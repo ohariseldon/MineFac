@@ -1,8 +1,10 @@
-# Veio 0.6
+# Veio 0.7
 
-Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, sem instalar o jogo.
+Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 
-Automação industrial no mundo procedural do Minecraft, executada no Horizon. Abra a instância **Veio** pelo launcher. No criativo, as abas **Veio – Indústria**, **Veio – Energia** e **Veio – Logística** reúnem o conteúdo.
+Automação industrial no mundo procedural do Minecraft, executada no Horizon. Abra a instância **Veio** pelo launcher. No criativo, as abas **Veio – Indústria**, **Veio – Energia**, **Veio – Logística** e **Veio – Mundo** reúnem o conteúdo.
+
+A fábrica faz parte do mundo do Minecraft: extrai das jazidas vanilla, queima combustíveis vanilla, cuida da lavoura, defende a base à noite e exporta para os povoados em troca de esmeraldas.
 
 ## Tutorial dentro do jogo
 
@@ -18,7 +20,7 @@ O começo usa receitas sem posição fixa na bancada, uma extratora diretamente 
 
 ## Energia
 
-- O gerador a carvão fornece até 40 FE/t. Cada carvão ou carvão vegetal rende 16.000 FE. O combustível fica em espera quando o reservatório enche.
+- O gerador fornece até 40 FE/t e queima os combustíveis da fornalha vanilla, na mesma proporção: carvão ou carvão vegetal rende 16.000 FE, tronco ou tábua 3.000 FE, vara de blaze 24.000 FE, bloco de alga seca 40.000 FE e bloco de carvão 160.000 FE. Madeira do Nether não queima. O combustível fica em espera quando o reservatório enche.
 - O gerador geotérmico fornece até 80 FE/t. Um balde de lava rende 64.000 FE e devolve um balde vazio no slot de saída. A saída pode ser automatizada com esteiras e funis.
 - Cada painel solar fornece até 16 FE/t ao meio-dia. Precisa de luz do céu e funciona no Overworld. Chuva, tempestade e horário reduzem a geração.
 - Cada acumulador armazena 30.000 FE. A receita entrega quatro unidades. Use bancos de acumuladores para atravessar a noite.
@@ -35,7 +37,9 @@ As extratoras trabalham diretamente sobre as jazidas existentes do Minecraft. As
 - Ouro, comum ou de ardósia, produz ouro bruto.
 - Carvão, comum ou de ardósia, produz carvão para alimentar geradores e ligas.
 - Redstone, comum ou de ardósia, produz pó de redstone.
-- Quartzo do Nether produz quartzo.
+- Lápis-lazúli, comum ou de ardósia, produz lápis-lazúli.
+- Quartzo do Nether produz quartzo, e ouro do Nether produz pepitas de ouro.
+- Diamante e esmeralda, comuns ou de ardósia, só com a Mk.II, 20 vezes mais devagar: uma pedra a cada 20 segundos e 4.800 FE por unidade.
 
 A extratora básica produz uma unidade a cada 2 segundos e consome 6 FE/t enquanto trabalha. A Mk.II produz uma unidade por segundo e consome 12 FE/t. As duas gastam 240 FE por unidade extraída.
 
@@ -45,7 +49,7 @@ As linhas de produção usam estas transformações.
 - Montador. Duas chapas de cobre viram uma engrenagem.
 - Cortadora. Uma chapa de ferro vira uma moldura. Uma chapa de cobre vira uma fiação de cobre.
 - Integrador. Uma moldura e uma engrenagem viram um módulo mecânico.
-- Triturador. Um quartzo vira uma pastilha de silício.
+- Triturador. Um quartzo vira uma pastilha de silício. Um osso vira quatro farinhas de osso. Pedregulho vira cascalho e cascalho vira areia.
 - Forno de ligas. Duas chapas de ferro e um carvão ou carvão vegetal viram uma chapa de aço.
 - Montador de circuitos. Duas fiações de cobre e uma pastilha de silício viram uma placa de circuito.
 
@@ -56,8 +60,9 @@ Máquinas aguardam material, energia e espaço na saída. Os ingredientes são c
 1. Cobre abre a primeira fábrica, com extratora, prensa e esteiras.
 2. Engrenagens abrem a oficina industrial, com chave, triturador e forno de ligas.
 3. Aço libera acumuladores, geotermia, montagem eletrônica e construção em lote.
-4. Quartzo e fiação permitem produzir circuitos, que liberam solar e extração Mk.II.
-5. O pedido de oito módulos mecânicos continua liberando o lote de 32 esteiras rápidas.
+4. Módulos mecânicos liberam a colheitadeira.
+5. Quartzo e fiação permitem produzir circuitos, que liberam solar, extração Mk.II e a torre Tesla.
+6. O pedido de oito módulos mecânicos continua liberando o lote de 32 esteiras rápidas.
 
 Os avanços entregam as receitas. Em um mundo anterior, recolha novamente os materiais do novo ramo para ativar os novos avanços.
 
@@ -71,9 +76,11 @@ Uma receita inicial entrega 16 esteiras. Com aço, uma chapa de aço, uma de cob
 
 ## Visual
 
-Os modelos usam painéis metálicos, grades, faixas de segurança e detalhes de esteira do conjunto CC0 **Platformer Pack – Industrial**, de Kenney. Os ícones de componentes, a interface escura e as cores das máquinas seguem a mesma linguagem industrial. As luzes indicam atividade, bloqueio e falta de recursos.
+As máquinas têm o formato e a escala dos blocos do Minecraft: base de pedra lisa, corpo e tampa com as texturas do próprio jogo para cada nível (cobre cortado, bloco de ferro, ardósia polida e barril na central) e uma face frontal em pixel art 16x16 que mostra a função. A saída fica atrás, com bico e faixa de segurança. O gerador tem chaminé de tijolos, o painel solar usa as células do sensor de luz do dia, o cabo é isolado com lã preta e emenda de cobre.
 
-A geometria dos blocos e a lógica do Veio pertencem a este projeto. As referências a texturas do Minecraft são resolvidas pela instalação do jogador. Créditos e licença estão em [CREDITS.md](CREDITS.md).
+Os painéis seguem as telas de baú e fornalha: fundo cinza em relevo, slots rebaixados, seta de progresso entre entrada e saída e texto escuro. Uma luz na tela e nas quatro faces da máquina indica o estado.
+
+Todas as texturas próprias são desenhadas em texto em `tools/build_textures.py`, e os modelos saem de `tools/build_content.py`. As referências a texturas do Minecraft são resolvidas pela instalação do jogador. Créditos em [CREDITS.md](CREDITS.md).
 
 ## Instalação e dados
 
@@ -82,6 +89,8 @@ A instância precisa do pacote em content/ e do módulo Rust em native/api/. A c
 Os dados do launcher ficam em E:\GPTmodMine\.launcher, os mundos e instâncias em E:\GPTmodMine\.game e a compilação em E:\GPTmodMine\.build. Essas pastas estão excluídas do controle de versão.
 
 O mundo **Veio03-Laboratorio** contém a demonstração da versão anterior. Os novos equipamentos estão disponíveis nas abas criativas e na progressão da 0.4. Blocos colocados quando apenas o pacote de conteúdo estava instalado podem precisar ser recolocados para criar seu inventário.
+
+Mundos da 0.6 continuam válidos: nenhum bloco ou item mudou de nome, e estoques, progresso e energia ficam nas máquinas. Os painéis reposicionaram os slots na tela, sem mudar o que cada slot guarda.
 
 A validação de jogabilidade desta expansão fica com o jogador. O desenvolvimento desta versão concentra as mudanças antes da compilação, seguindo a preferência por evitar testes no jogo a cada iteração.
 
@@ -95,12 +104,23 @@ A central é fabricada com um baú, uma engrenagem, um lingote de ferro e um de 
 2. Entrepostos. Entregue 16 chapas de aço e oito módulos mecânicos para receber 64 trilhos e 16 trilhos elétricos.
 3. Povoado. Entregue 12 circuitos e 24 molduras para receber oito funis e oito esmeraldas.
 4. Farol industrial. Entregue uma estrela do Nether e 32 circuitos para receber um farol e duas extratoras Mk.II. É um projeto opcional depois da infraestrutura.
+5. Exportação contínua. Depois dos projetos, a central aceita sem fim quatro circuitos e quatro chapas de aço, e entrega quatro esmeraldas e dois frascos de experiência por remessa. O painel conta as entregas.
 
 O progresso é salvo na central colocada. Sua desmontagem inicia uma central nova. A chave permite reorientá-la mantendo o progresso. Ao mudar de contrato, retire sobras das entradas e direcione os materiais do projeto seguinte. As recompensas podem sair por funis ou pelo bocal frontal.
 
 As máquinas de produção passam a mostrar itens produzidos por minuto e porcentagem de tempo ativo. A primeira leitura usa a amostra parcial; depois as leituras fecham a cada minuto de simulação com a máquina carregada. Falta de materiais, falta de energia, saída cheia e suspensão por redstone contam como tempo de espera. Uma linha equilibrada pode esperar ao atingir o estoque desejado.
 
 Um sinal de redstone pausa a produção e preserva o progresso. A saída continua escoando produtos. Alavancas permitem comando manual; comparadores e circuitos de redstone podem transformar estoque em sinal de parada. O painel informa a suspensão.
+
+## A fábrica no mundo
+
+A versão 0.7 liga a produção ao que acontece em volta da base.
+
+**Colheitadeira.** Verifica uma área de 9x9 em volta de si, numa camada abaixo, na própria e numa acima. Quando trigo, cenoura, batata, beterraba, fungo do Nether, frutas silvestres ou cacau amadurecem, ela colhe e replanta no mesmo lugar, gastando 120 FE por colheita. Os produtos ficam em três saídas e seguem pelo bocal até esteiras, funis ou baús. Com farinha de osso no slot de adubo, adianta dois estágios de uma planta por farinha. Uma volta completa leva cerca de quatro segundos.
+
+**Torre Tesla.** Abate o monstro hostil mais próximo num raio de 10 blocos, com 2.400 FE por disparo e intervalo de dois segundos. Guarda 20.000 FE. Aldeões, animais e chefes não são alvos. Como os painéis solares param à noite, a defesa depende de acumuladores ou de geradores. Os itens dos monstros caem no chão, e os ossos viram farinha no triturador, alimentando a lavoura. Um sinal de redstone desliga a torre.
+
+**Esmeraldas.** A exportação contínua da central transforma a produção eletrônica em esmeraldas para negociar com os aldeões.
 
 ## Direção de jogo
 
@@ -117,4 +137,4 @@ A integração com Minecraft deve criar usos para a fábrica.
 - Nether fornece quartzo e lava para rotas industriais.
 - Faróis permitem transformar exploração e construção em um projeto de fábrica.
 
-Os contratos implementados entregam materiais e recompensas. A avaliação de construções no terreno, rotas ferroviárias e presença de povoados pertence às próximas etapas. Rotas alternativas de produção devem criar escolhas entre exploração, energia e complexidade, como obter silício de quartzo ou desenvolver uma rota de areia com mais etapas.
+Os contratos implementados entregam materiais e recompensas, e a lavoura e a defesa já reagem ao mundo. A avaliação de construções no terreno, rotas ferroviárias e presença de povoados pertence às próximas etapas. Rotas alternativas de produção devem criar escolhas entre exploração, energia e complexidade, como obter silício de quartzo ou desenvolver uma rota de areia com mais etapas.

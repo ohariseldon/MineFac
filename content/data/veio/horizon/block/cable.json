@@ -2,7 +2,7 @@
   "template": "minecraft:black_glazed_terracotta",
   "item": true,
   "properties": {
-    "hardness": 1.5,
+    "hardness": 1.0,
     "occludes": false
   },
   "shapes": {

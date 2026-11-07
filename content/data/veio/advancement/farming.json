@@ -1,0 +1,26 @@
+{
+  "parent": "veio:modules",
+  "display": {
+    "icon": {
+      "id": "veio:harvester"
+    },
+    "title": {
+      "translate": "advancement.veio.farming.title"
+    },
+    "description": {
+      "translate": "advancement.veio.farming.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:harvester"
+          }
+        ]
+      }
+    }
+  }
+}

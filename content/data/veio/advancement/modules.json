@@ -27,6 +27,8 @@
     }
   },
   "rewards": {
-    "recipes": []
+    "recipes": [
+      "veio:harvester"
+    ]
   }
 }

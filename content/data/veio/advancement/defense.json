@@ -1,0 +1,26 @@
+{
+  "parent": "veio:circuits",
+  "display": {
+    "icon": {
+      "id": "veio:tesla"
+    },
+    "title": {
+      "translate": "advancement.veio.defense.title"
+    },
+    "description": {
+      "translate": "advancement.veio.defense.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:tesla"
+          }
+        ]
+      }
+    }
+  }
+}

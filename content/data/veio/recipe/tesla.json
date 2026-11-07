@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:circuit",
+    "veio:circuit",
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "minecraft:lightning_rod",
+    "minecraft:copper_block"
+  ],
+  "result": {
+    "id": "veio:tesla",
+    "count": 1
+  }
+}

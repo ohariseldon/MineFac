@@ -29,12 +29,24 @@ pub(super) const CONTRACTS: [Contract; 4] = [
     },
 ];
 
+/// Depois dos projetos, a central passa a exportar para os povoados sem fim.
+/// Esmeraldas compram com aldeões o que a fábrica não produz.
+pub(super) const EXPORT: Contract = Contract {
+    title: "veio.contract.export",
+    inputs: [(CIRCUIT, 4), (STEEL, 4)],
+    rewards: [("minecraft:emerald", 4), ("minecraft:experience_bottle", 2)],
+};
+
 pub(super) fn current(entity: &ModBlockEntity) -> Option<&'static Contract> {
-    CONTRACTS.get(number(entity, "ContractStage") as usize)
+    Some(for_stage(number(entity, "ContractStage") as usize))
+}
+
+pub(super) fn for_stage(stage: usize) -> &'static Contract {
+    CONTRACTS.get(stage).unwrap_or(&EXPORT)
 }
 
 pub(super) fn valid_input(slot: usize, stack: &ItemStack) -> bool {
-    slot < 2 && CONTRACTS.iter().any(|contract| is_plain(stack, contract.inputs[slot].0))
+    slot < 2 && CONTRACTS.iter().chain([&EXPORT]).any(|contract| is_plain(stack, contract.inputs[slot].0))
 }
 
 pub(super) fn accepts(entity: &ModBlockEntity, slot: usize, stack: &ItemStack) -> bool {
@@ -64,35 +76,42 @@ pub(super) fn tick(entity: &mut ModBlockEntity) {
         if let Some(stack) = slot { stack.count += count; }
         else { *slot = Some(ItemStack::new(item, count)); }
     }
-    let stage = number(entity, "ContractStage") + 1;
-    set_number(entity, "ContractStage", stage);
-    set_number(entity, "Status", if stage as usize == CONTRACTS.len() { 8 } else { 1 });
+    let stage = number(entity, "ContractStage");
+    if (stage as usize) < CONTRACTS.len() {
+        set_number(entity, "ContractStage", stage + 1);
+    } else {
+        set_number(entity, "Total", number(entity, "Total").saturating_add(1));
+    }
+    set_number(entity, "Status", 1);
 }
 
 pub(super) fn draw_screen(
     host: &dyn Host,
     event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>,
 ) {
+    use horizon_client::mod_api::Text;
     let [x, y] = event.origin;
     let stage = event.data.get(8).copied().unwrap_or(0).max(0) as usize;
-    let Some(contract) = CONTRACTS.get(stage) else {
-        let text = horizon_client::mod_api::Text::tr("veio.contract.completed", &[]).plain();
-        host.text(event.batch, &text, [x + 9.0, y + 24.0], 0x61a5e8, false);
-        return;
-    };
-    let title = horizon_client::mod_api::Text::tr(contract.title, &[]).plain();
-    host.text(event.batch, &title, [x + 9.0, y + 24.0], 0xdce6ef, false);
+    let contract = for_stage(stage);
+    let title = Text::tr(contract.title, &[]).plain();
+    host.text(event.batch, &title, [x + 9.0, y + 24.0], presentation::INK, false);
     for (index, &(item, required)) in contract.inputs.iter().enumerate() {
-        let kind = if is_factory_block(item) { "block" } else { "item" };
-        let key = format!("{kind}.{}", item.replace(':', "."));
-        let name = horizon_client::mod_api::Text::tr(&key, &[]).plain();
-        let text = format!("{required} x {name}");
-        host.text(event.batch, &text, [x + 9.0, y + 76.0 + index as f32 * 12.0], 0x91a7bd, false);
+        let text = format!("{required} x {}", item_name(item));
+        host.text(event.batch, &text, [x + 9.0, y + 76.0 + index as f32 * 11.0], presentation::SOFT_INK, false);
     }
     let status = event.data.first().copied().unwrap_or(0);
     let key = if status == 3 { "veio.status.blocked" } else { "veio.contract.deliver" };
-    host.text(event.batch, &horizon_client::mod_api::Text::tr(key, &[]).plain(),
-        [x + 9.0, y + 106.0], 0xffffbb4a, false);
-    let progress = horizon_client::mod_api::Text::tr("veio.contract.stage", &[&(stage + 1), &CONTRACTS.len()]).plain();
-    host.text(event.batch, &progress, [x + 9.0, y + 130.0], 0x91a7bd, false);
+    let color = if status == 3 { presentation::text_color(3) } else { presentation::INK };
+    host.text(event.batch, &Text::tr(key, &[]).plain(), [x + 9.0, y + 104.0], color, false);
+    let progress = if stage < CONTRACTS.len() {
+        Text::tr("veio.contract.stage", &[&(stage + 1), &CONTRACTS.len()]).plain()
+    } else {
+        Text::tr("veio.contract.exports", &[&event.data.get(9).copied().unwrap_or(0)]).plain()
+    };
+    host.text(event.batch, &progress, [x + 9.0, y + 128.0], presentation::SOFT_INK, false);
+}
+
+fn item_name(item: &str) -> String {
+    let kind = if is_factory_block(item) { "block" } else { "item" };
+    horizon_client::mod_api::Text::tr(&format!("{kind}.{}", item.replace(':', ".")), &[]).plain()
 }

@@ -1,15 +1,10 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "body": "veio:block/panel",
-    "dark": "veio:block/console",
-    "trim": "veio:block/casing",
-    "vent": "veio:block/vents",
-    "hazard": "veio:block/hazard",
-    "solar": "veio:block/solar",
-    "belt": "veio:block/belt",
-    "particle": "veio:block/panel",
-    "accent": "minecraft:block/gray_concrete"
+    "frame": "minecraft:block/iron_block",
+    "cells": "minecraft:block/daylight_detector_top",
+    "edge": "minecraft:block/daylight_detector_side",
+    "particle": "minecraft:block/daylight_detector_top"
   },
   "elements": [
     {
@@ -20,27 +15,91 @@
       ],
       "to": [
         4,
-        4,
+        3,
         4
       ],
       "faces": {
         "down": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "up": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "north": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "south": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "west": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "east": {
-          "texture": "#trim"
+          "texture": "#frame"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        0,
+        12
+      ],
+      "to": [
+        4,
+        3,
+        14
+      ],
+      "faces": {
+        "down": {
+          "texture": "#frame"
+        },
+        "up": {
+          "texture": "#frame"
+        },
+        "north": {
+          "texture": "#frame"
+        },
+        "south": {
+          "texture": "#frame"
+        },
+        "west": {
+          "texture": "#frame"
+        },
+        "east": {
+          "texture": "#frame"
+        }
+      }
+    },
+    {
+      "from": [
+        12,
+        0,
+        2
+      ],
+      "to": [
+        14,
+        3,
+        4
+      ],
+      "faces": {
+        "down": {
+          "texture": "#frame"
+        },
+        "up": {
+          "texture": "#frame"
+        },
+        "north": {
+          "texture": "#frame"
+        },
+        "south": {
+          "texture": "#frame"
+        },
+        "west": {
+          "texture": "#frame"
+        },
+        "east": {
+          "texture": "#frame"
         }
       }
     },
@@ -52,27 +111,27 @@
       ],
       "to": [
         14,
-        4,
+        3,
         14
       ],
       "faces": {
         "down": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "up": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "north": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "south": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "west": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "east": {
-          "texture": "#trim"
+          "texture": "#frame"
         }
       }
     },
@@ -89,22 +148,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "up": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "north": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "south": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "west": {
-          "texture": "#trim"
+          "texture": "#frame"
         },
         "east": {
-          "texture": "#trim"
+          "texture": "#frame"
         }
       }
     },
@@ -115,60 +174,28 @@
         1
       ],
       "to": [
-        7.8,
-        5,
-        15
-      ],
-      "faces": {
-        "down": {
-          "texture": "#solar"
-        },
-        "up": {
-          "texture": "#solar"
-        },
-        "north": {
-          "texture": "#solar"
-        },
-        "south": {
-          "texture": "#solar"
-        },
-        "west": {
-          "texture": "#solar"
-        },
-        "east": {
-          "texture": "#solar"
-        }
-      }
-    },
-    {
-      "from": [
-        8.2,
-        4,
-        1
-      ],
-      "to": [
         15,
-        5,
+        5.5,
         15
       ],
       "faces": {
         "down": {
-          "texture": "#solar"
+          "texture": "#edge"
         },
         "up": {
-          "texture": "#solar"
+          "texture": "#cells"
         },
         "north": {
-          "texture": "#solar"
+          "texture": "#edge"
         },
         "south": {
-          "texture": "#solar"
+          "texture": "#edge"
         },
         "west": {
-          "texture": "#solar"
+          "texture": "#edge"
         },
         "east": {
-          "texture": "#solar"
+          "texture": "#edge"
         }
       }
     }

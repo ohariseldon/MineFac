@@ -1,0 +1,9 @@
+{
+  "title": "itemGroup.veio.world",
+  "icon": "veio:harvester",
+  "items": [
+    "veio:harvester",
+    "veio:tesla",
+    "minecraft:bone_meal"
+  ]
+}

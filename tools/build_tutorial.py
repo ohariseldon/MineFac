@@ -17,6 +17,8 @@ vanilla={
  "stonecutter":("Cortador de pedra","Stonecutter"),"chest":("Baú","Chest"),
  "coal":("Carvão","Coal"),"glass":("Vidro","Glass"),"gold_ingot":("Lingote de ouro","Gold ingot"),
  "bucket":("Balde","Bucket"),"book":("Livro","Book"),"paper":("Papel","Paper"),
+ "iron_hoe":("Enxada de ferro","Iron hoe"),"composter":("Composteira","Composter"),
+ "lightning_rod":("Para-raios","Lightning rod"),"copper_block":("Bloco de cobre","Block of copper"),
 }
 def item_name(item,code):
  ns,name=item.split(":")
@@ -29,14 +31,14 @@ def item_name(item,code):
 # Every help entry describes the actual slot order and material conversion.
 help={
  "generator":(
- "Queima carvão ou carvão vegetal.\nCombustível no slot central.\nEnvia energia aos vizinhos.\nLigue cabos a cada máquina.",
- "Burns coal or charcoal.\nFuel goes in the middle slot.\nSupplies adjacent machines.\nRun cables to each machine."),
+ "Queima combustível vanilla:\ncarvão, madeira, tábuas,\nbloco de carvão, vara de blaze.\nLigue cabos a cada máquina.",
+ "Burns vanilla fuels:\ncoal, logs, planks,\ncoal blocks, blaze rods.\nRun cables to each machine."),
  "drill":(
- "Coloque sobre um minério.\nPrecisa de energia.\nEntrega matéria-prima.\nBocal: saída para a esteira.",
- "Place directly on an ore.\nRequires electricity.\nProduces raw materials.\nThe port feeds a conveyor."),
+ "Coloque sobre um minério.\nCobre, ferro, ouro, carvão,\nredstone, lápis e quartzo.\nBocal: saída para a esteira.",
+ "Place directly on an ore.\nCopper, iron, gold, coal,\nredstone, lapis and quartz.\nThe port feeds a conveyor."),
  "drill_mk2":(
- "Use como a extratora básica.\nExtrai duas vezes mais rápido.\nPrecisa do dobro de potência.\nCusto por minério igual.",
- "Use like the basic extractor.\nExtracts twice as fast.\nNeeds twice the power.\nSame energy cost per ore."),
+ "Extrai duas vezes mais rápido.\nPrecisa do dobro de potência.\nSó ela extrai diamante e\nesmeralda, bem devagar.",
+ "Extracts twice as fast.\nNeeds twice the power.\nOnly it mines diamond and\nemerald, very slowly."),
  "press":(
  "Cobre/ferro bruto vira chapa.\nOuro bruto vira lingote.\nEntrada no slot esquerdo.\nSaída no direito. Use energia.",
  "Raw copper/iron makes plates.\nRaw gold makes ingots.\nInput in the left slot.\nOutput on the right. Use power."),
@@ -50,8 +52,8 @@ help={
  "Entrada 1: moldura.\nEntrada 2: engrenagem.\nProduz módulo mecânico.\nRequer um de cada e energia.",
  "Input 1: frame.\nInput 2: gear.\nMakes a mechanical module.\nNeeds one of each and power."),
  "crusher":(
- "Recebe quartzo do Nether.\nProduz pastilha de silício.\nEntrada à esquerda.\nSaída à direita. Use energia.",
- "Takes Nether quartz.\nMakes silicon wafers.\nInput on the left.\nOutput on the right. Use power."),
+ "Quartzo vira silício.\nOsso vira 4 farinhas de osso.\nPedregulho vira cascalho e\ncascalho vira areia.",
+ "Quartz makes silicon.\nA bone makes 4 bone meal.\nCobblestone makes gravel,\ngravel makes sand."),
  "alloy_furnace":(
  "Entrada 1: 2 chapas de ferro.\nEntrada 2: 1 carvão.\nProduz 1 chapa de aço.\nTambém aceita carvão vegetal.\nPrecisa de energia.",
  "Input 1: 2 iron plates.\nInput 2: 1 coal.\nMakes 1 steel plate.\nCharcoal works too.\nRequires electricity."),
@@ -82,26 +84,33 @@ help={
  "contract_hub":(
  "Entradas 1 e 2 à esquerda.\nRecompensas 1 e 2 à direita.\nEntregue o pedido exibido.\nRetire sobras ao mudar pedido.",
  "Inputs 1 and 2 on the left.\nRewards 1 and 2 on the right.\nDeliver the displayed order.\nClear leftovers for the next."),
+ "harvester":(
+ "Colhe e replanta em 9x9.\nTrigo, cenoura, batata,\nbeterraba, fungo e frutas.\nFarinha de osso acelera.",
+ "Harvests and replants 9x9.\nWheat, carrots, potatoes,\nbeetroot, wart and berries.\nBone meal speeds growth."),
+ "tesla":(
+ "Abate monstros a 10 blocos.\n2.400 FE por disparo.\nÀ noite, use acumuladores.\nRedstone desliga a torre.",
+ "Stops monsters within 10.\n2,400 FE per shot.\nAt night, use batteries.\nRedstone turns it off."),
  "wrench":(
  "Selecione na barra rápida.\nBotão direito gira máquinas\ne esteiras.\nConserva estoques e progresso.",
  "Select it in the hotbar.\nRight-click to turn machines\nand conveyors.\nKeeps contents and progress."),
 }
 order=["generator","cable","drill","belt","press","assembler","wrench","cutter","integrator",
  "contract_hub","splitter","fast_belt","alloy_furnace","crusher","electronics","geothermal",
- "solar","battery","drill_mk2"]
+ "solar","battery","drill_mk2","harvester","tesla"]
 for name,(pt,en) in help.items():
  label(f"veio.help.{name}",pt,en)
 
 slothelp={
  "drill":["Produto extraído. Retire ou ligue uma esteira."],
  "drill_mk2":["Produto extraído. Retire ou ligue uma esteira."],
- "generator":["Coloque carvão ou carvão vegetal."],
+ "generator":["Coloque carvão, madeira ou outro combustível."],
+ "harvester":["Farinha de osso: acelera as plantações.","Colheita.","Colheita.","Colheita."],
  "geothermal":["Coloque um balde de lava.","Recolha os baldes vazios."],
  "press":["Coloque cobre, ferro ou ouro BRUTO.","Recolha as chapas ou os lingotes."],
  "assembler":["Coloque DUAS chapas de cobre.","Recolha as engrenagens."],
  "cutter":["Coloque chapa de ferro ou de cobre.","Recolha molduras ou fiação."],
  "integrator":["Coloque UMA moldura.","Coloque UMA engrenagem.","Recolha o módulo mecânico."],
- "crusher":["Coloque quartzo do Nether.","Recolha as pastilhas de silício."],
+ "crusher":["Coloque quartzo, osso, pedregulho ou cascalho.","Recolha o produto triturado."],
  "alloy_furnace":["Coloque DUAS chapas de ferro.","Coloque UM carvão ou carvão vegetal.","Recolha as chapas de aço."],
  "electronics":["Coloque DUAS fiações de cobre.","Coloque UMA pastilha de silício.","Recolha as placas de circuito."],
  "belt":["Itens guardados neste trecho da esteira."],
@@ -112,13 +121,14 @@ slothelp={
 slot_en={
  "drill":["Extracted product. Take it or connect a belt."],
  "drill_mk2":["Extracted product. Take it or connect a belt."],
- "generator":["Insert coal or charcoal."],
+ "generator":["Insert coal, wood or another fuel."],
+ "harvester":["Bone meal: speeds up the crops.","Harvest.","Harvest.","Harvest."],
  "geothermal":["Insert a lava bucket.","Collect the empty buckets."],
  "press":["Insert RAW copper, iron or gold.","Collect plates or ingots."],
  "assembler":["Insert TWO copper plates.","Collect the gears."],
  "cutter":["Insert iron or copper plates.","Collect frames or wiring."],
  "integrator":["Insert ONE frame.","Insert ONE gear.","Collect the mechanical module."],
- "crusher":["Insert Nether quartz.","Collect the silicon wafers."],
+ "crusher":["Insert quartz, bone, cobblestone or gravel.","Collect the crushed product."],
  "alloy_furnace":["Insert TWO iron plates.","Insert ONE coal or charcoal.","Collect the steel plates."],
  "electronics":["Insert TWO copper wiring.","Insert ONE silicon wafer.","Collect the circuit boards."],
  "belt":["Items held by this conveyor segment."],
@@ -143,6 +153,7 @@ label("veio.guide.role.input1","Ent.1","In 1")
 label("veio.guide.role.input2","Ent.2","In 2")
 label("veio.guide.role.output1","Sai.1","Out 1")
 label("veio.guide.role.output2","Sai.2","Out 2")
+label("veio.guide.role.fertilizer","Adubo","Fertilizer")
 
 components={
  "copper_plate":("Feita na prensa com cobre bruto. Vai para engrenagens e fiação.","Press raw copper. Used for gears and wiring."),
@@ -199,8 +210,14 @@ page(
 page(
  "Seu roteiro\n\nAbra Avanços > Primeira fábrica. Os marcos contam materiais obtidos.\n\nRecolha os produtos para marcar progresso.\n\nO painel de cada máquina confirma seu funcionamento.",
  "Your checklist\n\nOpen Advancements and find First Factory. Milestones track obtained materials.\n\nPick up products to mark progress.\n\nInspect machine panels to confirm operation.")
+world=page(
+ "Fábrica e mundo\n\nColheitadeira: plante ao redor dela e ligue uma esteira.\n\nTorre Tesla: protege a base à noite. Junte acumuladores ao solar.\n\nOssos dos monstros viram farinha no triturador.",
+ "Factory and world\n\nHarvester: build the farm around it and belt the crops away.\n\nTesla tower: guards the base at night. Pair solar with batteries.\n\nMonster bones become bone meal in the crusher.")
+page(
+ "Comércio\n\nDepois dos quatro projetos, a central exporta sem fim: 4 circuitos e 4 chapas de aço viram 4 esmeraldas e frascos de experiência.\n\nUse as esmeraldas com os aldeões da sua vila.",
+ "Trade\n\nAfter the four projects, the hub keeps exporting: 4 circuits and 4 steel plates become 4 emeralds and experience bottles.\n\nSpend emeralds with your villagers.")
 index_pages=[]
-for group in range(4):
+for group in range(5):
  index_pages.append(len(pages)+1);pages.append(None)
 references={}
 for name in order:
@@ -239,13 +256,14 @@ links=[
  ("Montar a linha","Build the line",layout),("Resolver falhas","Troubleshoot",troubleshoot),
  ("Máquinas A","Machines A",index_pages[0]),("Máquinas B","Machines B",index_pages[1]),
  ("Máquinas C","Machines C",index_pages[2]),("Máquinas D","Machines D",index_pages[3]),
+ ("Máquinas E","Machines E",index_pages[4]),("Fábrica e mundo","Factory and world",world),
 ]
 extra=[{"translate":"veio.guide.title","bold":True},{"text":"\n\n"}]
 for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.6"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.7"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",

@@ -1,15 +1,12 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "body": "veio:block/panel",
-    "dark": "veio:block/console",
-    "trim": "veio:block/casing",
-    "vent": "veio:block/vents",
-    "hazard": "veio:block/hazard",
-    "solar": "veio:block/solar",
+    "base": "minecraft:block/smooth_stone",
+    "base_side": "minecraft:block/smooth_stone_slab_side",
     "belt": "veio:block/belt",
-    "particle": "veio:block/panel",
-    "accent": "minecraft:block/gray_concrete"
+    "rail": "veio:block/belt_rail",
+    "iron": "minecraft:block/iron_block",
+    "particle": "veio:block/belt"
   },
   "elements": [
     {
@@ -25,22 +22,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#dark"
+          "texture": "#base"
         },
         "up": {
-          "texture": "#dark"
+          "texture": "#base"
         },
         "north": {
-          "texture": "#dark"
+          "texture": "#base_side"
         },
         "south": {
-          "texture": "#dark"
+          "texture": "#base_side"
         },
         "west": {
-          "texture": "#dark"
+          "texture": "#base_side"
         },
         "east": {
-          "texture": "#dark"
+          "texture": "#base_side"
         }
       }
     },
@@ -57,22 +54,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#trim"
+          "texture": "#iron"
         },
         "up": {
-          "texture": "#trim"
+          "texture": "#rail"
         },
         "north": {
-          "texture": "#trim"
+          "texture": "#iron"
         },
         "south": {
-          "texture": "#trim"
+          "texture": "#iron"
         },
         "west": {
-          "texture": "#trim"
+          "texture": "#iron"
         },
         "east": {
-          "texture": "#trim"
+          "texture": "#iron"
         }
       }
     },
@@ -89,22 +86,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#trim"
+          "texture": "#iron"
         },
         "up": {
-          "texture": "#trim"
+          "texture": "#rail"
         },
         "north": {
-          "texture": "#trim"
+          "texture": "#iron"
         },
         "south": {
-          "texture": "#trim"
+          "texture": "#iron"
         },
         "west": {
-          "texture": "#trim"
+          "texture": "#iron"
         },
         "east": {
-          "texture": "#trim"
+          "texture": "#iron"
         }
       }
     },
@@ -137,70 +134,6 @@
         },
         "east": {
           "texture": "#belt"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        4,
-        0
-      ],
-      "to": [
-        2,
-        4.2,
-        16
-      ],
-      "faces": {
-        "down": {
-          "texture": "#hazard"
-        },
-        "up": {
-          "texture": "#hazard"
-        },
-        "north": {
-          "texture": "#hazard"
-        },
-        "south": {
-          "texture": "#hazard"
-        },
-        "west": {
-          "texture": "#hazard"
-        },
-        "east": {
-          "texture": "#hazard"
-        }
-      }
-    },
-    {
-      "from": [
-        14,
-        4,
-        0
-      ],
-      "to": [
-        16,
-        4.2,
-        16
-      ],
-      "faces": {
-        "down": {
-          "texture": "#hazard"
-        },
-        "up": {
-          "texture": "#hazard"
-        },
-        "north": {
-          "texture": "#hazard"
-        },
-        "south": {
-          "texture": "#hazard"
-        },
-        "west": {
-          "texture": "#hazard"
-        },
-        "east": {
-          "texture": "#hazard"
         }
       }
     }

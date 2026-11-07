@@ -1,12 +1,7 @@
-﻿# Third-party artwork
+# Artwork
 
-Veio 0.4 uses selected, unmodified PNG sprites from **Platformer Pack: Industrial**, by **Kenney Vleugels / Kenney.nl**, under **Creative Commons Zero (CC0)**.
+Since Veio 0.7, every texture in `content/assets/veio/textures` is original 16x16 pixel art made for this project. The drawings live as text in `tools/build_textures.py`, which writes the PNG files.
 
-The original license is included in [third_party/kenney/LICENSE.txt](third_party/kenney/LICENSE.txt).
+The block models also reference textures from Minecraft itself, such as `minecraft:block/iron_block`, `minecraft:block/cut_copper` and `minecraft:block/daylight_detector_top`. Those files are not distributed here: the game resolves them from the player's own installation.
 
-- Public source mirror. https://github.com/ETdoFresh/kenney.nl/tree/master/kenney_platformerpack_industrial
-- Individual sprite directory. https://github.com/ETdoFresh/kenney.nl/tree/master/kenney_platformerpack_industrial/PNG/Default%20size
-- Author. https://kenney.nl/
-- License. https://creativecommons.org/publicdomain/zero/1.0/
-
-The downloaded sprites supply casing panels, control panels, vents, conveyor details, warning stripes and component icons. Veio's block geometry, recipes, interfaces and simulation code are authored in this project. Minecraft texture references are resolved from the player's own installation.
+Veio 0.4 to 0.6 used sprites from **Platformer Pack: Industrial** by Kenney (CC0). They were replaced in 0.7 to match Minecraft's style and are no longer included.

@@ -42,7 +42,44 @@ def main():
     assert loot["pools"][0]["entries"][0]["functions"][0]["components"] == components, "Guia entregue e fabricado devem ser iguais"
     for language in languages:
         assert all(language[key] for key in language if key.startswith("veio.guide.")), "Texto vazio no guia"
-    print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas.")
+    textures = check_assets(languages)
+    print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas; "
+          f"{textures} texturas 16x16 encontradas.")
+
+
+def png_size(path):
+    data = path.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n", f"{path} não é PNG"
+    return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+
+
+def check_assets(languages):
+    """Cada bloco e item registrado tem nome, modelo, receita e texturas próprias existentes."""
+    assets = CONTENT / "assets/veio"
+    data = CONTENT / "data/veio"
+    textures = sorted((assets / "textures").rglob("*.png"))
+    for path in textures:
+        assert png_size(path) == (16, 16), f"{path.name} deve ter 16x16, como as texturas vanilla"
+    for kind in ("block", "item"):
+        for path in (data / f"horizon/{kind}").glob("*.json"):
+            name = path.stem
+            for language in languages:
+                assert f"{kind}.veio.{name}" in language, f"Falta o nome de {kind}.veio.{name}"
+            assert (assets / f"items/{name}.json").exists(), f"Falta assets/veio/items/{name}.json"
+            if kind == "block":  # Componentes saem das máquinas, não da bancada.
+                assert (data / f"recipe/{name}.json").exists(), f"Falta a receita de {name}"
+    for model in (assets / "models").rglob("*.json"):
+        textures_used = read_json(model).get("textures", {}).values()
+        for texture in textures_used:
+            if texture.startswith("veio:"):
+                path = assets / f"textures/{texture[5:]}.png"
+                assert path.exists(), f"{model.name} usa {texture}, que não existe"
+    unlocked = set()
+    for advancement in (data / "advancement").rglob("*.json"):
+        unlocked.update(read_json(advancement).get("rewards", {}).get("recipes", []))
+    for recipe in (data / "recipe").glob("*.json"):
+        assert f"veio:{recipe.stem}" in unlocked, f"Nenhum avanço libera a receita {recipe.stem}"
+    return len(textures)
 
 
 if __name__ == "__main__":

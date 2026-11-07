@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:module",
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "minecraft:iron_hoe",
+    "minecraft:composter"
+  ],
+  "result": {
+    "id": "veio:harvester",
+    "count": 1
+  }
+}

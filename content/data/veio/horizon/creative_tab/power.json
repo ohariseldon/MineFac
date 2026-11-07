@@ -3,8 +3,8 @@
   "icon": "veio:generator",
   "items": [
     "veio:generator",
-    "veio:solar",
     "veio:geothermal",
+    "veio:solar",
     "veio:battery",
     "veio:cable",
     "minecraft:coal",

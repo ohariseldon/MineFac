@@ -1,15 +1,9 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "body": "veio:block/panel",
-    "dark": "veio:block/console",
-    "trim": "veio:block/casing",
-    "vent": "veio:block/vents",
-    "hazard": "veio:block/hazard",
-    "solar": "veio:block/solar",
-    "belt": "veio:block/belt",
-    "particle": "veio:block/panel",
-    "accent": "minecraft:block/gray_concrete"
+    "wire": "minecraft:block/black_wool",
+    "joint": "minecraft:block/copper_block",
+    "particle": "minecraft:block/black_wool"
   },
   "elements": [
     {
@@ -25,22 +19,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#dark"
+          "texture": "#wire"
         },
         "up": {
-          "texture": "#dark"
+          "texture": "#wire"
         },
         "north": {
-          "texture": "#dark"
+          "texture": "#wire"
         },
         "south": {
-          "texture": "#dark"
+          "texture": "#wire"
         },
         "west": {
-          "texture": "#dark"
+          "texture": "#wire"
         },
         "east": {
-          "texture": "#dark"
+          "texture": "#wire"
         }
       }
     },
@@ -57,22 +51,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#dark"
+          "texture": "#wire"
         },
         "up": {
-          "texture": "#dark"
+          "texture": "#wire"
         },
         "north": {
-          "texture": "#dark"
+          "texture": "#wire"
         },
         "south": {
-          "texture": "#dark"
+          "texture": "#wire"
         },
         "west": {
-          "texture": "#dark"
+          "texture": "#wire"
         },
         "east": {
-          "texture": "#dark"
+          "texture": "#wire"
         }
       }
     },
@@ -89,22 +83,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#trim"
+          "texture": "#joint"
         },
         "up": {
-          "texture": "#trim"
+          "texture": "#joint"
         },
         "north": {
-          "texture": "#trim"
+          "texture": "#joint"
         },
         "south": {
-          "texture": "#trim"
+          "texture": "#joint"
         },
         "west": {
-          "texture": "#trim"
+          "texture": "#joint"
         },
         "east": {
-          "texture": "#trim"
+          "texture": "#joint"
         }
       }
     }

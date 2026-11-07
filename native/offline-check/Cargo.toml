@@ -1,0 +1,4 @@
+# Verificação offline do módulo nativo. Não faz parte do mod e não substitui a compilação do launcher.
+[workspace]
+members = ["horizon-client", "veio-check"]
+resolver = "3"
