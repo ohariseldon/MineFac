@@ -19,7 +19,8 @@ use super::*;
 use std::sync::Mutex;
 
 pub(super) const RADIUS: i32 = 12;
-const PER_CYCLE: i32 = 150;
+/// Uma fileira do 25×25 por ciclo; a volta (1875 blocos) leva 75 ciclos.
+pub(super) const SCAN: i32 = 25;
 pub(super) const MAX_POSTS: usize = 6;
 /// Abaixo disto (comida guardada no posto e pontos do trabalhador), o capataz reabastece.
 pub(super) const LOW_FOOD: u32 = 4;
@@ -109,7 +110,7 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
                 Some(_) => 0,
             };
             // Deixa um item para o próprio capataz.
-            let spare = if number(entity, "Ration") > 0 { stack.count } else { stack.count.saturating_sub(1) };
+            let spare = if number(entity, "Ration") >= TASK_COST { stack.count } else { stack.count.saturating_sub(1) };
             let count = FOOD_BATCH.min(spare).min(room);
             (count > 0).then_some((from, count))
         });
@@ -242,7 +243,7 @@ fn queue_outputs(block: &str) -> Vec<usize> {
 pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
     let dimension = host.dimension();
     register_desk(dimension, pos, now);
-    let Some(network) = scan_named(host, pos, entity, "Area", RADIUS, PER_CYCLE, MAX_NETWORK, &networked, true) else { return };
+    let Some(network) = scan_named(host, pos, entity, "Area", RADIUS, SCAN, MAX_NETWORK, &networked, true) else { return };
     let round = (number(entity, "Organize") + 1) % ORGANIZE_EVERY;
     set_number(entity, "Organize", round);
     if round != 0 {
