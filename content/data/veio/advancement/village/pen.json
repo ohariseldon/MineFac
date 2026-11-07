@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/field",
+  "display": {
+    "icon": {
+      "id": "veio:pen_marker"
+    },
+    "title": {
+      "translate": "veio.village.stage.pen.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.pen.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:pen_marker"
+          }
+        ]
+      }
+    }
+  }
+}

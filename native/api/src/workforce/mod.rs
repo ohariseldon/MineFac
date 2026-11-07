@@ -30,6 +30,7 @@ pub(super) mod hauler;
 pub(super) mod shepherd;
 pub(super) mod center;
 pub(super) mod storage;
+pub(super) mod spawn;
 pub(super) mod village;
 pub(super) mod zones;
 
@@ -596,11 +597,10 @@ pub(super) fn rotate(entity: &mut ModBlockEntity, len: usize) {
 pub(super) fn candidate(host: &mut dyn Host, pos: [i32; 3], now: u64) -> Option<(Uuid, u32)> {
     let dimension = host.dimension();
     let center = post_center(pos);
-    let mut nearby: Vec<(f64, u32)> = production::ranch::recent_villagers(dimension).into_iter()
-        .filter_map(|id| {
-            let at = host.entity(id)?.position(host)?;
-            near(at, center, HIRE_RADIUS).then(|| ((at[0] - center[0]).hypot(at[2] - center[2]), id))
-        })
+    // Posições do censo (até 5 s de idade); a distância exata não é crítica para contratar.
+    let mut nearby: Vec<(f64, u32)> = production::ranch::villager_positions(host, dimension).into_iter()
+        .filter(|(_, at)| near(*at, center, HIRE_RADIUS))
+        .map(|(id, at)| ((at[0] - center[0]).hypot(at[2] - center[2]), id))
         .collect();
     nearby.sort_by(|a, b| a.0.total_cmp(&b.0));
     nearby.into_iter().find_map(|(_, id)| {
@@ -721,10 +721,10 @@ fn locate(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, uuid:
         remember_entity(uuid, None);
     }
     let center = post_center(pos);
-    let nearby: Vec<u32> = production::ranch::recent_villagers(host.dimension()).into_iter()
-        .filter(|id| host.entity(*id).and_then(|handle| handle.position(host))
-            .is_some_and(|at| (at[0] - center[0]).hypot(at[2] - center[2]) <= SEARCH_RADIUS
-                && (at[1] - center[1]).abs() <= SEARCH_RADIUS))
+    let nearby: Vec<u32> = production::ranch::villager_positions(host, host.dimension()).into_iter()
+        .filter(|(_, at)| (at[0] - center[0]).hypot(at[2] - center[2]) <= SEARCH_RADIUS
+            && (at[1] - center[1]).abs() <= SEARCH_RADIUS)
+        .map(|(id, _)| id)
         .collect();
     if nearby.is_empty() {
         return None;

@@ -59,14 +59,14 @@ pub(crate) fn stores_near(dimension: &str, at: [i32; 3], radius: i32, now: u64) 
     if !STORES_PENDING.load(Ordering::Acquire) {
         return Vec::new();
     }
-    STORES.lock().map(|mut stores| {
-        stores.retain(|store| now.saturating_sub(store.seen) <= STALE);
+    // Leitura sem efeito colateral: entradas vencidas saem nas escritas (`register`/`report`).
+    STORES.lock().map(|stores| {
         if stores.is_empty() {
             STORES_PENDING.store(false, Ordering::Release);
             return Vec::new();
         }
         stores.iter()
-            .filter(|store| store.dimension == dimension
+            .filter(|store| store.dimension == dimension && now.saturating_sub(store.seen) <= STALE
                 && (0..3).all(|axis| (store.pos[axis] - at[axis]).abs() <= radius))
             .cloned().collect()
     }).unwrap_or_default()

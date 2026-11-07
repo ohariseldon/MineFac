@@ -64,14 +64,14 @@ pub(crate) fn posts_near(dimension: &str, at: [i32; 3], radius: i32, now: u64) -
     if !POSTS_PENDING.load(Ordering::Acquire) {
         return Vec::new();
     }
-    POSTS.lock().map(|mut posts| {
-        posts.retain(|post| now.saturating_sub(post.seen) <= STALE);
+    // Leitura sem efeito colateral: entradas vencidas saem nas escritas (`register`/`report`).
+    POSTS.lock().map(|posts| {
         if posts.is_empty() {
             POSTS_PENDING.store(false, Ordering::Release);
             return Vec::new();
         }
         posts.iter()
-            .filter(|post| post.dimension == dimension
+            .filter(|post| post.dimension == dimension && now.saturating_sub(post.seen) <= STALE
                 && (0..3).all(|axis| (post.pos[axis] - at[axis]).abs() <= radius))
             .cloned().collect()
     }).unwrap_or_default()
@@ -95,6 +95,8 @@ pub(crate) fn perform(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
     set_number(entity, "Refresh", round % (REFRESH_EVERY * CHARGE_EVERY));
     if round % REFRESH_EVERY == 1 || !entity.nbt.contains_key(&"DWorkers".into()) {
         refresh(host.dimension(), pos, entity, now);
+        // Com administrador, o centro de controle é o centro da vila: spawn e renascimento aqui.
+        spawn::control_center(host, pos);
     }
     (round % (REFRESH_EVERY * CHARGE_EVERY) == 0).then(Vec::new)
 }

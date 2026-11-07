@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/haul",
+  "display": {
+    "icon": {
+      "id": "veio:foreman_desk"
+    },
+    "title": {
+      "translate": "veio.village.stage.foreman.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.foreman.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:foreman_desk"
+          }
+        ]
+      }
+    }
+  }
+}

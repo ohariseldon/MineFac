@@ -109,14 +109,14 @@ pub(crate) fn zones_near(dimension: &str, at: [i32; 3], radius: i32, now: u64) -
     if !ZONES_PENDING.load(Ordering::Acquire) {
         return Vec::new();
     }
-    ZONES.lock().map(|mut zones| {
-        zones.retain(|zone| now.saturating_sub(zone.seen) <= STALE);
+    // Leitura sem efeito colateral: entradas vencidas saem nas escritas (`register`/`report`).
+    ZONES.lock().map(|zones| {
         if zones.is_empty() {
             ZONES_PENDING.store(false, Ordering::Release);
             return Vec::new();
         }
         zones.iter()
-            .filter(|zone| zone.dimension == dimension
+            .filter(|zone| zone.dimension == dimension && now.saturating_sub(zone.seen) <= STALE
                 && (0..3).all(|axis| (zone.pos[axis] - at[axis]).abs() <= radius))
             .cloned().collect()
     }).unwrap_or_default()

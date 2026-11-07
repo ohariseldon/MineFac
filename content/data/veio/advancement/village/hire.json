@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/root",
+  "display": {
+    "icon": {
+      "id": "veio:farm_post"
+    },
+    "title": {
+      "translate": "veio.village.stage.hire.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.hire.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:farm_post"
+          }
+        ]
+      }
+    }
+  }
+}

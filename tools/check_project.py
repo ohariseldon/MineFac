@@ -21,10 +21,20 @@ def main():
     versions = [manifests[0]["version"], manifests[1]["mod"]["version"], manifests[2]["package"]["version"]]
     assert len(set(versions)) == 1, f"Versões diferentes: {versions}"
     languages = [read_json(CONTENT / f"assets/veio/lang/{code}.json") for code in ("pt_br", "en_us")]
-    recipe = read_json(CONTENT / "data/veio/recipe/guide.json")
+    pages = check_book(languages, "guide")
+    check_book(languages, "village_guide")
+    textures = check_assets(languages)
+    print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas; "
+          f"{textures} texturas 16x16 encontradas.")
+
+
+def check_book(languages, name):
+    """Um livro do Veio: até 100 páginas, traduções e links de página válidos, e o livro
+    fabricado igual ao entregue pelo avanço."""
+    recipe = read_json(CONTENT / f"data/veio/recipe/{name}.json")
     components = recipe["result"]["components"]
     pages = components["minecraft:written_book_content"]["pages"]
-    assert 0 < len(pages) <= 100, "O livro aceita de 1 a 100 páginas"
+    assert 0 < len(pages) <= 100, f"{name}: o livro aceita de 1 a 100 páginas"
 
     def visit(node):
         if isinstance(node, dict):
@@ -42,13 +52,11 @@ def main():
                 visit(child)
 
     visit(pages)
-    loot = read_json(CONTENT / "data/veio/loot_table/tutorial/guide.json")
-    assert loot["pools"][0]["entries"][0]["functions"][0]["components"] == components, "Guia entregue e fabricado devem ser iguais"
+    loot = read_json(CONTENT / f"data/veio/loot_table/tutorial/{name}.json")
+    assert loot["pools"][0]["entries"][0]["functions"][0]["components"] == components, f"{name}: livro entregue e fabricado devem ser iguais"
     for language in languages:
-        assert all(language[key] for key in language if key.startswith("veio.guide.")), "Texto vazio no guia"
-    textures = check_assets(languages)
-    print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas; "
-          f"{textures} texturas 16x16 encontradas.")
+        assert all(language[key] for key in language if key.startswith(("veio.guide.", "veio.village."))), "Texto vazio no guia"
+    return pages
 
 
 def png_size(path):
