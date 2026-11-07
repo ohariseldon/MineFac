@@ -2,12 +2,14 @@
 //! da sua área, como os postes do Factorio.
 //!
 //! Custo: cada poste guarda em NBT a lista de vizinhos (`Links`) e de blocos de energia da área
-//! (`Area`). A cada 40 ticks atualiza os fios e inicia a varredura da área em lotes pequenos.
+//! (`Area`). A cada 40 ticks solicita a reconstrução dos fios e a varredura da área.
+//! Ambas avançam em etapas sob cotas globais; listas completas continuam em uso.
 //! A transferência percorre as listas completas. Os postes
 //! se encontram por um registro em memória dividido em chunks.
 use super::*;
 use horizon_client::mod_api::{BlockEntitySubmitEvent, Tag};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
+mod rebuild;
 use std::sync::Mutex;
 
 pub(super) struct Tier {
@@ -25,7 +27,7 @@ pub(super) struct Tier {
 
 pub(super) const WOOD: Tier = Tier { reach: 8, area: 2, rate: 120, capacity: 1000, top: 1.40, wire: 0x2d2a26 };
 pub(super) const STEEL: Tier = Tier { reach: 16, area: 3, rate: 400, capacity: 4000, top: 1.90, wire: 0xb5643c };
-/// No máximo seis fios por poste, para a malha não virar uma teia.
+/// Cada poste escolhe seis vizinhos; a união simétrica pode conter mais fios.
 const MAX_LINKS: usize = 6;
 const REFRESH: i64 = 40;
 /// Limit world lookups for area discovery; energy transfer still runs every tick.
@@ -39,7 +41,9 @@ pub(super) fn tier(block: &str) -> Option<&'static Tier> {
     }
 }
 
-type Chunks = HashMap<(i32, i32), Vec<([i32; 3], bool)>>;
+#[derive(Default)]
+struct PoleChunk { nodes: BTreeMap<[i32; 3], bool>, revision: u64 }
+type Chunks = HashMap<(i32, i32), PoleChunk>;
 /// Postes conhecidos por dimensão e chunk. `true` marca o poste de aço.
 static POLES: Mutex<Vec<(String, Chunks)>> = Mutex::new(Vec::new());
 
@@ -56,37 +60,20 @@ fn register(dimension: &str, pos: [i32; 3], steel: bool) {
             all.len() - 1
         }
     };
-    let list = all[index].1.entry(chunk(pos)).or_default();
-    match list.iter_mut().find(|(at, _)| *at == pos) {
-        Some(entry) => entry.1 = steel,
-        None => list.push((pos, steel)),
+    let cell = all[index].1.entry(chunk(pos)).or_default();
+    if cell.nodes.insert(pos, steel) != Some(steel) {
+        cell.revision = cell.revision.wrapping_add(1);
     }
 }
 
 fn forget(dimension: &str, pos: [i32; 3]) {
     if let Ok(mut all) = POLES.lock()
         && let Some((_, chunks)) = all.iter_mut().find(|(name, _)| name == dimension)
-        && let Some(list) = chunks.get_mut(&chunk(pos))
+        && let Some(cell) = chunks.get_mut(&chunk(pos))
+        && cell.nodes.remove(&pos).is_some()
     {
-        list.retain(|(at, _)| *at != pos);
+        cell.revision = cell.revision.wrapping_add(1);
     }
-}
-
-/// Postes registrados a até `radius` blocos (pela caixa de chunks).
-fn nearby(dimension: &str, pos: [i32; 3], radius: i32) -> Vec<([i32; 3], bool)> {
-    let Ok(all) = POLES.lock() else { return Vec::new() };
-    let Some((_, chunks)) = all.iter().find(|(name, _)| name == dimension) else { return Vec::new() };
-    let (cx, cz) = chunk(pos);
-    let span = (radius >> 4) + 1;
-    let mut found = Vec::new();
-    for x in cx - span..=cx + span {
-        for z in cz - span..=cz + span {
-            if let Some(list) = chunks.get(&(x, z)) {
-                found.extend(list.iter().filter(|(at, _)| *at != pos).copied());
-            }
-        }
-    }
-    found
 }
 
 fn distance2(a: [i32; 3], b: [i32; 3]) -> i32 {
@@ -98,6 +85,7 @@ fn reach(steel: bool) -> i32 {
 }
 
 /// Os até seis postes mais próximos de `pos` ao alcance do mais curto dos dois.
+#[cfg(test)]
 fn nearest(pos: [i32; 3], steel: bool, candidates: &[([i32; 3], bool)]) -> Vec<[i32; 3]> {
     let mut list: Vec<(i32, [i32; 3])> = candidates.iter()
         .filter(|(at, other)| distance2(pos, *at) <= reach(steel).min(reach(*other)).pow(2))
@@ -194,7 +182,7 @@ mod optimization_tests {
         let mut host = Grid { consumer: ModBlockEntity::default() };
         host.consumer.id = PRESS.into();
         budget::begin_tick(0);
-        assert!(budget::request(budget::Lane::Topology, host.dimension(), [999; 3], 2));
+        assert!(budget::request(budget::Lane::Topology, host.dimension(), [999; 3], 4096));
         assert!(budget::request(budget::Lane::Area, host.dimension(), [999; 3], 512));
         tick(&mut host, [0; 3], &mut pole, 0);
         assert_eq!(number(&host.consumer, "energy"), WOOD.rate);
@@ -256,6 +244,7 @@ mod optimization_tests {
 }
 
 // Membership in the nearest-six set needs a rank, not a sorted allocation.
+#[cfg(test)]
 fn among_nearest(center: [i32; 3], steel: bool, target: [i32; 3], target_steel: bool,
     peers: impl IntoIterator<Item = ([i32; 3], bool)>) -> bool
 {
@@ -273,6 +262,7 @@ fn among_nearest(center: [i32; 3], steel: bool, target: [i32; 3], target_steel: 
 }
 
 /// Symmetric union of the nearest-six selections, with the original ordering.
+#[cfg(test)]
 pub(super) fn links<I>(pos: [i32; 3], steel: bool, around: impl Fn([i32; 3]) -> I) -> Vec<[i32; 3]>
 where I: IntoIterator<Item = ([i32; 3], bool)> {
     let mine: Vec<_> = around(pos).into_iter().collect();
@@ -295,15 +285,6 @@ fn offsets<'a>(entity: &'a ModBlockEntity, key: &str) -> impl ExactSizeIterator<
     values.chunks_exact(3).map(|v| [v[0], v[1], v[2]])
 }
 
-fn set_offsets(entity: &mut ModBlockEntity, key: &str, list: &[[i32; 3]]) -> bool {
-    if matches!(entity.nbt.get(nbt_key(key)), Some(Tag::IntArray(old))
-        if old.iter().copied().eq(list.iter().flatten().copied())) {
-        return false;
-    }
-    let flat = list.iter().flatten().copied().collect();
-    entity.nbt.insert(nbt_key(key).clone(), Tag::IntArray(flat));
-    true
-}
 
 fn add([x, y, z]: [i32; 3], [dx, dy, dz]: [i32; 3]) -> [i32; 3] {
     [x + dx, y + dy, z + dz]
@@ -366,37 +347,20 @@ fn scan_area(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, radius
     set_number(entity, "AreaScan", 0);
 }
 
+pub(super) fn maintenance(now: u64) { rebuild::maintenance(now); }
+
 pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) -> bool {
     let Some(own) = tier(&entity.id) else { return false };
     let steel = entity.id == STEEL_POLE;
     let dimension = host.dimension();
     let mut changed = false;
     let due = (time + i64::from((pos[0] ^ pos[2]) & 31)).rem_euclid(REFRESH) == 0;
-    if due || !entity.nbt.contains_key(nbt_key("Links")) {
+    if due || (!entity.nbt.contains_key(nbt_key("Links")) && number(entity, "TopologyPending") == 0) {
+        register(dimension, pos, steel);
         set_number(entity, "TopologyPending", 1);
     }
-    if number(entity, "TopologyPending") != 0
-        && budget::request(budget::Lane::Topology, dimension, pos, 1) {
-        set_number(entity, "TopologyPending", 0);
-        register(dimension, pos, steel);
-        let reader: &dyn Host = host;
-        // Confere os candidatos no mundo: um poste quebrado sai do registro.
-        let mut gone = Vec::new();
-        let candidates: Vec<([i32; 3], bool)> = nearby(dimension, pos, 2 * STEEL.reach).into_iter()
-            .filter(|(at, steel)| {
-                let alive = reader.block(*at) == if *steel { STEEL_POLE } else { POLE };
-                if !alive { gone.push(*at); }
-                alive
-            })
-            .collect();
-        for at in gone {
-            forget(dimension, at);
-        }
-        let around = |center: [i32; 3]| candidates.iter().copied().chain(std::iter::once((pos, steel)))
-            .filter(move |(at, _)| *at != center && distance2(*at, center) <= (2 * STEEL.reach).pow(2));
-        let linked: Vec<[i32; 3]> = links(pos, steel, around).into_iter()
-            .map(|at| [at[0] - pos[0], at[1] - pos[1], at[2] - pos[2]]).collect();
-        changed |= set_offsets(entity, "Links", &linked);
+    if number(entity, "TopologyPending") != 0 {
+        changed |= rebuild::poll(host, pos, entity, steel, time);
     }
     scan_area(host, pos, entity, own.area, due);
     let limit = own.capacity;
