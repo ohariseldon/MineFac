@@ -168,7 +168,19 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 14
+                              "page": 13
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.village.contents.12",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 15
                             }
                           },
                           {
@@ -239,6 +251,11 @@
                     },
                     {
                       "raw": {
+                        "translate": "veio.village.page.14"
+                      }
+                    },
+                    {
+                      "raw": {
                         "text": "",
                         "extra": [
                           {
@@ -254,7 +271,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 15
+                              "page": 16
                             }
                           },
                           {
@@ -266,7 +283,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 16
+                              "page": 17
                             }
                           },
                           {
@@ -278,7 +295,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 17
+                              "page": 18
                             }
                           },
                           {
@@ -290,7 +307,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 18
+                              "page": 19
                             }
                           },
                           {
@@ -302,7 +319,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 19
+                              "page": 20
                             }
                           },
                           {
@@ -314,7 +331,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 20
+                              "page": 21
                             }
                           },
                           {
@@ -326,7 +343,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 21
+                              "page": 22
                             }
                           },
                           {
@@ -338,7 +355,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 22
+                              "page": 23
                             }
                           },
                           {
@@ -350,7 +367,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 23
+                              "page": 24
                             }
                           },
                           {

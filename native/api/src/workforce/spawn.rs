@@ -115,7 +115,9 @@ pub(crate) fn tick(host: &mut dyn Host, now: u64) {
             waiting.push(arrival);
             continue;
         }
-        let known = center().filter(|(_, control)| *control).map(|(at, _)| at);
+        // Centro já conhecido (a vila do anfitrião ou o centro de controle): quem entra na LAN
+        // vai para lá, mesmo longe. Sem isso, o convidado ganharia outra vila onde apareceu.
+        let known = center().map(|(at, _)| at);
         let found = known.or_else(|| find_village(host, player.position));
         if let Some(at) = found {
             if settle(host, &arrival.name, at) {
@@ -130,6 +132,13 @@ pub(crate) fn tick(host: &mut dyn Host, now: u64) {
             continue;
         }
         if now < arrival.deadline {
+            waiting.push(arrival);
+            continue;
+        }
+        if let Some(at) = center().map(|(at, _)| at) {
+            if settle(host, &arrival.name, at) {
+                continue;
+            }
             waiting.push(arrival);
             continue;
         }
