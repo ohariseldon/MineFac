@@ -2,7 +2,10 @@ mod presentation;
 mod contracts;
 mod defense;
 mod farm;
+mod pollution;
+mod power;
 mod tutorial;
+mod upgrades;
 
 use horizon_client::mod_api::{
     BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
@@ -42,6 +45,11 @@ const HUB: &str = "veio:contract_hub";
 const HARVESTER: &str = "veio:harvester";
 const TESLA: &str = "veio:tesla";
 const BONE_MEAL: &str = "minecraft:bone_meal";
+const POLE: &str = "veio:pole";
+const STEEL_POLE: &str = "veio:steel_pole";
+const REPAIR_KIT: &str = "veio:repair_kit";
+/// Cada kit de reparo recupera metade da integridade.
+const REPAIR: i32 = 50;
 
 
 pub fn hooks() -> Box<dyn Hooks> {
@@ -94,14 +102,45 @@ impl Hooks for Factory {
     fn right_click_block(&self, host: &mut dyn Host,
         event: &mut horizon_client::mod_api::RightClickBlockEvent) -> Flow
     {
-        if !host.held().is_some_and(|held| held.0 == WRENCH) {
-            return Flow::Continue;
-        }
+        let Some((held, _, _)) = host.held() else { return Flow::Continue };
         let block = host.block(event.pos);
         if !is_factory_block(&block) {
             return Flow::Continue;
         }
-        let facing = host.block_property(event.pos, "facing");
+        let pos = event.pos;
+        let mut damage = 0;
+        let mut module = 0;
+        host.change_mod_block_entity(pos, &mut |entity| {
+            damage = number(entity, "Damage");
+            module = number(entity, "Module");
+        });
+        if held == REPAIR_KIT {
+            if damage == 0 || host.take_items(REPAIR_KIT, 1) == 0 {
+                return Flow::Continue;
+            }
+            host.change_mod_block_entity(pos, &mut |entity| {
+                set_number(entity, "Damage", (number(entity, "Damage") - REPAIR).max(0));
+            });
+            host.play_sound("minecraft:block.anvil.use", center(pos), 4, 0.5, 1.4);
+            return Flow::Cancel;
+        }
+        if let Some(index) = upgrades::index(&held) {
+            if !upgrades::supports(&block) || module != 0 || host.take_items(&held, 1) == 0 {
+                return Flow::Continue;
+            }
+            host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Module", index));
+            host.play_sound("minecraft:block.smithing_table.use", center(pos), 4, 0.6, 1.2);
+            return Flow::Cancel;
+        }
+        if held != WRENCH {
+            return Flow::Continue;
+        }
+        if host.sneaking() && module > 0 {
+            host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Module", 0));
+            host.give_items(upgrades::MODULES[(module - 1) as usize], 1);
+            return Flow::Cancel;
+        }
+        let facing = host.block_property(pos, "facing");
         let next = match facing.as_deref() {
             Some("north") => "east",
             Some("east") => "south",
@@ -109,7 +148,7 @@ impl Hooks for Factory {
             Some("west") => "north",
             _ => return Flow::Continue,
         };
-        if host.set_block_property(event.pos, "facing", next) { Flow::Cancel }
+        if host.set_block_property(pos, "facing", next) { Flow::Cancel }
         else { Flow::Continue }
     }
 
@@ -118,7 +157,7 @@ impl Hooks for Factory {
         _host: &dyn Host,
         event: &mut horizon_client::mod_api::BlockEntityEnergyEvent<'_>,
     ) -> Option<ModEnergyBuffer> {
-        if !needs_power(event.block) && !is_power_block(event.block) {
+        if !needs_power(event.block) && !is_power_block(event.block) && power::tier(event.block).is_none() {
             return None;
         }
         Some(ModEnergyBuffer {
@@ -126,7 +165,7 @@ impl Hooks for Factory {
             max_insert: 80,
             max_extract: 80,
             insert_faces: [!matches!(event.block, GENERATOR | SOLAR | GEOTHERMAL); 6],
-            extract_faces: [is_power_block(event.block); 6],
+            extract_faces: [is_power_block(event.block) || power::tier(event.block).is_some(); 6],
         })
     }
 
@@ -137,9 +176,14 @@ impl Hooks for Factory {
         let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) else {
             return;
         };
+        pollution::update(host, time);
+        if power::tick(host, event.pos, event.entity, time) {
+            host.block_entity_sync(event.pos);
+        }
         let previous = visual_signature(event.entity);
         let produced = number(event.entity, "Produced");
         tick_factory(host, event.pos, event.entity, time);
+        pollution::emit(host, event.pos, event.entity, time);
         record_performance(event.entity, produced);
         presentation::publish(event.entity);
         if visual_signature(event.entity) != previous {
@@ -156,6 +200,18 @@ impl Hooks for Factory {
 
     fn tick(&self, _host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
         defense::advance_clock();
+    }
+
+    fn register_goals(&self, event: &mut horizon_client::mod_api::RegisterGoalsEvent<'_>) {
+        pollution::register_goals(event.mob);
+    }
+
+    fn block_entity_render_bounding_box(&self, _host: &dyn Host,
+        event: &mut horizon_client::mod_api::BlockEntityRenderBoundingBoxEvent<'_>)
+    {
+        if power::tier(event.block).is_some() {
+            power::bounds(event.entity, event.bounds);
+        }
     }
 
     fn screen(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::ScreenEvent<'_>)
@@ -203,7 +259,7 @@ impl Hooks for Factory {
 fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
         SPLITTER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
-        GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA)
+        GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
@@ -221,7 +277,7 @@ fn capacity(block: &str) -> i32 {
     match block {
         BATTERY => 30000,
         TESLA => defense::CAPACITY,
-        _ => 2000,
+        _ => power::tier(block).map_or(2000, |tier| tier.capacity),
     }
 }
 
@@ -235,7 +291,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         GENERATOR => (1, vec![0], vec![]),
         GEOTHERMAL => (2, vec![0], vec![1]),
         SOLAR | BATTERY | TESLA => (1, vec![], vec![]),
-        CABLE => (0, vec![], vec![]),
+        CABLE | POLE | STEEL_POLE => (0, vec![], vec![]),
         HUB => (4, vec![0, 1], vec![2, 3]),
         HARVESTER => (4, vec![0], vec![1, 2, 3]),
         _ => return None,
@@ -249,7 +305,7 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         INTEGRATOR | ALLOY | ELECTRONICS => 2..3,
         HUB => 2..4,
         HARVESTER => 1..4,
-        GENERATOR | SOLAR | BATTERY | TESLA | CABLE => 0..0,
+        GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE => 0..0,
         _ => 0..1,
     }
 }
@@ -345,13 +401,20 @@ fn set_number(entity: &mut ModBlockEntity, key: &str, value: i32) {
     }
 }
 
-fn visual_signature(entity: &ModBlockEntity) -> (i32, Option<ItemStack>) {
-    (number(entity, "Status"), entity.items.first().cloned().flatten())
+fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, Option<ItemStack>) {
+    (number(entity, "Status"), number(entity, "Module"), entity.items.first().cloned().flatten())
+}
+
+fn center([x, y, z]: [i32; 3]) -> [f64; 3] {
+    [f64::from(x) + 0.5, f64::from(y) + 0.5, f64::from(z) + 0.5]
 }
 
 fn stamp(time: i64) -> i32 {
     (time % i64::from(i32::MAX)) as i32
 }
+
+/// Ingredientes, produto com quantidade, duração em ticks e FE por tick.
+type Recipe<'a> = (&'a [(&'a str, u32)], (&'a str, u32), i32, i32);
 
 fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let [x, y, z] = pos;
@@ -384,6 +447,13 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
         contracts::tick(entity);
         return;
     }
+    if power::tier(&entity.id).is_some() {
+        return;
+    }
+    if pollution::emission(&entity.id) > 0.0 && pollution::wear(host, pos, entity) {
+        set_number(entity, "Status", 13);
+        return;
+    }
     if logistics {
         let status = if entity.items[0].is_none() { 0 }
             else if stamp(time) - number(entity, "MovedAt") > 8 { 3 }
@@ -401,11 +471,16 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
     }
     match entity.id.as_str() {
         HARVESTER => return farm::tick(host, pos, entity, time),
-        TESLA => return defense::tick(host, pos, entity),
+        TESLA => {
+            if time.rem_euclid(20) == 0 {
+                set_number(entity, "LocalSmog", pollution::local(host.dimension(), pos) as i32);
+            }
+            return defense::tick(host, pos, entity);
+        }
         _ => {}
     }
     let output_slot = output_slots(&entity.id).start;
-    let (recipe, (output, amount), duration, draw): (&[(&str, u32)], (&str, u32), i32, i32) = match entity.id.as_str() {
+    let (recipe, (output, amount), duration, draw): Recipe<'_> = match entity.id.as_str() {
         DRILL | DRILL_MK2 => {
             let advanced = entity.id == DRILL_MK2;
             let Some((ore, gem)) = ore_product(&host.block([x, y - 1, z])) else {
@@ -458,6 +533,7 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
         INTEGRATOR => (&[(FRAME, 1), (GEAR, 1)], (MODULE, 1), 60, 16),
         _ => return,
     };
+    let (duration, draw) = upgrades::apply(duration, draw, upgrades::effect(entity));
     set_number(entity, "Duration", duration);
     let recipe_key = "Recipe".into();
     let recipe_changed = !matches!(entity.nbt.get(&recipe_key), Some(Tag::String(old)) if old.to_string_lossy() == output);
@@ -486,6 +562,9 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
             add(&mut entity.items[0], output, amount);
         } else {
             process(&mut entity.items, recipe, output, amount);
+        }
+        if upgrades::bonus_ready(entity) && can_add(&entity.items[output_slot], output, amount) {
+            add(&mut entity.items[output_slot], output, amount);
         }
         let produced = number(entity, "Produced").saturating_add(1);
         set_number(entity, "Produced", produced);
@@ -550,13 +629,14 @@ fn tick_power(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
         let delta = face.normal();
         let target = std::array::from_fn(|axis| pos[axis] + delta[axis]);
         host.change_mod_block_entity(target, &mut |other| {
-            if !needs_power(&other.id) && !matches!(other.id.as_str(), CABLE | BATTERY) {
+            let storage = matches!(other.id.as_str(), CABLE | BATTERY) || power::tier(&other.id).is_some();
+            if !needs_power(&other.id) && !storage {
                 return;
             }
             let other_limit = capacity(&other.id);
             let stored = number(other, "energy").min(other_limit);
             // Equalize charge percentages, so large batteries can charge and discharge.
-            let offered = if matches!(other.id.as_str(), CABLE | BATTERY) {
+            let offered = if storage {
                 ((i64::from(energy) * i64::from(other_limit)
                     - i64::from(stored) * i64::from(limit))
                     / i64::from(limit + other_limit)).clamp(0, 80) as i32

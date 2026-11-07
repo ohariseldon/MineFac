@@ -1,6 +1,6 @@
 # Trabalhar no MineFac / Veio
 
-Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.7.0**, com energia, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla e visual no estilo do Minecraft.
+Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.8.0**, com energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
 
 ## Começar na nuvem
 
@@ -19,6 +19,9 @@ A verificação Rust compila `native/api/src` contra `native/offline-check/horiz
 - `native/api/src/lib.rs`: simulação, energia, inventários, transporte, combustíveis, jazidas e regras de interação.
 - `native/api/src/farm.rs`: colheitadeira.
 - `native/api/src/defense.rs`: torre Tesla e registro de monstros hostis.
+- `native/api/src/power.rs`: postes, fios aéreos e área de alimentação.
+- `native/api/src/pollution.rs`: poluição por chunk, avisos, ondas noturnas e o objetivo dos Saqueadores.
+- `native/api/src/upgrades.rs`: módulos de velocidade, eficiência e produtividade.
 - `native/api/src/tests.rs`: testes de regras.
 - `native/api/src/presentation.rs`: painéis no estilo vanilla e desenho animado das máquinas e esteiras.
 - `native/api/src/contracts.rs`: pedidos e recompensas da central de projetos.
@@ -36,7 +39,7 @@ As receitas do guia são extraídas das receitas de fabricação reais. Ao mudar
 
 ## Compilar e instalar para jogar
 
-A versão 0.6 foi compilada com Horizon `66f3981f522b24c250b21523a70080965b940424`, base `nightly-2026-11-05-66f3981`, Rust 1.99.1 e perfil `dev`. A 0.7 foi escrita contra as assinaturas desse mesmo commit e conferida com a verificação offline; a primeira compilação pelo launcher confirma. As APIs do Horizon evoluem; conserve essa referência ao investigar incompatibilidades. O launcher resolve e prepara o ambiente nativo. Um `cargo build` isolado nesta pasta não substitui esse processo.
+A versão 0.6 foi compilada com Horizon `66f3981f522b24c250b21523a70080965b940424`, base `nightly-2026-11-05-66f3981`, Rust 1.99.1 e perfil `dev`. A 0.7 e a 0.8 foram escritas contra as assinaturas desse mesmo commit e conferida com a verificação offline; a primeira compilação pelo launcher confirma. As APIs do Horizon evoluem; conserve essa referência ao investigar incompatibilidades. O launcher resolve e prepara o ambiente nativo. Um `cargo build` isolado nesta pasta não substitui esse processo.
 
 Em uma máquina Windows com Horizon Launcher instalado e uma instância chamada Veio, execute, ajustando os caminhos:
 
@@ -47,6 +50,10 @@ Em uma máquina Windows com Horizon Launcher instalado e uma instância chamada 
 Com o jogo fechado, copie o **conteúdo** de `content/` para a pasta `horizon-mods/veio/` da instância. Ela deve conter diretamente `horizon-mod.toml`, `assets/` e `data/`. Selecione Veio no launcher para jogar.
 
 No ambiente local original, launcher, instâncias e cache estão no E:, configurados por `HORIZON_LAUNCHER_LOCATION_FILE=E:\GPTmodMine\.build\location.json`. Esse arquivo pertence à instalação local e não é distribuído. Uma máquina nova deve configurar seus próprios caminhos no launcher. Os diretórios `.build/`, `.launcher/` e `.game/` são recriados localmente e não precisam ser baixados do GitHub.
+
+## Desempenho
+
+Nada de varrer blocos ou entidades a cada tick. Guarde listas em NBT ou em registros em memória e recalcule em intervalos escalonados pela posição. Use `draw.keep()` quando o desenho não depende do tempo e `draw.spin()` para peças que giram em velocidade constante.
 
 ## Combinar o trabalho
 

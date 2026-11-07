@@ -1,0 +1,31 @@
+{
+  "parent": "veio:power",
+  "display": {
+    "icon": {
+      "id": "veio:pole"
+    },
+    "title": {
+      "translate": "advancement.veio.wiring.title"
+    },
+    "description": {
+      "translate": "advancement.veio.wiring.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:pole"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0"
+    ]
+  ]
+}

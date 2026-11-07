@@ -45,11 +45,11 @@ pub(super) fn screen_tooltip(event: &mut ScreenTooltipEvent<'_>) {
         return;
     }
     for (i, slot) in layout.slots.iter().enumerate() {
-        if let Some([sx, sy]) = slot {
-            if (*sx..*sx + 16.0).contains(&x) && (*sy..*sy + 16.0).contains(&y) {
-                event.lines.push(Text::tr(&format!("veio.slothelp.{name}.{i}"), &[]).plain());
-                break;
-            }
+        if let Some([sx, sy]) = slot
+            && (*sx..*sx + 16.0).contains(&x) && (*sy..*sy + 16.0).contains(&y)
+        {
+            event.lines.push(Text::tr(&format!("veio.slothelp.{name}.{i}"), &[]).plain());
+            break;
         }
     }
 }

@@ -506,6 +506,47 @@ WRENCH = [
     "................",
 ]
 
+REPAIR_KIT = [
+    "................",
+    "................",
+    "......eeee......",
+    ".....e....e.....",
+    "..xxxxxxxxxxxx..",
+    ".xXXXXXXXXXXXXx.",
+    ".xXxxxxxxxxxxXx.",
+    ".xXxxxxbbxxxxXx.",
+    ".xXxxxxbbxxxxXx.",
+    ".kkkkkkbbkkkkkk.",
+    ".xXxxxxxxxxxxXx.",
+    ".xXxxxxxxxxxxXx.",
+    ".xXXXXXXXXXXXXx.",
+    "..xxxxxxxxxxxx..",
+    "................",
+    "................",
+]
+
+def module_card(light):
+    """Placa de módulo com a luz da cor do efeito, como os módulos do Factorio."""
+    rows = [
+        "................",
+        "................",
+        "..TTTTTTTTTTTT..",
+        "..TSSSSSSSSSST..",
+        "..TS11111111ST..",
+        "..TS12222221ST..",
+        "..TS12kkkk21ST..",
+        "..TS12kkkk21ST..",
+        "..TS12kkkk21ST..",
+        "..TS12222221ST..",
+        "..TS11111111ST..",
+        "..TSSSSSSSSSST..",
+        "..TTTTTTTTTTTT..",
+        "...Y.Y.Y.Y.Y....",
+        "................",
+        "................",
+    ]
+    return render(rows, salt=len(light), mapping={"1": light[0], "2": light[1]})
+
 def material():
     """Textura clara e uniforme que o bloco tinge nas luzes e peças animadas."""
     rows = []
@@ -537,6 +578,10 @@ def main():
     out["item/frame"] = render(FRAME, salt=8)
     out["item/module"] = render(MODULE, salt=9)
     out["item/wrench"] = render(WRENCH, salt=10)
+    out["item/repair_kit"] = render(REPAIR_KIT, salt=11)
+    out["item/speed_module"] = module_card("uv")
+    out["item/efficiency_module"] = module_card("HG")
+    out["item/productivity_module"] = module_card("oO")
     for name, pixels in out.items():
         write_png(ROOT / f"{name}.png", pixels)
     print(f"{len(out)} texturas 16x16 em {ROOT.relative_to(ROOT.parents[3])}")

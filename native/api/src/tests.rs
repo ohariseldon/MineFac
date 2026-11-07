@@ -114,6 +114,9 @@ struct Field {
 }
 
 impl Host for Field {
+    fn dimension(&self) -> &'static str {
+        "veio:test_field"
+    }
     fn block(&self, pos: [i32; 3]) -> String {
         self.blocks.get(&pos).map_or_else(|| "minecraft:air".to_owned(), |(id, _)| id.clone())
     }
@@ -223,4 +226,101 @@ fn contract_hub_keeps_exporting_after_the_last_project() {
     assert_eq!(number(&hub, "Total"), 2);
     assert_eq!(hub.items[2], Some(ItemStack::new("minecraft:emerald", 8)));
     assert!(hub.items[0].is_none() && hub.items[1].is_none());
+}
+
+#[test]
+fn poles_link_symmetrically_within_the_shorter_reach() {
+    // Uma fileira de postes de madeira a cada 6 blocos e um de aço longe.
+    let poles: Vec<([i32; 3], bool)> = vec![
+        ([0, 64, 0], false), ([6, 64, 0], false), ([12, 64, 0], false), ([30, 64, 0], true), ([42, 64, 0], true),
+    ];
+    let around = |center: [i32; 3]| poles.iter().filter(|(at, _)| *at != center).copied().collect::<Vec<_>>();
+    let links = |pos: [i32; 3], steel: bool| power::links(pos, steel, around);
+    assert_eq!(links([0, 64, 0], false), vec![[6, 64, 0]]);
+    assert_eq!(links([6, 64, 0], false), vec![[0, 64, 0], [12, 64, 0]]);
+    assert_eq!(links([12, 64, 0], false), vec![[6, 64, 0]], "madeira não alcança 18 blocos");
+    assert_eq!(links([30, 64, 0], true), vec![[42, 64, 0]], "aço com aço chega a 12 blocos");
+    for (pos, steel) in &poles {
+        for other in links(*pos, *steel) {
+            let other_steel = poles.iter().find(|(at, _)| *at == other).unwrap().1;
+            assert!(links(other, other_steel).contains(pos), "ligação de mão única entre {pos:?} e {other:?}");
+        }
+    }
+}
+
+#[test]
+fn pole_balance_moves_energy_toward_the_emptier_buffer() {
+    assert_eq!(power::balance(1000, 1000, 0, 1000, 400), 400, "limitado pela vazão");
+    assert_eq!(power::balance(200, 1000, 0, 1000, 400), 100);
+    assert_eq!(power::balance(0, 1000, 30000, 30000, 120), -120, "acumulador cheio alimenta o poste");
+    assert_eq!(power::balance(500, 1000, 1000, 2000, 400), 0, "mesma porcentagem");
+}
+
+#[test]
+fn wires_sag_between_their_ends() {
+    let points = power::sag_points([0.5, 1.4, 0.5], [8.5, 1.4, 0.5]);
+    assert_eq!(points.first(), Some(&[0.5, 1.4, 0.5]));
+    assert_eq!(points.last().map(|p| (p[0], p[1])), Some((8.5, 1.4)));
+    let middle = points[points.len() / 2];
+    assert!(middle[1] < 1.1, "o meio do fio fica mais baixo: {middle:?}");
+}
+
+#[test]
+fn pollution_spreads_and_fades_without_growing() {
+    let mut cells = HashMap::from([((0, 0), 1000.0_f32)]);
+    let total = |cells: &HashMap<(i32, i32), f32>| cells.values().sum::<f32>();
+    let before = total(&cells);
+    cells = pollution::diffuse(&cells);
+    assert!(cells[&(1, 0)] > 0.0 && cells[&(0, -1)] > 0.0, "vizinhos recebem parte");
+    assert!((total(&cells) - before * 0.98).abs() < 0.5, "só 2% somem por passo");
+    for _ in 0..400 {
+        cells = pollution::diffuse(&cells);
+    }
+    assert!(total(&cells) < 1.0, "sem emissão, tudo se dissipa");
+}
+
+#[test]
+fn raids_need_a_notice_a_day_of_grace_and_the_night() {
+    use pollution::Plan;
+    let anchor = [3, 64, 3];
+    let hot = |level: f32| [((0, 0), level)];
+    // Primeiro contato: só o aviso, mesmo com muita poluição e de noite.
+    assert_eq!(pollution::plan_for_test(&hot(5000.0), anchor, None, 1000, 15000), Some(Plan::Notice(anchor)));
+    // Menos de um dia depois do aviso, nada acontece.
+    assert_eq!(pollution::plan_for_test(&hot(5000.0), anchor, Some(1000), 20000, 15000), None);
+    // Depois da carência: alerta ao anoitecer e onda à noite.
+    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 12000), Some(Plan::Warning(anchor)));
+    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 15000), Some(Plan::Wave(anchor, 2)));
+    // De dia ou abaixo do limite, não há ataque.
+    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 3000), None);
+    assert_eq!(pollution::plan_for_test(&hot(900.0), anchor, Some(0), 30000, 24000 + 15000), None);
+}
+
+#[test]
+fn waves_grow_but_stay_capped() {
+    assert_eq!(pollution::wave_size(pollution::RAID, 1), 2);
+    assert_eq!(pollution::wave_size(pollution::RAID + 1200.0, 3), 5);
+    assert_eq!(pollution::wave_size(1.0e6, 50), 8);
+}
+
+#[test]
+fn modules_trade_one_bottleneck_for_another() {
+    let speed = upgrades::effect_of(1);
+    let (duration, draw) = upgrades::apply(30, 8, speed);
+    assert_eq!((duration, draw), (18, 14));
+    assert!(duration * draw > 30 * 8, "velocidade custa mais energia por produto");
+    let efficiency = upgrades::effect_of(2);
+    assert_eq!(upgrades::apply(30, 8, efficiency), (30, 5));
+    let mut press = entity(PRESS, 2);
+    set_number(&mut press, "Module", 3);
+    let extras = (0..20).filter(|_| upgrades::bonus_ready(&mut press)).count();
+    assert_eq!(extras, 2, "produtividade: um extra a cada dez ciclos");
+    assert!(!upgrades::supports(TESLA));
+}
+
+#[test]
+fn panels_publish_as_many_values_as_the_menus_declare() {
+    let mut press = entity(PRESS, 2);
+    presentation::publish(&mut press);
+    assert_eq!(press.data.len(), presentation::DATA_SLOTS);
 }

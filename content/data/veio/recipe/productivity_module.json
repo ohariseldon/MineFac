@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:circuit",
+    "veio:circuit",
+    "veio:module",
+    "minecraft:emerald"
+  ],
+  "result": {
+    "id": "veio:productivity_module",
+    "count": 1
+  }
+}

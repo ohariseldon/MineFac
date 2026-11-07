@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:wire",
+    "veio:wire"
+  ],
+  "result": {
+    "id": "veio:steel_pole",
+    "count": 2
+  }
+}

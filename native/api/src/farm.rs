@@ -12,6 +12,7 @@ pub(super) const AREA: i32 = SIDE * SIDE * LAYERS;
 const SCANS_PER_TICK: i32 = 3;
 pub(super) const HARVEST_COST: i32 = 120;
 const GROW_COST: i32 = 40;
+const ABSORB_PER_HARVEST: f32 = 3.0;
 /// Estágios que uma farinha de osso adianta.
 const GROWTH_PER_BONE_MEAL: u8 = 2;
 
@@ -130,6 +131,8 @@ fn visit(host: &mut dyn Host, target: [i32; 3], entity: &mut ModBlockEntity) -> 
         set_number(entity, "energy", energy - HARVEST_COST);
         set_number(entity, "Produced", number(entity, "Produced").saturating_add(1));
         set_number(entity, "Total", number(entity, "Total").saturating_add(1));
+        // Plantas absorvem poluição: a lavoura ajuda a fábrica a passar despercebida.
+        pollution::absorb(host.dimension(), target, ABSORB_PER_HARVEST);
         let at = center(target);
         host.send_particles(&ParticleOptions::simple(ParticleType::Composter), None, at, [0.3, 0.2, 0.3], 0.0, 6);
         host.play_sound("minecraft:block.crop.break", at, 4, 0.6, 1.0);

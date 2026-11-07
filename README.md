@@ -1,10 +1,10 @@
-# Veio 0.7
+# Veio 0.8
 
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 
 Automação industrial no mundo procedural do Minecraft, executada no Horizon. Abra a instância **Veio** pelo launcher. No criativo, as abas **Veio – Indústria**, **Veio – Energia**, **Veio – Logística** e **Veio – Mundo** reúnem o conteúdo.
 
-A fábrica faz parte do mundo do Minecraft: extrai das jazidas vanilla, queima combustíveis vanilla, cuida da lavoura, defende a base à noite e exporta para os povoados em troca de esmeraldas.
+A fábrica faz parte do mundo do Minecraft: extrai das jazidas vanilla, queima combustíveis vanilla, leva energia por postes e fios, cuida da lavoura, polui e atrai ataques noturnos, defende a base e exporta para os povoados em troca de esmeraldas.
 
 ## Tutorial dentro do jogo
 
@@ -24,7 +24,8 @@ O começo usa receitas sem posição fixa na bancada, uma extratora diretamente 
 - O gerador geotérmico fornece até 80 FE/t. Um balde de lava rende 64.000 FE e devolve um balde vazio no slot de saída. A saída pode ser automatizada com esteiras e funis.
 - Cada painel solar fornece até 16 FE/t ao meio-dia. Precisa de luz do céu e funciona no Overworld. Chuva, tempestade e horário reduzem a geração.
 - Cada acumulador armazena 30.000 FE. A receita entrega quatro unidades. Use bancos de acumuladores para atravessar a noite.
-- Cabos e máquinas armazenam até 2.000 FE. Cabos e acumuladores equilibram a porcentagem de carga e alimentam máquinas adjacentes pelas seis faces. Para começar, use redes curtas.
+- **Postes** levam a energia. Cada poste se liga sozinho aos postes vizinhos por fios aéreos e alimenta as máquinas, geradores e acumuladores da sua área. O poste de madeira alcança 8 blocos, alimenta num raio de 2 blocos e passa 120 FE/t por fio. O poste de aço alcança 16 blocos, raio de 3 e 400 FE/t. Cada poste se liga aos até seis vizinhos mais próximos.
+- Cabos continuam funcionando como ligação curta entre blocos encostados. Máquinas armazenam até 2.000 FE.
 - Esteiras têm acionamento mecânico. A comum transporta até 2,5 itens/s e a rápida até 5 itens/s.
 
 Os painéis de inspeção mostram energia, progresso e motivo de espera. Os estoques, o progresso, a carga e a queima em andamento são salvos no mundo. A energia armazenada pertence ao bloco colocado. Use a chave para mudar sua orientação.
@@ -82,6 +83,15 @@ Os painéis seguem as telas de baú e fornalha: fundo cinza em relevo, slots reb
 
 Todas as texturas próprias são desenhadas em texto em `tools/build_textures.py`, e os modelos saem de `tools/build_content.py`. As referências a texturas do Minecraft são resolvidas pela instalação do jogador. Créditos em [CREDITS.md](CREDITS.md).
 
+## Desempenho
+
+O código evita trabalho por tick:
+
+- Postes se encontram por um registro em memória dividido em chunks e recalculam vizinhos e área a cada 2 segundos, em ticks escalonados. No tick comum, só percorrem essas listas.
+- A poluição é somada na máquina e entregue ao chunk uma vez por segundo; a difusão roda a cada 64 ticks.
+- A torre Tesla consulta apenas os hostis vistos no tick anterior.
+- Fios, máquinas paradas e rotores não são redesenhados a cada quadro: o jogo guarda a geometria até o estado mudar, e as peças giratórias giram na placa de vídeo.
+
 ## Instalação e dados
 
 A instância precisa do pacote em content/ e do módulo Rust em native/api/. A compilação pelo launcher instala o módulo na instância Veio. Alterações que registram novos blocos exigem reiniciar o jogo.
@@ -90,7 +100,7 @@ Os dados do launcher ficam em E:\GPTmodMine\.launcher, os mundos e instâncias e
 
 O mundo **Veio03-Laboratorio** contém a demonstração da versão anterior. Os novos equipamentos estão disponíveis nas abas criativas e na progressão da 0.4. Blocos colocados quando apenas o pacote de conteúdo estava instalado podem precisar ser recolocados para criar seu inventário.
 
-Mundos da 0.6 continuam válidos: nenhum bloco ou item mudou de nome, e estoques, progresso e energia ficam nas máquinas. Os painéis reposicionaram os slots na tela, sem mudar o que cada slot guarda.
+Mundos da 0.6 e da 0.7 continuam válidos: nenhum bloco ou item mudou de nome, e estoques, progresso e energia ficam nas máquinas. Os painéis reposicionaram os slots na tela, sem mudar o que cada slot guarda.
 
 A validação de jogabilidade desta expansão fica com o jogador. O desenvolvimento desta versão concentra as mudanças antes da compilação, seguindo a preferência por evitar testes no jogo a cada iteração.
 
@@ -111,6 +121,32 @@ O progresso é salvo na central colocada. Sua desmontagem inicia uma central nov
 As máquinas de produção passam a mostrar itens produzidos por minuto e porcentagem de tempo ativo. A primeira leitura usa a amostra parcial; depois as leituras fecham a cada minuto de simulação com a máquina carregada. Falta de materiais, falta de energia, saída cheia e suspensão por redstone contam como tempo de espera. Uma linha equilibrada pode esperar ao atingir o estoque desejado.
 
 Um sinal de redstone pausa a produção e preserva o progresso. A saída continua escoando produtos. Alavancas permitem comando manual; comparadores e circuitos de redstone podem transformar estoque em sinal de parada. O painel informa a suspensão.
+
+## Gargalos e melhorias
+
+A fábrica cresce resolvendo um gargalo de cada vez: a extração limita a prensa, a energia limita as máquinas, o fio de madeira limita a energia que chega longe, a poluição limita o tamanho que a base aguenta sem defesa.
+
+Os **módulos** entram com o botão direito numa máquina de receita ou extratora, um por máquina. A chave, com o jogador agachado, devolve o módulo.
+
+| Módulo | Ciclo | Energia por tick | Poluição | Efeito |
+|---|---|---|---|---|
+| Velocidade | 60% | 180% | 150% | Mais produção por máquina, 8% mais energia por produto |
+| Eficiência | 100% | 60% | 50% | Menos energia e metade da poluição |
+| Produtividade | 115% | 140% | 120% | Um produto extra a cada dez ciclos |
+
+O painel mostra o módulo, a poluição emitida por minuto e a integridade. Um selo colorido na tampa da máquina indica o módulo instalado.
+
+## Poluição e Saqueadores
+
+Máquinas trabalhando poluem o chunk onde estão: gerador 6 por segundo, forno de ligas e extratora Mk.II 4, extratora, triturador e geotérmico 2, demais máquinas 1. A cada 3,2 segundos a poluição se espalha aos chunks vizinhos e 2% se dissipa. Cada colheita da colheitadeira absorve 3 unidades.
+
+1. Quando um chunk passa de 400, o chat avisa os jogadores próximos e explica o que fazer.
+2. Ataques só acontecem um dia inteiro depois desse aviso, só à noite e só se o chunk mais poluído passar de 1.200. Ao anoitecer, a barra de ação avisa.
+3. A onda surge a 28 blocos da máquina poluidora: dois **Saqueadores** na primeira, crescendo com a poluição e com as noites de ataque, até oito. É no máximo uma onda por noite.
+4. Saqueadores são zumbis que caminham até a máquina poluidora mais próxima e a golpeiam. Um jogador por perto continua sendo o alvo preferido deles. Eles queimam ao sol.
+5. Máquina com integridade zerada para, sem perder estoque. Um **kit de reparo**, com o botão direito, recupera 50%.
+
+Muros vanilla barram o caminho, a torre Tesla abate Saqueadores e lavouras e módulos de eficiência reduzem a poluição. No modo pacífico não há ataques. A poluição fica em memória e recomeça ao reabrir o mundo.
 
 ## A fábrica no mundo
 

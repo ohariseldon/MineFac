@@ -183,6 +183,9 @@ pub mod mod_api {
         pub light: u32,
     }
     impl BlockEntityDraw {
+        pub fn keep(&mut self) {}
+        pub fn spin(&mut self, axis: [f32; 3], pivot: [f32; 3], degrees_per_tick: f32, phase: f32) {}
+        pub fn still(&mut self) {}
         pub fn push(&mut self) {}
         pub fn pop(&mut self) {}
         pub fn translate(&mut self, by: [f32; 3]) {}
@@ -368,6 +371,63 @@ pub mod mod_api {
         fn block_state_property(&self, state: BlockStateId, key: &str) -> Option<&str> {
             unimplemented!("block_state_property")
         }
+        fn draw_quad(
+            &self,
+            draw: &mut BlockEntityDraw,
+            sprite: &str,
+            corners: [[f32; 3]; 4],
+            uv: [f32; 4],
+            tint: u32,
+        ) -> bool {
+            unimplemented!("draw_quad")
+        }
+        fn summon(&mut self, dimension: &str, kind: &str, pos: [f64; 3], nbt: Compound) -> Option<u32> {
+            unimplemented!("summon")
+        }
+        fn surface_heights(
+            &self,
+            dimension: &str,
+            columns: &[(i32, i32)],
+            heightmap: NativeHeightmap,
+        ) -> Result<Vec<Option<i32>>, String> {
+            unimplemented!("surface_heights")
+        }
+        fn server_players(&self) -> Vec<NativeServerPlayer> {
+            unimplemented!("server_players")
+        }
+        fn action_bar(&mut self, uuid: u128, line: Text) -> bool {
+            unimplemented!("action_bar")
+        }
+        fn tell(&mut self, uuid: u128, line: Text) -> bool {
+            unimplemented!("tell")
+        }
+        fn take_items(&mut self, item: &str, count: u32) -> u32 {
+            unimplemented!("take_items")
+        }
+        fn give_items(&mut self, item: &str, count: u32) -> u32 {
+            unimplemented!("give_items")
+        }
+        fn sneaking(&self) -> bool {
+            unimplemented!("sneaking")
+        }
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum NativeHeightmap {
+        WorldSurface,
+        MotionBlocking,
+        MotionBlockingNoLeaves,
+        OceanFloor,
+    }
+    #[derive(Clone, Debug, Default)]
+    pub struct NativeServerPlayer {
+        pub uuid: u128,
+        pub name: String,
+        pub permission: u8,
+        pub dimension: String,
+        pub position: [f64; 3],
+        pub game_mode: i32,
+        pub health: f32,
     }
 
     // ---------- Eventos dos ganchos usados ----------
@@ -464,6 +524,18 @@ pub mod mod_api {
     }
     #[non_exhaustive]
     pub struct TickEvent {}
+    #[non_exhaustive]
+    pub struct RegisterGoalsEvent<'a> {
+        pub mob: &'a mut crate::mobs::Mob,
+    }
+    #[non_exhaustive]
+    pub struct BlockEntityRenderBoundingBoxEvent<'a> {
+        pub pos: [i32; 3],
+        pub block: &'a str,
+        pub state: BlockStateId,
+        pub entity: &'a ModBlockEntity,
+        pub bounds: &'a mut [f32; 6],
+    }
 
     // ---------- Ganchos ----------
     pub trait Hooks: Send + Sync {
@@ -507,5 +579,96 @@ pub mod mod_api {
             Flow::Continue
         }
         fn tick(&self, host: &mut dyn Host, event: &mut TickEvent) {}
+        fn register_goals(&self, event: &mut RegisterGoalsEvent<'_>) {}
+        fn block_entity_render_bounding_box(
+            &self,
+            host: &dyn Host,
+            event: &mut BlockEntityRenderBoundingBoxEvent<'_>,
+        ) {
+        }
+    }
+}
+
+/// Mobs e objetivos (`horizon_client::mobs`), só os campos que o Veio lê.
+pub mod mobs {
+    use std::sync::Arc;
+
+    #[derive(Clone, Copy, Debug, Default, PartialEq)]
+    pub struct Vec3 {
+        pub x: f64,
+        pub y: f64,
+        pub z: f64,
+    }
+    #[derive(Clone, Debug, Default)]
+    pub struct MobType {
+        pub id: String,
+    }
+    pub struct MobWorld<'w> {
+        _world: std::marker::PhantomData<&'w ()>,
+    }
+    #[derive(Default)]
+    pub struct Navigation {
+        pub done: bool,
+    }
+    impl Navigation {
+        pub fn is_done(&self) -> bool {
+            self.done
+        }
+    }
+    #[derive(Default)]
+    pub struct Ai {
+        pub goals: goals::GoalSelector,
+        pub targets: goals::GoalSelector,
+        pub nav: Navigation,
+    }
+    pub struct Mob {
+        pub id: u32,
+        pub kind: Arc<MobType>,
+        pub position: Vec3,
+        pub ai: Ai,
+    }
+    impl Mob {
+        pub fn nav_move_to(&mut self, w: &MobWorld, at: [f64; 3], speed: f64) -> bool {
+            let _ = (w, at, speed);
+            true
+        }
+    }
+
+    pub mod goals {
+        use super::{Mob, MobWorld};
+        pub const MOVE: u8 = 1;
+        pub const LOOK: u8 = 2;
+        pub const JUMP: u8 = 4;
+        pub const TARGET: u8 = 8;
+        pub struct Cx<'a, 'w> {
+            pub w: &'a MobWorld<'w>,
+        }
+        pub trait Goal: std::fmt::Debug {
+            fn flags(&self) -> u8;
+            fn set_start_delay(&mut self, _ticks: i32) {}
+            fn can_use(&mut self, m: &mut Mob, cx: &mut Cx) -> bool;
+            fn can_continue(&mut self, m: &mut Mob, cx: &mut Cx) -> bool {
+                self.can_use(m, cx)
+            }
+            fn interruptable(&self) -> bool {
+                true
+            }
+            fn start(&mut self, _m: &mut Mob, _cx: &mut Cx) {}
+            fn stop(&mut self, _m: &mut Mob, _cx: &mut Cx) {}
+            fn every_tick(&self) -> bool {
+                false
+            }
+            fn tick(&mut self, _m: &mut Mob, _cx: &mut Cx) {}
+            fn box_clone(&self) -> Box<dyn Goal>;
+        }
+        #[derive(Default)]
+        pub struct GoalSelector {
+            pub added: Vec<(i32, Box<dyn Goal>)>,
+        }
+        impl GoalSelector {
+            pub fn add(&mut self, priority: i32, goal: impl Goal + 'static) {
+                self.added.push((priority, Box::new(goal)));
+            }
+        }
     }
 }

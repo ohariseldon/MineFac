@@ -1,0 +1,28 @@
+{
+  "parent": "veio:tutorial/repair",
+  "display": {
+    "icon": {
+      "id": "veio:tesla"
+    },
+    "title": {
+      "translate": "veio.tutorial.defense.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.defense.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:tesla"
+          }
+        ]
+      }
+    }
+  }
+}

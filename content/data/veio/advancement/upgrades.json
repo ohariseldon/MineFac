@@ -1,0 +1,53 @@
+{
+  "parent": "veio:circuits",
+  "display": {
+    "icon": {
+      "id": "veio:speed_module"
+    },
+    "title": {
+      "translate": "advancement.veio.upgrades.title"
+    },
+    "description": {
+      "translate": "advancement.veio.upgrades.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:speed_module"
+          }
+        ]
+      }
+    },
+    "get_1": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:efficiency_module"
+          }
+        ]
+      }
+    },
+    "get_2": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:productivity_module"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0",
+      "get_1",
+      "get_2"
+    ]
+  ]
+}

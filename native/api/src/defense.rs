@@ -31,7 +31,7 @@ pub(super) fn hostile(kind: &str) -> bool {
         | "minecraft:endermite" | "minecraft:pillager" | "minecraft:vindicator" | "minecraft:evoker"
         | "minecraft:ravager" | "minecraft:vex" | "minecraft:blaze" | "minecraft:ghast"
         | "minecraft:guardian" | "minecraft:zoglin" | "minecraft:piglin_brute" | "minecraft:breeze"
-        | "minecraft:creaking" | "minecraft:hoglin")
+        | "minecraft:creaking" | "minecraft:hoglin" | "veio:raider")
 }
 
 pub(super) fn advance_clock() {

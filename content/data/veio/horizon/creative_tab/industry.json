@@ -21,6 +21,9 @@
     "veio:frame",
     "veio:silicon",
     "veio:circuit",
-    "veio:module"
+    "veio:module",
+    "veio:speed_module",
+    "veio:efficiency_module",
+    "veio:productivity_module"
   ]
 }

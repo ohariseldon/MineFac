@@ -4,6 +4,7 @@
   "items": [
     "veio:harvester",
     "veio:tesla",
+    "veio:repair_kit",
     "minecraft:bone_meal"
   ]
 }

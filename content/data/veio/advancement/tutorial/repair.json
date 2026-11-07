@@ -1,0 +1,28 @@
+{
+  "parent": "veio:tutorial/hub",
+  "display": {
+    "icon": {
+      "id": "veio:repair_kit"
+    },
+    "title": {
+      "translate": "veio.tutorial.repair.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.repair.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:repair_kit"
+          }
+        ]
+      }
+    }
+  }
+}

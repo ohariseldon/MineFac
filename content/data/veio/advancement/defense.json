@@ -22,5 +22,10 @@
         ]
       }
     }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:productivity_module"
+    ]
   }
 }

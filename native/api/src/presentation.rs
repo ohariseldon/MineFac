@@ -16,9 +16,9 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 13] = [
+pub(super) const STATUS_KEYS: [&str; 14] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
-    "crops", "watch", "tier",
+    "crops", "watch", "tier", "damaged",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
@@ -152,6 +152,7 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         TESLA => vec![
             Text::tr("veio.metric.kills", &[&read(9)]).plain(),
             Text::tr("veio.hint.tesla", &[]).plain(),
+            Text::tr("veio.metric.pollution", &[&read(12), &(read(12) * 100 / pollution::RAID as i32)]).plain(),
         ],
         HARVESTER => vec![
             Text::tr("veio.metric.harvests", &[&read(6)]).plain(),
@@ -162,6 +163,23 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
             Text::tr("veio.metric.utilization", &[&read(7)]).plain(),
         ],
     };
+    let mut lines = lines;
+    // Terceira linha: módulo, emissão e integridade, só quando houver algo a dizer.
+    let mut extra = Vec::new();
+    let module = read(11);
+    if (1..=3).contains(&module) {
+        extra.push(Text::tr(&format!("veio.module.{}", ["speed", "efficiency", "productivity"][module as usize - 1]), &[]).plain());
+    }
+    let emission = pollution::emission(event.block) * upgrades::effect_of(module).pollution * 60.0;
+    if emission > 0.0 {
+        extra.push(Text::tr("veio.metric.emission", &[&(emission.round() as i32)]).plain());
+    }
+    if read(10) > 0 {
+        extra.push(Text::tr("veio.metric.integrity", &[&(100 - read(10)).max(0)]).plain());
+    }
+    if !extra.is_empty() && lines.len() < 3 {
+        lines.push(extra.join(" · "));
+    }
     for (index, line) in lines.iter().enumerate() {
         host.text(event.batch, line, [x + 10.0, y + 108.0 + index as f32 * 11.0], SOFT_INK, false);
     }
@@ -174,6 +192,10 @@ fn lamp_icon(host: &dyn Host, event: &mut ScreenDrawEvent<'_>, [lx, ly]: [f32; 2
     host.fill(event.batch, [x + lx + 1.0, y + ly + 1.0, 2.0, 1.0], 0x80ffffff);
 }
 
+/// Valores enviados ao painel. Os menus em `data/veio/horizon/menu` declaram o mesmo número
+/// (`tools/check_project.py` confere).
+pub(super) const DATA_SLOTS: usize = 13;
+
 pub(super) fn publish(entity: &mut ModBlockEntity) {
     let (progress, duration) = match entity.id.as_str() {
         GENERATOR | GEOTHERMAL => (number(entity, "Burn"), number(entity, "BurnTotal").max(1)),
@@ -181,7 +203,9 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
     };
     entity.data = vec![number(entity, "Status"), progress, duration,
         number(entity, "energy"), number(entity, "Burn"), capacity(&entity.id), number(entity, "Rate"),
-        number(entity, "Utilization"), number(entity, "ContractStage"), number(entity, "Total")];
+        number(entity, "Utilization"), number(entity, "ContractStage"), number(entity, "Total"),
+        number(entity, "Damage"), number(entity, "Module"), number(entity, "LocalSmog")];
+    debug_assert_eq!(entity.data.len(), DATA_SLOTS);
     let stack = entity.items.first().and_then(Option::as_ref);
     let name = stack.map_or("", |stack| stack.item.as_ref()).to_owned();
     let count = stack.map_or(0, |stack| stack.count);
@@ -195,7 +219,7 @@ pub(super) fn lamp_color(status: usize) -> u32 {
         1 => 0x5dff5d,
         3 => 0xffaa00,
         2 | 10 | 11 => 0xffe14d,
-        4..=6 | 12 => 0xff4040,
+        4..=6 | 12 | 13 => 0xff4040,
         7 => 0xd9b84a,
         8 => 0x55aaff,
         9 => 0xcc66ff,
@@ -209,7 +233,7 @@ pub(super) fn text_color(status: usize) -> u32 {
         1 => 0x1e7a1e,
         3 => 0x9a5a00,
         2 | 10 | 11 => 0x6b5a00,
-        4..=6 | 12 => 0xaa1f1f,
+        4..=6 | 12 | 13 => 0xaa1f1f,
         7 => 0x7a6420,
         8 => 0x1f4fa8,
         9 => 0x7a2fa0,
@@ -222,6 +246,9 @@ const FLAT: [Option<CubeFace<'static>>; 6] = [Some(CubeFace { sprite: "veio:gui/
 pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     if !is_factory_block(event.block) {
         return;
+    }
+    if power::tier(event.block).is_some() {
+        return power::draw(host, event);
     }
     let status = (number(event.entity, "Status") as usize).min(STATUS_KEYS.len() - 1);
     let lamp = lamp_color(status);
@@ -276,26 +303,32 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
                 event.draw.pop();
             }
         }
-    } else if event.block == TESLA {
-        // Anel que gira em volta da bobina; acelera ao disparar.
-        let rate = if status == 1 { 18.0 } else if status == 11 { 4.0 } else { 0.0 };
-        let angle = (event.draw.game_time.rem_euclid(360) as f32 + event.draw.partial) * rate;
-        event.draw.push();
-        event.draw.rotate_about([0.0, 1.0, 0.0], angle, [0.5, 0.5, 0.5]);
-        for side in 0..4 {
-            event.draw.push();
-            event.draw.rotate_about([0.0, 1.0, 0.0], side as f32 * 90.0, [0.5; 3]);
-            host.draw_cube(event.draw, [4.0, 9.5, 3.5], [12.0, 10.5, 4.5], FLAT,
-                if status == 1 { 0x9fe8ff } else { 0xb87333 });
-            event.draw.pop();
+    } else {
+        if event.block == TESLA {
+            // Anel em volta da bobina: gira devagar vigiando e rápido ao disparar.
+            let rate = match status { 1 => 18.0, 11 => 4.0, _ => 0.0 };
+            event.draw.spin([0.0, 1.0, 0.0], [0.5, 0.5, 0.5], rate, 0.0);
+            for side in 0..4 {
+                event.draw.push();
+                event.draw.rotate_about([0.0, 1.0, 0.0], side as f32 * 90.0, [0.5; 3]);
+                host.draw_cube(event.draw, [4.0, 9.5, 3.5], [12.0, 10.5, 4.5], FLAT,
+                    if status == 1 { 0x9fe8ff } else { 0xb87333 });
+                event.draw.pop();
+            }
+            event.draw.still();
+        } else if status == 1 && needs_power(event.block) {
+            // Rotor no teto: gira enquanto a máquina trabalha.
+            event.draw.spin([0.0, 1.0, 0.0], [0.5, 1.0, 0.5], 6.0, 0.0);
+            host.draw_cube(event.draw, [4.0, 16.0, 7.25], [12.0, 16.5, 8.75], FLAT, 0x9a9a9a);
+            event.draw.still();
         }
-        event.draw.pop();
-    } else if status == 1 && needs_power(event.block) {
-        // Rotor no teto: gira enquanto a máquina trabalha.
-        event.draw.push();
-        let angle = (event.draw.game_time.rem_euclid(60) as f32 + event.draw.partial) * 6.0;
-        event.draw.rotate_about([0.0, 1.0, 0.0], angle, [0.5, 1.0, 0.5]);
-        host.draw_cube(event.draw, [4.0, 16.0, 7.25], [12.0, 16.5, 8.75], FLAT, 0x9a9a9a);
-        event.draw.pop();
+        let module = number(event.entity, "Module");
+        if module > 0 {
+            // Selo colorido no canto da tampa: azul velocidade, verde eficiência, laranja produtividade.
+            let color = [0x3f7fff, 0x3fbf3f, 0xff8a1f][(module as usize - 1).min(2)];
+            host.draw_cube(event.draw, [12.5, 16.0, 12.5], [14.5, 16.6, 14.5], FLAT, color);
+        }
+        // Sem nada que dependa do tempo: o jogo reaproveita este desenho até o estado mudar.
+        event.draw.keep();
     }
 }

@@ -6,6 +6,8 @@
     "veio:geothermal",
     "veio:solar",
     "veio:battery",
+    "veio:pole",
+    "veio:steel_pole",
     "veio:cable",
     "minecraft:coal",
     "minecraft:lava_bucket"

@@ -1,0 +1,31 @@
+{
+  "parent": "veio:engineering",
+  "display": {
+    "icon": {
+      "id": "veio:repair_kit"
+    },
+    "title": {
+      "translate": "advancement.veio.repairs.title"
+    },
+    "description": {
+      "translate": "advancement.veio.repairs.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:repair_kit"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0"
+    ]
+  ]
+}

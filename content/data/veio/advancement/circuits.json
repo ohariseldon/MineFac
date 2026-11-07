@@ -27,7 +27,9 @@
     "recipes": [
       "veio:solar",
       "veio:drill_mk2",
-      "veio:tesla"
+      "veio:tesla",
+      "veio:speed_module",
+      "veio:efficiency_module"
     ]
   }
 }

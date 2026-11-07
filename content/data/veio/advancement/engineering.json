@@ -27,7 +27,8 @@
     "recipes": [
       "veio:wrench",
       "veio:crusher",
-      "veio:alloy_furnace"
+      "veio:alloy_furnace",
+      "veio:repair_kit"
     ]
   }
 }

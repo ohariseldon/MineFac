@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/steel_pole"
+    },
+    "facing=west": {
+      "model": "veio:block/steel_pole",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/steel_pole",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/steel_pole",
+      "y": 270
+    }
+  }
+}

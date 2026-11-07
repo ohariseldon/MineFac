@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "veio:gear"
+  ],
+  "result": {
+    "id": "veio:repair_kit",
+    "count": 4
+  }
+}

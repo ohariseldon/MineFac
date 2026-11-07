@@ -18,6 +18,8 @@
     "veio:fast_belt",
     "veio:splitter",
     "veio:cable",
+    "veio:pole",
+    "veio:steel_pole",
     "veio:solar",
     "veio:battery"
   ]

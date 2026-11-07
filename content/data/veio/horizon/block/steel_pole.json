@@ -1,0 +1,32 @@
+{
+  "template": "minecraft:black_glazed_terracotta",
+  "item": true,
+  "properties": {
+    "hardness": 2.0,
+    "occludes": false
+  },
+  "shapes": {
+    "default": [
+      [
+        0.3125,
+        0,
+        0.3125,
+        0.6875,
+        1.5,
+        0.6875
+      ]
+    ]
+  },
+  "collision_shapes": {
+    "default": [
+      [
+        0.3125,
+        0,
+        0.3125,
+        0.6875,
+        1.5,
+        0.6875
+      ]
+    ]
+  }
+}

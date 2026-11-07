@@ -74,6 +74,11 @@ def check_assets(languages):
             if texture.startswith("veio:"):
                 path = assets / f"textures/{texture[5:]}.png"
                 assert path.exists(), f"{model.name} usa {texture}, que não existe"
+    import re
+    source = (ROOT / "native/api/src/presentation.rs").read_text(encoding="utf-8")
+    slots = int(re.search(r"const DATA_SLOTS: usize = (\d+);", source).group(1))
+    for menu in (data / "horizon/menu").glob("*.json"):
+        assert read_json(menu)["data_slots"] == slots, f"{menu.name}: data_slots deve ser {slots}, como no painel"
     unlocked = set()
     for advancement in (data / "advancement").rglob("*.json"):
         unlocked.update(read_json(advancement).get("rewards", {}).get("recipes", []))

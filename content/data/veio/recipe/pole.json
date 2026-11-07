@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:stick",
+    "minecraft:stick",
+    "minecraft:stick",
+    "minecraft:copper_ingot"
+  ],
+  "result": {
+    "id": "veio:pole",
+    "count": 2
+  }
+}

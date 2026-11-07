@@ -46,6 +46,8 @@ BLOCKS = {
     "fast_belt": ("belt", None, 1, [], 1.5),
     "splitter": ("splitter", None, 1, [], 1.5),
     "cable": ("cable", None, 0, [], 1.0),
+    "pole": ("pole", None, 0, [], 1.0),
+    "steel_pole": ("steel_pole", None, 0, [], 2.0),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
 }
@@ -63,16 +65,21 @@ ITEMS = {
     "module": ("minecraft:echo_shard", 64),
     # A chave copia a picareta de ferro: também quebra as máquinas rapidamente.
     "wrench": ("minecraft:iron_pickaxe", None),
+    "repair_kit": ("minecraft:iron_ingot", 64),
+    "speed_module": ("minecraft:echo_shard", 16),
+    "efficiency_module": ("minecraft:echo_shard", 16),
+    "productivity_module": ("minecraft:echo_shard", 16),
 }
 
 TABS = {
     "industry": ("veio:press", ["drill", "drill_mk2", "press", "assembler", "cutter", "integrator",
         "crusher", "alloy_furnace", "electronics", "contract_hub", "wrench", "copper_plate", "iron_plate",
-        "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module"]),
-    "power": ("veio:generator", ["generator", "geothermal", "solar", "battery", "cable",
+        "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module", "speed_module",
+        "efficiency_module", "productivity_module"]),
+    "power": ("veio:generator", ["generator", "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
         "minecraft:coal", "minecraft:lava_bucket"]),
     "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "wrench"]),
-    "world": ("veio:harvester", ["harvester", "tesla", "minecraft:bone_meal"]),
+    "world": ("veio:harvester", ["harvester", "tesla", "repair_kit", "minecraft:bone_meal"]),
 }
 
 FACES = ("down", "up", "north", "south", "west", "east")
@@ -152,6 +159,29 @@ def model(kind, name, tier):
             textures["divider"] = "veio:block/splitter_top"
             elements.append(box([5, 3, 5], [11, 6, 11], {"up": "#divider", "*": "#iron"}))
         return textures, elements
+    if kind == "pole":
+        textures = {"wood": "minecraft:block/stripped_spruce_log", "glass": "minecraft:block/copper_block",
+                    "particle": "minecraft:block/stripped_spruce_log"}
+        tall = {"side": [7, 0, 9, 16], "up": [7, 7, 9, 9]}
+        return textures, [
+            box([7, 0, 7], [9, 22, 9], "#wood", uv=tall),
+            box([3, 19, 7.5], [13, 20.5, 8.5], "#wood", uv={"side": [0, 6, 16, 7.5], "up": [0, 7, 16, 8]}),
+            box([3.5, 20.5, 7.5], [4.5, 21.5, 8.5], "#glass", uv={"side": [0, 0, 1, 1], "up": [0, 0, 1, 1]}),
+            box([11.5, 20.5, 7.5], [12.5, 21.5, 8.5], "#glass", uv={"side": [0, 0, 1, 1], "up": [0, 0, 1, 1]}),
+            box([7.5, 22, 7.5], [8.5, 23, 8.5], "#glass", uv={"side": [0, 0, 1, 1], "up": [0, 0, 1, 1]}),
+        ]
+    if kind == "steel_pole":
+        textures = {"base": "minecraft:block/smooth_stone", "base_side": "minecraft:block/smooth_stone_slab_side",
+                    "mast": "minecraft:block/iron_block", "arm": "minecraft:block/polished_deepslate",
+                    "glass": "minecraft:block/copper_block", "particle": "minecraft:block/iron_block"}
+        return textures, [
+            box([5, 0, 5], [11, 2, 11], {"up": "#base", "down": "#base", "*": "#base_side"}),
+            box([7, 2, 7], [9, 29, 9], "#mast", uv={"side": [7, 0, 9, 16], "up": [7, 7, 9, 9]}),
+            box([2, 26, 7.5], [14, 27.5, 8.5], "#arm", uv={"side": [2, 6, 14, 7.5], "up": [2, 7, 14, 8]}),
+            box([2.5, 27.5, 7.5], [3.5, 29, 8.5], "#glass", uv={"side": [0, 0, 1, 1.5], "up": [0, 0, 1, 1]}),
+            box([12.5, 27.5, 7.5], [13.5, 29, 8.5], "#glass", uv={"side": [0, 0, 1, 1.5], "up": [0, 0, 1, 1]}),
+            box([7.5, 29, 7.5], [8.5, 31, 8.5], "#glass", uv={"side": [0, 0, 1, 2], "up": [0, 0, 1, 1]}),
+        ]
     if kind == "cable":
         textures = {"wire": "minecraft:block/black_wool", "joint": "minecraft:block/copper_block",
                     "particle": "minecraft:block/black_wool"}
@@ -187,6 +217,8 @@ SHAPES = {
     "cable": [[0, 0, 0.375, 1, 0.25, 0.625], [0.375, 0, 0, 0.625, 0.25, 1]],
     "solar": [[0, 0, 0, 1, 0.34375, 1]],
     "battery": [[0.0625, 0, 0.0625, 0.9375, 1.025, 0.9375]],
+    "pole": [[0.375, 0, 0.375, 0.625, 1.5, 0.625]],
+    "steel_pole": [[0.3125, 0, 0.3125, 0.6875, 1.5, 0.6875]],
 }
 
 def write(path, value):
@@ -204,13 +236,14 @@ def main():
             "facing=east": {"model": f"veio:block/{name}", "y": 270},
         }})
         write(A / f"items/{name}.json", {"model": {"type": "minecraft:model", "model": f"veio:block/{name}"}})
-        template = "minecraft:black_glazed_terracotta" if kind == "cable" else "minecraft:stonecutter"
+        # Sem menu, um template sem tela própria: a terracota esmaltada só gira com o jogador.
+        template = "minecraft:black_glazed_terracotta" if kind in ("cable", "pole", "steel_pole") else "minecraft:stonecutter"
         shape = {"default": SHAPES[kind]}
         write(D / f"horizon/block/{name}.json", {"template": template, "item": True,
             "properties": {"hardness": hardness, "occludes": False},
             "shapes": shape, "collision_shapes": shape})
         if slots:
-            write(D / f"horizon/menu/{name}.json", {"slots": slots, "data_slots": 10, "results": results})
+            write(D / f"horizon/menu/{name}.json", {"slots": slots, "data_slots": 13, "results": results})
         write(D / f"loot_table/blocks/{name}.json", {"type": "minecraft:block", "pools": [{"rolls": 1,
             "entries": [{"type": "minecraft:item", "name": f"veio:{name}"}],
             "conditions": [{"condition": "minecraft:survives_explosion"}]}],
@@ -223,6 +256,14 @@ def main():
         if stack:
             entry["max_stack_size"] = stack
         write(D / f"horizon/item/{name}.json", entry)
+    write(D / "horizon/entity_type/raider.json", {"template": "minecraft:zombie",
+        "attributes": {"minecraft:max_health": 24.0, "minecraft:movement_speed": 0.25}})
+    write(D / "loot_table/entities/raider.json", {"type": "minecraft:entity", "pools": [
+        {"rolls": 1, "entries": [{"type": "minecraft:item", "name": "minecraft:rotten_flesh",
+            "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 0, "max": 2}}]}]},
+        {"rolls": 1, "entries": [{"type": "minecraft:item", "name": "minecraft:iron_nugget",
+            "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 1, "max": 3}}]}]},
+    ], "random_sequence": "veio:entities/raider"})
     write(ROOT / "data/minecraft/tags/block/mineable/pickaxe.json", {"values": [f"veio:{name}" for name in BLOCKS]})
     for tab, (icon, members) in TABS.items():
         write(D / f"horizon/creative_tab/{tab}.json", {"title": f"itemGroup.veio.{tab}", "icon": icon,

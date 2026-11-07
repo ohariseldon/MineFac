@@ -29,7 +29,8 @@
       "veio:geothermal",
       "veio:electronics",
       "veio:belts_bulk",
-      "veio:cables_bulk"
+      "veio:cables_bulk",
+      "veio:steel_pole"
     ]
   }
 }
