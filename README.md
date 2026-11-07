@@ -99,6 +99,24 @@ Os painéis seguem as telas de baú e fornalha: fundo cinza em relevo, slots reb
 
 Todas as texturas próprias são desenhadas em texto em `tools/build_textures.py`, e os modelos saem de `tools/build_content.py`. As referências a texturas do Minecraft são resolvidas pela instalação do jogador. Créditos em [CREDITS.md](CREDITS.md).
 
+## Realismo leve opcional
+
+**Pacote com esta primeira versão visual:** [Veio-0.15.1-realismo.zip](release/Veio-0.15.1-realismo.zip). Extraia a pasta completa e abra `launcher.exe`; o executável da raiz do repositório também já oferece a escolha.
+
+O launcher agora oferece a escolha **antes de abrir o jogo**, sem precisar carregar shaders para chegar às opções:
+
+- **Realismo leve — 8 GB (padrão):** luz natural, sombras próximas de 1024 × 1024 até 48 blocos, céu ajustado, brilho discreto em metais e água. Usa as texturas e modelos existentes, com um único pós-processamento para cor e suavização. É uma primeira direção visual industrial inspirada em Satisfactory.
+- **Leve — sem shaders:** abre pelo caminho normal do Horizon, com menos distância de visão e sem carregar o pacote visual. Abra `Jogar-Leve.cmd` para escolher esse modo diretamente, inclusive na primeira partida.
+
+Abra `Escolher-Visual.cmd` para mudar ou restaurar um dos perfis. A escolha fica salva em `launcher.ini`. Também pode desligar o pacote em Opções > Vídeo > Shaders; alterações feitas no jogo continuam valendo nas próximas aberturas normais. O launcher guarda as opções originais da instância em `options.txt.antes-do-veio` e `horizon-graphics.txt.antes-do-veio`, sem alterar mundos, controles ou pacotes de recursos.
+
+O perfil Realismo começa com visão de 8 chunks, simulação de 5, até 60 FPS, resolução interna de 85%, dois trabalhadores de preparação de terreno e orçamento de texturas de 256 MiB. Leve começa com visão de 6 chunks, resolução interna de 75%, partículas mínimas e nuvens desligadas. A resolução interna é uma porcentagem da janela; ambos permitem ajustes posteriores. As compilações jogáveis agora usam o perfil otimizado `performance`, e a marca de compilação distingue esse perfil de uma compilação antiga de desenvolvimento.
+
+O shader é original e opcional, em `visuals/veio-industrial`, sob MIT. Não acrescenta trabalho à simulação, luzes dinâmicas ou texturas. Não usa reflexos de cena, bloom, SSAO, luz volumétrica, traçado de raios ou geometria extra. Sombras, metais, detalhe da água e suavização podem ser ajustados nas opções do próprio pacote.
+
+**8 GB é a meta para o computador inteiro, não uma reserva de memória para o jogo nem uma garantia em qualquer placa gráfica.** O orçamento de 2 ms declarado pelo shader é um objetivo; FPS, consumo total e comportamento em fábricas grandes precisam ser medidos no Horizon real. Mais detalhes em [visuals/veio-industrial/README.md](visuals/veio-industrial/README.md).
+
+
 ## Desempenho
 
 O código evita trabalho por tick:

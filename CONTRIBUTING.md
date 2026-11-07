@@ -62,6 +62,8 @@ No ambiente local original, launcher, instâncias e cache estão no E:, configur
 
 ## Desempenho
 
+O launcher usa `native-build --profile performance` nas entregas jogáveis; `dev` fica para desenvolvimento. O visual opcional está isolado em `visuals/veio-industrial` (WGSL original, API 0.1), e a escolha anterior à partida em `launcher/src/visuals.rs`. Não mova o shader para ganchos do mod que o reativem depois de o usuário escolher Leve. Valide alterações WGSL com o `horizon-shader check` da versão do Horizon usada pela entrega. Testes de instalação e preservação das opções estão no próprio launcher (`cargo test` em `launcher/`).
+
 Nada de varrer blocos ou entidades a cada tick. Guarde listas em NBT ou em registros em memória e recalcule em intervalos escalonados pela posição. Use `draw.keep()` quando o desenho não depende do tempo e `draw.spin()` para peças que giram em velocidade constante.
 
 ## Combinar o trabalho

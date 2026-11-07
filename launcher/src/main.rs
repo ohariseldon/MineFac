@@ -18,9 +18,12 @@ use std::io::{self, BufRead, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
+mod visuals;
+
 const CONFIG: &str = "launcher.ini";
 /// Arquivo gravado na pasta do mod depois de uma compilação bem-sucedida.
 const STAMP: &str = ".veio-native-build";
+const NATIVE_PROFILE: &str = "performance";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -42,6 +45,7 @@ fn run(args: &[String]) -> Result<(), String> {
 
     let config_path = root.join(CONFIG);
     let mut config = read_config(&config_path);
+    let visual = visuals::choose(args, &mut config)?;
     let horizon = horizon_launcher(&mut config)?;
     let instance = config.entry("instance".into()).or_insert_with(|| "Veio".into()).clone();
     let mods = mods_dir(&mut config, &horizon, &instance)?;
@@ -49,16 +53,17 @@ fn run(args: &[String]) -> Result<(), String> {
 
     let target = mods.join("veio");
     let built = fs::read_to_string(target.join(STAMP)).unwrap_or_default();
-    let rebuild = args.iter().any(|arg| arg == "--rebuild") || built.trim() != version;
+    let build_stamp = format!("{version}\nprofile={NATIVE_PROFILE}");
+    let rebuild = args.iter().any(|arg| arg == "--rebuild") || built.trim() != build_stamp;
     let skip = args.iter().any(|arg| arg == "--skip-build");
     if skip {
         println!("[1/3] Compilação pulada (--skip-build).");
     } else if rebuild {
-        println!("[1/3] Compilando o código nativo do Veio {version} na instância {instance}.");
+        println!("[1/3] Compilando o Veio {version} otimizado para jogar na instância {instance}.");
         println!("      Na primeira vez o Horizon baixa o Rust: leva de 20 a 30 minutos e alguns GB.");
         let status = Command::new(&horizon)
             .arg("native-build").arg(root.join("native"))
-            .args(["--instance", &instance, "--trust-native-code", "--profile", "dev"])
+            .args(["--instance", &instance, "--trust-native-code", "--profile", NATIVE_PROFILE])
             .status()
             .map_err(|error| format!("não foi possível executar {}: {error}", horizon.display()))?;
         if !status.success() {
@@ -72,17 +77,24 @@ fn run(args: &[String]) -> Result<(), String> {
     install(&root.join("content"), &target)?;
     // A marca só vale para uma compilação desta versão (feita agora ou antes).
     if !skip || !rebuild {
-        fs::write(target.join(STAMP), &version).map_err(|error| format!("não foi possível gravar {STAMP}: {error}"))?;
+        fs::write(target.join(STAMP), &build_stamp).map_err(|error| format!("não foi possível gravar {STAMP}: {error}"))?;
     }
+
+    let instance_dir = mods.parent().ok_or("a pasta horizon-mods precisa estar dentro da instância")?;
+    visuals::install(&root, instance_dir, visual)?;
 
     println!("[3/3] Abrindo o jogo na instância {instance}.");
     println!("      Na primeira partida, ative o Veio em Opções > Mods (mods de conteúdo começam desligados)");
     println!("      e reinicie o jogo. Se o jogo não abrir, use o Horizon Launcher: Prepare, conta e Play.");
-    let started = Command::new(&horizon).args(["play", "--instance", &instance]).args(config_args(&config)).status()
+    let mut play = Command::new(&horizon);
+    visuals::launch_environment(&mut play, visual.profile);
+    let started = play.args(["play", "--instance", &instance]).args(config_args(&config)).status()
         .map(|status| status.success()).unwrap_or(false);
     if !started {
         println!("      O jogo não abriu pela linha de comando; abrindo o Horizon Launcher.");
-        Command::new(&horizon).spawn()
+        let mut launcher = Command::new(&horizon);
+        visuals::launch_environment(&mut launcher, visual.profile);
+        launcher.spawn()
             .map_err(|error| format!("não foi possível abrir {}: {error}", horizon.display()))?;
     }
     Ok(())
@@ -123,8 +135,9 @@ fn write_config(path: &Path, config: &BTreeMap<String, String>) -> Result<(), St
          # horizon_launcher: caminho do horizon-launcher.exe\n\
          # instance: nome da instância no Horizon Launcher\n\
          # mods_dir: pasta horizon-mods da instância\n\
+         # visual_profile: realismo-8gb ou leve; use Escolher-Visual.cmd para mudar\n\
          # launch_args: argumentos extras ao abrir o Horizon Launcher (opcional)\n");
-    for key in ["horizon_launcher", "instance", "mods_dir", "launch_args"] {
+    for key in ["horizon_launcher", "instance", "mods_dir", "visual_profile", "launch_args"] {
         text.push_str(&format!("{key}={}\n", config.get(key).map_or("", String::as_str)));
     }
     fs::write(path, text).map_err(|error| format!("não foi possível gravar {}: {error}", path.display()))

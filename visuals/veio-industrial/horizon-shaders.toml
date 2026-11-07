@@ -1,0 +1,98 @@
+schema = 1
+id = "veio_industrial"
+name = "Veio — Realismo leve"
+version = "1.0.0"
+api = "0.1"
+description = "Luz natural, metais industriais e água suave. Perfil econômico do Veio inspirado em fábricas ao ar livre."
+authors = ["Veio"]
+license = "MIT"
+shared = ["common.wgsl"]
+
+[sky]
+file = "sky.wgsl"
+
+[material]
+file = "material.wgsl"
+
+[shadow]
+resolution = 1024
+distance = 48.0
+option = "shadows"
+resolution_option = "shadow_resolution"
+distance_option = "shadow_distance"
+
+[[post]]
+file = "finish.wgsl"
+name = "Cor industrial e suavização"
+
+[[materials]]
+id = 1
+sprites = ["block/iron_block", "block/iron_trapdoor", "block/heavy_core", "veio:block/machine_top_iron", "veio:block/machine_top_steel", "veio:block/port"]
+
+[[materials]]
+id = 2
+sprites = ["block/copper_block", "block/cut_copper", "block/exposed_copper", "block/exposed_cut_copper", "veio:block/machine_top_copper"]
+
+[[materials]]
+id = 3
+sprites = ["veio:block/*_front", "veio:block/belt_rail", "veio:block/fast_belt_rail", "veio:block/splitter_top", "veio:block/merger_top"]
+
+[[options]]
+id = "shadows"
+name = "Sombras próximas"
+description = "Desligue para retirar completamente a passagem de sombras."
+type = "bool"
+default = true
+
+[[options]]
+id = "shadow_resolution"
+name = "Resolução das sombras"
+type = "choice"
+default = "1024"
+values = ["512", "1024"]
+
+[[options]]
+id = "shadow_distance"
+name = "Alcance das sombras (blocos)"
+type = "choice"
+default = "48"
+values = ["32", "48", "64"]
+
+[[options]]
+id = "metal_highlights"
+name = "Brilho dos metais"
+type = "float"
+default = 0.65
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "water_detail"
+name = "Detalhe da água"
+type = "bool"
+default = true
+
+[[options]]
+id = "edge_smoothing"
+name = "Suavizar bordas"
+type = "bool"
+default = true
+
+[[options]]
+id = "color_strength"
+name = "Intensidade da cor industrial"
+type = "float"
+default = 0.65
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[pages]]
+id = "main"
+name = "Realismo leve — 8 GB"
+items = ["shadows", "shadow_resolution", "shadow_distance", "metal_highlights", "water_detail", "edge_smoothing", "color_strength"]
+
+# Objetivo de custo, não uma medição nem um limitador automático.
+[budget]
+gpu_ms = 2.0
