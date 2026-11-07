@@ -385,6 +385,7 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
 
 /// Chaves NBT lidas todo tick. A primeira vez monta o `JavaString`; as seguintes reaproveitam.
 fn nbt_key(name: &str) -> &'static JavaString {
+    #[cfg(test)] perf::key_read();
     macro_rules! key {
         ($lit:literal) => {{
             static KEY: std::sync::OnceLock<JavaString> = std::sync::OnceLock::new();
@@ -440,6 +441,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "energy" => key!("energy"),
         _ => {
             // Chave rara: vive até o fim do processo, para o tick seguinte não alocar de novo.
+            #[cfg(test)] perf::fallback_lock();
             use std::collections::HashMap;
             use std::sync::Mutex;
             static EXTRA: Mutex<Option<HashMap<String, &'static JavaString>>> = Mutex::new(None);
@@ -639,3 +641,5 @@ fn consume(slot: &mut Option<ItemStack>, count: u32) {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod perf;

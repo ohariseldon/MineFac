@@ -21,6 +21,11 @@ use horizon_client::mobs::Mob;
 use horizon_client::mobs::goals::{self, Cx, Goal};
 use horizon_client::mod_api::{ParticleOptions, ParticleType, Text};
 use std::collections::HashMap;
+
+#[cfg(test)]
+pub(super) fn profile_organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
+    foreman::organize(host, pos, entity, now);
+}
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
