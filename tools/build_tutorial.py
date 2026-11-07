@@ -23,7 +23,7 @@ vanilla={
  "dispenser":("Ejetor","Dispenser"),"white_wool":("Lã branca","White wool"),"iron_axe":("Machado de ferro","Iron axe"),
  "shears":("Tesoura","Shears"),"hay_block":("Fardo de feno","Hay bale"),"glowstone":("Pedra luminosa","Glowstone"),
  "diamond":("Diamante","Diamond"),"emerald":("Esmeralda","Emerald"),
- "hopper":("Funil","Hopper"),"lectern":("Atril","Lectern"),"bell":("Sino","Bell"),"lead":("Laço","Lead"),
+ "hopper":("Funil","Hopper"),"lectern":("Atril","Lectern"),"bell":("Sino","Bell"),"lead":("Laço","Lead"),"oak_fence":("Cerca de carvalho","Oak fence"),"wheat_seeds":("Sementes de trigo","Wheat seeds"),
 }
 def item_name(item,code):
  ns,name=item.split(":")
@@ -163,6 +163,21 @@ help["hauler_post"] = (
 help["shepherd_post"] = (
  "Esmeralda: contrata aldeão.\nRecolhe ovos, penas e lã,\ntosquia ovelhas e dá ração\naos pares, a até 6 blocos.\nNão ordenha nem abate.",
  "Emerald: hires a villager.\nPicks up eggs, feathers and\nwool, shears sheep and feeds\npairs within 6 blocks.\nNo milking or culling.")
+help["field_marker"] = (
+ "Centro da lavoura: 9x9 no\nnível 1, até 21x21. Lavradores\nperto aram, plantam e colhem.\nSemente no slot: só ela.\nEsmeralda expande; chave escolhe.",
+ "Field center: 9x9 at level 1,\nup to 21x21. Nearby farmhands\ntill, plant and harvest.\nSeed in the slot: only that.\nEmerald expands; wrench sizes.")
+help["pen_marker"] = (
+ "Centro do cercado: 9x9 a\n21x21. O pastor perto cuida\ndos animais dentro dele.\nRação no slot: só ela e as\nespécies que a comem.",
+ "Pen center: 9x9 to 21x21.\nA nearby shepherd tends the\nanimals inside it.\nFeed in the slot: only that\nand the kinds that eat it.")
+help["barn"] = (
+ "27 espaços para qualquer item.\nA fila do capataz guarda\nsobras aqui e tira daqui\npara as máquinas. Funis\npõem e tiram.",
+ "27 slots for any item.\nThe foreman's queue stores\nsurplus here and feeds\nmachines from it. Hoppers\nwork too.")
+help["silo"] = (
+ "18 espaços: grãos, sementes,\nração e comida. Também faz\nparte da fila do capataz.",
+ "18 slots: grain, seeds, feed\nand food. Also part of the\nforeman's queue.")
+help["control_center"] = (
+ "Painel da vila: trabalhadores,\nesperas, zonas, armazéns e\nmetas. Contrate um administrador.\nItem na meta: x16 guardados.\nLivro no centro: relatório.",
+ "Village panel: workers, waits,\nzones, storage and goals.\nHire an administrator.\nGoal item: x16 in storage.\nBook on the center: report.")
 help["foreman_desk"] = (
  "Esmeralda: contrata o capataz.\nCuida de até 6 postos a\naté 12 blocos: leva comida\ne recontrata com esmeraldas\nda mesa. Monta a fila.",
  "Emerald: hires the foreman.\nManages up to 6 posts within\n12 blocks: brings food and\nrehires with the desk's\nemeralds. Queues transfers.")
@@ -192,6 +207,55 @@ for key, pt, en in [
  ("veio.status.no_wage", "Sem esmeralda para contratar", "No emerald to hire"),
  ("veio.metric.trips", "Viagens feitas: %s", "Trips done: %s"),
  ("veio.metric.posts", "Postos: %s · fila: %s", "Posts: %s · queue: %s"),
+ # Quarta entrega: zonas, armazenagem e centro de controle.
+ ("block.veio.field_marker", "Marco de lavoura", "Field Marker"),
+ ("veio.status.zone", "Zona ativa", "Zone active"),
+ ("veio.status.storing", "Guardando", "Storing"),
+ ("block.veio.pen_marker", "Marco de cercado", "Pen Marker"),
+ ("block.veio.barn", "Celeiro", "Barn"),
+ ("block.veio.silo", "Silo", "Silo"),
+ ("block.veio.control_center", "Centro de controle", "Control Center"),
+ ("veio.zone.size", "Nível %s de %s · área %sx%s", "Level %s of %s · area %sx%s"),
+ ("veio.zone.next", "Próximo: %s esm. · %s/%s · aldeões %s/%s", "Next: %s emer. · %s/%s · villagers %s/%s"),
+ ("veio.zone.max", "Nível máximo liberado", "Highest level unlocked"),
+ ("veio.zone.level1", "Zona em 9x9", "Zone set to 9x9"),
+ ("veio.zone.level2", "Zona em 13x13", "Zone set to 13x13"),
+ ("veio.zone.level3", "Zona em 17x17", "Zone set to 17x17"),
+ ("veio.zone.level4", "Zona em 21x21", "Zone set to 21x21"),
+ ("veio.zone.need_work", "Falta trabalho feito na zona para o próximo nível.", "The zone needs more work done for the next level."),
+ ("veio.zone.need_villagers", "A vila precisa de mais aldeões para o próximo nível.", "The village needs more villagers for the next level."),
+ ("veio.zone.need_emeralds", "Faltam esmeraldas para o próximo nível.", "Not enough emeralds for the next level."),
+ ("veio.hint.field_marker", "Esmeralda expande · chave: tamanho", "Emerald expands · wrench: size"),
+ ("veio.hint.pen_marker", "Ração no slot define o cercado", "Feed in the slot sets the pen"),
+ ("veio.hint.barn", "Sobras da fila e estoque", "Queue leftovers and stock"),
+ ("veio.hint.silo", "Grãos, sementes, ração, comida", "Grain, seeds, feed, food"),
+ ("veio.metric.storage", "Espaços usados: %s de %s", "Slots used: %s of %s"),
+ ("veio.center.workers", "Trabalhadores: %s · ativos: %s", "Workers: %s · active: %s"),
+ ("veio.center.waiting", "Esperando: %s · sem comida: %s", "Waiting: %s · no food: %s"),
+ ("veio.center.zones", "Lavouras: %s · cercados: %s", "Fields: %s · pens: %s"),
+ ("veio.center.storage", "Armazéns: %s%% · fila: %s", "Storage: %s%% · queue: %s"),
+ ("veio.center.no_storage", "Sem armazéns · fila: %s", "No storage · queue: %s"),
+ ("veio.center.goal_empty", "meta", "goal"),
+ ("veio.center.need_admin", "Contrate um administrador e deixe-o no centro para ver o relatório.", "Hire an administrator and keep them at the center to see the report."),
+ ("veio.report.title", "Relatório da vila: %s postos, %s trabalhando.", "Village report: %s posts, %s working."),
+ ("veio.report.issue.blocked", "Saída cheia: posto em %s", "Output full: post at %s"),
+ ("veio.report.issue.no_worker", "Sem trabalhador: posto em %s", "No worker: post at %s"),
+ ("veio.report.issue.absent", "Trabalhador ausente: posto em %s", "Worker missing: post at %s"),
+ ("veio.report.issue.no_food", "Sem comida: posto em %s", "No food: post at %s"),
+ ("veio.report.issue.path", "Caminho obstruído: posto em %s", "Path blocked: post at %s"),
+ ("veio.report.issue.no_wage", "Sem esmeralda para contratar: mesa em %s", "No emerald to hire: desk at %s"),
+ ("veio.report.issue.idle", "Parado: posto em %s", "Stopped: post at %s"),
+ ("veio.report.field", "Lavoura em %s: nível %s de %s (%sx%s)", "Field at %s: level %s of %s (%sx%s)"),
+ ("veio.report.pen", "Cercado em %s: nível %s de %s (%sx%s)", "Pen at %s: level %s of %s (%sx%s)"),
+ ("veio.report.next", "  Próximo nível: %s esmeraldas · trabalho %s/%s · aldeões %s/%s", "  Next level: %s emeralds · work %s/%s · villagers %s/%s"),
+ ("veio.report.storage", "Armazéns: %s, com %s de %s espaços usados.", "Storage: %s, %s of %s slots used."),
+ ("veio.report.goal", "Meta %s (%s): %s de %s", "Goal %s (%s): %s of %s"),
+ ("advancement.veio.zoning.title", "Terra demarcada", "Marked Land"),
+ ("advancement.veio.zoning.description", "Demarque uma lavoura para seus lavradores plantarem e colherem.", "Mark a field for your farmhands to plant and harvest."),
+ ("advancement.veio.granary.title", "Celeiro cheio", "Full Barn"),
+ ("advancement.veio.granary.description", "Guarde as sobras da fazenda num celeiro ou silo.", "Store the farm's surplus in a barn or silo."),
+ ("advancement.veio.headquarters.title", "Centro de controle", "Headquarters"),
+ ("advancement.veio.headquarters.description", "Acompanhe toda a vila operária num só painel.", "Watch the whole worker village from one panel."),
  # Terceira entrega: fila de tarefas e pastor.
  ("block.veio.shepherd_post", "Posto do pastor", "Shepherd Post"),
  ("veio.hint.shepherd_post", "Ração, tosquia e coleta", "Feed, shearing and pickup"),
@@ -213,7 +277,7 @@ categories=[
  ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","farm_post","shepherd_post","mill","electric_furnace","kitchen","pantry"]),
  ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
  ("Logística","Logistics",["belt","fast_belt","splitter","merger","cable","pole","steel_pole","wrench"]),
- ("Projetos e defesa","Projects and defense",["contract_hub","tesla","foreman_desk"]),
+ ("Vila, projetos e defesa","Village, projects and defense",["contract_hub","tesla","foreman_desk","control_center","field_marker","pen_marker","barn","silo"]),
 ]
 order=[name for _,_,names in categories for name in names]
 assert set(order)==set(help), set(order)^set(help)
@@ -249,6 +313,11 @@ slothelp={
  "farm_post":["Comida do trabalhador: pão vale 3 colheitas.","Colheita entregue.","Colheita entregue.","Colheita entregue."],
  "hauler_post":["Comida do trabalhador: pão vale 3 viagens.","Insumo para as máquinas.","Insumo para as máquinas.","Insumo para as máquinas.","Produto recolhido.","Produto recolhido.","Produto recolhido."],
  "shepherd_post":["Comida do trabalhador.","Ração: trigo, cenoura, sementes...","Produto.","Produto.","Produto."],
+ "field_marker":["Semente desta lavoura (vazio: qualquer uma)."],
+ "pen_marker":["Ração deste cercado (vazio: qualquer uma)."],
+ "barn":["Estoque."]*27,
+ "silo":["Grãos, sementes, ração ou comida."]*18,
+ "control_center":["Comida do administrador.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar."],
  "foreman_desk":["Comida do capataz e dos postos.","Comida do capataz e dos postos.","Comida do capataz e dos postos.","Esmeraldas para recontratar."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
 }
@@ -281,6 +350,11 @@ slot_en={
  "farm_post":["Worker food: bread pays for 3 harvests.","Delivered harvest.","Delivered harvest.","Delivered harvest."],
  "hauler_post":["Worker food: bread pays for 3 trips.","Supplies for the machines.","Supplies for the machines.","Supplies for the machines.","Collected product.","Collected product.","Collected product."],
  "shepherd_post":["Worker food.","Feed: wheat, carrots, seeds...","Product.","Product.","Product."],
+ "field_marker":["Seed for this field (empty: any)."],
+ "pen_marker":["Feed for this pen (empty: any)."],
+ "barn":["Stock."]*27,
+ "silo":["Grain, seeds, feed or food."]*18,
+ "control_center":["Administrator food.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store."],
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
@@ -404,6 +478,12 @@ page(
 page(
  "Fila e pastor\n\nCom o capataz presente, a mesa monta uma fila: produtos de um posto ou máquina para outra que os aceite. Carregadores perto pegam a fila primeiro.\n\nPosto do pastor: ração, tosquia e coleta de ovos e lã.",
  "Queue and shepherd\n\nWith the foreman present, the desk queues transfers: products from a post or machine to another that accepts them. Nearby haulers take the queue first.\n\nShepherd post: feed, shearing, eggs and wool.")
+page(
+ "Zonas e armazéns\n\nMarco de lavoura ou cercado no centro da área: postos perto trabalham nela inteira. 9x9 no início, até 21x21 com esmeraldas, trabalho e mais aldeões.\n\nCeleiro e silo guardam as sobras da fila.",
+ "Zones and storage\n\nPut a field or pen marker at the center: nearby posts work the whole area. 9x9 at first, up to 21x21 with emeralds, work and more villagers.\n\nBarns and silos keep the queue's surplus.")
+page(
+ "Centro de controle\n\nContrate um administrador. O painel mostra trabalhadores, quem espera, zonas, armazéns e até 3 metas.\n\nLivro no centro: relatório no chat com o que falta. A vila cresce até 30 aldeões.",
+ "Control center\n\nHire an administrator. The panel shows workers, who is waiting, zones, storage and up to 3 goals.\n\nBook on the center: chat report of what is missing. Villages grow up to 30 villagers.")
 help["belt"] = (
  "Curvas e rampas automáticas.\nConecte esteiras vizinhas.\nRampas vencem 1 bloco.\nChave fixa a direção.\nAgachar + chave: automático.",
  "Automatic turns and ramps.\nConnect neighboring belts.\nRamps span one block up.\nWrench locks the direction.\nSneak + wrench: automatic.")
@@ -516,7 +596,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.12.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.13.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",

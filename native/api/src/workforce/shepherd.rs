@@ -5,6 +5,11 @@
 //! - Dá a ração do slot 1 a animais adultos que a comem, um de cada vez, para reproduzir até
 //!   `ranch::CAP` por espécie. Só começa se houver dois adultos prontos da mesma espécie.
 //!
+//! Com uma **zona de cercado** (`zones`, marco a até 3 blocos da borda), ele trabalha no cercado
+//! inteiro em vez do raio fixo, e a ração do slot do marco define o cercado: só ela é usada, e só
+//! as espécies que a comem são criadas (trigo: vacas, ovelhas, cabras; cenoura: porcos, coelhos;
+//! sementes: galinhas).
+//!
 //! Tudo exige o aldeão ao lado do animal ou do item. Não usa energia; ao contrário do rancho,
 //! não ordenha nem abate. Animais vêm do registro do rancho (`entity_tick_pre`), lendo no
 //! máximo `MAX_READS` NBT por ciclo.
@@ -12,7 +17,8 @@ use super::*;
 use production::ranch;
 
 pub(super) const RADIUS: f64 = 6.0;
-const MAX_READS: usize = 12;
+/// NBT de animais lidos por ciclo, em rodízio (o mesmo teto do `locate` dos aldeões).
+pub(super) const MAX_READS: usize = 4;
 const SHEEP: u8 = 1;
 /// Ações guardadas em `Action` enquanto o trabalhador anda.
 const GATHER: i32 = 1;
@@ -24,9 +30,12 @@ fn spot_of(at: [f64; 3]) -> [i32; 3] {
     [at[0].floor() as i32, at[1].floor() as i32, at[2].floor() as i32]
 }
 
-fn in_range(at: [f64; 3], post: [i32; 3]) -> bool {
-    (at[0] - f64::from(post[0]) - 0.5).hypot(at[2] - f64::from(post[2]) - 0.5) <= RADIUS
-        && (at[1] - f64::from(post[1])).abs() <= 3.0
+fn in_range(at: [f64; 3], post: [i32; 3], zone: Option<&zones::Zone>) -> bool {
+    match zone {
+        Some(zone) => zones::contains(zone, at),
+        None => (at[0] - f64::from(post[0]) - 0.5).hypot(at[2] - f64::from(post[2]) - 0.5) <= RADIUS
+            && (at[1] - f64::from(post[1])).abs() <= 3.0,
+    }
 }
 
 struct Seen {
@@ -39,14 +48,26 @@ struct Seen {
     color: i32,
 }
 
-fn animals(host: &mut dyn Host, pos: [i32; 3]) -> Vec<Seen> {
-    let mut list = Vec::new();
+/// Animais no raio (sem NBT) e a fatia cujo NBT foi lido neste ciclo.
+fn animals(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, zone: Option<&zones::Zone>) -> (Vec<(u32, u8, [f64; 3])>, Vec<Seen>) {
+    let mut nearby: Vec<(u32, u8, [f64; 3])> = Vec::new();
     for (id, kind) in ranch::recent(host.dimension()) {
-        if kind == ranch::VILLAGER || list.len() >= MAX_READS {
+        if kind == ranch::VILLAGER {
             continue;
         }
         let Some(handle) = host.entity(id) else { continue };
-        let Some(at) = handle.position(host).filter(|at| in_range(*at, pos)) else { continue };
+        let Some(at) = handle.position(host).filter(|at| in_range(*at, pos, zone)) else { continue };
+        nearby.push((id, kind, at));
+    }
+    if nearby.is_empty() {
+        return (nearby, Vec::new());
+    }
+    let start = number(entity, "Herd") as usize % nearby.len();
+    set_number(entity, "Herd", (start + MAX_READS) as i32);
+    let mut list = Vec::new();
+    for step in 0..MAX_READS.min(nearby.len()) {
+        let (id, kind, at) = nearby[(start + step) % nearby.len()];
+        let Some(handle) = host.entity(id) else { continue };
         let Some(nbt) = host.entity_nbt(handle) else { continue };
         list.push(Seen {
             id, kind, at,
@@ -56,7 +77,30 @@ fn animals(host: &mut dyn Host, pos: [i32; 3]) -> Vec<Seen> {
             color: ranch::tag_int(&nbt, "Color"),
         });
     }
-    list
+    (nearby, list)
+}
+
+/// Se o alvo atual ainda precisa da ação, só atualiza a posição — o animal anda.
+fn follow(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, zone: Option<&zones::Zone>) -> Option<Plan> {
+    let id = number(entity, "TargetMob") as u32;
+    let action = number(entity, "Action");
+    if id == 0 || action == 0 || action == GATHER {
+        return None;
+    }
+    let handle = host.entity(id)?;
+    let at = handle.position(host).filter(|at| in_range(*at, pos, zone))?;
+    let nbt = host.entity_nbt(handle)?;
+    match action {
+        SHEAR if ranch::tag_int(&nbt, "Sheared") == 0 && ranch::tag_int(&nbt, "Age") >= 0 => {
+            Some(choose(entity, SHEAR, id, at))
+        }
+        FEED if ranch::tag_int(&nbt, "InLove") == 0 && ranch::tag_int(&nbt, "Age") >= 0
+            && entity.items[FEED_SLOT].as_ref().is_some_and(|stack| plain(stack)) =>
+        {
+            Some(choose(entity, FEED, id, at))
+        }
+        _ => None,
+    }
 }
 
 fn wool(color: i32) -> String {
@@ -73,12 +117,15 @@ fn choose(entity: &mut ModBlockEntity, action: i32, id: u32, at: [f64; 3]) -> Pl
 }
 
 /// Próxima tarefa do pastor. `Err` traz o estado de espera do painel.
-pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, _now: u64) -> Result<Plan, i32> {
+pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) -> Result<Plan, i32> {
     let room = entity.items[outputs(&entity.id)].to_vec();
     let dimension = host.dimension();
+    let zone = zones::zone_for(dimension, pos, zones::Kind::Pen, now);
+    set_pos(entity, "ZoneAt", zone.as_ref().map(|zone| zone.pos));
     // 1. Produtos no chão.
-    let (min, max) = ([f64::from(pos[0]) - RADIUS, f64::from(pos[1]) - 2.0, f64::from(pos[2]) - RADIUS],
-        [f64::from(pos[0]) + RADIUS + 1.0, f64::from(pos[1]) + 3.0, f64::from(pos[2]) + RADIUS + 1.0]);
+    let (middle, reach) = zone.as_ref().map_or((pos, RADIUS), |zone| (zone.pos, f64::from(zone.side / 2)));
+    let (min, max) = ([f64::from(middle[0]) - reach, f64::from(middle[1]) - 2.0, f64::from(middle[2]) - reach],
+        [f64::from(middle[0]) + reach + 1.0, f64::from(middle[1]) + 3.0, f64::from(middle[2]) + reach + 1.0]);
     let mut full = false;
     for drop in host.item_entities(dimension, min, max) {
         if !ranch::collectable(&drop.stack.item) || drop.stack.extra.is_some() {
@@ -89,7 +136,15 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         }
         full = true;
     }
-    let herd = animals(host, pos);
+    let wanted = zone.as_ref().and_then(|zone| zone.filter.clone());
+    let feeding = entity.items[FEED_SLOT].as_ref()
+        .is_some_and(|stack| wanted.as_ref().is_none_or(|wanted| *wanted == *stack.item));
+    if number(entity, "Action") != FEED || feeding {
+        if let Some(plan) = follow(host, pos, entity, zone.as_ref()) {
+            return Ok(plan);
+        }
+    }
+    let (nearby, herd) = animals(host, pos, entity, zone.as_ref());
     // 2. Ovelhas para tosquiar.
     for sheep in herd.iter().filter(|animal| animal.kind == SHEEP && animal.adult && !animal.sheared) {
         if farm::drops_fit(&room, &[(wool(sheep.color).as_str(), 3)]) {
@@ -98,10 +153,11 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         full = true;
     }
     // 3. Ração: só quando dois adultos da mesma espécie podem cruzar.
-    let feed = entity.items[FEED_SLOT].as_ref().filter(|stack| plain(stack)).map(|stack| stack.item.to_string());
+    let feed = entity.items[FEED_SLOT].as_ref().filter(|stack| plain(stack)).map(|stack| stack.item.to_string())
+        .filter(|item| wanted.as_ref().is_none_or(|wanted| wanted == item));
     if let Some(item) = feed {
         for &kind in ranch::feeds(&item) {
-            let population = herd.iter().filter(|animal| animal.kind == kind).count();
+            let population = nearby.iter().filter(|(_, seen, _)| *seen == kind).count();
             let ready: Vec<&Seen> = herd.iter().filter(|animal| animal.kind == kind && animal.adult && !animal.in_love).collect();
             let loving = herd.iter().any(|animal| animal.kind == kind && animal.in_love);
             // Um já comeu: alimenta o par dele. Senão, precisa de dois prontos.
@@ -111,12 +167,20 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         }
     }
     set_target(entity, None);
-    Err(if full { 3 } else if herd.is_empty() { production::NO_ANIMALS } else { IDLE_WORK })
+    Err(if full { 3 } else if nearby.is_empty() { production::NO_ANIMALS } else { IDLE_WORK })
 }
 
 /// Executa a ação ao lado do alvo. Devolve a carga (vazia ao alimentar) ou `None` se o alvo
 /// sumiu, já foi atendido ou se afastou.
-pub(super) fn perform(host: &mut dyn Host, spot: [i32; 3], entity: &mut ModBlockEntity, _now: u64) -> Option<Vec<(String, u32)>> {
+pub(super) fn perform(host: &mut dyn Host, spot: [i32; 3], entity: &mut ModBlockEntity, now: u64) -> Option<Vec<(String, u32)>> {
+    let done = act(host, spot, entity, now);
+    if done.is_some() && let Some(marker) = get_pos(entity, "ZoneAt") {
+        zones::credit(host, marker);
+    }
+    done
+}
+
+fn act(host: &mut dyn Host, spot: [i32; 3], entity: &mut ModBlockEntity, _now: u64) -> Option<Vec<(String, u32)>> {
     let id = number(entity, "TargetMob") as u32;
     let action = number(entity, "Action");
     set_number(entity, "Action", 0);

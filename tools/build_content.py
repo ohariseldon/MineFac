@@ -68,6 +68,12 @@ BLOCKS = {
     "hauler_post": ("machine", "iron", 7, [4, 5, 6], 1.5),
     "foreman_desk": ("machine", "wood", 4, [], 1.5),
     "shepherd_post": ("machine", "wood", 5, [2, 3, 4], 1.5),
+    # Zonas, armazenagem e gestão da vila.
+    "field_marker": ("marker", None, 1, [], 1.0),
+    "pen_marker": ("marker", None, 1, [], 1.0),
+    "barn": ("machine", "wood", 27, [], 2.0),
+    "silo": ("machine", "iron", 18, [], 2.0),
+    "control_center": ("machine", "steel", 4, [], 2.0),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
 }
@@ -102,7 +108,8 @@ TABS = {
         "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
         "minecraft:coal", "minecraft:lava_bucket"]),
     "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "wrench"]),
-    "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk", "mill", "kitchen",
+    "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
+        "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
         "pantry", "flour", "biomass", "tesla", "repair_kit", "minecraft:bone_meal"]),
 }
 
@@ -194,6 +201,13 @@ def model(kind, name, tier):
                 box([14, 3.25, 5], [16, 3.75, 11], {"up": "#lane_b", "*": "#iron"}),
                 box([0, 2, 14], [16, 5, 16], {"up": "#rail", "*": "#iron"})]
         return textures, elements
+    if kind == "marker":
+        sign = "minecraft:block/brown_wool" if name == "pen_marker" else "minecraft:block/lime_wool"
+        textures = {"wood": "minecraft:block/stripped_oak_log", "sign": sign, "particle": "minecraft:block/stripped_oak_log"}
+        return textures, [
+            box([7, 0, 7], [9, 14, 9], "#wood", uv={"side": [7, 2, 9, 16], "up": [7, 7, 9, 9]}),
+            box([3, 9, 7.5], [13, 15, 8.5], "#sign", uv={"side": [3, 1, 13, 7], "up": [3, 7, 13, 8]}),
+        ]
     if kind == "pole":
         textures = {"wood": "minecraft:block/stripped_spruce_log", "glass": "minecraft:block/copper_block",
                     "particle": "minecraft:block/stripped_spruce_log"}
@@ -282,6 +296,7 @@ SHAPES = {
     "water_wheel": [[0, 0, 0, 1, 1, 1]],
     "wind_turbine": [[0.4375, 0, 0.4375, 0.5625, 1.5, 0.5625]],
     "grow_lamp": [[0.25, 0, 0.25, 0.75, 0.9375, 0.75]],
+    "marker": [[0.375, 0, 0.375, 0.625, 0.9375, 0.625]],
 }
 
 def write(path, value):

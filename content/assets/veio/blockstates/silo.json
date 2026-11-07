@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/silo"
+    },
+    "facing=west": {
+      "model": "veio:block/silo",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/silo",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/silo",
+      "y": 270
+    }
+  }
+}

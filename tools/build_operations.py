@@ -39,6 +39,8 @@ def add_labels(langs):
         "walking": ("O trabalhador está indo até a tarefa.", "The worker is walking to the task."),
         "idle_work": ("Nada a atender: abasteça o estoque ou aguarde produtos.", "Nothing to serve: stock the post or wait for products."),
         "no_wage": ("Coloque esmeraldas na mesa para recontratar trabalhadores.", "Put emeralds in the desk to rehire workers."),
+        "zone": ("Postos perto da borda trabalham nesta zona.", "Posts near the border work in this zone."),
+        "storing": ("A fila do capataz guarda e retira itens daqui.", "The foreman's queue stores and takes items here."),
         "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
     }
     for prefix, entries in (("sector", sectors), ("advice", advice)):

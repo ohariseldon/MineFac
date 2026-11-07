@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:chest",
+    "minecraft:chest",
+    "minecraft:barrel",
+    "minecraft:hay_block"
+  ],
+  "result": {
+    "id": "veio:barn",
+    "count": 1
+  }
+}

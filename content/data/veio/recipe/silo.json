@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:barrel",
+    "minecraft:barrel",
+    "minecraft:hay_block",
+    "veio:iron_plate"
+  ],
+  "result": {
+    "id": "veio:silo",
+    "count": 1
+  }
+}

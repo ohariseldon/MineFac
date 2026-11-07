@@ -1,0 +1,31 @@
+{
+  "parent": "veio:coordination",
+  "display": {
+    "icon": {
+      "id": "veio:control_center"
+    },
+    "title": {
+      "translate": "advancement.veio.headquarters.title"
+    },
+    "description": {
+      "translate": "advancement.veio.headquarters.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:control_center"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0"
+    ]
+  ]
+}
