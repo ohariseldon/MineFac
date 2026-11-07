@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:shears",
+    "minecraft:lead",
+    "minecraft:hay_block",
+    "minecraft:emerald"
+  ],
+  "result": {
+    "id": "veio:shepherd_post",
+    "count": 1
+  }
+}

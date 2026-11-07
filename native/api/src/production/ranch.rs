@@ -12,7 +12,7 @@ pub(crate) const KINDS: [&str; 8] = [
     "minecraft:cow", "minecraft:sheep", "minecraft:pig", "minecraft:chicken", "minecraft:rabbit",
     "minecraft:goat", "minecraft:mooshroom", "minecraft:villager",
 ];
-const VILLAGER: u8 = 7;
+pub(crate) const VILLAGER: u8 = 7;
 const RADIUS: f64 = 6.0;
 /// Adultos por espécie que o rancho mantém; acima disso, abate o excedente.
 pub(crate) const CAP: usize = 10;
@@ -83,17 +83,17 @@ pub(crate) fn is_feed(item: &str) -> bool {
 }
 
 /// Produtos de animais que o rancho recolhe do chão em volta.
-fn collectable(item: &str) -> bool {
+pub(crate) fn collectable(item: &str) -> bool {
     matches!(item, "minecraft:egg" | "minecraft:brown_egg" | "minecraft:blue_egg" | "minecraft:feather"
         | "minecraft:leather" | "minecraft:beef" | "minecraft:porkchop" | "minecraft:chicken" | "minecraft:mutton"
         | "minecraft:rabbit" | "minecraft:rabbit_hide" | "minecraft:rabbit_foot")
         || item.ends_with("_wool")
 }
 
-const WOOL: [&str; 16] = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
+pub(crate) const WOOL: [&str; 16] = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
     "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"];
 
-fn tag_int(nbt: &Compound, key: &str) -> i32 {
+pub(crate) fn tag_int(nbt: &Compound, key: &str) -> i32 {
     match nbt.get(&key.into()) {
         Some(Tag::Int(value)) => *value,
         Some(Tag::Byte(value)) => i32::from(*value),
