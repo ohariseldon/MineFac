@@ -225,7 +225,8 @@ pub(super) fn process(entity: &mut ModBlockEntity) {
         });
         set_number(entity, "Progress", 0);
     }
-    if !can_add(&entity.items[output_slot], item, amount) {
+    let produced = upgrades::output_amount(entity, item, amount);
+    if !can_add(&entity.items[output_slot], item, produced) {
         set_number(entity, "Status", 3);
         return;
     }
@@ -245,15 +246,15 @@ pub(super) fn process(entity: &mut ModBlockEntity) {
         consume(&mut entity.items[slot], input.count);
     }
     add(&mut entity.items[output_slot], item, amount);
-    if upgrades::bonus_ready(entity) && can_add(&entity.items[output_slot], item, amount) {
+    if upgrades::bonus_ready(entity, item) {
         add(&mut entity.items[output_slot], item, amount);
     }
-    finish_cycle(entity);
+    finish_cycle(entity, produced);
 }
 
 /// Contadores comuns ao terminar um ciclo de produção.
-pub(super) fn finish_cycle(entity: &mut ModBlockEntity) {
-    set_number(entity, "Produced", number(entity, "Produced").saturating_add(1));
+pub(super) fn finish_cycle(entity: &mut ModBlockEntity, produced: u32) {
+    set_number(entity, "Produced", number(entity, "Produced").saturating_add(produced as i32));
     set_number(entity, "Total", number(entity, "Total").saturating_add(1));
     set_number(entity, "Progress", 0);
 }

@@ -351,8 +351,8 @@ fn modules_trade_one_bottleneck_for_another() {
     assert_eq!(upgrades::apply(30, 8, efficiency), (30, 5));
     let mut press = entity(PRESS, 2);
     set_number(&mut press, "Module", 3);
-    let extras = (0..20).filter(|_| upgrades::bonus_ready(&mut press)).count();
-    assert_eq!(extras, 2, "produtividade: um extra a cada dez ciclos");
+    let extras = (0..20).filter(|_| upgrades::bonus_ready(&mut press, PLATE)).count();
+    assert_eq!(extras, 4, "produtividade: um lote extra a cada cinco ciclos");
     assert!(!upgrades::supports(TESLA));
 }
 

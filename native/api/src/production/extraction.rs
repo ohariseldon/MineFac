@@ -64,7 +64,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let (ticks, draw) = upgrades::apply(ticks, draw, upgrades::effect(entity));
     set_number(entity, "Duration", ticks);
     let (item, amount) = node.output;
-    if !can_add(&entity.items[0], item, amount) {
+    let produced = upgrades::output_amount(entity, item, amount);
+    if !can_add(&entity.items[0], item, produced) {
         set_number(entity, "Status", 3);
         return;
     }
@@ -81,8 +82,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return;
     }
     add(&mut entity.items[0], item, amount);
-    if upgrades::bonus_ready(entity) && can_add(&entity.items[0], item, amount) {
+    if upgrades::bonus_ready(entity, item) {
         add(&mut entity.items[0], item, amount);
     }
-    finish_cycle(entity);
+    finish_cycle(entity, produced);
 }

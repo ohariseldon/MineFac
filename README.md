@@ -188,7 +188,9 @@ Os **módulos** entram com o botão direito numa máquina de receita ou extrator
 |---|---|---|---|---|
 | Velocidade | 60% | 180% | 150% | Mais produção por máquina, 8% mais energia por produto |
 | Eficiência | 100% | 60% | 50% | Menos energia e metade da poluição |
-| Produtividade | 115% | 140% | 120% | Um produto extra a cada dez ciclos |
+| Produtividade | 115% | 140% | 120% | Um lote extra a cada cinco ciclos (+20%) |
+
+Produtividade reserva espaço para o lote extra antes de trabalhar: saída cheia pausa sem perder o bônus. A fração pertence ao produto e reinicia ao concluir uma receita de outro produto. O painel conta itens produzidos, incluindo lotes e bônus; o contador interno de ciclos permanece separado.
 
 O painel mostra o módulo, a poluição emitida por minuto e a integridade. Um selo colorido na tampa da máquina indica o módulo instalado.
 

@@ -21,14 +21,14 @@ pub(super) struct Effect {
 
 const NONE: Effect = Effect { time: 1.0, power: 1.0, pollution: 1.0, bonus: 0 };
 
-/// Velocidade: 40% mais rápido, gasta 80% mais por tick (8% mais por produto) e polui 50% mais.
+/// Velocidade: 40% menos tempo de ciclo, gasta 80% mais por tick (8% mais por produto) e polui 50% mais.
 /// Eficiência: 40% menos energia e metade da poluição.
-/// Produtividade: um produto extra a cada dez ciclos, ciclos 15% mais longos e 40% mais energia.
+/// Produtividade: um lote extra a cada cinco ciclos, ciclos 15% mais longos e 40% mais energia.
 pub(super) fn effect_of(module: i32) -> Effect {
     match module {
         1 => Effect { time: 0.6, power: 1.8, pollution: 1.5, bonus: 0 },
         2 => Effect { time: 1.0, power: 0.6, pollution: 0.5, bonus: 0 },
-        3 => Effect { time: 1.15, power: 1.4, pollution: 1.2, bonus: 10 },
+        3 => Effect { time: 1.15, power: 1.4, pollution: 1.2, bonus: 20 },
         _ => NONE,
     }
 }
@@ -51,18 +51,33 @@ pub(super) fn apply(duration: i32, draw: i32, effect: Effect) -> (i32, i32) {
     (((duration as f32 * effect.time).round() as i32).max(1), ((draw as f32 * effect.power).round() as i32).max(1))
 }
 
-/// Acumula o bônus de produtividade; devolve `true` quando sai um produto extra.
-pub(super) fn bonus_ready(entity: &mut ModBlockEntity) -> bool {
-    let effect = effect(entity);
-    if effect.bonus == 0 {
-        return false;
-    }
-    let bonus = number(entity, "Bonus") + effect.bonus;
-    if bonus >= 100 {
-        set_number(entity, "Bonus", bonus - 100);
-        true
-    } else {
-        set_number(entity, "Bonus", bonus);
-        false
-    }
+/// Frações pertencem ao produto: não financiar netherita com ciclos de pedra.
+fn accumulated(entity: &ModBlockEntity, item: &str) -> i32 {
+    with_nbt_key("BonusItem", |key| {
+        if matches!(entity.nbt.get(key), Some(Tag::String(old)) if java_eq(old, item)) {
+            number(entity, "Bonus").clamp(0, 99)
+        } else { 0 }
+    })
+}
+
+/// Reserva espaço para o lote inteiro, incluindo o bônus devido neste ciclo.
+/// Consulta pura: esperar por saída ou energia não pode gastar frações.
+pub(super) fn output_amount(entity: &ModBlockEntity, item: &str, amount: u32) -> u32 {
+    let bonus = effect(entity).bonus;
+    if bonus > 0 && accumulated(entity, item) + bonus >= 100 { amount * 2 }
+    else { amount }
+}
+
+/// Só chamar ao concluir um ciclo cuja saída inteira já cabe.
+pub(super) fn bonus_ready(entity: &mut ModBlockEntity, item: &str) -> bool {
+    let bonus = effect(entity).bonus;
+    if bonus == 0 { return false; }
+    let total = accumulated(entity, item) + bonus;
+    with_nbt_key("BonusItem", |key| {
+        if !matches!(entity.nbt.get(key), Some(Tag::String(old)) if java_eq(old, item)) {
+            entity.nbt.insert(key.clone(), Tag::String(item.into()));
+        }
+    });
+    set_number(entity, "Bonus", total % 100);
+    total >= 100
 }
