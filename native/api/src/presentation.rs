@@ -16,11 +16,13 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 26] = [
+pub(super) const STATUS_KEYS: [&str; 28] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
     "no_worker", "absent", "no_task", "no_food", "path", "walking", "idle_work", "no_wage",
+    // Zonas e armazéns.
+    "zone", "storing",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
@@ -32,7 +34,7 @@ pub(super) fn screen(block: &str) -> Option<NativeScreen> {
         SOLAR | BATTERY | TESLA | inserters::ID | inserters::FAST | inserters::LONG => vec![None],
         HUB => vec![Some([26.0, 45.0]), Some([62.0, 45.0]), Some([116.0, 45.0]), Some([152.0, 45.0])],
         HARVESTER => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0])],
-        _ if workforce::is_post(block) => workforce::screen_slots(block)?,
+        _ if workforce::owns(block) => workforce::screen_slots(block)?,
         _ => production::screen_slots(block)?,
     };
     Some(NativeScreen {
@@ -127,6 +129,10 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         contracts::draw_screen(host, event);
         return;
     }
+    if event.block == workforce::CONTROL_CENTER {
+        workforce::center::draw_screen(host, event);
+        return;
+    }
     let status = read(0).clamp(0, STATUS_KEYS.len() as i32 - 1) as usize;
     let status_text = Text::tr(&format!("veio.status.{}", STATUS_KEYS[status]), &[]).plain();
     lamp_icon(host, event, [9.0, 24.0], status);
@@ -135,7 +141,7 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     // Seta entre a última entrada e a primeira saída; nas demais máquinas, uma barra.
     let first_output = output_slots(event.block).start;
     let positions = &machine_slots;
-    let post = workforce::is_post(event.block);
+    let post = workforce::owns(event.block);
     if first_output > 0 && first_output < positions.len() && event.block != HARVESTER && !post {
         arrow(host, event, positions[first_output - 1][0] + 16.0, positions[first_output][0], progress);
     } else if !matches!(event.block, BATTERY | CABLE | SOLAR) && production::shows_progress(event.block) && !post {
@@ -227,6 +233,10 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
         if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") },
     ];
     debug_assert_eq!(values.len(), DATA_SLOTS);
+    // Centro de controle e marcos de zona publicam os próprios números.
+    let own = if entity.id == workforce::CONTROL_CENTER { Some(workforce::center::data(entity)) }
+        else if workforce::zones::is_marker(&entity.id) { Some(workforce::zones::data(entity)) } else { None };
+    let values: [i32; DATA_SLOTS] = own.and_then(|own| own.try_into().ok()).unwrap_or(values);
     if entity.data.len() != DATA_SLOTS {
         entity.data.resize(DATA_SLOTS, 0);
     }
@@ -285,7 +295,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
         return power::draw(host, event);
     }
     if inserters::is_arm(event.block) { return inserters::draw(host, event); }
-    if production::draw(host, event) {
+    if production::draw(host, event) || workforce::zones::draw(host, event) {
         return;
     }
     let status = (number(event.entity, "Status") as usize).min(STATUS_KEYS.len() - 1);

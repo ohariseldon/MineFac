@@ -1,6 +1,6 @@
 # Lote integrado de logística
 
-Este lote amplia o PR dos braços, compatibilizado com a consolidação 0.12.0, a fila do coordenador, o pastor e o lote 3 do Grok. A unidade da entrega é uma rede que abastece, transporta, separa, prioriza, armazena e pausa itens, com ferramentas de escala e leitura de vazão. A IA, os contratos de trabalhadores e os ajustes globais de balanceamento continuam com Cloud e Grok.
+Este lote amplia o PR dos braços, compatibilizado com a consolidação 0.14.0, incluindo fila do coordenador, pastor, zonas, armazenamento, aldeias e os ajustes do Grok já integrados à main. A unidade da entrega é uma rede que abastece, transporta, separa, prioriza, armazena e pausa itens, com ferramentas de escala e leitura de vazão. A IA, os contratos de trabalhadores e os ajustes globais de balanceamento continuam com Cloud e Grok.
 
 ## Recursos implementados
 
@@ -41,9 +41,9 @@ Os braços continuam usando `Host::move_items` com filtros e faces, de forma at�
 
 As escolhas são salvas em NBT. Blocos existentes começam equilibrados e sem filtro. Nenhum ID antigo mudou. O perfil de todos os braços permanece `Transport`, fora das tarefas genéricas dos aldeões. Custos e ritmos estão em `inserters::tier` para a revisão do Grok.
 
-Validação final após integração da 0.12.0: 93 regras offline aprovadas, compilação de metadados contra a API real `66f3981`, 427 JSON, 99 páginas e 55 texturas conferidos. Compilação completa pelo launcher e conferência visual no jogo estão pendentes. A versão e o ZIP oficial permanecem 0.12.0 até a consolidação; para testar o código da branch use `launcher.exe --rebuild`.
+Validação final após integração da 0.14.0: 108 regras offline aprovadas, compilação de metadados contra a API real `66f3981`, 475 JSON, 93 páginas no guia industrial, 23 no guia da aldeia e 58 texturas conferidos. Compilação completa pelo launcher e conferência visual no jogo estão pendentes. A versão e o ZIP oficial permanecem 0.14.0 até a consolidação; para testar o código da branch use `launcher.exe --rebuild`.
 
-O guia está em 99 das 100 páginas suportadas pelo Horizon. A próxima expansão de conteúdo deve revisar a organização do guia antes de acrescentar páginas.
+Foi preservada a divisão em guia industrial e guia da aldeia recebida da nuvem. Cada volume deve continuar respeitando o limite de 100 páginas do Horizon.
 
 ## Visão das próximas rodadas
 

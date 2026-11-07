@@ -28,11 +28,18 @@ pub(super) mod farmhand;
 pub(super) mod foreman;
 pub(super) mod hauler;
 pub(super) mod shepherd;
+pub(super) mod center;
+pub(super) mod storage;
+pub(super) mod spawn;
+pub(super) mod village;
+pub(super) mod zones;
 
 pub(super) const FARM_POST: &str = "veio:farm_post";
 pub(super) const HAULER_POST: &str = "veio:hauler_post";
 pub(super) const FOREMAN_DESK: &str = "veio:foreman_desk";
 pub(super) const SHEPHERD_POST: &str = "veio:shepherd_post";
+pub(super) const CONTROL_CENTER: &str = center::CONTROL_CENTER;
+pub(super) use zones::{FIELD_MARKER, PEN_MARKER};
 pub(super) const VILLAGER: &str = "minecraft:villager";
 /// Contratar custa uma esmeralda, paga só quando a contratação dá certo.
 pub(super) const WAGE: &str = "minecraft:emerald";
@@ -48,6 +55,9 @@ pub(super) const WALKING: i32 = 23;
 pub(super) const IDLE_WORK: i32 = 24;
 /// Capataz encontrou posto vazio, mas não tem esmeralda para contratar.
 pub(super) const NO_WAGE: i32 = 25;
+/// Marco de zona ativo e armazém com espaço.
+pub(super) const ZONE_ACTIVE: i32 = 26;
+pub(super) const STORING: i32 = 27;
 /// Resposta de uma tarefa que ainda está procurando: o painel mantém o estado anterior.
 pub(super) const KEEP: i32 = -1;
 
@@ -82,8 +92,14 @@ const MAX_SKIPPED: usize = 8;
 
 pub(super) type Uuid = [i32; 4];
 
+/// Blocos com trabalhador contratado.
 pub(super) fn is_post(block: &str) -> bool {
-    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST)
+    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST | CONTROL_CENTER)
+}
+
+/// Todos os blocos deste módulo: postos, marcos de zona e armazéns.
+pub(super) fn owns(block: &str) -> bool {
+    is_post(block) || zones::is_marker(block) || storage::is_store(block)
 }
 
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
@@ -96,7 +112,9 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         FOREMAN_DESK => (4, vec![0, 1, 2, 3], vec![]),
         // Comida; ração para os animais; produtos (lã, ovos, penas).
         SHEPHERD_POST => (5, vec![0, 1], vec![2, 3, 4]),
-        _ => return None,
+        // Comida do administrador; três metas (sem automação).
+        CONTROL_CENTER => (4, vec![0], vec![]),
+        _ => return zones::layout(block).or_else(|| storage::layout(block)),
     })
 }
 
@@ -138,6 +156,9 @@ pub(super) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (SHEPHERD_POST, 1) => production::ranch::is_feed(&stack.item),
         (HAULER_POST, 1..=3) => true,
         (FOREMAN_DESK, 3) => stack.item.as_ref() == WAGE,
+        (CONTROL_CENTER, _) => center::accepts(slot, stack),
+        _ if zones::is_marker(block) => zones::accepts(block, slot, stack),
+        _ if storage::is_store(block) => storage::accepts(block, slot, stack),
         _ => false,
     }
 }
@@ -576,11 +597,10 @@ pub(super) fn rotate(entity: &mut ModBlockEntity, len: usize) {
 pub(super) fn candidate(host: &mut dyn Host, pos: [i32; 3], now: u64) -> Option<(Uuid, u32)> {
     let dimension = host.dimension();
     let center = post_center(pos);
-    let mut nearby: Vec<(f64, u32)> = production::ranch::recent_villagers(dimension).into_iter()
-        .filter_map(|id| {
-            let at = host.entity(id)?.position(host)?;
-            near(at, center, HIRE_RADIUS).then(|| ((at[0] - center[0]).hypot(at[2] - center[2]), id))
-        })
+    // Posições do censo (até 5 s de idade); a distância exata não é crítica para contratar.
+    let mut nearby: Vec<(f64, u32)> = production::ranch::villager_positions(host, dimension).into_iter()
+        .filter(|(_, at)| near(*at, center, HIRE_RADIUS))
+        .map(|(id, at)| ((at[0] - center[0]).hypot(at[2] - center[2]), id))
         .collect();
     nearby.sort_by(|a, b| a.0.total_cmp(&b.0));
     nearby.into_iter().find_map(|(_, id)| {
@@ -618,6 +638,16 @@ pub(super) fn dismiss(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntit
 
 /// Clique com esmeralda contrata; agachado com a chave, dispensa.
 pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Option<Flow> {
+    let block = host.block(pos);
+    if zones::is_marker(&block) {
+        return zones::right_click(host, pos, held);
+    }
+    if block == CONTROL_CENTER && held == "minecraft:book" {
+        return center::report_to_chat(host, pos);
+    }
+    if !is_post(&block) {
+        return None;
+    }
     let wrench = held == WRENCH && host.sneaking();
     if held != WAGE && !wrench {
         return None;
@@ -691,10 +721,10 @@ fn locate(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, uuid:
         remember_entity(uuid, None);
     }
     let center = post_center(pos);
-    let nearby: Vec<u32> = production::ranch::recent_villagers(host.dimension()).into_iter()
-        .filter(|id| host.entity(*id).and_then(|handle| handle.position(host))
-            .is_some_and(|at| (at[0] - center[0]).hypot(at[2] - center[2]) <= SEARCH_RADIUS
-                && (at[1] - center[1]).abs() <= SEARCH_RADIUS))
+    let nearby: Vec<u32> = production::ranch::villager_positions(host, host.dimension()).into_iter()
+        .filter(|(_, at)| (at[0] - center[0]).hypot(at[2] - center[2]) <= SEARCH_RADIUS
+            && (at[1] - center[1]).abs() <= SEARCH_RADIUS)
+        .map(|(id, _)| id)
         .collect();
     if nearby.is_empty() {
         return None;
@@ -717,8 +747,21 @@ fn locate(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, uuid:
 /// Tick do posto. O relógio `now` vem de `defense::clock` (registros em memória); `time` é o
 /// tempo do mundo (fase do ciclo).
 pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
+    village::flush(host);
+    if zones::is_marker(&entity.id) {
+        return zones::tick(host, pos, entity, time);
+    }
+    if storage::is_store(&entity.id) {
+        return storage::tick(host, pos, entity, time);
+    }
     let now = defense::clock();
     step(host, pos, entity, time, now);
+    if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) == 0 {
+        if entity.id == CONTROL_CENTER && number(entity, "Status") != 1 {
+            set_number(entity, "Admin", 0);
+        }
+        center::report(host.dimension(), pos, entity, now);
+    }
 }
 
 fn publish_ration(entity: &mut ModBlockEntity) {
@@ -824,6 +867,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         HAULER_POST => hauler::plan(host, pos, entity, now),
         FOREMAN_DESK => foreman::plan(host, pos, entity, now),
         SHEPHERD_POST => shepherd::plan(host, pos, entity, now),
+        CONTROL_CENTER => center::plan(host, pos, entity, now),
         _ => Err(NO_TASK),
     };
     let plan = match plan {
@@ -850,6 +894,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 FARM_POST => farmhand::perform(host, spot, entity),
                 HAULER_POST => hauler::perform(host, spot, entity),
                 SHEPHERD_POST => shepherd::perform(host, spot, entity, now),
+                CONTROL_CENTER => center::perform(host, spot, entity, now),
                 _ => None,
             };
             set_target(entity, None);
@@ -1045,7 +1090,7 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         // O capataz publica os postos atendidos em `Rate` (slot 6), livre fora das máquinas elétricas.
         FOREMAN_DESK => (tr("veio.metric.posts", &[&read(6), &read(7)]), "veio.hint.foreman_desk"),
         SHEPHERD_POST => (tr("veio.metric.chores", &[&read(9)]), "veio.hint.shepherd_post"),
-        _ => return None,
+        _ => return zones::panel_lines(block, data).or_else(|| storage::panel_lines(block, data)),
     };
     Some(vec![first, tr("veio.metric.ration", &[&read(12)]), tr(hint, &[])])
 }
@@ -1057,7 +1102,9 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
             Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
         FOREMAN_DESK => vec![Some([44.0, 45.0]), Some([62.0, 45.0]), Some([80.0, 45.0]), Some([134.0, 45.0])],
         SHEPHERD_POST => vec![Some([17.0, 45.0]), Some([39.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
-        _ => return None,
+        CONTROL_CENTER => center::screen_slots(),
+        FIELD_MARKER | PEN_MARKER => vec![Some([89.0, 45.0])],
+        _ => return storage::screen_slots(block),
     })
 }
 
@@ -1067,6 +1114,10 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         HAULER_POST => &["food", "supply", "", "", "output", "", ""],
         FOREMAN_DESK => &["food", "", "", "wage"],
         SHEPHERD_POST => &["food", "feed", "output", "", ""],
+        CONTROL_CENTER => &[],
+        FIELD_MARKER => &["seeds"],
+        PEN_MARKER => &["feed"],
+        _ if storage::is_store(block) => &[],
         _ => return None,
     })
 }

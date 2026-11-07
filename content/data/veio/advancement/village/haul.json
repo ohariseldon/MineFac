@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/store",
+  "display": {
+    "icon": {
+      "id": "veio:hauler_post"
+    },
+    "title": {
+      "translate": "veio.village.stage.haul.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.haul.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:hauler_post"
+          }
+        ]
+      }
+    }
+  }
+}

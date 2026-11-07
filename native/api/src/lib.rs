@@ -107,7 +107,7 @@ impl Hooks for Factory {
         if !is_factory_block(&block) {
             return Flow::Continue;
         }
-        if workforce::is_post(&block)
+        if workforce::owns(&block)
             && let Some(flow) = workforce::right_click(host, event.pos, &held)
         {
             return flow;
@@ -205,16 +205,28 @@ impl Hooks for Factory {
         }
     }
 
-    fn entity_tick_pre(&self, _host: &mut dyn Host,
+    fn entity_tick_pre(&self, host: &mut dyn Host,
         event: &mut horizon_client::mod_api::EntityTickPreEvent<'_>) -> Flow
     {
         defense::observe(event.dimension, event.entity, event.kind);
         production::ranch::observe(event.dimension, event.entity, event.kind);
+        if event.kind == "minecraft:villager" {
+            workforce::village::observe(host, event.dimension, event.entity, defense::clock());
+        }
         Flow::Continue
+    }
+
+    fn player_logged_in(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
+        workforce::spawn::logged_in(event.player, event.name, defense::clock());
+    }
+
+    fn player_respawned(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
+        workforce::spawn::respawned(host, event.name);
     }
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
         defense::advance_clock();
+        workforce::spawn::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
         }
@@ -233,6 +245,9 @@ impl Hooks for Factory {
         }
         production::generation::bounds(event.block, event.bounds);
         if inserters::is_arm(event.block) { *event.bounds = [-1.5, 0.0, -1.5, 2.5, 1.0, 2.5]; }
+        if workforce::zones::is_marker(event.block) {
+            workforce::zones::bounds(event.entity, event.bounds);
+        }
         if logistics::is_belt(event.block) {
             event.bounds[4] = event.bounds[4].max(1.6);
         }
@@ -284,7 +299,7 @@ fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
         SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::is_machine(block) || workforce::is_post(block)
+        || production::is_machine(block) || workforce::owns(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
@@ -326,7 +341,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         CABLE | POLE | STEEL_POLE => (0, vec![], vec![]),
         HUB => (4, vec![0, 1], vec![2, 3]),
         HARVESTER => (4, vec![0], vec![1, 2, 3]),
-        _ if workforce::is_post(block) => return workforce::layout(block),
+        _ if workforce::owns(block) => return workforce::layout(block),
         _ => return production::layout(block),
     })
 }
@@ -337,7 +352,7 @@ fn has_item_inputs(block: &str) -> bool {
         BELT | FAST_BELT | SPLITTER | MERGER | PRESS | ASSEMBLER | CUTTER | CRUSHER |
         INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER => true,
         DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => false,
-        _ if workforce::is_post(block) => true,
+        _ if workforce::is_post(block) || workforce::storage::is_store(block) => true,
         _ => production::has_inputs(block),
     }
 }
@@ -352,7 +367,7 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         HARVESTER => 1..4,
         GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => 0..0,
         _ if production::is_machine(block) => production::outputs(block),
-        _ if workforce::is_post(block) => workforce::outputs(block),
+        _ if workforce::owns(block) => workforce::outputs(block),
         _ => 0..1,
     }
 }
@@ -362,7 +377,7 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (HUB, _) => contracts::valid_input(slot, stack),
         (BELT | FAST_BELT | SPLITTER, 0) => true,
         (MERGER, 0 | 1) => true,
-        _ if workforce::is_post(block) => workforce::accepts(block, slot, stack),
+        _ if workforce::owns(block) => workforce::accepts(block, slot, stack),
         // Entradas das máquinas de produção, pela tabela de receitas e combustíveis.
         _ => production::accepts(block, slot, stack),
     }
@@ -414,8 +429,8 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
         tick_power(host, pos, entity);
         return;
     }
-    if workforce::is_post(&entity.id) {
-        // Trabalhadores: sem energia; o custo é a comida do aldeão.
+    if workforce::owns(&entity.id) {
+        // Trabalhadores, zonas e armazéns: sem energia; o custo é a comida do aldeão.
         return workforce::tick(host, pos, entity, time);
     }
     if needs_power(&entity.id) && host.neighbor_signal(host.dimension(), pos) > 0 {

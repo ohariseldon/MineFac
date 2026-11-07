@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:oak_fence",
+    "minecraft:wheat_seeds",
+    "minecraft:stick"
+  ],
+  "result": {
+    "id": "veio:field_marker",
+    "count": 1
+  }
+}

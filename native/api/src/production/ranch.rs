@@ -53,12 +53,40 @@ pub(crate) fn recent_villagers(dimension: &str) -> Vec<u32> {
     recent(dimension).into_iter().filter(|(_, kind)| *kind == VILLAGER).map(|(id, _)| id).collect()
 }
 
+/// Censo dos aldeões: posições de todos os aldeões vistos há pouco, por dimensão. Refeito a cada
+/// `CENSUS_EVERY` ticks do relógio do mod, ou quando a quantidade muda; até lá, quem pergunta
+/// (natalidade, níveis de zona, contratação, armazém) usa a mesma cópia em vez de reler a
+/// posição de cada aldeão. Com vilas de até 150 aldeões, isso evita centenas de leituras.
+const CENSUS_EVERY: u64 = 100;
+type Census = Vec<(String, u64, Vec<(u32, [f64; 3])>)>;
+static CENSUS: Mutex<Census> = Mutex::new(Vec::new());
+
+pub(crate) fn villager_positions(host: &dyn Host, dimension: &str) -> Vec<(u32, [f64; 3])> {
+    let now = defense::clock();
+    let mut ids = recent_villagers(dimension);
+    ids.sort_unstable();
+    if let Ok(census) = CENSUS.lock()
+        && let Some((_, stamp, list)) = census.iter().find(|(name, _, _)| name == dimension)
+        && now.saturating_sub(*stamp) < CENSUS_EVERY && *stamp <= now
+        && list.len() == ids.len() && list.iter().zip(&ids).all(|((id, _), known)| id == known)
+    {
+        return list.clone();
+    }
+    let list: Vec<(u32, [f64; 3])> = ids.into_iter()
+        .filter_map(|id| host.entity(id).and_then(|entity| entity.position(host)).map(|at| (id, at)))
+        .collect();
+    // Uma posição que não pôde ser lida tira o aldeão da lista: a próxima consulta refaz o censo.
+    if let Ok(mut census) = CENSUS.lock() {
+        census.retain(|(name, _, _)| name != dimension);
+        census.push((dimension.to_owned(), now, list.clone()));
+    }
+    list
+}
+
 /// Quantos aldeões há a até `radius` blocos.
 pub(crate) fn villagers_near(host: &dyn Host, center: [f64; 3], radius: f64) -> i32 {
-    recent(host.dimension()).into_iter()
-        .filter(|(_, kind)| *kind == VILLAGER)
-        .filter(|(id, _)| host.entity(*id).and_then(|entity| entity.position(host))
-            .is_some_and(|at| within(at, center, radius, radius)))
+    villager_positions(host, host.dimension()).into_iter()
+        .filter(|(_, at)| within(*at, center, radius, radius))
         .count() as i32
 }
 

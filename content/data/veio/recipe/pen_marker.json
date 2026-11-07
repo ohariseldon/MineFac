@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:oak_fence",
+    "minecraft:lead",
+    "minecraft:stick"
+  ],
+  "result": {
+    "id": "veio:pen_marker",
+    "count": 1
+  }
+}

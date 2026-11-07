@@ -1,0 +1,146 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "wood": "minecraft:block/stripped_oak_log",
+    "sign": "minecraft:block/lime_wool",
+    "particle": "minecraft:block/stripped_oak_log"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        14,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#wood",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "up": {
+          "texture": "#wood",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "north": {
+          "texture": "#wood",
+          "uv": [
+            7,
+            2,
+            9,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#wood",
+          "uv": [
+            7,
+            2,
+            9,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#wood",
+          "uv": [
+            7,
+            2,
+            9,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#wood",
+          "uv": [
+            7,
+            2,
+            9,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        9,
+        7.5
+      ],
+      "to": [
+        13,
+        15,
+        8.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#sign",
+          "uv": [
+            3,
+            7,
+            13,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#sign",
+          "uv": [
+            3,
+            7,
+            13,
+            8
+          ]
+        },
+        "north": {
+          "texture": "#sign",
+          "uv": [
+            3,
+            1,
+            13,
+            7
+          ]
+        },
+        "south": {
+          "texture": "#sign",
+          "uv": [
+            3,
+            1,
+            13,
+            7
+          ]
+        },
+        "west": {
+          "texture": "#sign",
+          "uv": [
+            3,
+            1,
+            13,
+            7
+          ]
+        },
+        "east": {
+          "texture": "#sign",
+          "uv": [
+            3,
+            1,
+            13,
+            7
+          ]
+        }
+      }
+    }
+  ]
+}

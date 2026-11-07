@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:circuit",
+    "minecraft:lectern",
+    "minecraft:book",
+    "minecraft:emerald"
+  ],
+  "result": {
+    "id": "veio:control_center",
+    "count": 1
+  }
+}

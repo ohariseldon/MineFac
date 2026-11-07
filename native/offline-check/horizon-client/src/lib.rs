@@ -429,6 +429,11 @@ pub mod mod_api {
         fn set_item_entity(&mut self, dimension: &str, id: u32, stack: ItemStack) -> bool {
             unimplemented!("set_item_entity")
         }
+        /// `native_server::Game::native_run_command`: roda como o console do servidor (nível 4,
+        /// sem saída). `false` sem servidor (cliente de outro servidor) ou se o comando falhar.
+        fn run_command(&mut self, line: &str) -> bool {
+            unimplemented!("run_command")
+        }
     }
 
     #[derive(Clone, Copy, Debug, PartialEq)]
@@ -568,6 +573,16 @@ pub mod mod_api {
     #[non_exhaustive]
     pub struct TickEvent {}
     #[non_exhaustive]
+    pub struct PlayerLoggedInEvent<'a> {
+        pub player: u128,
+        pub name: &'a str,
+    }
+    #[non_exhaustive]
+    pub struct PlayerRespawnedEvent<'a> {
+        pub player: u128,
+        pub name: &'a str,
+    }
+    #[non_exhaustive]
     pub struct RegisterGoalsEvent<'a> {
         pub mob: &'a mut crate::mobs::Mob,
     }
@@ -622,6 +637,8 @@ pub mod mod_api {
             Flow::Continue
         }
         fn tick(&self, host: &mut dyn Host, event: &mut TickEvent) {}
+        fn player_logged_in(&self, host: &mut dyn Host, event: &mut PlayerLoggedInEvent<'_>) {}
+        fn player_respawned(&self, host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {}
         fn register_goals(&self, event: &mut RegisterGoalsEvent<'_>) {}
         fn block_entity_render_bounding_box(
             &self,
