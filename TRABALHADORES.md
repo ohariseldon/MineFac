@@ -32,6 +32,29 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## Quinta entrega: vilas até 150, spawn na vila e Guia da Vila Operária
+
+### População que cresce com a vila
+
+O teto de aldeões de cada vila passou a depender do desenvolvimento a até 64 blocos: **30** de base, mais **3** por posto com trabalhador, **5** por nível de zona, **2** por armazém e **20** por um centro de controle com administrador, até **150**. A natalidade é a mesma (1 chance em 6 a cada 5 min por adulto), contando os aldeões a até 48 blocos. Uma fábrica espalhada em vários lugares tem uma vila em cada lugar, cada uma com o seu teto.
+
+**Desempenho com vilas grandes:** as contagens de aldeões (natalidade, níveis de zona, contratação, procura do trabalhador, armazém da vila) usam um **censo** das posições (`ranch::villager_positions`), refeito a cada 100 ticks ou quando o conjunto de aldeões muda. Com 150 aldeões, cada consulta deixa de reler 150 posições. O teto lê os registros de postos, zonas e armazéns, sem varrer blocos.
+
+### Spawn no centro da vila
+
+- **Mundo novo e jogador novo:** no login, o Veio procura uma vila a até 96 blocos pelos aldeões registrados. O centro é a média dos aldeões em volta daquele com mais vizinhos (onde a vila se reúne). O jogador é levado para lá, e o spawn do mundo e o dele ficam nesse ponto. Se não houver vila em 30 s, o Veio gera uma vila de planície onde o jogador está (`/place structure minecraft:village_plains`) e procura de novo; se ainda assim nada aparecer, avisa no chat.
+- **Centro de controle:** com administrador, o centro de controle passa a ser o centro da vila. O spawn do mundo e o de todos os jogadores vão para cima dele, e quem renasce é levado para lá, mesmo tendo cama em outro lugar.
+- Cada jogador recebe a tag `veio_village` depois da primeira chegada; os comandos de chegada só valem para quem não tem a tag, então voltar ao mundo não muda nada.
+- Usa os ganchos `player_logged_in` e `player_respawned` e `Host::run_command` (console do servidor), conferidos no Horizon `66f3981`. Só no Overworld.
+
+### Guia da Vila Operária
+
+O guia principal estava com 99 de 100 páginas. Os sistemas da vila foram para um **segundo livro**, o Guia da Vila Operária (23 páginas): roteiro em 7 passos, expansão das zonas, crescimento da vila, problemas comuns, comida e a consulta de todos os blocos da vila. O guia principal ficou com 86 páginas e uma página que aponta para o novo livro.
+
+- Entregue por uma aba de avanços nova, **Vila operária**, que funciona como roteiro: contratar o primeiro trabalhador, demarcar a lavoura, cercado, celeiro, carregador, capataz e centro de controle.
+- Livro + trigo fabricam outro guia da vila.
+- `tools/check_project.py` confere os dois livros (páginas, traduções, links e livro fabricado igual ao entregue).
+
 ## Quarta entrega: zonas, armazenagem, centro de controle e vilas maiores
 
 ### Zonas de lavoura e de cercado
@@ -68,7 +91,7 @@ O painel mostra também as colheitas feitas e quantas colheitas a comida guardad
 
 ### Vilas maiores
 
-- A cada 5 minutos (fase espalhada pelo id), cada aldeão adulto tem 1 chance em 6 de ter um filho, se houver pelo menos 2 aldeões a até 32 blocos e menos de 30. O vanilla limita a vila pelas camas; o teto de 30 é o triplo de uma vila grande. O bebê nasce no tick seguinte de um bloco do Veio na mesma dimensão.
+- A cada 5 minutos (fase espalhada pelo id), cada aldeão adulto tem 1 chance em 6 de ter um filho, se houver pelo menos 2 aldeões perto e menos que o teto da vila. O vanilla limita a vila pelas camas; o teto começa em 30 (o triplo de uma vila grande) e, a partir da quinta entrega, cresce com o desenvolvimento até 150. O bebê nasce no tick seguinte de um bloco do Veio na mesma dimensão.
 
 ## Terceira entrega: fila de tarefas e pastor
 
@@ -136,7 +159,7 @@ Cada posto reserva o alvo atual (planta, máquina ou posto atendido) num registr
 - **Conservação.** O espaço no posto é conferido antes da colheita. A carga só entra no posto quando cabe inteira. Dispensar com carga a mantém no posto até haver espaço; nada é destruído nem duplicado. A comida é consumida item a item até cobrir 2 pontos; cada tarefa concluída desconta esses 2 pontos.
 - **Saves.** O posto guarda o UUID do aldeão (`Worker`), a comida (`Ration`), o alvo (`Target`), a carga (`Carried`) e os contadores. Ao reabrir o mundo, o posto reencontra o aldeão pelo UUID entre os aldeões próximos, lendo no máximo 4 NBT a cada 10 ticks.
 - **Comportamento vanilla.** O aldeão só obedece enquanto o posto renova a ordem (a cada 10 ticks; ela vence em 60). Sem ordem — sem tarefa, sem comida, posto descarregado ou removido, ou dispensado — o objetivo de trabalho fica inativo e o cérebro vanilla continua no comando, incluindo comércio e profissão. Nenhum dado do aldeão é alterado.
-- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Lavrador: 9 blocos/ciclo sem zona, uma fileira da zona com zona; carregador: 16 blocos e 3 inspeções de máquina; capataz: 25 blocos de varredura e 3 inspeções de posto; pastor: 4 NBT de animais, e o alvo atual não relê o rebanho. A fila relê cada bloco da rede uma vez a cada 40 ticks. Aldeões e animais vêm do registro do rancho (`entity_tick_pre`). Sem ordem, reserva ou mesa, os objetivos não disputam os mapas.
+- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Lavrador: 9 blocos/ciclo, com ou sem zona, e no máximo um teste de água por ciclo; carregador: 16 blocos e 3 inspeções de máquina; capataz: 25 blocos de varredura e 3 inspeções de posto; pastor: 4 NBT de animais, e o alvo atual não relê o rebanho. A fila relê cada bloco da rede uma vez a cada 40 ticks. Aldeões e animais vêm do registro do rancho (`entity_tick_pre`). Sem ordem, reserva, mesa, zona ou armazém, os objetivos não disputam os mapas.
 
 ## Código
 
@@ -147,6 +170,14 @@ Cada posto reserva o alvo atual (planta, máquina ou posto atendido) num registr
 - `native/api/src/workforce/tests.rs`: 17 testes. Além dos 11 da primeira entrega: abastecer e recolher uma prensa, ignorar esteiras e outros postos, reserva entre dois carregadores, capataz alimentando e recontratando, capataz sem esmeralda e esmeralda devolvida, e insumo devolvido ao estoque quando a máquina deixa de aceitar.
 
 ### Contratos tocados (para Codex e Grok)
+
+Quinta entrega:
+
+- `lib.rs`: ganchos `player_logged_in` e `player_respawned`; o `tick` chama `workforce::spawn::tick`.
+- Substituto offline: `Host::run_command(&mut self, line: &str) -> bool` e os eventos `PlayerLoggedInEvent`/`PlayerRespawnedEvent` (`player: u128`, `name: &str`), copiados do Horizon `66f3981` (`native_server.rs`, `native_hooks.rs` e o gerador `horizon-mod-api-gen`).
+- `production/ranch.rs`: `villager_positions` (censo) e `villagers_near` passa a usá-lo.
+- Registros (`ZONES`, `STORES`, `POSTS`): leituras sem efeito colateral; a limpeza de vencidos ficou só nas escritas. O atalho de registro vazio do lote 6 do Grok continua.
+- `tools/build_tutorial.py` gera o Guia da Vila Operária e a aba `veio:village/*`; `reference_labels` gera uso e receita para os dois livros.
 
 Quarta entrega:
 
@@ -182,6 +213,8 @@ IDs, saves e campos existentes não mudaram. O posto é um bloco novo, sem migra
 
 ## Números para revisão (Grok)
 
+Vila: teto 30 + 3/posto com trabalhador + 5/nível de zona + 2/armazém + 20/centro de controle, máximo 150, desenvolvimento contado a 64 blocos e aldeões a 48. Spawn: procura a 96 blocos, mínimo 3 aldeões, espera 30 s antes de gerar uma vila.
+
 Zonas: lados 9/13/17/21; níveis 2-4 custam 8/16/32 esmeraldas, 32/128/384 tarefas na zona e 6/12/20 aldeões a 48 blocos; postos a até 3 blocos da borda usam a zona. Centro: raio 64, metas x16, comida do administrador a cada 120 ciclos. Natalidade: 1/6 a cada 6.000 ticks por adulto, mínimo 2 e teto 30 aldeões a 32 blocos.
 
 Fila: rede de até 24 blocos a 12 da mesa, 8 tarefas, refeita a cada 40 ticks, marca vence em 200 ticks; carregadores a 16 da mesa, origem e destino a 12 do carregador; mesa pede comida abaixo de 16. Pastor: raio 6, lê até 12 animais por ciclo, lã 1 a 3 por ovelha. Receita do pastor: tesoura, laço, fardo de feno, esmeralda.
@@ -192,7 +225,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0 e 90 na 0.13.0, já com os lotes 3, 4 e 5 do Grok; prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0 e 93 na 0.14.0, já com os lotes 3 a 6 do Grok; prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
@@ -202,6 +235,13 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 - Dois pastores podem perseguir o mesmo animal (a reserva é por bloco, e o animal anda); o segundo só encontra o animal já atendido e procura outro.
 - A rede da mesa guarda os primeiros 24 blocos encontrados; numa base muito densa, postos podem ficar de fora.
 - O carregador, depois da primeira volta, ainda inspeciona até 12 máquinas a cada 10 ticks quando escolhe a próxima viagem; um teto de inspeções por ciclo fica para um lote seguinte.
+
+## Teste sugerido ao usuário (quinta entrega)
+
+1. Mundo novo: você deve aparecer no meio de uma vila (ou de uma vila de planície gerada) e receber o Guia da Vila Operária. Morra longe e veja onde renasce.
+2. Construa um centro de controle com administrador: o spawn passa para cima dele; renascer leva você para lá.
+3. Com vários postos, zonas e um centro, deixe o jogo correr perto da vila: a população deve passar de 30. Compare o desempenho com a vila pequena.
+4. Siga a aba de avanços Vila operária e o guia novo: diga o que ficou confuso.
 
 ## Teste sugerido ao usuário (quarta entrega)
 

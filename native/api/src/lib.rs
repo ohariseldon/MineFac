@@ -213,8 +213,17 @@ impl Hooks for Factory {
         Flow::Continue
     }
 
+    fn player_logged_in(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
+        workforce::spawn::logged_in(event.player, event.name, defense::clock());
+    }
+
+    fn player_respawned(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
+        workforce::spawn::respawned(host, event.name);
+    }
+
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
         defense::advance_clock();
+        workforce::spawn::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
         }

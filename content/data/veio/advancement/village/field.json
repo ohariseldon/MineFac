@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/hire",
+  "display": {
+    "icon": {
+      "id": "veio:field_marker"
+    },
+    "title": {
+      "translate": "veio.village.stage.field.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.field.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:field_marker"
+          }
+        ]
+      }
+    }
+  }
+}

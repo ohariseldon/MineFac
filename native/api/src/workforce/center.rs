@@ -11,6 +11,7 @@
 //! Clicar no centro com um livro manda ao chat um relatório com os postos que precisam de atenção
 //! (posição e motivo), as zonas e o que falta para o próximo nível, os armazéns e as metas.
 use super::*;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub(crate) const CONTROL_CENTER: &str = "veio:control_center";
 pub(crate) const RADIUS: i32 = 64;
@@ -40,6 +41,7 @@ pub(crate) struct PostInfo {
 }
 
 static POSTS: Mutex<Vec<PostInfo>> = Mutex::new(Vec::new());
+static POSTS_PENDING: AtomicBool = AtomicBool::new(false);
 
 /// Chamado pelos postos a cada ciclo.
 pub(crate) fn report(dimension: &str, pos: [i32; 3], entity: &ModBlockEntity, now: u64) {
@@ -48,16 +50,31 @@ pub(crate) fn report(dimension: &str, pos: [i32; 3], entity: &ModBlockEntity, no
         staffed: worker(entity).is_some(), queued: number(entity, "Queued"), seen: now,
     };
     if let Ok(mut posts) = POSTS.lock() {
-        posts.retain(|known| !(known.dimension == dimension && known.pos == pos) && now.saturating_sub(known.seen) <= STALE);
-        posts.push(info);
+        if let Some(known) = posts.iter_mut().find(|known| known.dimension == dimension && known.pos == pos) {
+            *known = info;
+        } else {
+            posts.retain(|known| now.saturating_sub(known.seen) <= STALE);
+            posts.push(info);
+        }
+        POSTS_PENDING.store(true, Ordering::Release);
     }
 }
 
 pub(crate) fn posts_near(dimension: &str, at: [i32; 3], radius: i32, now: u64) -> Vec<PostInfo> {
-    POSTS.lock().map(|posts| posts.iter()
-        .filter(|post| post.dimension == dimension && now.saturating_sub(post.seen) <= STALE
-            && (0..3).all(|axis| (post.pos[axis] - at[axis]).abs() <= radius))
-        .cloned().collect()).unwrap_or_default()
+    if !POSTS_PENDING.load(Ordering::Acquire) {
+        return Vec::new();
+    }
+    // Leitura sem efeito colateral: entradas vencidas saem nas escritas (`register`/`report`).
+    POSTS.lock().map(|posts| {
+        if posts.is_empty() {
+            POSTS_PENDING.store(false, Ordering::Release);
+            return Vec::new();
+        }
+        posts.iter()
+            .filter(|post| post.dimension == dimension && now.saturating_sub(post.seen) <= STALE
+                && (0..3).all(|axis| (post.pos[axis] - at[axis]).abs() <= radius))
+            .cloned().collect()
+    }).unwrap_or_default()
 }
 
 /// Esperando por algo que o jogador ou o capataz precisa resolver.
@@ -78,6 +95,8 @@ pub(crate) fn perform(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
     set_number(entity, "Refresh", round % (REFRESH_EVERY * CHARGE_EVERY));
     if round % REFRESH_EVERY == 1 || !entity.nbt.contains_key(&"DWorkers".into()) {
         refresh(host.dimension(), pos, entity, now);
+        // Com administrador, o centro de controle é o centro da vila: spawn e renascimento aqui.
+        spawn::control_center(host, pos);
     }
     (round % (REFRESH_EVERY * CHARGE_EVERY) == 0).then(Vec::new)
 }

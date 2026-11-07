@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/foreman",
+  "display": {
+    "icon": {
+      "id": "veio:control_center"
+    },
+    "title": {
+      "translate": "veio.village.stage.center.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.center.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:control_center"
+          }
+        ]
+      }
+    }
+  }
+}

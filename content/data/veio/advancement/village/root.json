@@ -1,0 +1,30 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:bell"
+    },
+    "title": {
+      "translate": "veio.village.tab"
+    },
+    "description": {
+      "translate": "veio.village.tab.description"
+    },
+    "background": "minecraft:gui/advancements/backgrounds/husbandry",
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "welcome": {
+      "trigger": "minecraft:tick"
+    }
+  },
+  "rewards": {
+    "loot": [
+      "veio:tutorial/village_guide"
+    ],
+    "recipes": [
+      "veio:village_guide"
+    ],
+    "function": "veio:village/welcome"
+  }
+}

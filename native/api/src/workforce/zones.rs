@@ -15,6 +15,7 @@
 //! varrer blocos para achar a zona.
 use super::*;
 use horizon_client::mod_api::{BlockEntitySubmitEvent, CubeFace};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub(crate) const FIELD_MARKER: &str = "veio:field_marker";
 pub(crate) const PEN_MARKER: &str = "veio:pen_marker";
@@ -88,21 +89,37 @@ pub(crate) struct Zone {
 }
 
 static ZONES: Mutex<Vec<Zone>> = Mutex::new(Vec::new());
+static ZONES_PENDING: AtomicBool = AtomicBool::new(false);
 
 fn register(zone: Zone) {
     if let Ok(mut zones) = ZONES.lock() {
         let now = zone.seen;
-        zones.retain(|known| !(known.dimension == zone.dimension && known.pos == zone.pos) && now.saturating_sub(known.seen) <= STALE);
-        zones.push(zone);
+        if let Some(known) = zones.iter_mut().find(|known| known.dimension == zone.dimension && known.pos == zone.pos) {
+            *known = zone;
+        } else {
+            zones.retain(|known| now.saturating_sub(known.seen) <= STALE);
+            zones.push(zone);
+        }
+        ZONES_PENDING.store(true, Ordering::Release);
     }
 }
 
 /// Zonas vivas nesta dimensão a até `radius` blocos de `at`.
 pub(crate) fn zones_near(dimension: &str, at: [i32; 3], radius: i32, now: u64) -> Vec<Zone> {
-    ZONES.lock().map(|zones| zones.iter()
-        .filter(|zone| zone.dimension == dimension && now.saturating_sub(zone.seen) <= STALE
-            && (0..3).all(|axis| (zone.pos[axis] - at[axis]).abs() <= radius))
-        .cloned().collect()).unwrap_or_default()
+    if !ZONES_PENDING.load(Ordering::Acquire) {
+        return Vec::new();
+    }
+    // Leitura sem efeito colateral: entradas vencidas saem nas escritas (`register`/`report`).
+    ZONES.lock().map(|zones| {
+        if zones.is_empty() {
+            ZONES_PENDING.store(false, Ordering::Release);
+            return Vec::new();
+        }
+        zones.iter()
+            .filter(|zone| zone.dimension == dimension && now.saturating_sub(zone.seen) <= STALE
+                && (0..3).all(|axis| (zone.pos[axis] - at[axis]).abs() <= radius))
+            .cloned().collect()
+    }).unwrap_or_default()
 }
 
 /// A zona do tipo `kind` que o posto em `post` usa: a mais próxima cuja borda esteja a até

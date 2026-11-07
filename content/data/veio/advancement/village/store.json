@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/pen",
+  "display": {
+    "icon": {
+      "id": "veio:barn"
+    },
+    "title": {
+      "translate": "veio.village.stage.store.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.store.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:barn"
+          }
+        ]
+      }
+    }
+  }
+}

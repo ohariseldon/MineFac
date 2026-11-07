@@ -1,17 +1,25 @@
-//! Crescimento das vilas: natalidade de aldeões até o triplo de uma vila grande do Minecraft.
+//! Crescimento das vilas: natalidade de aldeões, com um teto que cresce junto com a vila.
 //!
-//! A cada `CHECK` ticks (cerca de 5 min, com fase espalhada pelo id), cada aldeão adulto tem uma
-//! chance em `CHANCE` de ter um filho, se houver pelo menos `MIN_ADULTS` aldeões a até `RADIUS`
-//! blocos e a vizinhança tiver menos de `CAP`. O vanilla limita a vila pelas camas; aqui o teto é
-//! `CAP` (o triplo de uma vila vanilla grande, com cerca de 10).
+//! - **Teto:** `BASE_CAP` (30, o triplo de uma vila grande do Minecraft) mais o desenvolvimento a
+//!   até `DEVELOPMENT_RADIUS` blocos: cada posto com trabalhador soma 3, cada nível de zona soma 5,
+//!   cada armazém soma 2 e um centro de controle com administrador soma 20. Máximo `MAX_CAP` (150).
+//!   Assim uma vila só chega a 150 depois de virar uma fábrica grande; bases espalhadas em vários
+//!   lugares têm cada uma o seu teto.
+//! - **Natalidade:** a cada `CHECK` ticks (cerca de 5 min, fase espalhada pelo id), cada aldeão
+//!   adulto tem uma chance em `CHANCE` de ter um filho, se houver pelo menos `MIN_ADULTS` aldeões a
+//!   até `COUNT_RADIUS` blocos e menos que o teto.
 //!
 //! O nascimento é decidido no tick do aldeão (`observe`) e o bebê aparece no tick seguinte de um
-//! bloco do Veio na mesma dimensão (`flush`), fora da iteração de entidades do jogo.
+//! bloco do Veio na mesma dimensão (`flush`), fora da iteração de entidades do jogo. As contagens
+//! usam o censo de posições (`ranch::villager_positions`) e os registros de postos, zonas e
+//! armazéns, sem varrer blocos.
 use super::*;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-pub(crate) const CAP: usize = 30;
-pub(crate) const RADIUS: f64 = 32.0;
+pub(crate) const BASE_CAP: usize = 30;
+pub(crate) const MAX_CAP: usize = 150;
+pub(crate) const COUNT_RADIUS: f64 = 48.0;
+pub(crate) const DEVELOPMENT_RADIUS: i32 = 64;
 pub(crate) const CHECK: u64 = 6000;
 pub(crate) const CHANCE: u64 = 6;
 pub(crate) const MIN_ADULTS: usize = 2;
@@ -27,6 +35,17 @@ fn roll(id: u32, now: u64) -> u64 {
     n
 }
 
+/// Teto de população da vila em volta de `at`.
+pub(crate) fn cap(dimension: &str, at: [i32; 3], now: u64) -> usize {
+    let posts = center::posts_near(dimension, at, DEVELOPMENT_RADIUS, now);
+    let staffed = posts.iter().filter(|post| post.staffed).count();
+    let control = posts.iter().any(|post| post.staffed && post.block == CONTROL_CENTER);
+    let levels: i32 = zones::zones_near(dimension, at, DEVELOPMENT_RADIUS, now).iter().map(|zone| zone.level).sum();
+    let stores = storage::stores_near(dimension, at, DEVELOPMENT_RADIUS, now).len();
+    let points = staffed * 3 + levels.max(0) as usize * 5 + stores * 2 + if control { 20 } else { 0 };
+    (BASE_CAP + points).min(MAX_CAP)
+}
+
 /// Chamado no tick de cada aldeão. Quase sempre sai na primeira comparação.
 pub(crate) fn observe(host: &mut dyn Host, dimension: &str, id: u32, now: u64) {
     if (now + u64::from(id)) % CHECK != 0 || roll(id, now) % CHANCE != 0 {
@@ -38,12 +57,13 @@ pub(crate) fn observe(host: &mut dyn Host, dimension: &str, id: u32, now: u64) {
     if !adult {
         return;
     }
-    let near = production::ranch::recent_villagers(dimension).into_iter()
-        .filter_map(|other| host.entity(other).and_then(|other| other.position(host)))
-        .filter(|other| (0..3).all(|axis| (other[axis] - at[axis]).abs() <= RADIUS))
-        .take(CAP)
+    let block = [at[0].floor() as i32, at[1].floor() as i32, at[2].floor() as i32];
+    let limit = cap(dimension, block, now);
+    let near = production::ranch::villager_positions(host, dimension).into_iter()
+        .filter(|(_, other)| (0..3).all(|axis| (other[axis] - at[axis]).abs() <= COUNT_RADIUS))
+        .take(limit)
         .count();
-    if near < MIN_ADULTS || near >= CAP {
+    if near < MIN_ADULTS || near >= limit {
         return;
     }
     if let Ok(mut births) = BIRTHS.lock()

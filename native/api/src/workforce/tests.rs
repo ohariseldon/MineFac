@@ -27,6 +27,8 @@ struct Village {
     /// Esmeraldas no inventário do jogador.
     emeralds: u32,
     summoned: Vec<[f64; 3]>,
+    commands: Vec<String>,
+    players: Vec<horizon_client::mod_api::NativeServerPlayer>,
     edits: Cell<u32>,
     reads: Cell<u32>,
 }
@@ -132,7 +134,14 @@ impl Host for Village {
         false
     }
     fn server_players(&self) -> Vec<horizon_client::mod_api::NativeServerPlayer> {
-        Vec::new()
+        self.players.clone()
+    }
+    fn run_command(&mut self, line: &str) -> bool {
+        self.commands.push(line.to_owned());
+        true
+    }
+    fn surface_heights(&self, _: &str, columns: &[(i32, i32)], _: horizon_client::mod_api::NativeHeightmap) -> Result<Vec<Option<i32>>, String> {
+        Ok(columns.iter().map(|_| Some(70)).collect())
     }
     fn block_entity_sync(&mut self, _: [i32; 3]) {}
     fn summon(&mut self, _: &str, _: &str, at: [f64; 3], _: Compound) -> Option<u32> {
@@ -804,7 +813,7 @@ fn farmhand_in_a_field_zone_plants_tills_and_harvests_beyond_the_old_area() {
     let mut entity = post();
     set_number(&mut entity, "Ration", 20);
     assert!(assign(village.dimension, POST, &mut entity, ([40, 0, 0, 1], 14001), 0));
-    let now = cycles_at(&mut village, POST, &mut entity, 1, 40, |post| target(post) == Some(far));
+    let now = cycles_at(&mut village, POST, &mut entity, 1, 80, |post| target(post) == Some(far));
     assert_eq!(get_pos(&entity, "ZoneAt"), Some([5, 64, 0]));
     village.walk(14001, far);
     cycle(&mut village, &mut entity, now + 1);
@@ -817,7 +826,7 @@ fn farmhand_in_a_field_zone_plants_tills_and_harvests_beyond_the_old_area() {
     let soil = [6, 63, 2];
     village.crops.insert(soil, ("minecraft:farmland".into(), 0));
     let spot = [6, 64, 2];
-    let now = cycles_at(&mut village, POST, &mut entity, now + 3, 60, |post| target(post) == Some(spot));
+    let now = cycles_at(&mut village, POST, &mut entity, now + 3, 80, |post| target(post) == Some(spot));
     village.walk(14001, spot);
     cycle(&mut village, &mut entity, now + 1);
     assert_eq!(village.crops.get(&spot).map(|(id, _)| id.as_str()), Some("minecraft:wheat"), "plantou trigo");
@@ -827,12 +836,33 @@ fn farmhand_in_a_field_zone_plants_tills_and_harvests_beyond_the_old_area() {
     let grass = [3, 64, -3];
     village.crops.insert(grass, ("minecraft:grass_block".into(), 0));
     village.crops.insert([3, 64, -1], ("minecraft:water".into(), 0));
-    let now = cycles_at(&mut village, POST, &mut entity, now + 2, 60, |post| target(post) == Some(grass));
+    let now = cycles_at(&mut village, POST, &mut entity, now + 2, 80, |post| target(post) == Some(grass));
     village.walk(14001, grass);
     cycle(&mut village, &mut entity, now + 1);
     assert_eq!(village.crops[&grass].0, "minecraft:farmland");
     let work = number(&village.stations[&[5, 64, 0]], "Work");
     assert_eq!(work, 3, "colheita, plantio e aragem contam na zona");
+}
+
+#[test]
+fn idle_farmhand_in_a_dry_field_scans_one_row() {
+    let mut village = Village::new("veio:test_work_zone_dry");
+    village.crops.clear();
+    marker(&mut village, FIELD_MARKER, [0, 64, 0], 2, None);
+    for x in -6..=6 {
+        for z in -6..=6 {
+            village.crops.insert([x, 64, z], ("minecraft:grass_block".into(), 0));
+        }
+    }
+    village.villager(15001, [1.5, 64.0, 1.5], [50, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 10);
+    assert!(assign(village.dimension, POST, &mut entity, ([50, 0, 0, 1], 15001), 0));
+    village.looks.set(0);
+    cycle(&mut village, &mut entity, 1);
+    // Fileira de 9 + ar acima + no máximo 32 blocos de água no primeiro probe.
+    assert!(village.looks.get() <= 50, "não sonda água em toda a fileira seca ({})", village.looks.get());
+    assert!(village.looks.get() >= farmhand::SCANS as u32);
 }
 
 #[test]
@@ -990,7 +1020,7 @@ fn villages_grow_with_births_until_the_cap() {
     assert_eq!(village.summoned.len(), 1, "nasceu um bebê");
     assert_eq!(village::pending("veio:test_work_births"), 0);
     // Vila cheia: ninguém nasce.
-    for id in 0..village::CAP as u32 {
+    for id in 0..village::BASE_CAP as u32 {
         village.villager(15100 + id, [0.5, 64.0, id as f64 * 0.5], [51, 0, 0, id as i32]);
     }
     village.villagers.get_mut(&15001).unwrap().0 = [0.5, 64.0, 0.5];
@@ -1070,4 +1100,78 @@ fn idle_foreman_inspects_a_few_posts_per_cycle() {
     cycle_at(&mut village, DESK, &mut desk, found + 1);
     assert_eq!(village.looks.get(), foreman::SCAN as u32, "não relê a Área para achar os postos");
     assert_eq!(village.edits.get(), foreman::LOOKS as u32, "não inspeciona os 6 postos no mesmo ciclo");
+}
+
+#[test]
+fn village_cap_grows_with_development_up_to_150() {
+    let dimension = "veio:test_work_cap";
+    let at = [500, 64, 500];
+    assert_eq!(village::cap(dimension, at, 5), village::BASE_CAP, "sem desenvolvimento, 30");
+    // Cinco postos com trabalhador (+15), um centro com administrador (+3 +20).
+    for (index, block_id) in [FARM_POST, FARM_POST, HAULER_POST, SHEPHERD_POST, FOREMAN_DESK, CONTROL_CENTER].iter().enumerate() {
+        let mut post = block(block_id);
+        post.nbt.insert("Worker".into(), Tag::IntArray(vec![60, index as i32, 0, 1]));
+        center::report(dimension, [at[0] + index as i32 * 3, 64, at[2]], &post, 5);
+    }
+    assert_eq!(village::cap(dimension, at, 5), 30 + 6 * 3 + 20);
+    // Muitas zonas no nível máximo: o teto para em 150.
+    let mut village = Village::new(dimension);
+    for index in 0..12 {
+        marker(&mut village, FIELD_MARKER, [at[0] + index * 4, 64, at[2] + 10], 4, None);
+    }
+    assert_eq!(village::cap(dimension, at, 5), village::MAX_CAP);
+    assert_eq!(village::cap(dimension, [at[0] + 500, 64, at[2]], 5), village::BASE_CAP, "outra base, longe, tem o seu teto");
+}
+
+// ---------- Spawn no centro da vila ----------
+
+fn player(uuid: u128, name: &str, at: [f64; 3]) -> horizon_client::mod_api::NativeServerPlayer {
+    horizon_client::mod_api::NativeServerPlayer {
+        uuid, name: name.to_owned(), dimension: spawn::OVERWORLD.to_owned(), position: at, ..Default::default()
+    }
+}
+
+#[test]
+fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() {
+    spawn::reset();
+    let mut village = Village::new(spawn::OVERWORLD);
+    village.crops.clear();
+    for (index, (x, z)) in [(98.5, 99.5), (101.5, 100.5), (100.5, 102.5), (99.5, 98.5), (102.5, 99.5)].iter().enumerate() {
+        village.villager(16001 + index as u32, [*x, 64.0, *z], [70, 0, 0, index as i32]);
+    }
+    village.villager(16010, [180.5, 64.0, 100.5], [70, 0, 0, 10]);
+    village.players = vec![player(7, "Steve", [90.0, 64.0, 90.0]), player(9, "Alex", [5000.0, 64.0, 5000.0])];
+
+    spawn::logged_in(7, "Steve", 0);
+    spawn::logged_in(8, "bad name;kill", 0);
+    spawn::tick(&mut village, 20);
+    let joined = village.commands.join("\n");
+    assert!(joined.contains("setworldspawn 100 70 100"), "centro da vila: média do grupo, altura do terreno\n{joined}");
+    assert!(joined.contains("unless entity @s[tag=veio_village] run tp @s 100 70 100"), "só quem chega pela primeira vez");
+    assert!(joined.contains("tag Steve add veio_village"));
+    assert!(!joined.contains("bad name"), "nome inseguro não entra em comando");
+
+    // Longe de qualquer vila: espera os chunks, gera uma vila e só depois desiste.
+    village.commands.clear();
+    spawn::logged_in(9, "Alex", 40);
+    spawn::tick(&mut village, 60);
+    assert!(village.commands.is_empty(), "ainda esperando os aldeões carregarem");
+    spawn::tick(&mut village, 40 + spawn::WAIT + 20);
+    assert!(village.commands.iter().any(|line| line.contains("place structure minecraft:village_plains")));
+    spawn::tick(&mut village, 40 + 2 * spawn::WAIT + 40);
+    assert!(village.commands.iter().any(|line| line.contains("veio.spawn.none")));
+    assert!(village.commands.iter().any(|line| line == "tag Alex add veio_village"));
+
+    // O centro de controle vira o centro da vila; quem renasce volta para lá.
+    village.commands.clear();
+    spawn::control_center(&mut village, [200, 64, 200]);
+    assert_eq!(spawn::center(), Some(([200, 65, 200], true)));
+    assert!(village.commands.iter().any(|line| line.ends_with("setworldspawn 200 65 200")));
+    assert!(village.commands.iter().any(|line| line.ends_with("spawnpoint @a 200 65 200")));
+    let before = village.commands.len();
+    spawn::control_center(&mut village, [200, 64, 200]);
+    assert_eq!(village.commands.len(), before, "mesmo centro: nada a refazer");
+    spawn::respawned(&mut village, "Steve");
+    assert!(village.commands.last().is_some_and(|line| line.ends_with("tp Steve 200 65 200")));
+    spawn::reset();
 }
