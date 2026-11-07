@@ -351,8 +351,8 @@ fn modules_trade_one_bottleneck_for_another() {
     assert_eq!(upgrades::apply(30, 8, efficiency), (30, 5));
     let mut press = entity(PRESS, 2);
     set_number(&mut press, "Module", 3);
-    let extras = (0..20).filter(|_| upgrades::bonus_ready(&mut press)).count();
-    assert_eq!(extras, 2, "produtividade: um extra a cada dez ciclos");
+    let extras = (0..20).filter(|_| upgrades::bonus_ready(&mut press, PLATE)).count();
+    assert_eq!(extras, 4, "produtividade: um lote extra a cada cinco ciclos");
     assert!(!upgrades::supports(TESLA));
 }
 
@@ -370,4 +370,72 @@ fn workforce_posts_count_as_item_input_for_belt_curves() {
     assert!(has_item_inputs(workforce::FOREMAN_DESK));
     assert!(has_item_inputs(workforce::SHEPHERD_POST));
     assert!(!has_item_inputs(SOLAR));
+}
+
+
+#[test]
+fn industrial_exports_do_not_require_the_optional_boss() {
+    let mut hub = entity(HUB, 4);
+    set_number(&mut hub, "ContractStage", 3);
+    hub.items[0] = Some(ItemStack::new(CIRCUIT, 8));
+    hub.items[1] = Some(ItemStack::new(STEEL, 8));
+    for _ in 0..2 { contracts::tick(&mut hub); }
+    assert_eq!(number(&hub, "ContractStage"), 3);
+    assert_eq!(number(&hub, "Total"), 2);
+    assert_eq!(hub.items[2], Some(ItemStack::new("minecraft:emerald", 8)));
+    presentation::publish(&mut hub);
+    assert_eq!(hub.data[8], 3);
+    assert_eq!(hub.data[12], 0);
+}
+
+#[test]
+fn optional_beacon_selects_its_inputs_and_returns_to_export() {
+    let mut hub = entity(HUB, 4);
+    set_number(&mut hub, "ContractStage", 3);
+    assert!(contracts::accepts(&hub, 0, &ItemStack::new("minecraft:nether_star", 1)));
+    assert!(!contracts::accepts(&hub, 1, &ItemStack::new(CIRCUIT, 48)));
+    hub.items[0] = Some(ItemStack::new("minecraft:nether_star", 1));
+    assert!(contracts::accepts(&hub, 1, &ItemStack::new(CIRCUIT, 48)));
+    assert!(!contracts::accepts(&hub, 1, &ItemStack::new(STEEL, 4)));
+    presentation::publish(&mut hub);
+    assert_eq!(hub.data[12], 1);
+    hub.items[1] = Some(ItemStack::new(CIRCUIT, 48));
+    contracts::tick(&mut hub);
+    assert_eq!(number(&hub, "ContractStage"), 4);
+    assert_eq!(number(&hub, "Total"), 0);
+    assert_eq!(hub.items[2], Some(ItemStack::new("minecraft:beacon", 1)));
+    assert_eq!(hub.items[3], Some(ItemStack::new(DRILL_MK2, 2)));
+    assert!(!contracts::accepts(&hub, 0, &ItemStack::new("minecraft:nether_star", 1)));
+    assert_eq!(contracts::current(&hub).unwrap().title, contracts::EXPORT.title);
+}
+
+#[test]
+fn every_project_preserves_inputs_until_both_rewards_fit() {
+    for (stage, contract) in contracts::CONTRACTS.iter().enumerate() {
+        let mut hub = entity(HUB, 4);
+        set_number(&mut hub, "ContractStage", stage as i32);
+        for (slot, &(item, count)) in contract.inputs.iter().enumerate() {
+            assert!(count > 0 && count <= 64);
+            hub.items[slot] = Some(ItemStack::new(item, count));
+        }
+        // A segunda saída cheia também deve proteger a primeira recompensa.
+        hub.items[3] = Some(ItemStack::new(contract.rewards[1].0, 64));
+        let before = hub.items.clone();
+        contracts::tick(&mut hub);
+        assert_eq!(hub.items, before);
+        assert_eq!(number(&hub, "ContractStage"), stage as i32);
+        hub.items[3] = None;
+        hub.items[1].as_mut().unwrap().count -= 1;
+        let before = hub.items.clone();
+        contracts::tick(&mut hub);
+        assert_eq!(hub.items, before);
+        hub.items[1].as_mut().unwrap().count += 1;
+        contracts::tick(&mut hub);
+        assert_eq!(number(&hub, "ContractStage"), stage as i32 + 1);
+        assert!(hub.items[..2].iter().all(Option::is_none));
+        for (slot, &(item, count)) in contract.rewards.iter().enumerate() {
+            assert!(count > 0 && count <= 64);
+            assert_eq!(hub.items[slot + 2], Some(ItemStack::new(item, count)));
+        }
+    }
 }

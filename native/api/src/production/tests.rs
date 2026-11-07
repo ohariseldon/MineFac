@@ -283,3 +283,127 @@ fn pantry_pays_more_for_processed_food_and_villages() {
     assert_eq!(pantry::credit("minecraft:bread", 2, true), 6 * 2 * 150);
     assert!(pantry::value("minecraft:stone").is_none());
 }
+
+#[test]
+fn productivity_reserves_the_bonus_without_consuming_inputs_or_power_while_blocked() {
+    let mut press = machine(PRESS);
+    set_number(&mut press, "Module", 3);
+    press.items[0] = Some(ItemStack::new("minecraft:raw_copper", 5));
+    run(&mut press, 4 * 35);
+    assert_eq!(press.items[1], Some(ItemStack::new(PLATE, 4)));
+    assert_eq!(number(&press, "Bonus"), 80);
+    press.items[1] = Some(ItemStack::new(PLATE, 63));
+    let before = press.items.clone();
+    let energy = number(&press, "energy");
+    process(&mut press);
+    assert_eq!(number(&press, "Status"), 3);
+    assert_eq!(number(&press, "energy"), energy);
+    assert_eq!(press.items, before);
+    assert_eq!(number(&press, "Bonus"), 80);
+    assert_eq!(number(&press, "Progress"), 0);
+    press.items[1].as_mut().unwrap().count = 62;
+    run(&mut press, 35);
+    assert_eq!(press.items[1], Some(ItemStack::new(PLATE, 64)));
+    assert!(press.items[0].is_none());
+    assert_eq!(number(&press, "Produced"), 6);
+    assert_eq!(number(&press, "Total"), 5);
+    assert_eq!(number(&press, "Bonus"), 0);
+}
+
+#[test]
+fn cheap_cycles_cannot_be_banked_for_a_different_expensive_product() {
+    let mut furnace = machine(ELECTRIC_FURNACE);
+    set_number(&mut furnace, "Module", 3);
+    furnace.items[0] = Some(ItemStack::new("minecraft:oak_log", 4));
+    run(&mut furnace, 4 * 92);
+    assert_eq!(number(&furnace, "Bonus"), 80);
+    furnace.items[1] = None;
+    furnace.items[0] = Some(ItemStack::new("minecraft:ancient_debris", 1));
+    run(&mut furnace, 460);
+    assert_eq!(furnace.items[1], Some(ItemStack::new("minecraft:netherite_scrap", 1)));
+    assert_eq!(number(&furnace, "Bonus"), 20);
+    furnace.items[1] = None;
+    furnace.items[0] = Some(ItemStack::new("minecraft:oak_log", 1));
+    run(&mut furnace, 92);
+    assert_eq!(furnace.items[1], Some(ItemStack::new("minecraft:charcoal", 1)));
+    assert_eq!(number(&furnace, "Bonus"), 20);
+}
+
+#[test]
+fn extraction_rewards_scale_across_tiers_and_preserve_the_vein() {
+    for id in [DRILL, DRILL_MK2, DRILL_MK3] {
+        for (blocks, purity) in [(1, 1), (4, 2), (9, 3)] {
+            let mut world = World::default();
+            // O bloco central deve estar presente também na jazida impura.
+            let positions = [[0, 63, 0], [-1, 63, 0], [1, 63, 0], [0, 63, -1],
+                [0, 63, 1], [-1, 63, -1], [-1, 63, 1], [1, 63, -1], [1, 63, 1]];
+            for pos in positions.into_iter().take(blocks) { world.put(pos, "minecraft:copper_ore"); }
+            let mut drill = machine(id);
+            set_number(&mut drill, "Module", 3);
+            let (_, base, draw) = extraction::tier_of(id).unwrap();
+            let (ticks, _) = upgrades::apply(extraction::duration(base, 1, purity), draw, upgrades::effect(&drill));
+            for time in 0..ticks * 5 {
+                set_number(&mut drill, "energy", 2000);
+                extraction::tick(&mut world, [0, 64, 0], &mut drill, i64::from(time));
+            }
+            assert_eq!(drill.items[0], Some(ItemStack::new("minecraft:raw_copper", 6)), "{id}, pureza {purity}");
+            assert_eq!(number(&drill, "Produced"), 6);
+            assert_eq!(number(&drill, "Total"), 5);
+            assert_eq!(world.blocks.len(), blocks, "extração não esgota a jazida");
+        }
+    }
+}
+
+#[test]
+fn batch_recipes_report_items_instead_of_cycles() {
+    let mut kitchen = machine(KITCHEN);
+    kitchen.items[0] = Some(ItemStack::new(FLOUR, 2));
+    kitchen.items[1] = Some(ItemStack::new("minecraft:cocoa_beans", 1));
+    for _ in 0..80 {
+        set_number(&mut kitchen, "energy", 2000);
+        let before = number(&kitchen, "Produced");
+        process(&mut kitchen);
+        super::super::record_performance(&mut kitchen, before);
+    }
+    assert_eq!(number(&kitchen, "Rate"), 120, "8 biscoitos em 4 segundos");
+    assert_eq!(number(&kitchen, "Produced"), 8);
+    assert_eq!(number(&kitchen, "Total"), 1);
+}
+
+
+#[test]
+fn old_untyped_bonus_is_not_awarded_to_a_new_product() {
+    let mut furnace = machine(ELECTRIC_FURNACE);
+    set_number(&mut furnace, "Module", 3);
+    set_number(&mut furnace, "Bonus", 90); // save antigo, sem BonusItem
+    furnace.items[0] = Some(ItemStack::new("minecraft:ancient_debris", 1));
+    run(&mut furnace, 460);
+    assert_eq!(furnace.items[1], Some(ItemStack::new("minecraft:netherite_scrap", 1)));
+    assert_eq!(number(&furnace, "Bonus"), 20);
+}
+
+#[test]
+fn a_full_extractor_keeps_the_earned_bonus_until_transport_makes_room() {
+    let mut world = World::default();
+    world.put([0, 63, 0], "minecraft:copper_ore");
+    let mut drill = machine(DRILL);
+    set_number(&mut drill, "Module", 3);
+    for time in 0..92 * 4 {
+        set_number(&mut drill, "energy", 2000);
+        extraction::tick(&mut world, [0, 64, 0], &mut drill, time);
+    }
+    assert_eq!(number(&drill, "Bonus"), 80);
+    drill.items[0] = Some(ItemStack::new("minecraft:raw_copper", 63));
+    let energy = number(&drill, "energy");
+    extraction::tick(&mut world, [0, 64, 0], &mut drill, 400);
+    assert_eq!(number(&drill, "Status"), 3);
+    assert_eq!(number(&drill, "energy"), energy);
+    assert_eq!(number(&drill, "Bonus"), 80);
+    drill.items[0].as_mut().unwrap().count = 62;
+    for time in 401..493 {
+        set_number(&mut drill, "energy", 2000);
+        extraction::tick(&mut world, [0, 64, 0], &mut drill, time);
+    }
+    assert_eq!(drill.items[0], Some(ItemStack::new("minecraft:raw_copper", 64)));
+    assert_eq!(number(&drill, "Produced"), 6);
+}

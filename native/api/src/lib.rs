@@ -396,6 +396,8 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Action" => key!("Action"),
         "Admin" => key!("Admin"),
         "Area" => key!("Area"),
+        "Bonus" => key!("Bonus"),
+        "BonusItem" => key!("BonusItem"),
         "Burn" => key!("Burn"),
         "BurnTotal" => key!("BurnTotal"),
         "ContractStage" => key!("ContractStage"),
