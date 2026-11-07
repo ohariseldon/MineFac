@@ -7,6 +7,7 @@ use super::*;
 use horizon_client::mod_api::{Compound, Tag};
 use std::collections::HashMap;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 pub(crate) const KINDS: [&str; 8] = [
     "minecraft:cow", "minecraft:sheep", "minecraft:pig", "minecraft:chicken", "minecraft:rabbit",
@@ -24,6 +25,19 @@ const FORGET: u64 = 600;
 /// Por dimensão: id → (índice em `KINDS`, última vez visto).
 type Seen = Vec<(String, HashMap<u32, (u8, u64)>)>;
 static SEEN: Mutex<Seen> = Mutex::new(Vec::new());
+static SWEEP: AtomicU64 = AtomicU64::new(u64::MAX);
+
+/// Esquece marcas velhas no máximo uma vez a cada 40 ticks. Quem consulta continua filtrando `FRESH`.
+fn sweep(mobs: &mut HashMap<u32, (u8, u64)>, now: u64) {
+    let generation = now / 40;
+    if SWEEP.load(Ordering::Relaxed) == generation {
+        return;
+    }
+    if SWEEP.swap(generation, Ordering::Relaxed) == generation {
+        return;
+    }
+    mobs.retain(|_, (_, stamp)| now.saturating_sub(*stamp) <= FORGET);
+}
 
 pub(crate) fn observe(dimension: &str, id: u32, kind: &str) {
     let Some(index) = KINDS.iter().position(|known| *known == kind) else { return };
@@ -33,7 +47,16 @@ pub(crate) fn observe(dimension: &str, id: u32, kind: &str) {
         if mobs.len() >= 4096 && !mobs.contains_key(&id) {
             mobs.clear();
         }
-        mobs.insert(id, (index as u8, now));
+        match mobs.get_mut(&id) {
+            Some((stored, stamp)) if *stored == index as u8 && *stamp == now => {}
+            Some((stored, stamp)) => {
+                *stored = index as u8;
+                *stamp = now;
+            }
+            None => {
+                mobs.insert(id, (index as u8, now));
+            }
+        }
     } else {
         seen.push((dimension.to_owned(), HashMap::from([(id, (index as u8, now))])));
     }
@@ -44,7 +67,7 @@ pub(crate) fn recent(dimension: &str) -> Vec<(u32, u8)> {
     let now = defense::clock();
     let Ok(mut seen) = SEEN.lock() else { return Vec::new() };
     let Some((_, mobs)) = seen.iter_mut().find(|(name, _)| name == dimension) else { return Vec::new() };
-    mobs.retain(|_, (_, stamp)| now.saturating_sub(*stamp) <= FORGET);
+    sweep(mobs, now);
     mobs.iter().filter(|(_, (_, stamp))| now.saturating_sub(*stamp) <= FRESH).map(|(id, (kind, _))| (*id, *kind)).collect()
 }
 

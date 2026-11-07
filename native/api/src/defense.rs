@@ -20,6 +20,7 @@ const MAX_TRACKED: usize = 4096;
 
 static CLOCK: AtomicU64 = AtomicU64::new(0);
 static SEEN: Mutex<Vec<(String, HashMap<u32, u64>)>> = Mutex::new(Vec::new());
+static SWEEP: AtomicU64 = AtomicU64::new(u64::MAX);
 
 /// Monstros que atacam o jogador por conta própria. Chefes ficam de fora.
 pub(super) fn hostile(kind: &str) -> bool {
@@ -53,20 +54,25 @@ pub(super) fn observe(dimension: &str, id: u32, kind: &str) {
         if mobs.len() >= MAX_TRACKED && !mobs.contains_key(&id) {
             mobs.clear();
         }
-        mobs.insert(id, now);
+        if mobs.get(&id) != Some(&now) {
+            mobs.insert(id, now);
+        }
     } else {
         seen.push((dimension.to_owned(), HashMap::from([(id, now)])));
     }
 }
 
-/// Hostis vistos há pouco nesta dimensão. Esquece os antigos.
+/// Hostis vistos há pouco nesta dimensão. Esquece os antigos no máximo uma vez a cada 40 ticks.
 pub(super) fn recent(dimension: &str) -> Vec<u32> {
     let now = CLOCK.load(Ordering::Relaxed);
     let Ok(mut seen) = SEEN.lock() else { return Vec::new() };
     let Some((_, mobs)) = seen.iter_mut().find(|(name, _)| name == dimension) else {
         return Vec::new();
     };
-    mobs.retain(|_, stamp| now.saturating_sub(*stamp) <= FORGET);
+    let generation = now / 40;
+    if SWEEP.swap(generation, Ordering::Relaxed) != generation {
+        mobs.retain(|_, stamp| now.saturating_sub(*stamp) <= FORGET);
+    }
     mobs.iter().filter(|(_, stamp)| now.saturating_sub(**stamp) <= FRESH).map(|(id, _)| *id).collect()
 }
 

@@ -216,10 +216,13 @@ pub(super) fn process(entity: &mut ModBlockEntity) {
     let (item, amount) = recipe.output;
     let (duration, draw) = upgrades::apply(recipe.ticks, recipe.power, upgrades::effect(entity));
     set_number(entity, "Duration", duration);
-    let recipe_key = "Recipe".into();
-    let changed = !matches!(entity.nbt.get(&recipe_key), Some(Tag::String(old)) if old.to_string_lossy() == item);
+    let changed = with_nbt_key("Recipe", |key| {
+        !matches!(entity.nbt.get(key), Some(Tag::String(old)) if java_eq(old, item))
+    });
     if changed {
-        entity.nbt.insert(recipe_key, Tag::String(item.into()));
+        with_nbt_key("Recipe", |key| {
+            entity.nbt.insert(key.clone(), Tag::String(item.into()));
+        });
         set_number(entity, "Progress", 0);
     }
     if !can_add(&entity.items[output_slot], item, amount) {
