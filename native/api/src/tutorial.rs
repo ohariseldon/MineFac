@@ -38,7 +38,15 @@ pub(super) fn screen_tooltip(event: &mut ScreenTooltipEvent<'_>) {
     let Some(name) = event.block.strip_prefix("veio:") else { return; };
     let Some(layout) = presentation::screen(event.block) else { return; };
     let [x, y] = event.at;
+    if (8.0..186.0).contains(&x) && (23.0..34.0).contains(&y) && event.block != HUB {
+        let status = event.data.first().copied().unwrap_or(0);
+        event.lines.push(Text::tr(&operations::advice_key(status), &[]).plain());
+        return;
+    }
     if (176.0..190.0).contains(&x) && (3.0..17.0).contains(&y) {
+        if let Some(profile) = operations::profile(event.block) {
+            event.lines.push(Text::tr(profile.sector.translation_key(), &[]).plain());
+        }
         for prefix in ["veio.help", "veio.guide.make"] {
             let text = Text::tr(&format!("{prefix}.{name}"), &[]).plain();
             event.lines.extend(text.lines().map(str::to_owned));
