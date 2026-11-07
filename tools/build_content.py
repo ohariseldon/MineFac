@@ -47,6 +47,8 @@ BLOCKS = {
     "splitter": ("splitter", None, 1, [], 1.5),
     "merger": ("merger", None, 2, [], 1.5),
     "inserter": ("inserter", None, 1, [], 1.5),
+    "fast_inserter": ("inserter", None, 1, [], 2.0),
+    "long_inserter": ("inserter", None, 1, [], 1.5),
     "cable": ("cable", None, 0, [], 1.0),
     "pole": ("pole", None, 0, [], 1.0),
     # Produção (0.9): extração, processamento, energia, lavoura e comida.
@@ -101,7 +103,7 @@ TABS = {
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
         "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
         "minecraft:coal", "minecraft:lava_bucket"]),
-    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "wrench"]),
+    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench"]),
     "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "hauler_post", "foreman_desk", "mill", "kitchen",
         "pantry", "flour", "biomass", "tesla", "repair_kit", "minecraft:bone_meal"]),
 }
@@ -144,9 +146,9 @@ def machine(name, tier):
 
 def model(kind, name, tier):
     if kind == "inserter":
+        motor = {"fast_inserter": "minecraft:block/prismarine_bricks", "long_inserter": "minecraft:block/red_terracotta"}.get(name, "minecraft:block/cut_copper")
         return {"iron": "minecraft:block/iron_block", "base": "minecraft:block/smooth_stone",
-                "motor": "minecraft:block/cut_copper", "port": "veio:block/port",
-                "particle": "minecraft:block/cut_copper"}, [
+                "motor": motor, "port": "veio:block/port", "particle": motor}, [
             box([0, 0, 0], [16, 2, 16], "#base"),
             box([2, 2, 4], [14, 4, 12], "#iron"),
             box([5, 4, 5], [11, 8, 11], "#motor"),

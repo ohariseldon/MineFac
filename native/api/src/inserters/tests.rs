@@ -6,12 +6,13 @@ struct World {
     source: u32,
     target: u32,
     accepts: bool,
+    filter: Option<String>,
     attempts: Vec<([i32; 3], Direction, [i32; 3], Direction)>,
 }
 
 impl Default for World {
     fn default() -> Self {
-        Self { facing: "south", signal: 0, source: 5, target: 0, accepts: true, attempts: Vec::new() }
+        Self { facing: "south", signal: 0, source: 5, target: 0, accepts: true, filter: None, attempts: Vec::new() }
     }
 }
 
@@ -24,7 +25,7 @@ impl Host for World {
     fn move_items(&mut self, dimension: &str, from: [i32; 3], from_face: Direction,
         to: [i32; 3], to_face: Direction, item: Option<&str>, max: u32) -> u32 {
         assert_eq!(dimension, "minecraft:overworld");
-        assert!(item.is_none());
+        self.filter = item.map(str::to_owned);
         assert_eq!(max, 1);
         self.attempts.push((from, from_face, to, to_face));
         if self.source == 0 || self.target == 64 || !self.accepts { return 0; }
@@ -117,4 +118,41 @@ fn arms_are_powered_transport_without_supply_or_haul_slots() {
     assert_eq!(view.profile.kind, operations::StationKind::Transport);
     assert!(view.services.is_empty());
     assert!(!accepts(ID, 0, &ItemStack::new(PLATE, 1)));
+}
+
+#[test]
+fn fast_arm_delivers_two_and_a_half_times_the_basic_rate() {
+    let mut world = World { source: 50, ..Default::default() };
+    let mut entity = arm(2000);
+    entity.id = FAST.into();
+    for time in 0..40 { tick(&mut world, [0; 3], &mut entity, time); }
+    assert_eq!(world.target, 5);
+    assert_eq!(number(&entity, "energy"), 2000 - 5 * 64);
+}
+
+#[test]
+fn long_arm_skips_intermediate_inventories_in_all_directions() {
+    for (facing, output) in [("south", Direction::North), ("north", Direction::South),
+        ("east", Direction::West), ("west", Direction::East)] {
+        let mut world = World { facing, ..Default::default() };
+        let mut entity = arm(100);
+        entity.id = LONG.into();
+        tick(&mut world, [0; 3], &mut entity, 0);
+        let [dx, _, dz] = output.normal();
+        assert_eq!(world.attempts[0], ([-2*dx, 0, -2*dz], output, [2*dx, 0, 2*dz], output.opposite()));
+        assert_eq!(number(&entity, "energy"), 40);
+    }
+}
+
+#[test]
+fn sample_filter_is_forwarded_to_the_atomic_host_transfer_and_can_be_cleared() {
+    let mut world = World::default();
+    let mut entity = arm(100);
+    logistics_controls::set_filter(&mut entity, Some("minecraft:iron_ingot"));
+    tick(&mut world, [0; 3], &mut entity, 0);
+    assert_eq!(world.filter.as_deref(), Some("minecraft:iron_ingot"));
+    logistics_controls::set_filter(&mut entity, None);
+    for time in 1..=20 { tick(&mut world, [0; 3], &mut entity, time); }
+    assert!(world.filter.is_none());
+    assert_eq!(world.target, 2);
 }

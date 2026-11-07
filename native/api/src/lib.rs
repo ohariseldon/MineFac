@@ -1,6 +1,7 @@
 mod presentation;
 mod contracts;
 mod logistics;
+mod logistics_controls;
 mod inserters;
 pub(crate) mod operations;
 mod defense;
@@ -100,8 +101,9 @@ impl Hooks for Factory {
     fn right_click_block(&self, host: &mut dyn Host,
         event: &mut horizon_client::mod_api::RightClickBlockEvent) -> Flow
     {
-        let Some((held, _, _)) = host.held() else { return Flow::Continue };
         let block = host.block(event.pos);
+        if let Some(flow) = logistics_controls::right_click(host, event.pos, &block) { return flow; }
+        let Some((held, _, _)) = host.held() else { return Flow::Continue };
         if !is_factory_block(&block) {
             return Flow::Continue;
         }
@@ -230,7 +232,7 @@ impl Hooks for Factory {
             power::bounds(event.entity, event.bounds);
         }
         production::generation::bounds(event.block, event.bounds);
-        if event.block == inserters::ID { *event.bounds = [-0.5, 0.0, -0.5, 1.5, 1.0, 1.5]; }
+        if inserters::is_arm(event.block) { *event.bounds = [-1.5, 0.0, -1.5, 2.5, 1.0, 2.5]; }
         if logistics::is_belt(event.block) {
             event.bounds[4] = event.bounds[4].max(1.6);
         }
@@ -281,14 +283,14 @@ impl Hooks for Factory {
 fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
         SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
-        GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID)
+        GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG)
         || production::is_machine(block) || workforce::is_post(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
 fn needs_power(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | CUTTER | INTEGRATOR |
-        CRUSHER | ALLOY | ELECTRONICS | HARVESTER | TESLA | inserters::ID)
+        CRUSHER | ALLOY | ELECTRONICS | HARVESTER | TESLA | inserters::ID | inserters::FAST | inserters::LONG)
         || production::consumes(block)
 }
 
@@ -320,7 +322,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         MERGER => (2, vec![0, 1], vec![0, 1]),
         GENERATOR => (1, vec![0], vec![]),
         GEOTHERMAL => (2, vec![0], vec![1]),
-        SOLAR | BATTERY | TESLA | inserters::ID => (1, vec![], vec![]),
+        SOLAR | BATTERY | TESLA | inserters::ID | inserters::FAST | inserters::LONG => (1, vec![], vec![]),
         CABLE | POLE | STEEL_POLE => (0, vec![], vec![]),
         HUB => (4, vec![0, 1], vec![2, 3]),
         HARVESTER => (4, vec![0], vec![1, 2, 3]),
@@ -334,7 +336,7 @@ fn has_item_inputs(block: &str) -> bool {
     match block {
         BELT | FAST_BELT | SPLITTER | MERGER | PRESS | ASSEMBLER | CUTTER | CRUSHER |
         INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER => true,
-        DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID => false,
+        DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => false,
         _ => production::has_inputs(block),
     }
 }
@@ -347,7 +349,7 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         INTEGRATOR | ALLOY | ELECTRONICS => 2..3,
         HUB => 2..4,
         HARVESTER => 1..4,
-        GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID => 0..0,
+        GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => 0..0,
         _ if production::is_machine(block) => production::outputs(block),
         _ if workforce::is_post(block) => workforce::outputs(block),
         _ => 0..1,
@@ -379,7 +381,7 @@ fn set_number(entity: &mut ModBlockEntity, key: &str, value: i32) {
 }
 
 fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, Option<ItemStack>) {
-    (number(entity, "Status"), number(entity, "Module"), number(entity, if entity.id == inserters::ID { "MovedAt" } else { "Info" }), logistics::display_stack(entity).cloned())
+    (number(entity, "Status"), number(entity, "Module"), number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }), logistics::display_stack(entity).cloned())
 }
 
 fn center([x, y, z]: [i32; 3]) -> [f64; 3] {
@@ -391,7 +393,7 @@ fn stamp(time: i64) -> i32 {
 }
 
 fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
-    if entity.id == inserters::ID { return inserters::tick(host, pos, entity, time); }
+    if inserters::is_arm(&entity.id) { return inserters::tick(host, pos, entity, time); }
     logistics::transfer_outputs(host, pos, entity, time);
     if entity.id == HUB {
         contracts::tick(entity);

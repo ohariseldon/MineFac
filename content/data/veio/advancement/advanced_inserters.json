@@ -1,0 +1,5 @@
+{
+  "parent": "veio:circuits",
+  "criteria": {"stock": {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": "veio:circuit"}]}}},
+  "rewards": {"recipes": ["veio:fast_inserter"]}
+}

@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:crafting_shapeless", "category": "redstone",
+  "ingredients": ["veio:inserter", "veio:circuit", "veio:steel_plate", "veio:wire", "veio:wire"],
+  "result": {"id": "veio:fast_inserter", "count": 1}
+}

@@ -1,0 +1,5 @@
+{
+  "parent": "veio:frames",
+  "criteria": {"stock": {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": "veio:frame"}]}}},
+  "rewards": {"recipes": ["veio:long_inserter"]}
+}

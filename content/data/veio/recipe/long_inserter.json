@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:crafting_shapeless", "category": "redstone",
+  "ingredients": ["veio:inserter", "veio:frame", "veio:frame", "veio:gear", "veio:wire"],
+  "result": {"id": "veio:long_inserter", "count": 1}
+}

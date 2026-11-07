@@ -4,6 +4,8 @@ Leia [COORDENACAO.md](../COORDENACAO.md). Esta frente continua a expansão das f
 
 ## Escopo
 
+O lote atual foi ampliado para uma [rede integrada de logística](CODEX-LOGISTICA.md): três braços, filtros, prioridades de divisores e unificadores, pausa por redstone, vazão e sinalização. O roteiro de teste cobre uma fábrica completa. As próximas rodadas devem ser organizadas por redes utilizáveis, evitando entregar apenas uma peça isolada por vez.
+
 - Continuar logística: braços de transferência, filtros, prioridades, transporte e ferramentas para montar fábricas em escala.
 - Expandir máquinas e cadeias quando elas criarem usos e escolhas concretas no mundo: recursos do terreno, redstone, energia, agricultura, povoados, Nether, armazenamento e projetos de infraestrutura.
 - Integrar cada novidade com visual legível, controles, estados de espera, receitas, tutorial e progressão. Preservar curvas, rampas, unificador e os recursos industriais recebidos na 0.9.

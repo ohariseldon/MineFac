@@ -1,5 +1,7 @@
 # Braço de transferência — primeiro lote
 
+O escopo deste PR foi ampliado. A descrição atual está em [CODEX-LOGISTICA.md](CODEX-LOGISTICA.md), incluindo braços rápido e longo, filtros, prioridades, controle por redstone e diagnóstico. As seções abaixo registram a entrega inicial do braço básico.
+
 Desenvolvido sobre a consolidação 0.10.0 e compatibilizado com a 0.11.0, em `codex/inserters`. O launcher, o pacote de release e os sistemas de trabalhadores permanecem sob os contratos da base. Este lote acrescenta `veio:inserter` e não altera a IA dos aldeões nem os números de produção e energia definidos pelo Grok.
 
 ## Uso
