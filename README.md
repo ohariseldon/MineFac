@@ -14,7 +14,7 @@ Histórico: a 0.14.0 fez as vilas crescerem com a fábrica até 150 aldeões (co
 
 **Para jogar no Windows:** depois de clonar, abra `launcher.exe` na raiz do repositório (ou extraia `release/Veio-0.15.0.zip` em qualquer pasta e abra o `launcher.exe` de dentro). Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Se a instância não existir, ele a cria (`horizon-launcher instance create Veio`) e depois abre o jogo direto. Antes, instale o Horizon Launcher, entre com a conta e faça o Prepare uma vez. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo. Para gerar de novo: `python tools/package.py`.
 
-A integração passou na conferência de conteúdo e nos testes offline (108 regras do mod e 2 do launcher). A compilação nativa pelo Horizon Launcher e o teste dentro do jogo ainda precisam ser feitos na máquina do usuário; o `launcher.exe` executa essa compilação. Ordens das frentes: [Cloud](frentes/CLOUD.md), [Grok](frentes/GROK.md) e [Codex](frentes/CODEX.md); acordo em [COORDENACAO.md](COORDENACAO.md).
+A integração passou na conferência de conteúdo e nos testes offline (116 regras do mod e 2 do launcher). A compilação nativa pelo Horizon Launcher e o teste dentro do jogo ainda precisam ser feitos na máquina do usuário; o `launcher.exe` executa essa compilação. Ordens das frentes: [Cloud](frentes/CLOUD.md), [Grok](frentes/GROK.md) e [Codex](frentes/CODEX.md); acordo em [COORDENACAO.md](COORDENACAO.md).
 
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 
@@ -196,8 +196,8 @@ Máquinas trabalhando poluem o chunk onde estão: gerador 6 por segundo, forno d
 
 1. Quando um chunk passa de 400, o chat avisa os jogadores próximos e explica o que fazer.
 2. Ataques só acontecem um dia inteiro depois desse aviso, só à noite e só se o chunk mais poluído passar de 1.200. Ao anoitecer, a barra de ação avisa.
-3. A onda surge a 28 blocos da máquina poluidora: dois **Saqueadores** na primeira, crescendo com a poluição e com as noites de ataque, até oito. É no máximo uma onda por noite.
-4. Saqueadores são zumbis que caminham até a máquina poluidora mais próxima e a golpeiam. Um jogador por perto continua sendo o alvo preferido deles. Eles queimam ao sol.
+3. A onda surge na cara de quem está a até 64 blocos da fábrica (ou a 18 blocos da máquina, se não houver ninguém): quatro **Saqueadores** na primeira noite, crescendo com a poluição e com as noites, até doze. É no máximo uma onda por noite. O som é o de invasão.
+4. Eles correm até o jogador e batem como zumbi. Sem luta corpo a corpo, vão aos aldeões: quatro golpes matam um, e o posto dele fica parado até outra contratação. Sem jogador nem aldeão a 40 blocos, golpeiam a máquina no mesmo ritmo. Zumbis, esqueletos e aranhas da noite também caçam aldeões. Eles queimam ao sol.
 5. Máquina com integridade zerada para, sem perder estoque. Um **kit de reparo**, com o botão direito, recupera 50%.
 
 Muros vanilla barram o caminho, a torre Tesla abate Saqueadores e lavouras e módulos de eficiência reduzem a poluição. No modo pacífico não há ataques. A poluição fica em memória e recomeça ao reabrir o mundo.

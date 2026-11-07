@@ -481,8 +481,8 @@ smog=page(
  "Poluição\n\nMáquinas trabalhando poluem o chunk; o painel mostra quanto por minuto. A poluição se espalha e some aos poucos.\n\nLavouras colhidas a absorvem. Módulos de eficiência cortam pela metade.",
  "Pollution\n\nWorking machines pollute their chunk; the panel shows how much per minute. It spreads and slowly fades.\n\nHarvested crops absorb it. Efficiency modules halve it.")
 page(
- "Saqueadores\n\nO chat avisa quando a fumaça chama atenção. Um dia depois, com poluição alta, eles atacam à noite as máquinas que poluem.\n\nMáquina danificada para: use um kit de reparo. Muros e torres Tesla defendem.",
- "Raiders\n\nChat warns when the smoke draws attention. A day later, with high pollution, they attack polluting machines at night.\n\nDamaged machines stop: use a repair kit. Walls and Tesla towers defend.")
+ "Saqueadores\n\nO chat avisa um dia antes. Na noite seguinte eles vêm com o som de invasão: atrás de você e dos aldeões.\n\nEnfrente-os. Quatro golpes param uma máquina ou matam um aldeão, e o posto dele fica parado. Muros, espada e torre Tesla.",
+ "Raiders\n\nChat warns a day ahead. The next night they come with a raid horn: for you and for the villagers.\n\nFace them. Four hits stop a machine or kill a villager, and that post sits idle. Walls, a sword and Tesla towers.")
 upgrades=page(
  "Módulos\n\nBotão direito numa máquina instala um. Chave agachado retira.\n\nVelocidade: mais produção, mais energia e poluição.\nEficiência: menos energia e poluição.\nProdutividade: +10% de produtos.",
  "Modules\n\nRight-click a machine to install one. Sneak with the wrench to remove it.\n\nSpeed: more output, power and pollution.\nEfficiency: less power and pollution.\nProductivity: +10% products.")

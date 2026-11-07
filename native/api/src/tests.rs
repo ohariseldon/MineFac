@@ -346,7 +346,7 @@ fn raids_need_a_notice_a_day_of_grace_and_the_night() {
     assert_eq!(pollution::plan_for_test(&hot(5000.0), anchor, Some(1000), 20000, 15000), None);
     // Depois da carência: alerta ao anoitecer e onda à noite.
     assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 12000), Some(Plan::Warning(anchor)));
-    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 15000), Some(Plan::Wave(anchor, 2)));
+    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 15000), Some(Plan::Wave(anchor, 4)));
     // De dia ou abaixo do limite, não há ataque.
     assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 3000), None);
     assert_eq!(pollution::plan_for_test(&hot(900.0), anchor, Some(0), 30000, 24000 + 15000), None);
@@ -354,9 +354,11 @@ fn raids_need_a_notice_a_day_of_grace_and_the_night() {
 
 #[test]
 fn waves_grow_but_stay_capped() {
-    assert_eq!(pollution::wave_size(pollution::RAID, 1), 2);
-    assert_eq!(pollution::wave_size(pollution::RAID + 1200.0, 3), 5);
-    assert_eq!(pollution::wave_size(1.0e6, 50), 8);
+    assert_eq!(pollution::wave_size(pollution::RAID, 1), 4);
+    assert_eq!(pollution::wave_size(pollution::RAID + 1200.0, 3), 9);
+    assert_eq!(pollution::wave_size(1.0e6, 50), 12);
+    assert_eq!(100 / pollution::BLOW, 4, "quatro golpes param a máquina");
+    assert_eq!(pollution::VILLAGER_BLOWS, 4, "quatro golpes matam um aldeão");
 }
 
 #[test]
