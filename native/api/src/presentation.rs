@@ -208,19 +208,33 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
         GENERATOR | GEOTHERMAL => (number(entity, "Burn"), number(entity, "BurnTotal").max(1)),
         _ => (number(entity, "Progress"), number(entity, "Duration").max(1)),
     };
-    entity.data = vec![number(entity, "Status"), progress, duration,
+    let values = [
+        number(entity, "Status"), progress, duration,
         number(entity, "energy"), number(entity, "Burn"), capacity(&entity.id), number(entity, "Rate"),
         number(entity, "Utilization"), number(entity, "ContractStage"), number(entity, "Total"),
         number(entity, "Damage"), number(entity, "Module"),
         // Slot 12: poluição local na torre Tesla; nas máquinas de produção, a leitura própria
         // (pureza, FE/t gerado, animais, aldeões).
-        if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") }];
-    debug_assert_eq!(entity.data.len(), DATA_SLOTS);
-    let stack = logistics::display_stack(entity);
-    let name = stack.map_or("", |stack| stack.item.as_ref()).to_owned();
-    let count = stack.map_or(0, |stack| stack.count);
-    entity.nbt.insert("DisplayItem".into(), Tag::String(name.as_str().into()));
-    entity.nbt.insert("DisplayCount".into(), Tag::Int(count as i32));
+        if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") },
+    ];
+    debug_assert_eq!(values.len(), DATA_SLOTS);
+    if entity.data.len() != DATA_SLOTS {
+        entity.data.resize(DATA_SLOTS, 0);
+    }
+    entity.data.copy_from_slice(&values);
+    if !matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
+        return;
+    }
+    let (name, count) = {
+        let stack = logistics::display_stack(entity);
+        (stack.map_or("", |stack| stack.item.as_ref()).to_owned(), stack.map_or(0, |stack| stack.count) as i32)
+    };
+    let same = matches!(entity.nbt.get(&"DisplayItem".into()), Some(Tag::String(old)) if old.to_string_lossy() == name)
+        && number(entity, "DisplayCount") == count;
+    if !same {
+        entity.nbt.insert("DisplayItem".into(), Tag::String(name.as_str().into()));
+        set_number(entity, "DisplayCount", count);
+    }
 }
 
 /// Cor das luzes no mundo: fortes, para ler de longe.

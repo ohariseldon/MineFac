@@ -116,17 +116,17 @@ help={
  "Compra comida da fábrica\ne paga esmeraldas.\nComida pronta vale mais;\num povoado dá +50%.",
  "Buys the factory's food\nand pays in emeralds.\nCooked food is worth more;\na village adds 50%."),
  "biomass_generator":(
- "Queima biomassa, plantas\ne feno. 30 FE/t.\nLigue à lavoura e ao\nmoinho: energia renovável.",
- "Burns biomass, plants\nand hay. 30 FE/t.\nFeed it from farms and\nthe mill: renewable power."),
+ "Queima biomassa, plantas\ne feno. 40 FE/t, polui menos\nque o carvão. Ligue à\nlavoura e ao moinho.",
+ "Burns biomass, plants\nand hay. 40 FE/t, less\npollution than coal. Feed\nit from farms and the mill."),
  "steam_engine":(
  "Precisa de água parada ao\nlado. 120 FE/t e o dobro\nde energia por combustível.\nUsa os do gerador.",
  "Needs still water beside\nit. 120 FE/t and double\nthe energy per fuel.\nTakes generator fuels."),
  "water_wheel":(
- "Encoste em água corrente.\n6 FE/t por lado com fluxo,\naté 24. Não polui e não\nusa combustível.",
- "Place by flowing water.\n6 FE/t per side with flow,\nup to 24. No pollution,\nno fuel."),
+ "Encoste em água corrente.\n8 FE/t por lado com fluxo,\naté 32. Não polui e não\nusa combustível.",
+ "Place by flowing water.\n8 FE/t per side with flow,\nup to 32. No pollution,\nno fuel."),
  "wind_turbine":(
- "Céu aberto acima.\nRende mais no alto: y 110\ndá 16 FE/t. Chuva e\ntempestade ajudam.",
- "Needs open sky.\nStronger up high: y 110\ngives 16 FE/t. Rain and\nstorms help."),
+ "Céu aberto acima.\n8 FE/t no nível do mar;\ny 110 dá 16. Chuva e\ntempestade ajudam.",
+ "Needs open sky.\n8 FE/t at sea level;\ny 110 gives 16. Rain and\nstorms help."),
  "grow_lamp":(
  "Instale acima da lavoura.\nAdianta um estágio a cada\n4 ticks, 50 FE cada.\nTambém ilumina a noite.",
  "Place above your crops.\nAdvances a stage every\n4 ticks, 50 FE each.\nAlso lights the night."),
@@ -147,6 +147,8 @@ label("block.veio.merger", "Unificador de esteiras", "Conveyor Merger")
 label("veio.guide.role.left", "Ent. A", "In A")
 label("veio.guide.role.right", "Ent. B", "In B")
 label("veio.hint.merger", "Duas laterais > uma frente", "Two sides > one front")
+label("veio.hint.water_wheel", "8 FE/t por lado com água corrente", "8 FE/t per side with flowing water")
+label("veio.hint.wind", "8 FE/t no nível do mar; mais alto e na chuva", "8 FE/t at sea level; more up high and in rain")
 label("veio.tutorial.merger.title", "Duas linhas, uma saída", "Two lines, one outlet")
 label("veio.tutorial.merger.description", "Conecte as entradas A e B pelas laterais. Você recebeu o guia atualizado.", "Connect inputs A and B from the sides. You received the updated guide.")
 help["merger"] = (
@@ -351,8 +353,8 @@ production=page(
  "Escada de produção\n\nCada melhoria resolve um gargalo e revela o próximo: jazida, energia, fio, poluição.\n\nVeios grandes rendem mais: a extratora lê o 3x3 abaixo dela. Jazida pura dobra a velocidade.",
  "Production ladder\n\nEach upgrade fixes one bottleneck and reveals the next: vein, power, wire, pollution.\n\nBig veins pay off: the extractor reads the 3x3 below. A pure vein doubles its speed.")
 page(
- "Energia\n\nRoda d'água e cata-vento: grátis, fracos e limpos.\nGerador e biomassa: médios.\nVapor: forte, precisa de água.\nGeotérmico e solar: escalam.\n\nAcumuladores seguram a noite.",
- "Power\n\nWater wheel and wind: free, weak and clean.\nGenerator and biomass: medium.\nSteam: strong, needs water.\nGeothermal and solar: scale up.\n\nBatteries carry the night.")
+ "Energia\n\nRoda d'água e cata-vento: grátis e limpos; 8 FE/t por face ou no nível do mar.\nGerador e biomassa: 40 FE/t; biomassa polui menos.\nVapor: 120 FE/t, precisa de água.\nGeotérmico e solar: escalam.\n\nAcumuladores seguram a noite.",
+ "Power\n\nWater wheel and wind: free and clean; 8 FE/t per face or at sea level.\nGenerator and biomass: 40 FE/t; biomass pollutes less.\nSteam: 120 FE/t, needs water.\nGeothermal and solar: scale up.\n\nBatteries carry the night.")
 food=page(
  "Comida e povoado\n\nTrigo > moinho > farinha > cozinha > pão.\nCarnes do rancho > fornalha elétrica.\n\nO armazém paga esmeraldas pela comida, mais por comida pronta, e 50% a mais com aldeões perto.",
  "Food and village\n\nWheat > mill > flour > kitchen > bread.\nRanch meat > electric furnace.\n\nThe pantry pays emeralds for food, more for cooked food, and 50% more with villagers near.")
