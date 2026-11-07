@@ -114,6 +114,29 @@ fn generator_conserves_energy_and_pauses_fuel_when_buffers_are_full() {
 }
 
 #[test]
+fn idle_cables_skip_neighbor_lookups() {
+    struct Probe { visits: usize, neighbor: ModBlockEntity }
+    impl Host for Probe {
+        fn change_mod_block_entity(
+            &mut self,
+            _pos: [i32; 3],
+            change: &mut dyn FnMut(&mut ModBlockEntity),
+        ) -> bool {
+            self.visits += 1;
+            change(&mut self.neighbor);
+            true
+        }
+    }
+    let mut probe = Probe { visits: 0, neighbor: entity(CABLE, 0) };
+    let mut cable = entity(CABLE, 0);
+    tick_power(&mut probe, [0, 0, 0], &mut cable);
+    assert_eq!(probe.visits, 0, "cabo vazio não consulta vizinhos");
+    set_number(&mut cable, "energy", 80);
+    tick_power(&mut probe, [0, 0, 0], &mut cable);
+    assert_eq!(probe.visits, 6, "com carga, percorre as seis faces");
+}
+
+#[test]
 fn gems_need_the_advanced_extractor() {
     let diamond = production::extraction::node("minecraft:deepslate_diamond_ore").unwrap();
     assert_eq!((diamond.output.0, diamond.tier), ("minecraft:diamond", 2));

@@ -150,8 +150,21 @@ fn drill_reads_the_vein_and_respects_tiers() {
 }
 
 #[test]
+fn renewable_power_covers_a_starter_line_without_replacing_steam() {
+    assert_eq!(generation::burner(BIOMASS_GENERATOR).unwrap().0, 40);
+    assert_eq!(generation::burner(GENERATOR).unwrap().0, 40);
+    assert_eq!(emission(BIOMASS_GENERATOR), 2.0);
+    assert_eq!(super::super::pollution::emission(GENERATOR), 6.0);
+    let line = 2 * 6 + 2 * 8;
+    let two_wheels = 2 * 2 * generation::WATER_FACE;
+    assert!(two_wheels >= line, "2 rodas com 2 faces cada cobrem 2 extratoras + 2 prensas: {two_wheels} >= {line}");
+    assert!(generation::WIND_FLOOR * 4 >= line, "4 cata-ventos no nível do mar cobrem a mesma linha");
+    assert!(two_wheels < 120, "água e vento não substituem a caldeira");
+}
+
+#[test]
 fn wind_grows_with_altitude_and_needs_open_sky() {
-    assert_eq!(generation::wind_output(64, true, 0.0, 0.0, 1.0), 1);
+    assert_eq!(generation::wind_output(64, true, 0.0, 0.0, 1.0), generation::WIND_FLOOR);
     assert_eq!(generation::wind_output(110, true, 0.0, 0.0, 1.0), 16);
     assert_eq!(generation::wind_output(110, false, 0.0, 0.0, 1.0), 0);
     assert!(generation::wind_output(110, true, 1.0, 1.0, 1.0) > 16, "tempestade ajuda");
@@ -165,7 +178,7 @@ fn water_wheel_needs_flowing_water_and_steam_needs_still_water() {
     world.put_with([-1, 64, 0], "minecraft:water", "level", "0");
     let mut wheel = machine(WATER_WHEEL);
     let energy = generation::produce(&mut world, [0, 64, 0], &mut wheel, 0, 2000);
-    assert_eq!(energy, 6, "uma face com água corrente");
+    assert_eq!(energy, generation::WATER_FACE, "uma face com água corrente");
     let mut steam = machine(STEAM_ENGINE);
     steam.items[0] = Some(ItemStack::new("minecraft:coal", 1));
     let energy = generation::produce(&mut world, [0, 64, 0], &mut steam, 0, 2000);

@@ -2,9 +2,9 @@
 //! cata-vento. A distribuição (cabos, postes) fica em `lib.rs`/`power.rs`, com a logística.
 //!
 //! Escada de energia, do começo ao fim:
-//! - roda d'água (6 FE/t por face com água corrente, até 24) e cata-vento (sobe com a altitude e
-//!   com chuva, até 32): grátis, mas fracos e presos ao terreno;
-//! - gerador a combustível (40 FE/t) e a biomassa (30 FE/t, alimentado pela lavoura);
+//! - roda d'água (8 FE/t por face com água corrente, até 32) e cata-vento (8 FE/t no nível do mar,
+//!   sobe com a altitude e com chuva, até 32): grátis, limpos e presos ao terreno;
+//! - gerador a combustível e a biomassa (40 FE/t; a biomassa polui menos e vem da lavoura);
 //! - caldeira a vapor (120 FE/t, o dobro de energia por combustível, precisa de água ao lado);
 //! - geotérmico (80 FE/t com lava) e painéis solares, que escalam em quantidade.
 use super::*;
@@ -14,7 +14,7 @@ use horizon_client::mod_api::{BlockEntitySubmitEvent, CubeFace};
 pub(crate) fn burner(block: &str) -> Option<(i32, i32)> {
     Some(match block {
         GENERATOR => (40, 10),
-        BIOMASS_GENERATOR => (30, 10),
+        BIOMASS_GENERATOR => (40, 10),
         STEAM_ENGINE => (120, 20),
         _ => return None,
     })
@@ -30,6 +30,10 @@ pub(crate) fn fuel_ticks(block: &str, stack: &ItemStack) -> Option<i32> {
 }
 
 const SENSE_EVERY: i32 = 40;
+/// FE/t por face lateral com água corrente.
+pub(crate) const WATER_FACE: i32 = 8;
+/// Piso do cata-vento com céu aberto, no nível do mar.
+pub(crate) const WIND_FLOOR: i32 = 8;
 
 /// Água corrente encostada nas faces laterais (roda d'água) ou água parada (caldeira).
 fn water_sides(host: &dyn Host, [x, y, z]: [i32; 3], flowing: bool) -> i32 {
@@ -46,26 +50,53 @@ pub(crate) fn wind_output(y: i32, open_sky: bool, rain: f32, thunder: f32, gust:
     if !open_sky {
         return 0;
     }
-    let base = ((y - 62) as f32 / 3.0).clamp(0.0, 24.0);
+    let altitude = ((y - 62) as f32 / 3.0).clamp(0.0, 24.0);
+    let base = altitude.max(WIND_FLOOR as f32);
     let weather = 1.0 + 0.25 * rain + 0.35 * thunder;
     ((base * weather * gust).round() as i32).min(32)
 }
 
 /// Produz energia neste tick e devolve o novo estoque. Não depende do relógio do jogo: os
 /// sensores (água, vento) são relidos por uma contagem própria, `Sense`, a cada 40 ticks.
+fn power_id(id: &str) -> &'static str {
+    match id {
+        GENERATOR => GENERATOR,
+        BIOMASS_GENERATOR => BIOMASS_GENERATOR,
+        STEAM_ENGINE => STEAM_ENGINE,
+        GEOTHERMAL => GEOTHERMAL,
+        SOLAR => SOLAR,
+        WATER_WHEEL => WATER_WHEEL,
+        WIND_TURBINE => WIND_TURBINE,
+        _ => "",
+    }
+}
+
+fn solar_output(host: &dyn Host, [x, y, z]: [i32; 3]) -> i32 {
+    let daylight = host.day_time().rem_euclid(24000);
+    let open_sky = host.light([x, y + 1, z]).1 == 15;
+    if host.dimension() != "minecraft:overworld" || !open_sky || daylight >= 12000 {
+        return 0;
+    }
+    let (rain, thunder) = host.weather();
+    let sun = (daylight as f32 * std::f32::consts::PI / 12000.0).sin().max(0.0);
+    (16.0 * sun * (1.0 - 0.6 * rain - 0.4 * thunder).max(0.0)) as i32
+}
+
 pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, energy: i32, limit: i32) -> i32 {
     let mut energy = energy;
-    let id = entity.id.clone();
-    let countdown = number(entity, "Sense");
-    let sense = countdown == 0 || !entity.nbt.contains_key(&"Info".into());
-    set_number(entity, "Sense", if sense { SENSE_EVERY - 1 + ((pos[0] ^ pos[2]) & 7) } else { countdown - 1 });
-    let time = i64::from(number(entity, "Gust").wrapping_add(1));
-    if id == WIND_TURBINE {
-        set_number(entity, "Gust", time as i32 % 100_000);
-    }
-    match id.as_str() {
+    let id = power_id(&entity.id);
+    let senses = matches!(id, STEAM_ENGINE | WATER_WHEEL | WIND_TURBINE | SOLAR);
+    let sense = if senses {
+        let countdown = number(entity, "Sense");
+        let due = countdown == 0 || !entity.nbt.contains_key(&"Info".into());
+        set_number(entity, "Sense", if due { SENSE_EVERY - 1 + ((pos[0] ^ pos[2]) & 7) } else { countdown - 1 });
+        due
+    } else {
+        false
+    };
+    match id {
         GENERATOR | BIOMASS_GENERATOR | STEAM_ENGINE => {
-            let (rate, per_tick) = burner(&id).expect("queimador");
+            let (rate, per_tick) = burner(id).expect("queimador");
             if id == STEAM_ENGINE && sense {
                 set_number(entity, "Info", water_sides(host, pos, false));
             }
@@ -75,7 +106,7 @@ pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
             }
             let mut burn = number(entity, "Burn");
             if burn == 0
-                && let Some(ticks) = entity.items[0].as_ref().and_then(|stack| fuel_ticks(&id, stack))
+                && let Some(ticks) = entity.items[0].as_ref().and_then(|stack| fuel_ticks(id, stack))
             {
                 consume(&mut entity.items[0], 1);
                 burn = (ticks * per_tick / rate).max(1);
@@ -104,23 +135,20 @@ pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
             }
         }
         SOLAR => {
-            let daylight = host.day_time().rem_euclid(24000);
-            let [x, y, z] = pos;
-            let open_sky = host.light([x, y + 1, z]).1 == 15;
-            if host.dimension() == "minecraft:overworld" && open_sky && daylight < 12000 {
-                let (rain, thunder) = host.weather();
-                let sun = (daylight as f32 * std::f32::consts::PI / 12000.0).sin().max(0.0);
-                let output = (16.0 * sun * (1.0 - 0.6 * rain - 0.4 * thunder).max(0.0)) as i32;
-                energy = (energy + output).min(limit);
+            if sense {
+                set_number(entity, "Info", solar_output(host, pos));
             }
+            energy = (energy + number(entity, "Info")).min(limit);
         }
         WATER_WHEEL => {
             if sense {
-                set_number(entity, "Info", 6 * water_sides(host, pos, true));
+                set_number(entity, "Info", WATER_FACE * water_sides(host, pos, true));
             }
             energy = (energy + number(entity, "Info")).min(limit);
         }
         WIND_TURBINE => {
+            let time = i64::from(number(entity, "Gust").wrapping_add(1));
+            set_number(entity, "Gust", time as i32 % 100_000);
             if sense {
                 let [x, y, z] = pos;
                 let open_sky = host.light([x, y + 2, z]).1 == 15 && host.dimension() == "minecraft:overworld";

@@ -31,3 +31,5 @@ A atualização das curvas está em `logistics.rs`; postes em `power.rs`; produ�
 - Preserve o tutorial e o objetivo de escalar com ferramentas, em vez de exigir mais cliques ou coleta manual.
 - Entregue o diagnóstico, as alterações concretas, a comparação reproduzível e as limitações num documento curto no PR. Registre riscos de gameplay e pontos de teste.
 - Faça as verificações necessárias ao concluir cada lote; evite repetir testes de jogo a cada ajuste. Termine com commits e PR, sem incrementar a versão consolidada por conta própria.
+
+O primeiro lote (custos de tick, esteiras estáveis, cabos ociosos e energia renovável) está em [GROK-LOTE.md](GROK-LOTE.md).

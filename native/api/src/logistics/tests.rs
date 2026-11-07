@@ -1,4 +1,5 @@
 use super::*;
+use std::cell::Cell;
 use std::collections::HashMap;
 const COPPER: &str = "minecraft:raw_copper";
 const IRON: &str = "minecraft:raw_iron";
@@ -85,6 +86,8 @@ struct RouteWorld {
     properties: HashMap<([i32; 3], String), String>,
     delivered: Vec<([i32; 3], ItemStack)>,
     full: bool,
+    lookups: Cell<usize>,
+    property_writes: usize,
 }
 
 impl RouteWorld {
@@ -96,12 +99,14 @@ impl RouteWorld {
 
 impl Host for RouteWorld {
     fn block(&self, pos: [i32; 3]) -> String {
+        self.lookups.set(self.lookups.get() + 1);
         self.blocks.get(&pos).cloned().unwrap_or_else(|| "minecraft:air".into())
     }
     fn block_property(&self, pos: [i32; 3], key: &str) -> Option<String> {
         self.properties.get(&(pos, key.into())).cloned()
     }
     fn set_block_property(&mut self, pos: [i32; 3], key: &str, value: &str) -> bool {
+        self.property_writes += 1;
         self.properties.insert((pos, key.into()), value.into());
         true
     }
@@ -145,7 +150,7 @@ fn lower_receiving_belt_builds_the_downhill_ramp() {
     world.put([0, 1, 1], BELT, "south");
     world.put([0, 0, -1], BELT, "south");
     assert_eq!(belt_target(&world, [0, 1, 1], Direction::North), [0; 3]);
-    refresh_path(&mut world, [0; 3], &belt());
+    refresh_path(&mut world, [0; 3], &mut belt());
     assert_eq!(world.block_property([0; 3], "path").as_deref(), Some("down"));
     world.put([0, 1, 0], "minecraft:stone", "");
     assert_eq!(belt_target(&world, [0, 1, 1], Direction::North), [0, 1, 0]);
@@ -158,13 +163,33 @@ fn a_single_incoming_and_outgoing_line_snap_to_a_curve_unless_manually_locked() 
     world.put([-1, 0, 0], BELT, "west");
     world.put([0, 0, -1], BELT, "south");
     let mut entity = belt();
-    refresh_path(&mut world, [0; 3], &entity);
+    refresh_path(&mut world, [0; 3], &mut entity);
     assert_eq!(world.block_property([0; 3], "facing").as_deref(), Some("south"));
     assert_eq!(world.block_property([0; 3], "path").as_deref(), Some("left"));
     world.put([0; 3], BELT, "west");
     set_number(&mut entity, "ManualDirection", 1);
-    refresh_path(&mut world, [0; 3], &entity);
+    refresh_path(&mut world, [0; 3], &mut entity);
     assert_eq!(world.block_property([0; 3], "facing").as_deref(), Some("west"));
+}
+
+#[test]
+fn stable_neighborhood_skips_incoming_scans() {
+    let mut world = RouteWorld::default();
+    world.put([0; 3], BELT, "west");
+    world.put([-1, 0, 0], BELT, "west");
+    world.put([1, 0, 0], BELT, "west");
+    let mut entity = belt();
+    refresh_path(&mut world, [0; 3], &mut entity);
+    let writes = world.property_writes;
+    let first = world.lookups.get();
+    refresh_path(&mut world, [0; 3], &mut entity);
+    assert_eq!(world.property_writes, writes, "vizinhança igual: não reescreve path");
+    let second = world.lookups.get() - first;
+    assert!(second <= 14, "só a assinatura na segunda passagem: {second} consultas");
+    assert!(first > second, "a primeira passagem relê entradas; a segunda não: {first} > {second}");
+    world.put([1, 1, 0], FAST_BELT, "west");
+    refresh_path(&mut world, [0; 3], &mut entity);
+    assert!(world.lookups.get() - first - second > second, "vizinho novo relê a topologia");
 }
 
 #[test]

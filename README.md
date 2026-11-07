@@ -92,7 +92,9 @@ Todas as texturas próprias são desenhadas em texto em `tools/build_textures.py
 O código evita trabalho por tick:
 
 - Postes se encontram por um registro em memória dividido em chunks e recalculam vizinhos e área a cada 2 segundos, em ticks escalonados. No tick comum, só percorrem essas listas.
-- A poluição é somada na máquina e entregue ao chunk uma vez por segundo; a difusão roda a cada 64 ticks.
+- A poluição é somada na máquina e entregue ao chunk uma vez por segundo; a difusão roda a cada 64 ticks, uma vez por dimensão e `game_time`.
+- Cabos e geradores sem carga não consultam vizinhos. Esteiras estáveis guardam uma assinatura da vizinhança e só relêem curvas quando um vizinho muda.
+- Painéis solares, rodas e cata-ventos relêem o mundo a cada 2 segundos, não a cada tick.
 - A torre Tesla consulta apenas os hostis vistos no tick anterior.
 - Fios, máquinas paradas e rotores não são redesenhados a cada quadro: o jogo guarda a geometria até o estado mudar, e as peças giratórias giram na placa de vídeo.
 
@@ -143,9 +145,9 @@ Um sinal de redstone pausa a produção e preserva o progresso. A saída continu
 
 | Fonte | Energia | Condição |
 |---|---|---|
-| Roda d'água | 6 FE/t por lado com água corrente, até 24 | Não polui |
-| Cata-vento | Até 32 FE/t, cresce com a altura (y 110 dá 16) e com chuva | Precisa de céu aberto; não polui |
-| Gerador a biomassa | 30 FE/t | Queima biomassa, plantas e feno |
+| Roda d'água | 8 FE/t por lado com água corrente, até 32 | Não polui |
+| Cata-vento | 8 FE/t no nível do mar, até 32; y 110 dá 16 e chuva ajuda | Precisa de céu aberto; não polui |
+| Gerador a biomassa | 40 FE/t, polui menos que o carvão | Queima biomassa, plantas e feno |
 | Caldeira a vapor | 120 FE/t e o dobro de energia por combustível | Precisa de água parada ao lado |
 
 **Lavoura.**

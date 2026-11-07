@@ -209,8 +209,11 @@ impl Hooks for Factory {
         Flow::Continue
     }
 
-    fn tick(&self, _host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
+    fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
         defense::advance_clock();
+        if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
+            pollution::update(host, time);
+        }
     }
 
     fn register_goals(&self, event: &mut horizon_client::mod_api::RegisterGoalsEvent<'_>) {
@@ -321,6 +324,16 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
     })
 }
 
+/// Há slot de entrada de itens? Evita alocar o `layout` só para decidir uma curva de esteira.
+fn has_item_inputs(block: &str) -> bool {
+    match block {
+        BELT | FAST_BELT | SPLITTER | MERGER | PRESS | ASSEMBLER | CUTTER | CRUSHER |
+        INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER => true,
+        DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE => false,
+        _ => production::has_inputs(block),
+    }
+}
+
 /// Slots que o bocal da máquina esvazia.
 fn output_slots(block: &str) -> std::ops::Range<usize> {
     match block {
@@ -409,32 +422,35 @@ fn tick_power(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     let mut energy = number(entity, "energy").min(limit);
     // Geração (produção); a distribuição abaixo é da logística.
     energy = production::generation::produce(host, pos, entity, energy, limit);
-    let offset = number(entity, "Port") as usize % 6;
-    for i in 0..6 {
-        let face = Direction::ALL[(i + offset) % 6];
-        let delta = face.normal();
-        let target = std::array::from_fn(|axis| pos[axis] + delta[axis]);
-        host.change_mod_block_entity(target, &mut |other| {
-            let storage = matches!(other.id.as_str(), CABLE | BATTERY) || power::tier(&other.id).is_some();
-            if !needs_power(&other.id) && !storage {
-                return;
-            }
-            let other_limit = capacity(&other.id);
-            let stored = number(other, "energy").min(other_limit);
-            // Equalize charge percentages, so large batteries can charge and discharge.
-            let offered = if storage {
-                ((i64::from(energy) * i64::from(other_limit)
-                    - i64::from(stored) * i64::from(limit))
-                    / i64::from(limit + other_limit)).clamp(0, 80) as i32
-            } else { energy.min(80) };
-            let accepted = offered.min(other_limit - stored);
-            if accepted > 0 {
-                set_number(other, "energy", stored + accepted);
-                energy -= accepted;
-            }
-        });
+    // A rede só empurra. Sem carga, as seis consultas a vizinhos não movem energia.
+    if energy > 0 {
+        let offset = number(entity, "Port") as usize % 6;
+        for i in 0..6 {
+            let face = Direction::ALL[(i + offset) % 6];
+            let delta = face.normal();
+            let target = std::array::from_fn(|axis| pos[axis] + delta[axis]);
+            host.change_mod_block_entity(target, &mut |other| {
+                let storage = matches!(other.id.as_str(), CABLE | BATTERY) || power::tier(&other.id).is_some();
+                if !needs_power(&other.id) && !storage {
+                    return;
+                }
+                let other_limit = capacity(&other.id);
+                let stored = number(other, "energy").min(other_limit);
+                // Equalize charge percentages, so large batteries can charge and discharge.
+                let offered = if storage {
+                    ((i64::from(energy) * i64::from(other_limit)
+                        - i64::from(stored) * i64::from(limit))
+                        / i64::from(limit + other_limit)).clamp(0, 80) as i32
+                } else { energy.min(80) };
+                let accepted = offered.min(other_limit - stored);
+                if accepted > 0 {
+                    set_number(other, "energy", stored + accepted);
+                    energy -= accepted;
+                }
+            });
+        }
+        set_number(entity, "Port", ((offset + 1) % 6) as i32);
     }
-    set_number(entity, "Port", ((offset + 1) % 6) as i32);
     set_number(entity, "energy", energy);
     let status = if energy == limit { 8 }
         else if energy == 0 { production::generation::empty_status(entity) }
