@@ -66,7 +66,7 @@ pub(crate) fn respawned(host: &mut dyn Host, name: &str) {
 
 /// Centro da vila em volta de `around`: a média dos aldeões perto daquele com mais vizinhos.
 pub(crate) fn find_village(host: &dyn Host, around: [f64; 3]) -> Option<[i32; 3]> {
-    let near: Vec<[f64; 3]> = production::ranch::villager_positions(host, OVERWORLD).into_iter()
+    let near: Vec<[f64; 3]> = production::ranch::villager_positions(host, OVERWORLD).iter().copied()
         .map(|(_, at)| at)
         .filter(|at| (at[0] - around[0]).hypot(at[2] - around[2]) <= SEARCH)
         .collect();

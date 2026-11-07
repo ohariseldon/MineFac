@@ -6,7 +6,7 @@
 use super::*;
 use horizon_client::mod_api::{Compound, Tag};
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 pub(crate) const KINDS: [&str; 8] = [
@@ -73,7 +73,14 @@ pub(crate) fn recent(dimension: &str) -> Vec<(u32, u8)> {
 
 /// Ids dos aldeões vistos há pouco nesta dimensão. Usado pelos postos de trabalho.
 pub(crate) fn recent_villagers(dimension: &str) -> Vec<u32> {
-    recent(dimension).into_iter().filter(|(_, kind)| *kind == VILLAGER).map(|(id, _)| id).collect()
+    let now = defense::clock();
+    let Ok(mut seen) = SEEN.lock() else { return Vec::new() };
+    let Some((_, mobs)) = seen.iter_mut().find(|(name, _)| name == dimension) else { return Vec::new() };
+    sweep(mobs, now);
+    mobs.iter()
+        .filter(|(_, (kind, stamp))| *kind == VILLAGER && now.saturating_sub(*stamp) <= FRESH)
+        .map(|(id, _)| *id)
+        .collect()
 }
 
 /// Censo dos aldeões: posições de todos os aldeões vistos há pouco, por dimensão. Refeito a cada
@@ -81,10 +88,10 @@ pub(crate) fn recent_villagers(dimension: &str) -> Vec<u32> {
 /// (natalidade, níveis de zona, contratação, armazém) usa a mesma cópia em vez de reler a
 /// posição de cada aldeão. Com vilas de até 150 aldeões, isso evita centenas de leituras.
 const CENSUS_EVERY: u64 = 100;
-type Census = Vec<(String, u64, Vec<(u32, [f64; 3])>)>;
+type Census = Vec<(String, u64, Arc<Vec<(u32, [f64; 3])>>)>;
 static CENSUS: Mutex<Census> = Mutex::new(Vec::new());
 
-pub(crate) fn villager_positions(host: &dyn Host, dimension: &str) -> Vec<(u32, [f64; 3])> {
+pub(crate) fn villager_positions(host: &dyn Host, dimension: &str) -> Arc<Vec<(u32, [f64; 3])>> {
     let now = defense::clock();
     let mut ids = recent_villagers(dimension);
     ids.sort_unstable();
@@ -93,22 +100,22 @@ pub(crate) fn villager_positions(host: &dyn Host, dimension: &str) -> Vec<(u32, 
         && now.saturating_sub(*stamp) < CENSUS_EVERY && *stamp <= now
         && list.len() == ids.len() && list.iter().zip(&ids).all(|((id, _), known)| id == known)
     {
-        return list.clone();
+        return Arc::clone(list);
     }
-    let list: Vec<(u32, [f64; 3])> = ids.into_iter()
+    let list: Arc<Vec<(u32, [f64; 3])>> = Arc::new(ids.into_iter()
         .filter_map(|id| host.entity(id).and_then(|entity| entity.position(host)).map(|at| (id, at)))
-        .collect();
+        .collect());
     // Uma posição que não pôde ser lida tira o aldeão da lista: a próxima consulta refaz o censo.
     if let Ok(mut census) = CENSUS.lock() {
         census.retain(|(name, _, _)| name != dimension);
-        census.push((dimension.to_owned(), now, list.clone()));
+        census.push((dimension.to_owned(), now, Arc::clone(&list)));
     }
     list
 }
 
 /// Quantos aldeões há a até `radius` blocos.
 pub(crate) fn villagers_near(host: &dyn Host, center: [f64; 3], radius: f64) -> i32 {
-    villager_positions(host, host.dimension()).into_iter()
+    villager_positions(host, host.dimension()).iter().copied()
         .filter(|(_, at)| within(*at, center, radius, radius))
         .count() as i32
 }
