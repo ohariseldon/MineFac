@@ -55,10 +55,12 @@ pub(crate) fn logged_in(player: u128, name: &str, now: u64) {
     }
 }
 
-/// Quem renasce volta ao centro da vila (mesmo com cama em outro lugar).
-pub(crate) fn respawned(host: &mut dyn Host, name: &str) {
+/// Quem renasce sem cama volta ao centro da vila. Com cama (a da casa ou a de fora, ver
+/// `home`), o jogo leva o jogador para ela.
+pub(crate) fn respawned(host: &mut dyn Host, player: u128, name: &str) {
     if let Some(([x, y, z], _)) = center()
         && safe_name(name)
+        && !super::super::home::has_bed(player)
     {
         host.run_command(&format!("execute in {OVERWORLD} run tp {name} {x} {y} {z}"));
     }

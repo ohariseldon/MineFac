@@ -434,6 +434,22 @@ pub mod mod_api {
         fn run_command(&mut self, line: &str) -> bool {
             unimplemented!("run_command")
         }
+        /// `native_server::Game::native_acting_player`: o jogador cuja ação o gancho ouve. API 21.
+        fn acting_player(&self) -> Option<NativeServerPlayer> {
+            unimplemented!("acting_player")
+        }
+        /// `native_inventories::Game::native_send_map`: 128 x 128 cores de mapa para um jogador.
+        /// API 132.
+        fn send_map(&mut self, uuid: u128, map_id: i32, colors: &[u8]) -> bool {
+            unimplemented!("send_map")
+        }
+    }
+
+    /// `horizon_client::first_person::Hand`, reexportado em `mod_api`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Hand {
+        MainHand,
+        OffHand,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq)]
@@ -583,6 +599,28 @@ pub mod mod_api {
         pub name: &'a str,
     }
     #[non_exhaustive]
+    pub struct PlayerSpawnPointSetEvent<'a> {
+        pub player: u128,
+        pub name: &'a str,
+        pub dimension: &'a str,
+        pub pos: [i32; 3],
+        pub cause: &'a str,
+    }
+    #[non_exhaustive]
+    pub struct PlayerBedEnterEvent<'a> {
+        pub player: u128,
+        pub name: &'a str,
+        pub pos: [i32; 3],
+    }
+    #[non_exhaustive]
+    pub struct LivingEntityUseItemFinishEvent<'a> {
+        pub stack: &'a ItemStack,
+        pub entity: Option<i32>,
+        pub hand: Hand,
+        pub duration: i32,
+        pub result: &'a mut Option<ItemStack>,
+    }
+    #[non_exhaustive]
     pub struct RegisterGoalsEvent<'a> {
         pub mob: &'a mut crate::mobs::Mob,
     }
@@ -639,6 +677,13 @@ pub mod mod_api {
         fn tick(&self, host: &mut dyn Host, event: &mut TickEvent) {}
         fn player_logged_in(&self, host: &mut dyn Host, event: &mut PlayerLoggedInEvent<'_>) {}
         fn player_respawned(&self, host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {}
+        fn player_spawn_point_set(&self, host: &mut dyn Host, event: &mut PlayerSpawnPointSetEvent<'_>) -> Flow {
+            Flow::Continue
+        }
+        fn player_bed_enter(&self, host: &mut dyn Host, event: &mut PlayerBedEnterEvent<'_>) -> Flow {
+            Flow::Continue
+        }
+        fn living_entity_use_item_finish(&self, host: &mut dyn Host, event: &mut LivingEntityUseItemFinishEvent<'_>) {}
         fn register_goals(&self, event: &mut RegisterGoalsEvent<'_>) {}
         fn block_entity_render_bounding_box(
             &self,

@@ -752,6 +752,12 @@ v_trouble=vpage(
 v_food=vpage(
  "Comida\n\nCada tarefa gasta 2 pontos. Trigo vale 1, batata e cenoura 1, pão 6 (3 tarefas), carne assada 8 (4 tarefas), torta 10.\n\nComida pronta rende mais: monte moinho e cozinha cedo.",
  "Food\n\nEach task costs 2 points. Wheat is worth 1, potato and carrot 1, bread 6 (3 tasks), cooked meat 8 (4 tasks), pie 10.\n\nCooked food goes further: build a mill and kitchen early.")
+v_home=vpage(
+ "Sua casa\n\nA vila já vem com a casa do fundador: painel, lareira, sofá, cama e um mural com o mapa.\n\nDentro dela, perto do painel, as fábricas rendem 15% mais.\n\nSua primeira cama é a da casa; fora dela, só mais uma.",
+ "Your house\n\nThe village comes with the founder's house: panel, fireplace, sofa, bed and a map mural.\n\nInside it, near the panel, factories produce 15% more.\n\nYour first bed is the one at home; outside it, just one more.")
+v_meals=vpage(
+ "Refeições\n\nRefeição (assados, pão, batata assada, torta): trabalho mais rápido e fábricas +5% por 5 min.\n\nBanquete (ensopados, sopas, cenoura dourada): +10% por 8 min e regeneração.\n\nComer em casa dobra o tempo.",
+ "Meals\n\nMeal (roasts, bread, baked potato, pie): faster work and factories +5% for 5 min.\n\nFeast (stews, soups, golden carrot): +10% for 8 min and regeneration.\n\nEating at home doubles the time.")
 v_blocks=len(vpages)+1;vpages.append(None)
 vrefs={}
 for name in village_order:
@@ -770,7 +776,7 @@ vpages[v_blocks-1]={"text":"","extra":extra}
 vlinks=[("Começar","Start here",v_intro),("1. Trabalhador","1. Worker",v_hire),("2. Lavoura","2. Field",v_field),
  ("3. Cercados","3. Pens",v_pen),("4. Armazéns","4. Storage",v_store),("5. Carregadores","5. Haulers",v_haul),
  ("6. Capataz","6. Foreman",v_foreman),("7. Centro","7. Center",v_center),("Expandir zonas","Grow zones",v_expand),
- ("A vila cresce","Village growth",v_grow),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
+ ("A vila cresce","Village growth",v_grow),("Casa e refeições","House and meals",v_home),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
 label("veio.village.title","Guia da Vila Operária","Worker Village Guide")
 extra=[{"translate":"veio.village.title","bold":True},{"text":"\n"}]
 for n,(pt,en,target) in enumerate(vlinks):
@@ -793,6 +799,16 @@ label("veio.village.tab.description","Abra o Guia da Vila Operária e contrate s
 label("veio.village.welcome","Você recebeu o Guia da Vila Operária: aldeões podem trabalhar por você.","You received the Worker Village Guide: villagers can work for you.")
 label("veio.spawn.village","Você está no centro da vila. Ela vai crescer com a sua fábrica.","You are at the village center. It will grow with your factory.")
 label("veio.spawn.none","Nenhuma vila encontrada por perto. Construa um centro de controle para fixar o centro da sua vila.","No village found nearby. Build a control center to set your village center.")
+label("veio.home.built","Sua casa está pronta, com o painel em %s: lareira, sofá, cama e o mural com o mapa. Durma lá primeiro.","Your house is ready, with the panel at %s: fireplace, sofa, bed and the map mural. Sleep there first.")
+label("veio.home.inside","Em casa, com o painel: as fábricas rendem 15% mais.","At home with the panel: factories produce 15% more.")
+label("veio.home.left","Fora de casa: as fábricas voltam ao ritmo normal.","Away from home: factories are back to normal pace.")
+label("veio.home.bed_first","Sua primeira cama é a da casa, ao lado do painel. Durma nela antes.","Your first bed is the one at home, next to the panel. Sleep there first.")
+label("veio.home.bed_limit","Você já tem duas camas: a da casa e uma fora. Quebre a de fora para usar esta.","You already have two beds: the one at home and one outside. Break the outside one to use this.")
+label("veio.home.bed_home","Cama da casa: você renasce aqui.","Home bed: you respawn here.")
+label("veio.home.bed_away","Segunda cama marcada. Você tem a da casa e esta.","Second bed set. You have the one at home and this one.")
+label("veio.food.meal","Refeição: você trabalha mais rápido e as fábricas rendem 5%% mais por %s min.","Meal: you work faster and factories produce 5%% more for %s min.")
+label("veio.food.feast","Banquete: fábricas +10%%, trabalho mais rápido e regeneração por %s min.","Feast: factories +10%%, faster work and regeneration for %s min.")
+label("veio.food.home","Comida de casa: dura o dobro.","Home cooking: lasts twice as long.")
 write(f"{D}/advancement/village/root.json",{
  "display":{"icon":{"id":"minecraft:bell"},"title":{"translate":"veio.village.tab"},
  "description":{"translate":"veio.village.tab.description"},"background":"minecraft:gui/advancements/backgrounds/husbandry",

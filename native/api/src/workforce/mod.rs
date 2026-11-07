@@ -764,6 +764,9 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return storage::tick(host, pos, entity, time);
     }
     let now = defense::clock();
+    if entity.id == CONTROL_CENTER {
+        home::center_tick(host, pos, entity, time, now);
+    }
     step(host, pos, entity, time, now);
     if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) == 0 {
         if entity.id == CONTROL_CENTER && number(entity, "Status") != 1 {

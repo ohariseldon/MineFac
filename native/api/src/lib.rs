@@ -7,6 +7,7 @@ mod inserters;
 pub(crate) mod operations;
 mod defense;
 mod farm;
+mod home;
 mod pollution;
 mod production;
 mod power;
@@ -228,7 +229,26 @@ impl Hooks for Factory {
     }
 
     fn player_respawned(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
-        workforce::spawn::respawned(host, event.name);
+        workforce::spawn::respawned(host, event.player, event.name);
+    }
+
+    /// Casa do fundador: a primeira cama é a da casa, e só mais uma fora dela.
+    fn player_spawn_point_set(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerSpawnPointSetEvent<'_>) -> Flow {
+        home::spawn_point(host, event.player, event.dimension, event.pos, event.cause)
+    }
+
+    fn player_bed_enter(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerBedEnterEvent<'_>) -> Flow {
+        home::bed_enter(host, event.player, event.pos)
+    }
+
+    /// Comida do jogador: refeições e banquetes aceleram as máquinas (`home::food`).
+    fn living_entity_use_item_finish(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::LivingEntityUseItemFinishEvent<'_>) {
+        if event.entity.is_some() {
+            return;
+        }
+        if let Some(player) = host.acting_player() {
+            home::food::eaten(player.uuid, &player.name, &player.dimension, player.position, &event.stack.item, defense::clock());
+        }
     }
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
@@ -236,6 +256,7 @@ impl Hooks for Factory {
         budget::begin_tick(defense::clock());
         power::maintenance(defense::clock());
         workforce::spawn::tick(host, defense::clock());
+        home::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
         }
@@ -415,6 +436,8 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "DisplayItem" => key!("DisplayItem"),
         "Duration" => key!("Duration"),
         "Herd" => key!("Herd"),
+        "Home" => key!("Home"),
+        "HomeBeds" => key!("HomeBeds"),
         "Info" => key!("Info"),
         "Level" => key!("Level"),
         "LogisticsFilter" => key!("LogisticsFilter"),

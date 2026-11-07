@@ -1197,7 +1197,7 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     let before = village.commands.len();
     spawn::control_center(&mut village, [200, 64, 200]);
     assert_eq!(village.commands.len(), before, "mesmo centro: nada a refazer");
-    spawn::respawned(&mut village, "Steve");
+    spawn::respawned(&mut village, 7, "Steve");
     assert!(village.commands.last().is_some_and(|line| line.ends_with("tp Steve 200 65 200")));
     spawn::reset();
 }
