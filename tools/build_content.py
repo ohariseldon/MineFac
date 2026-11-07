@@ -46,6 +46,9 @@ BLOCKS = {
     "fast_belt": ("belt", None, 1, [], 1.5),
     "splitter": ("splitter", None, 1, [], 1.5),
     "merger": ("merger", None, 2, [], 1.5),
+    "inserter": ("inserter", None, 1, [], 1.5),
+    "fast_inserter": ("inserter", None, 1, [], 2.0),
+    "long_inserter": ("inserter", None, 1, [], 1.5),
     "cable": ("cable", None, 0, [], 1.0),
     "pole": ("pole", None, 0, [], 1.0),
     # Produção (0.9): extração, processamento, energia, lavoura e comida.
@@ -107,7 +110,7 @@ TABS = {
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
         "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
         "minecraft:coal", "minecraft:lava_bucket"]),
-    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "wrench"]),
+    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench"]),
     "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
         "pantry", "flour", "biomass", "tesla", "repair_kit", "minecraft:bone_meal"]),
@@ -150,6 +153,16 @@ def machine(name, tier):
     return textures, elements
 
 def model(kind, name, tier):
+    if kind == "inserter":
+        motor = {"fast_inserter": "minecraft:block/prismarine_bricks", "long_inserter": "minecraft:block/red_terracotta"}.get(name, "minecraft:block/cut_copper")
+        return {"iron": "minecraft:block/iron_block", "base": "minecraft:block/smooth_stone",
+                "motor": motor, "port": "veio:block/port", "particle": motor}, [
+            box([0, 0, 0], [16, 2, 16], "#base"),
+            box([2, 2, 4], [14, 4, 12], "#iron"),
+            box([5, 4, 5], [11, 8, 11], "#motor"),
+            box([6, 2, 0], [10, 4, 4], {"up": "#port", "*": "#motor"}),
+            box([6, 2, 12], [10, 3, 16], "#iron"),
+        ]
     if kind == "machine":
         return machine(name, tier)
     if kind == "generator":
@@ -282,6 +295,7 @@ def model(kind, name, tier):
     raise ValueError(kind)
 
 SHAPES = {
+    "inserter": [[0, 0, 0, 1, 0.25, 1], [.3125, .25, .3125, .6875, .625, .6875]],
     "machine": [[0, 0, 0, 1, 1, 1]],
     "generator": [[0, 0, 0, 1, 1, 1]],
     "tesla": [[0, 0, 0, 1, 1, 1]],

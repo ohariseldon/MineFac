@@ -306,6 +306,10 @@ pub mod mod_api {
         fn insert_item(&mut self, pos: [i32; 3], face: Direction, stack: ItemStack) -> Option<ItemStack> {
             unimplemented!("insert_item")
         }
+        fn move_items(&mut self, dimension: &str, from: [i32; 3], from_face: Direction,
+            to: [i32; 3], to_face: Direction, item: Option<&str>, max: u32) -> u32 {
+            unimplemented!("move_items")
+        }
         fn change_mod_block_entity(
             &mut self,
             pos: [i32; 3],

@@ -4,6 +4,8 @@ Leia [COORDENACAO.md](../COORDENACAO.md). Esta frente continua a expansão das f
 
 ## Escopo
 
+O lote atual foi ampliado para uma [rede integrada de logística](CODEX-LOGISTICA.md): três braços, filtros, prioridades de divisores e unificadores, pausa por redstone, vazão e sinalização. O roteiro de teste cobre uma fábrica completa. As próximas rodadas devem ser organizadas por redes utilizáveis, evitando entregar apenas uma peça isolada por vez.
+
 - Continuar logística: braços de transferência, filtros, prioridades, transporte e ferramentas para montar fábricas em escala.
 - Expandir máquinas e cadeias quando elas criarem usos e escolhas concretas no mundo: recursos do terreno, redstone, energia, agricultura, povoados, Nether, armazenamento e projetos de infraestrutura.
 - Integrar cada novidade com visual legível, controles, estados de espera, receitas, tutorial e progressão. Preservar curvas, rampas, unificador e os recursos industriais recebidos na 0.9.
@@ -11,6 +13,8 @@ Leia [COORDENACAO.md](../COORDENACAO.md). Esta frente continua a expansão das f
 - Receber as melhorias de Grok, resolver conflitos e preparar versões consolidadas na `main`.
 
 ## Ordem inicial de trabalho
+
+Entrega em desenvolvimento sobre a 0.11.0: [braço de transferência básico](CODEX-BRACOS.md), na branch `codex/inserters`. A documentação inclui as interfaces de energia, inventário e postos preservadas e o estado das verificações. A atribuição de aldeões continua na frente Cloud.
 
 1. Incorporar o feedback do usuário ao testar a 0.9.1. Priorizar falhas que impeçam construir ou entender uma fábrica.
 2. Entregar braços de transferência com origem e destino visíveis, consumo de energia, conservação de itens e estado de bloqueio.

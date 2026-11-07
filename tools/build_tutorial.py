@@ -152,6 +152,36 @@ label("veio.hint.water_wheel", "8 FE/t por lado com água corrente", "8 FE/t per
 label("veio.hint.wind", "8 FE/t no nível do mar; mais alto e na chuva", "8 FE/t at sea level; more up high and in rain")
 label("veio.tutorial.merger.title", "Duas linhas, uma saída", "Two lines, one outlet")
 label("veio.tutorial.merger.description", "Conecte as entradas A e B pelas laterais. Você recebeu o guia atualizado.", "Connect inputs A and B from the sides. You received the updated guide.")
+label("block.veio.inserter", "Braço de transferência", "Transfer Arm")
+label("veio.hint.inserter", "Traseira > frente: 40 FE/item", "Rear > front: 40 FE/item")
+label("veio.hint.inserter_wait", "Confira origem e destino", "Check source and target")
+label("veio.hint.fast_inserter", "Traseira > frente: 64 FE/item", "Rear > front: 64 FE/item")
+label("veio.hint.long_inserter", "Alcance 2; 60 FE/item", "Reach 2; 60 FE/item")
+help["inserter"] = (
+ "Puxa de trás, entrega à frente.\nBaús, esteiras e máquinas.\nAté 1 item/s; 40 FE por item.\nLigue um cabo ou poste.\nRedstone pausa; chave gira.",
+ "Takes from rear, sends ahead.\nChests, belts and machines.\nUp to 1 item/s; 40 FE/item.\nConnect a cable or pole.\nRedstone pauses; wrench turns.")
+label("block.veio.fast_inserter", "Braço rápido", "Fast Transfer Arm")
+label("block.veio.long_inserter", "Braço longo", "Long Transfer Arm")
+help["fast_inserter"] = (
+ "Até 2,5 itens/s; 64 FE/item.\nPuxa atrás, entrega à frente.\nAlcance de 1 bloco por lado.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
+ "Up to 2.5 items/s; 64 FE/item.\nRear to front, 1-block reach.\nSneak + item: set filter.\nSneak + empty hand: clear.")
+help["long_inserter"] = (
+ "Até 1 item/s; 60 FE/item.\nAlcance de 2 blocos por lado.\nIgnora inventário intermediário.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
+ "Up to 1 item/s; 60 FE/item.\nReaches 2 blocks on each side.\nSkips intermediate inventory.\nSneak + item: set filter.\nSneak + empty hand: clear.")
+for key, pt, en in [
+ ("balanced", "Distribuição equilibrada", "Balanced routing"),
+ ("left", "Prioridade: esquerda / A", "Priority: left / A"),
+ ("right", "Prioridade: direita / B", "Priority: right / B"),
+ ("sorted", "Filtro: igual à esquerda", "Sort: matching goes left"),
+ ("filtered", "Filtro ativo: ícone no bloco", "Filter set: icon on block"),
+ ("any", "Filtro: qualquer item", "Filter: any item"),
+]: label("veio.routing."+key, pt, en)
+for name, pt, en in [
+ ("belt", "Esteira", "Conveyor"), ("fast_belt", "Esteira rápida", "Fast conveyor"),
+ ("splitter", "Divisor", "Splitter"), ("merger", "Unificador", "Merger"),
+ ("inserter", "Braço básico", "Basic arm"), ("fast_inserter", "Braço rápido", "Fast arm"),
+ ("long_inserter", "Braço longo", "Long arm"),
+]: label("veio.guide.short."+name, pt, en)
 help["merger"] = (
  "Une as duas entradas laterais.\nSaída única pela frente.\nAlterna A e B, até 5 itens/s.\nSem energia elétrica.\nUse a chave para girar.",
  "Merges the two side inputs.\nSingle outlet at the front.\nAlternates A/B, up to 5/s.\nNeeds no electricity.\nTurn with the wrench.")
@@ -276,7 +306,7 @@ categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
  ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
- ("Logística","Logistics",["belt","fast_belt","splitter","merger","cable","pole","steel_pole","wrench"]),
+ ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","wrench"]),
  ("Projetos e defesa","Projects and defense",["contract_hub","tesla"]),
 ]
 order=[name for _,_,names in categories for name in names]
@@ -488,6 +518,26 @@ page(
 page(
  "Subir e descer\n\nColoque esteiras sobre blocos em degraus, com diferença de 1 bloco.\n\nA peça mais baixa vira rampa. Deixe espaço acima.\n\nMáquinas, divisores e unificadores conectam na mesma altura.",
  "Up and down\n\nPlace belts on stair-stepped blocks, one block of height per step.\n\nThe lower belt becomes a ramp. Leave headroom.\n\nMachines, splitters and mergers connect at the same height.")
+help["splitter"] = (
+ "Equilibra duas saídas.\nAgachar + chave: prioridade.\nAgachar + item: filtro.\nIguais à esquerda; outros à direita.\nMão vazia agachado: limpar.",
+ "Balances two outlets.\nSneak + wrench: priority.\nSneak + item: sorting filter.\nMatching left; other right.\nSneak + empty hand: clear.")
+help["merger"] = (
+ "Duas entradas, uma saída.\nAgachar + chave: prioridade\nequilibrada, A ou B.\nVazão até 5 itens/s.\nRedstone pausa o fluxo.",
+ "Two inputs, one outlet.\nSneak + wrench: balanced,\nA or B priority.\nUp to 5 items/s.\nRedstone pauses the flow.")
+for name in ("splitter", "merger"):
+ label(f"veio.help.{name}", *help[name])
+page(
+ "Rede de logística\n\nEsteiras levam itens longe. Braços ligam baús e máquinas. Unificadores juntam; divisores distribuem.\n\nUse rápidas depois de juntar linhas.",
+ "Logistics network\n\nBelts carry over distance. Arms link chests and machines. Mergers join; splitters distribute.\n\nUse fast belts after merging.")
+page(
+ "Configurar filtros\n\nAgache e use um item no braço ou divisor: ele vira filtro sem gastar a amostra.\n\nAgache com mão vazia para limpar. O ícone fica no bloco.",
+ "Set a filter\n\nSneak and use an item on an arm or splitter to copy its filter. The sample is kept.\n\nSneak with an empty hand to clear. See the icon on the block.")
+page(
+ "Prioridades\n\nAgache com a chave no divisor ou unificador: equilibrado, esquerda/A, direita/B.\n\nPrioridade usa a outra via se precisar. O filtro nunca mistura vias.",
+ "Priorities\n\nSneak with a wrench on a splitter or merger: balanced, left/A, right/B.\n\nPriority falls back if needed. Sorting filters never mix lanes.")
+page(
+ "Parar e medir\n\nRedstone pausa braços e esteiras. Esteiras reagem em até 8 ticks.\n\nPainéis mostram itens/min. Divisor filtrado: iguais à esquerda, outros à direita.",
+ "Stop and measure\n\nRedstone pauses arms and belts. Belts respond within 8 ticks.\n\nPanels show items/min. A sorting splitter sends matching left, other right.")
 category_pages=[]
 for _ in categories:
  category_pages.append(len(pages)+1);pages.append(None)
@@ -537,7 +587,9 @@ for g,(pt,en,members) in enumerate(categories):
  extra=[{"translate":key,"bold":True},{"text":"\n"}]
  for name in members:
   kind="item" if name=="wrench" else "block"
-  extra.extend([{"translate":f"{kind}.veio.{name}","color":"dark_blue","underlined":True,
+  short_key=f"veio.guide.short.{name}"
+  title_key=short_key if short_key in langs["pt_br"] else f"{kind}.veio.{name}"
+  extra.extend([{"translate":title_key,"color":"dark_blue","underlined":True,
                  "click_event":{"action":"change_page","page":references[name]}},{"text":"\n"}])
  extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
  pages[category_pages[g]-1]={"text":"","extra":extra}
@@ -602,7 +654,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.14.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.15.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",

@@ -6,6 +6,9 @@
     "veio:fast_belt",
     "veio:splitter",
     "veio:merger",
+    "veio:inserter",
+    "veio:fast_inserter",
+    "veio:long_inserter",
     "veio:wrench"
   ]
 }

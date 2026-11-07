@@ -82,6 +82,7 @@ fn each_orientation_has_two_distinct_side_inputs_and_no_rear_input() {
 
 #[derive(Default)]
 struct RouteWorld {
+    signal: i32,
     blocks: HashMap<[i32; 3], String>,
     properties: HashMap<([i32; 3], String), String>,
     delivered: Vec<([i32; 3], ItemStack)>,
@@ -98,6 +99,8 @@ impl RouteWorld {
 }
 
 impl Host for RouteWorld {
+    fn dimension(&self) -> &'static str { "minecraft:overworld" }
+    fn neighbor_signal(&mut self, _dimension: &str, _pos: [i32; 3]) -> i32 { self.signal }
     fn block(&self, pos: [i32; 3]) -> String {
         self.lookups.set(self.lookups.get() + 1);
         self.blocks.get(&pos).cloned().unwrap_or_else(|| "minecraft:air".into())
@@ -213,4 +216,91 @@ fn item_paths_meet_at_the_same_height_and_preserve_the_output_edge() {
     assert!((path_point("down", 0.0)[1] - (1.0 + path_point("straight", 1.0)[1])).abs() < 0.0001);
     assert_eq!(orient([0.5, 0.0, 0.0], "west"), [1.0, 0.0, 0.5]);
     assert_eq!(orient([0.5, 0.0, 0.0], "east"), [0.0, 0.0, 0.5]);
+}
+
+#[derive(Default)]
+struct Junction {
+    blocked: Option<Direction>,
+    received: Vec<(Direction, String, u32)>,
+}
+
+impl Host for Junction {
+    fn insert_item(&mut self, pos: [i32; 3], face: Direction, stack: ItemStack) -> Option<ItemStack> {
+        let output = face.opposite();
+        let [dx, _, dz] = output.normal();
+        assert_eq!(pos, [dx, 0, dz]);
+        if self.blocked == Some(output) { return Some(stack); }
+        self.received.push((output, stack.item.to_string(), stack.count));
+        None
+    }
+}
+
+#[test]
+fn filtered_splitter_sorts_strictly_and_never_spills_into_the_wrong_lane() {
+    let mut entity = ModBlockEntity::default();
+    entity.id = SPLITTER.into();
+    entity.items = vec![Some(ItemStack::new(COPPER, 3))];
+    logistics_controls::set_filter(&mut entity, Some(COPPER));
+    let mut world = Junction { blocked: Some(Direction::West), ..Default::default() };
+    split(&mut world, [0; 3], Direction::North, &mut entity, 2);
+    assert!(world.received.is_empty());
+    assert_eq!(entity.items[0].as_ref().unwrap().count, 3);
+    world.blocked = None;
+    split(&mut world, [0; 3], Direction::North, &mut entity, 2);
+    assert!(world.received.iter().all(|(side, _, _)| *side == Direction::West));
+    entity.items[0] = Some(ItemStack::new(IRON, 2));
+    world.received.clear();
+    split(&mut world, [0; 3], Direction::North, &mut entity, 2);
+    assert!(world.received.iter().all(|(side, _, _)| *side == Direction::East));
+}
+
+#[test]
+fn splitter_priority_uses_overflow_and_balanced_mode_still_alternates() {
+    let mut entity = ModBlockEntity::default();
+    entity.id = SPLITTER.into();
+    entity.items = vec![Some(ItemStack::new(COPPER, 8))];
+    set_number(&mut entity, "RoutingPriority", 1);
+    let mut world = Junction::default();
+    split(&mut world, [0; 3], Direction::North, &mut entity, 2);
+    assert_eq!(world.received.iter().map(|(side, _, _)| *side).collect::<Vec<_>>(), [Direction::West, Direction::West]);
+    world.blocked = Some(Direction::West);
+    world.received.clear();
+    split(&mut world, [0; 3], Direction::North, &mut entity, 2);
+    assert!(world.received.iter().all(|(side, _, _)| *side == Direction::East));
+    world.blocked = None;
+    world.received.clear();
+    set_number(&mut entity, "RoutingPriority", 0);
+    split(&mut world, [0; 3], Direction::North, &mut entity, 2);
+    assert_ne!(world.received[0].0, world.received[1].0);
+}
+
+#[test]
+fn merger_priority_drains_the_selected_source_before_the_other() {
+    for (priority, expected) in [(1, COPPER), (2, IRON)] {
+        let mut entity = loaded();
+        set_number(&mut entity, "RoutingPriority", priority);
+        let mut outlet = Outlet { room: 4, ..Default::default() };
+        merge(&mut outlet, [0; 3], Direction::North, &mut entity, 2);
+        assert_eq!(outlet.received, [expected, expected]);
+        merge(&mut outlet, [0; 3], Direction::North, &mut entity, 2);
+        assert_eq!(outlet.received.len(), 4);
+        assert_ne!(outlet.received[2], outlet.received[3]);
+    }
+}
+
+#[test]
+fn redstone_pauses_belts_without_consuming_and_success_counts_the_real_flow() {
+    let mut world = RouteWorld::default();
+    world.put([0; 3], BELT, "south");
+    let mut entity = belt();
+    world.signal = 15;
+    transfer_outputs(&mut world, [0; 3], &mut entity, 0);
+    update_status(&mut entity, 0);
+    assert_eq!(number(&entity, "Status"), 9);
+    assert_eq!(entity.items[0].as_ref().unwrap().count, 4);
+    world.signal = 0;
+    transfer_outputs(&mut world, [0; 3], &mut entity, 8);
+    assert_eq!(number(&entity, "Produced"), 1);
+    assert_eq!(world.delivered.len(), 1);
+    assert_eq!(entity.items[0].as_ref().unwrap().count, 3);
 }

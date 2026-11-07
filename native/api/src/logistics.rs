@@ -7,20 +7,25 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
     if is_belt(&entity.id) && time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4 {
         refresh_path(host, pos, entity);
     }
+    if transport(&entity.id) && time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4 {
+        let paused = host.neighbor_signal(host.dimension(), pos) > 0;
+        set_number(entity, "LogisticsPaused", i32::from(paused));
+        if paused { return; }
+    }
     let outputs = output_slots(&entity.id);
     if time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4
         && entity.items.get(outputs.clone()).is_some_and(|slots| slots.iter().any(Option::is_some))
         && let Some(facing) = output_direction(host, pos)
     {
         if entity.id == MERGER {
-            if merge(host, pos, facing, entity, 2) > 0 {
-                set_number(entity, "MovedAt", stamp(time));
-            }
+            let moved = merge(host, pos, facing, entity, 2);
+            if moved > 0 { record_moved(entity, moved, time); }
         } else if entity.id == SPLITTER {
             let before = entity.items[0].as_ref().map_or(0, |stack| stack.count);
             split(host, pos, facing, entity, 2);
             if entity.items[0].as_ref().map_or(0, |stack| stack.count) < before {
-                set_number(entity, "MovedAt", stamp(time));
+                let moved = before - entity.items[0].as_ref().map_or(0, |stack| stack.count);
+                record_moved(entity, moved, time);
             }
         } else {
             let batch = if entity.id == FAST_BELT { 2 } else { 1 };
@@ -32,7 +37,7 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
                     } else { send(host, pos, facing, stack, batch) };
                     if moved > 0 {
                         consume(&mut entity.items[slot], moved);
-                        set_number(entity, "MovedAt", stamp(time));
+                        record_moved(entity, moved, time);
                     }
                 }
             }
@@ -40,9 +45,17 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
     }
 }
 
+pub(super) fn transport(block: &str) -> bool { matches!(block, BELT | FAST_BELT | SPLITTER | MERGER) }
+
+fn record_moved(entity: &mut ModBlockEntity, count: u32, time: i64) {
+    set_number(entity, "MovedAt", stamp(time));
+    if transport(&entity.id) { set_number(entity, "Produced", number(entity, "Produced") + count as i32); }
+}
+
 pub(super) fn update_status(entity: &mut ModBlockEntity, time: i64) -> bool {
     if matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
-        let status = if entity.items.iter().all(Option::is_none) { 0 }
+        let status = if number(entity, "LogisticsPaused") != 0 { 9 }
+            else if entity.items.iter().all(Option::is_none) { 0 }
             else if stamp(time) - number(entity, "MovedAt") > 8 { 3 }
             else { 1 };
         set_number(entity, "Status", status);
@@ -76,10 +89,12 @@ pub(super) fn accepts_merger(host: &dyn Host, event: &ContainerAcceptsEvent<'_>)
 /// stays in its own buffer while an accepted product can use the outlet.
 fn merge(host: &mut dyn Host, pos: [i32; 3], facing: Direction, entity: &mut ModBlockEntity, batch: u32) -> u32 {
     let mut next = (number(entity, "NextInput") & 1) as usize;
+    let priority = logistics_controls::priority(entity);
     let mut total = 0;
     for _ in 0..batch {
         let mut sent = false;
-        for slot in [next, 1 - next] {
+        let first = match priority { 1 => 0, 2 => 1, _ => next };
+        for slot in [first, 1 - first] {
             let Some(stack) = entity.items.get(slot).and_then(Option::as_ref) else { continue; };
             let moved = send(host, pos, facing, stack, 1);
             if moved == 0 { continue; }
@@ -108,16 +123,23 @@ pub(super) fn split(
     let key = "PreferRight".into();
     let was_right = matches!(entity.nbt.get(&key), Some(Tag::Byte(1)));
     let mut prefer_right = was_right;
+    let priority = logistics_controls::priority(entity);
+    let filter = logistics_controls::filter(entity);
     for _ in 0..batch {
         let Some(stack) = entity.items[0].as_ref() else {
             break;
         };
-        let preferred = turn(facing, prefer_right);
+        let right = if let Some(filter) = filter.as_deref() {
+            stack.item.as_ref() != filter
+        } else { match priority { 1 => false, 2 => true, _ => prefer_right } };
+        let preferred = turn(facing, right);
         let moved = send(host, pos, preferred, stack, 1);
         if moved != 0 {
             prefer_right = !prefer_right;
             consume(&mut entity.items[0], moved);
         } else {
+            // A sorting filter never spills into the wrong lane.
+            if filter.is_some() { break; }
             let moved = send(host, pos, preferred.opposite(), stack, 1);
             if moved == 0 {
                 break;

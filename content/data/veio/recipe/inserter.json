@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": ["minecraft:piston", "veio:gear", "minecraft:iron_ingot", "veio:wire", "veio:wire"],
+  "result": {"id": "veio:inserter", "count": 2}
+}
