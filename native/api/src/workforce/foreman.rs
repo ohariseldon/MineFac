@@ -292,17 +292,17 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
     nodes.sort_by_key(|(_, node)| storage::is_store(&node.id));
     let stores: Vec<[i32; 3]> = nodes.iter().filter(|(_, node)| storage::is_store(&node.id)).map(|(spot, _)| *spot).collect();
     // Produtos disponíveis: (bloco, slot, item, quantidade).
-    let mut sources: Vec<([i32; 3], usize, String, u32)> = Vec::new();
+    let mut sources: Vec<([i32; 3], usize, ItemStack)> = Vec::new();
     for (spot, node) in &nodes {
         for slot in queue_outputs(&node.id) {
             if let Some(stack) = node.items.get(slot).and_then(Option::as_ref).filter(|stack| plain(stack)) {
-                sources.push((*spot, slot, stack.item.to_string(), stack.count));
+                sources.push((*spot, slot, stack.clone()));
             }
         }
     }
-    sources.retain(|(spot, slot, _, _)| !tasks.iter().any(|task| task.from == *spot && task.slot == *slot));
+    sources.retain(|(spot, slot, _)| !tasks.iter().any(|task| task.from == *spot && task.slot == *slot));
     let mut next_id = number(entity, "TaskId");
-    let mut plan_for = |sink: &ModBlockEntity, spot: [i32; 3], tasks: &mut Vec<Task>, sources: &mut Vec<([i32; 3], usize, String, u32)>| {
+    let mut plan_for = |sink: &ModBlockEntity, spot: [i32; 3], tasks: &mut Vec<Task>, sources: &mut Vec<([i32; 3], usize, ItemStack)>| {
         // A mesa só pede comida quando está acabando; o resto da comida segue para as máquinas.
         let desk_food: u32 = if sink.id == FOREMAN_DESK {
             food_slots(&sink.id).filter_map(|slot| sink.items[slot].as_ref()).map(|stack| stack.count).sum()
@@ -320,11 +320,13 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
                 continue;
             }
             let current = sink.items.get(into).and_then(Option::as_ref);
-            let Some(index) = sources.iter().position(|(from, _, item, _)| *from != spot
+            let Some(index) = sources.iter().position(|(from, _, stack)| *from != spot
                 && !(store && stores.contains(from))
-                && current.is_none_or(|present| is_plain(present, item) && present.count < top_up(&sink.id))
-                && operations::accepts_material(sink, into, &ItemStack::new(item, 1))) else { continue };
-            let (from, slot, item, available) = sources.remove(index);
+                && current.is_none_or(|present| is_plain(present, &stack.item) && present.count < top_up(&sink.id))
+                && operations::accepts_material(sink, into, stack)) else { continue };
+            let (from, slot, stack) = sources.remove(index);
+            let available = stack.count;
+            let item = stack.item.to_string();
             let have = current.map_or(0, |present| present.count);
             let count = available.min(hauler::BATCH).min(top_up(&sink.id) - have);
             next_id += 1;

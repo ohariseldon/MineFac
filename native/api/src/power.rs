@@ -104,14 +104,79 @@ fn nearest(pos: [i32; 3], steel: bool, candidates: &[([i32; 3], bool)]) -> Vec<[
     list.into_iter().take(MAX_LINKS).map(|(_, at)| at).collect()
 }
 
-/// Ligação simétrica: A e B se ligam se um estiver entre os seis mais próximos do outro.
-/// Os dois lados calculam o mesmo resultado a partir do mesmo registro.
-pub(super) fn links(pos: [i32; 3], steel: bool, around: impl Fn([i32; 3]) -> Vec<([i32; 3], bool)>) -> Vec<[i32; 3]> {
-    let mine = around(pos);
+#[cfg(test)]
+mod optimization_tests {
+    use super::*;
+
+    #[test]
+    fn ranked_connections_match_original_sorted_selection_with_ties_and_mixed_tiers() {
+        for seed in 0..8 {
+            let nodes: Vec<_> = (-4i32..=4).flat_map(|x| (-4i32..=4).map(move |z| {
+                ([x * (seed % 3 + 1), (x + z).rem_euclid(3), z * (seed % 2 + 1)], (x + z + seed) % 3 == 0)
+            })).collect();
+            for &(pos, steel) in nodes.iter().step_by(3) {
+                let around = |center| nodes.iter().copied().filter(move |(at, _)| *at != center);
+                let mine: Vec<_> = around(pos).collect();
+                let own = nearest(pos, steel, &mine);
+                let mut expected: Vec<_> = mine.iter().filter(|(at, tier)| {
+                    own.contains(at) || nearest(*at, *tier, &around(*at).collect::<Vec<_>>()).contains(&pos)
+                }).map(|(at, _)| *at).collect();
+                expected.sort_unstable();
+                assert_eq!(links(pos, steel, around), expected);
+            }
+        }
+    }
+
+    #[test]
+    fn borrowed_area_keeps_wrap_order_and_handles_empty_or_partial_arrays() {
+        struct Trace { order: Vec<[i32; 3]> }
+        impl Host for Trace {
+            fn dimension(&self) -> &'static str { "veio:power-regression" }
+            fn change_mod_block_entity(&mut self, pos: [i32; 3], _: &mut dyn FnMut(&mut ModBlockEntity)) -> bool {
+                self.order.push(pos); false
+            }
+        }
+        let mut pole = ModBlockEntity::default();
+        pole.id = POLE.into();
+        pole.nbt.insert("Area".into(), Tag::IntArray(vec![1,0,0,2,0,0,3,0,0,99]));
+        pole.nbt.insert("Links".into(), Tag::IntArray(Vec::new()));
+        set_number(&mut pole, "Port", 2);
+        let mut trace = Trace { order: Vec::new() };
+        tick(&mut trace, [0; 3], &mut pole, 1);
+        assert_eq!(trace.order, [[3,0,0],[1,0,0],[2,0,0]]);
+        assert_eq!(number(&pole, "Port"), 0);
+        pole.nbt.insert("Area".into(), Tag::IntArray(Vec::new()));
+        trace.order.clear();
+        tick(&mut trace, [0; 3], &mut pole, 2);
+        assert!(trace.order.is_empty());
+    }
+}
+
+// Membership in the nearest-six set needs a rank, not a sorted allocation.
+fn among_nearest(center: [i32; 3], steel: bool, target: [i32; 3], target_steel: bool,
+    peers: impl IntoIterator<Item = ([i32; 3], bool)>) -> bool
+{
+    let target_distance = distance2(center, target);
+    if target_distance > reach(steel).min(reach(target_steel)).pow(2) { return false; }
+    let mut before = 0;
+    for (at, other_steel) in peers {
+        let distance = distance2(center, at);
+        if distance <= reach(steel).min(reach(other_steel)).pow(2) && (distance, at) < (target_distance, target) {
+            before += 1;
+            if before == MAX_LINKS { return false; }
+        }
+    }
+    true
+}
+
+/// Symmetric union of the nearest-six selections, with the original ordering.
+pub(super) fn links<I>(pos: [i32; 3], steel: bool, around: impl Fn([i32; 3]) -> I) -> Vec<[i32; 3]>
+where I: IntoIterator<Item = ([i32; 3], bool)> {
+    let mine: Vec<_> = around(pos).into_iter().collect();
     let own = nearest(pos, steel, &mine);
     let mut result: Vec<[i32; 3]> = mine.iter()
         .filter(|(other, other_steel)| {
-            own.contains(other) || nearest(*other, *other_steel, &around(*other)).contains(&pos)
+            own.contains(other) || among_nearest(*other, *other_steel, pos, steel, around(*other))
         })
         .map(|(other, _)| *other)
         .collect();
@@ -119,19 +184,21 @@ pub(super) fn links(pos: [i32; 3], steel: bool, around: impl Fn([i32; 3]) -> Vec
     result
 }
 
-fn offsets(entity: &ModBlockEntity, key: &str) -> Vec<[i32; 3]> {
-    match entity.nbt.get(&key.into()) {
-        Some(Tag::IntArray(values)) => values.chunks_exact(3).map(|v| [v[0], v[1], v[2]]).collect(),
-        _ => Vec::new(),
-    }
+fn offsets<'a>(entity: &'a ModBlockEntity, key: &str) -> impl ExactSizeIterator<Item = [i32; 3]> + Clone + 'a {
+    let values: &[i32] = match entity.nbt.get(nbt_key(key)) {
+        Some(Tag::IntArray(values)) => values,
+        _ => &[],
+    };
+    values.chunks_exact(3).map(|v| [v[0], v[1], v[2]])
 }
 
 fn set_offsets(entity: &mut ModBlockEntity, key: &str, list: &[[i32; 3]]) -> bool {
-    let flat: Vec<i32> = list.iter().flatten().copied().collect();
-    if matches!(entity.nbt.get(&key.into()), Some(Tag::IntArray(old)) if *old == flat) {
+    if matches!(entity.nbt.get(nbt_key(key)), Some(Tag::IntArray(old))
+        if old.iter().copied().eq(list.iter().flatten().copied())) {
         return false;
     }
-    entity.nbt.insert(key.into(), Tag::IntArray(flat));
+    let flat = list.iter().flatten().copied().collect();
+    entity.nbt.insert(nbt_key(key).clone(), Tag::IntArray(flat));
     true
 }
 
@@ -155,7 +222,7 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let steel = entity.id == STEEL_POLE;
     let dimension = host.dimension();
     let mut changed = false;
-    if (time + i64::from((pos[0] ^ pos[2]) & 31)).rem_euclid(REFRESH) == 0 || !entity.nbt.contains_key(&"Links".into()) {
+    if (time + i64::from((pos[0] ^ pos[2]) & 31)).rem_euclid(REFRESH) == 0 || !entity.nbt.contains_key(nbt_key("Links")) {
         register(dimension, pos, steel);
         let reader: &dyn Host = host;
         // Confere os candidatos no mundo: um poste quebrado sai do registro.
@@ -170,9 +237,8 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         for at in gone {
             forget(dimension, at);
         }
-        let around = |center: [i32; 3]| candidates.iter().chain([&(pos, steel)])
-            .filter(|(at, _)| *at != center && distance2(*at, center) <= (2 * STEEL.reach).pow(2))
-            .copied().collect::<Vec<_>>();
+        let around = |center: [i32; 3]| candidates.iter().copied().chain(std::iter::once((pos, steel)))
+            .filter(move |(at, _)| *at != center && distance2(*at, center) <= (2 * STEEL.reach).pow(2));
         let linked: Vec<[i32; 3]> = links(pos, steel, around).into_iter()
             .map(|at| [at[0] - pos[0], at[1] - pos[1], at[2] - pos[2]]).collect();
         changed |= set_offsets(entity, "Links", &linked);
@@ -191,9 +257,10 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let limit = own.capacity;
     let mut energy = number(entity, "energy").min(limit);
     let area = offsets(entity, "Area");
-    let start = number(entity, "Port") as usize;
-    for i in 0..area.len() {
-        let target = add(pos, area[(start + i) % area.len()]);
+    let area_len = area.len();
+    let start = number(entity, "Port") as usize % area_len.max(1);
+    for offset in area.clone().skip(start).chain(area.take(start)) {
+        let target = add(pos, offset);
         host.change_mod_block_entity(target, &mut |other| {
             if tier(&other.id).is_some() {
                 return; // Postes se ligam por fio, não pela área.
@@ -216,8 +283,8 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             }
         });
     }
-    if !area.is_empty() {
-        set_number(entity, "Port", ((start + 1) % area.len()) as i32);
+    if area_len > 0 {
+        set_number(entity, "Port", ((start + 1) % area_len) as i32);
     }
     // Cada fio é atendido só pela ponta "menor", uma vez por tick.
     for offset in offsets(entity, "Links").into_iter().filter(|offset| *offset > [0, 0, 0]) {

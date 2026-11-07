@@ -2,13 +2,17 @@
 use super::*;
 
 pub(super) fn filter(entity: &ModBlockEntity) -> Option<String> {
-    match entity.nbt.get(&"LogisticsFilter".into()) {
+    match entity.nbt.get(nbt_key("LogisticsFilter")) {
         Some(Tag::String(value)) => {
             let value = value.to_string_lossy();
             (!value.is_empty()).then_some(value)
         }
         _ => None,
     }
+}
+
+pub(super) fn has_filter(entity: &ModBlockEntity) -> bool {
+    matches!(entity.nbt.get(nbt_key("LogisticsFilter")), Some(Tag::String(value)) if !java_eq(value, ""))
 }
 
 pub(super) fn priority(entity: &ModBlockEntity) -> usize {
@@ -25,7 +29,7 @@ pub(super) fn set_filter(entity: &mut ModBlockEntity, item: Option<&str>) {
 }
 
 pub(super) fn cycle_priority(entity: &mut ModBlockEntity) {
-    if entity.id == SPLITTER && filter(entity).is_some() {
+    if entity.id == SPLITTER && has_filter(entity) {
         set_filter(entity, None);
         set_number(entity, "RoutingPriority", 0);
     } else {
@@ -36,7 +40,7 @@ pub(super) fn cycle_priority(entity: &mut ModBlockEntity) {
 
 pub(super) fn publish(entity: &mut ModBlockEntity) {
     if configurable(&entity.id) {
-        set_number(entity, "Info", priority(entity) as i32 + if filter(entity).is_some() { 4 } else { 0 });
+        set_number(entity, "Info", priority(entity) as i32 + if has_filter(entity) { 4 } else { 0 });
     }
 }
 
@@ -75,7 +79,7 @@ pub(super) fn draw_filter(host: &dyn Host, event: &mut horizon_client::mod_api::
         let facing = host.block_state_property(event.state, "facing").unwrap_or("south");
         let yaw = match facing { "west" => -90.0, "north" => -180.0, "east" => -270.0, _ => 0.0 };
         let mode = priority(event.entity);
-        let sorted = filter(event.entity).is_some();
+        let sorted = has_filter(event.entity);
         let faces = [Some(CubeFace { sprite: "veio:gui/material", uv: None }); 6];
         event.draw.push();
         event.draw.rotate_about([0.0, 1.0, 0.0], yaw, [0.5; 3]);

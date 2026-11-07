@@ -1,5 +1,36 @@
 use super::*;
 
+#[test]
+fn fast_material_rejection_keeps_the_original_layout_and_contract_fences() {
+    let blocks = [DRILL, DRILL_MK2, PRESS, ASSEMBLER, CUTTER, INTEGRATOR, CRUSHER, ALLOY,
+        ELECTRONICS, GENERATOR, GEOTHERMAL, HARVESTER, HUB, BELT, FAST_BELT, SPLITTER, MERGER,
+        CABLE, SOLAR, BATTERY, TESLA, inserters::ID, inserters::FAST, inserters::LONG,
+        production::PLANTER, production::TREE_FARM, production::RANCH, production::PANTRY,
+        production::MILL, production::KITCHEN, production::ELECTRIC_FURNACE, production::STEAM_ENGINE,
+        production::BIOMASS_GENERATOR, "veio:farm_post", "veio:hauler_post", "veio:shepherd_post",
+        "veio:foreman_desk", "veio:barn", "veio:silo", "veio:control_center"];
+    let materials = [PLATE, GEAR, FRAME, STEEL, CIRCUIT, BONE_MEAL, "minecraft:raw_copper",
+        "minecraft:coal", "minecraft:lava_bucket", "minecraft:bucket", "minecraft:wheat",
+        "minecraft:carrot", "minecraft:wheat_seeds", "minecraft:oak_sapling", "minecraft:emerald",
+        "minecraft:stone", "minecraft:shears"];
+    for block in blocks {
+        let mut entity = ModBlockEntity::default();
+        entity.id = block.into();
+        for stage in [0, 1, 4] {
+            set_number(&mut entity, "ContractStage", stage);
+            let size = layout(block).map_or(0, |(n, _, _)| n);
+            for slot in (0..size + 2).chain(std::iter::once(usize::MAX)) {
+                for item in materials {
+                    let stack = ItemStack::new(item, 1);
+                    let expected = layout(block).is_some_and(|(_, inputs, _)| inputs.contains(&slot))
+                        && if block == HUB { contracts::accepts(&entity, slot, &stack) } else { accepts(block, slot, &stack) };
+                    assert_eq!(accepts_material(&entity, slot, &stack), expected, "{block} / {slot} / {item}");
+                }
+            }
+        }
+    }
+}
+
 fn station(block: &str) -> ModBlockEntity {
     let mut entity = ModBlockEntity::default();
     entity.id = block.into();

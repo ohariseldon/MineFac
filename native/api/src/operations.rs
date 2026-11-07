@@ -135,10 +135,11 @@ pub(crate) fn inspect(entity: &ModBlockEntity) -> Option<StationView<'_>> {
 
 /// Material compatibility for planning. Does not check space, reach or side access.
 pub(crate) fn accepts_material(entity: &ModBlockEntity, slot: usize, stack: &ItemStack) -> bool {
-    let Some((_, inputs, _)) = layout(&entity.id) else { return false; };
-    inputs.contains(&slot) && if entity.id == HUB {
-        contracts::accepts(entity, slot, stack)
-    } else { accepts(&entity.id, slot, stack) }
+    let compatible = if entity.id == HUB { contracts::accepts(entity, slot, stack) }
+        else { accepts(&entity.id, slot, stack) };
+    if !compatible { return false; }
+    // Preserve the slot fence, allocating its layout only for accepted candidates.
+    layout(&entity.id).is_some_and(|(_, inputs, _)| inputs.contains(&slot))
 }
 
 /// Live delivery validation, shared with host insertion. The host remains responsible
