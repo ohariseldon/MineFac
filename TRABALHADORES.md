@@ -98,7 +98,7 @@ Cada posto reserva o alvo atual (planta, máquina ou posto atendido) num registr
 - **Conservação.** O espaço no posto é conferido antes da colheita. A carga só entra no posto quando cabe inteira. Dispensar com carga a mantém no posto até haver espaço; nada é destruído nem duplicado. A comida é consumida item a item até cobrir 2 pontos; cada tarefa concluída desconta esses 2 pontos.
 - **Saves.** O posto guarda o UUID do aldeão (`Worker`), a comida (`Ration`), o alvo (`Target`), a carga (`Carried`) e os contadores. Ao reabrir o mundo, o posto reencontra o aldeão pelo UUID entre os aldeões próximos, lendo no máximo 4 NBT a cada 10 ticks.
 - **Comportamento vanilla.** O aldeão só obedece enquanto o posto renova a ordem (a cada 10 ticks; ela vence em 60). Sem ordem — sem tarefa, sem comida, posto descarregado ou removido, ou dispensado — o objetivo de trabalho fica inativo e o cérebro vanilla continua no comando, incluindo comércio e profissão. Nenhum dado do aldeão é alterado.
-- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Lavrador: 9 blocos/ciclo; carregador: 16; capataz: 25. Aldeões vêm do registro já mantido pelo rancho (`entity_tick_pre`); não há varredura de entidades. Sem ordem ou reserva viva, os objetivos não disputam os mapas.
+- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Lavrador: 9 blocos/ciclo; carregador: 16; capataz: 25 blocos de varredura e 3 inspeções de posto. A fila relê cada bloco da rede uma vez a cada 40 ticks. Aldeões vêm do registro já mantido pelo rancho (`entity_tick_pre`); não há varredura de entidades. Sem ordem ou reserva viva, os objetivos não disputam os mapas.
 
 ## Código
 
