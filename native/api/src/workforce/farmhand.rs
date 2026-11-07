@@ -12,8 +12,7 @@ use super::*;
 use horizon_client::mod_api::{NativeBlockEdit, NativeBlockRun};
 use zones::{Kind, Zone};
 
-/// Posições examinadas por ciclo sem zona: uma fileira do 9x9 (a volta leva 27 ciclos). Com zona,
-/// uma fileira da zona.
+/// Posições examinadas por ciclo: uma fileira de 9 (a volta de um 9x9 leva 27 ciclos; um 21x21, 147).
 pub(super) const SCANS: i32 = 9;
 const ABSORB_PER_HARVEST: f32 = 3.0;
 const HARVEST: i32 = 0;
@@ -65,7 +64,8 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let room = outputs(&entity.id);
     let dimension = host.dimension();
     let zone = zone_of(host, pos, now);
-    let (center, radius, row) = zone.as_ref().map_or((pos, farm::RADIUS, SCANS), |zone| (zone.pos, zone.side / 2, zone.side));
+    // Uma fileira de `SCANS` mesmo na zona grande: a área não muda, só a volta demora mais.
+    let (center, radius, row) = zone.as_ref().map_or((pos, farm::RADIUS, SCANS), |zone| (zone.pos, zone.side / 2, SCANS));
     let area = (radius * 2 + 1).pow(2) * 3;
     // Zona nova ou de outro tamanho: recomeça a varredura.
     let shape = vec![center[0], center[1], center[2], radius];
@@ -93,6 +93,7 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let mut cursor = number(entity, "Scan") % area;
     let mut plant = None;
     let mut till = None;
+    let mut probed_soil = false;
     for _ in 0..row {
         let spot = area_position(center, radius, cursor);
         cursor = (cursor + 1) % area;
@@ -124,8 +125,14 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             && plantable(host, spot).is_some_and(|soil| seed_slot(entity, &soil, filter.as_deref()).is_some())
         {
             plant = Some(spot);
-        } else if till.is_none() && matches!(block.as_str(), "minecraft:grass_block" | "minecraft:dirt") && tillable(host, spot) {
-            till = Some(spot);
+        } else if till.is_none() && !probed_soil
+            && matches!(block.as_str(), "minecraft:grass_block" | "minecraft:dirt")
+        {
+            // `watered` pode ler 32 blocos; um probe por ciclo, o resto da fileira espera a próxima.
+            probed_soil = true;
+            if tillable(host, spot) {
+                till = Some(spot);
+            }
         }
     }
     set_number(entity, "Scan", cursor);

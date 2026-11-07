@@ -804,7 +804,7 @@ fn farmhand_in_a_field_zone_plants_tills_and_harvests_beyond_the_old_area() {
     let mut entity = post();
     set_number(&mut entity, "Ration", 20);
     assert!(assign(village.dimension, POST, &mut entity, ([40, 0, 0, 1], 14001), 0));
-    let now = cycles_at(&mut village, POST, &mut entity, 1, 40, |post| target(post) == Some(far));
+    let now = cycles_at(&mut village, POST, &mut entity, 1, 80, |post| target(post) == Some(far));
     assert_eq!(get_pos(&entity, "ZoneAt"), Some([5, 64, 0]));
     village.walk(14001, far);
     cycle(&mut village, &mut entity, now + 1);
@@ -817,7 +817,7 @@ fn farmhand_in_a_field_zone_plants_tills_and_harvests_beyond_the_old_area() {
     let soil = [6, 63, 2];
     village.crops.insert(soil, ("minecraft:farmland".into(), 0));
     let spot = [6, 64, 2];
-    let now = cycles_at(&mut village, POST, &mut entity, now + 3, 60, |post| target(post) == Some(spot));
+    let now = cycles_at(&mut village, POST, &mut entity, now + 3, 80, |post| target(post) == Some(spot));
     village.walk(14001, spot);
     cycle(&mut village, &mut entity, now + 1);
     assert_eq!(village.crops.get(&spot).map(|(id, _)| id.as_str()), Some("minecraft:wheat"), "plantou trigo");
@@ -827,12 +827,33 @@ fn farmhand_in_a_field_zone_plants_tills_and_harvests_beyond_the_old_area() {
     let grass = [3, 64, -3];
     village.crops.insert(grass, ("minecraft:grass_block".into(), 0));
     village.crops.insert([3, 64, -1], ("minecraft:water".into(), 0));
-    let now = cycles_at(&mut village, POST, &mut entity, now + 2, 60, |post| target(post) == Some(grass));
+    let now = cycles_at(&mut village, POST, &mut entity, now + 2, 80, |post| target(post) == Some(grass));
     village.walk(14001, grass);
     cycle(&mut village, &mut entity, now + 1);
     assert_eq!(village.crops[&grass].0, "minecraft:farmland");
     let work = number(&village.stations[&[5, 64, 0]], "Work");
     assert_eq!(work, 3, "colheita, plantio e aragem contam na zona");
+}
+
+#[test]
+fn idle_farmhand_in_a_dry_field_scans_one_row() {
+    let mut village = Village::new("veio:test_work_zone_dry");
+    village.crops.clear();
+    marker(&mut village, FIELD_MARKER, [0, 64, 0], 2, None);
+    for x in -6..=6 {
+        for z in -6..=6 {
+            village.crops.insert([x, 64, z], ("minecraft:grass_block".into(), 0));
+        }
+    }
+    village.villager(15001, [1.5, 64.0, 1.5], [50, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 10);
+    assert!(assign(village.dimension, POST, &mut entity, ([50, 0, 0, 1], 15001), 0));
+    village.looks.set(0);
+    cycle(&mut village, &mut entity, 1);
+    // Fileira de 9 + ar acima + no máximo 32 blocos de água no primeiro probe.
+    assert!(village.looks.get() <= 50, "não sonda água em toda a fileira seca ({})", village.looks.get());
+    assert!(village.looks.get() >= farmhand::SCANS as u32);
 }
 
 #[test]

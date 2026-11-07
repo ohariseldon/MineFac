@@ -7,6 +7,7 @@
 //!
 //! Cada armazém publica o que guarda em `STORES` (memória), lido pelo centro de controle.
 use super::*;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub(crate) const BARN: &str = "veio:barn";
 pub(crate) const SILO: &str = "veio:silo";
@@ -52,12 +53,23 @@ pub(crate) struct Store {
 }
 
 static STORES: Mutex<Vec<Store>> = Mutex::new(Vec::new());
+static STORES_PENDING: AtomicBool = AtomicBool::new(false);
 
 pub(crate) fn stores_near(dimension: &str, at: [i32; 3], radius: i32, now: u64) -> Vec<Store> {
-    STORES.lock().map(|stores| stores.iter()
-        .filter(|store| store.dimension == dimension && now.saturating_sub(store.seen) <= STALE
-            && (0..3).all(|axis| (store.pos[axis] - at[axis]).abs() <= radius))
-        .cloned().collect()).unwrap_or_default()
+    if !STORES_PENDING.load(Ordering::Acquire) {
+        return Vec::new();
+    }
+    STORES.lock().map(|mut stores| {
+        stores.retain(|store| now.saturating_sub(store.seen) <= STALE);
+        if stores.is_empty() {
+            STORES_PENDING.store(false, Ordering::Release);
+            return Vec::new();
+        }
+        stores.iter()
+            .filter(|store| store.dimension == dimension
+                && (0..3).all(|axis| (store.pos[axis] - at[axis]).abs() <= radius))
+            .cloned().collect()
+    }).unwrap_or_default()
 }
 
 pub(crate) fn contents(entity: &ModBlockEntity) -> Vec<(String, u32)> {
@@ -85,8 +97,13 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     };
     if let Ok(mut stores) = STORES.lock() {
         let now = store.seen;
-        stores.retain(|known| !(known.dimension == store.dimension && known.pos == pos) && now.saturating_sub(known.seen) <= STALE);
-        stores.push(store);
+        if let Some(known) = stores.iter_mut().find(|known| known.dimension == store.dimension && known.pos == pos) {
+            *known = store;
+        } else {
+            stores.retain(|known| now.saturating_sub(known.seen) <= STALE);
+            stores.push(store);
+        }
+        STORES_PENDING.store(true, Ordering::Release);
     }
 }
 
