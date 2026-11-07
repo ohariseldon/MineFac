@@ -1,6 +1,6 @@
 # Trabalhadores — primeira entrega (frente Cloud)
 
-Primeira etapa da ordem em [frentes/CLOUD.md](frentes/CLOUD.md): um aldeão contratado trabalha numa lavoura. A versão do projeto continua 0.9.1; a numeração fica com a integração local.
+Primeira etapa da ordem em [frentes/CLOUD.md](frentes/CLOUD.md): um aldeão contratado trabalha numa lavoura. Integrada na 0.10.0 com a interface de postos do Codex e o lote 1 do Grok.
 
 ## Para o jogador
 
@@ -63,7 +63,7 @@ Contratação: 1 esmeralda. Comida: 1 ponto por colheita, valores de `tools/prod
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes offline, painel do posto renderizado na prévia).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes offline na entrega; 61 depois da integração da 0.10.0).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
