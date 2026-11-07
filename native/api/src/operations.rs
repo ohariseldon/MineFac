@@ -41,7 +41,7 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
         HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH | workforce::FARM_POST | workforce::SHEPHERD_POST => Sector::Farming,
         MILL | KITCHEN | PANTRY => Sector::Food,
         HUB => Sector::Projects,
-        TESLA => Sector::Defense,
+        TESLA | workforce::BARRACKS => Sector::Defense,
         BELT | FAST_BELT | SPLITTER | MERGER | inserters::ID | inserters::FAST | inserters::LONG => Sector::Logistics,
         _ if workforce::storage::is_store(block) => return Some(Profile { sector: Sector::Logistics, kind: StationKind::Storage }),
         _ if is_power_block(block) || power::tier(block).is_some() => Sector::Power,

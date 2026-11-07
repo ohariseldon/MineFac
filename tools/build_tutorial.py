@@ -187,6 +187,7 @@ help["merger"] = (
  "Merges the two side inputs.\nSingle outlet at the front.\nAlternates A/B, up to 5/s.\nNeeds no electricity.\nTurn with the wrench.")
 # Trabalhadores (frente Cloud): posto agrícola com aldeão contratado.
 label("block.veio.farm_post", "Posto do lavrador", "Farmhand Post")
+label("block.veio.barracks", "Quartel", "Barracks")
 help["hauler_post"] = (
  "Esmeralda: contrata aldeão.\nAbastece máquinas a até 6\nblocos com os insumos e\nrecolhe os produtos delas.\nNão mexe em esteiras.",
  "Emerald: hires a villager.\nFeeds machines within 6\nblocks from the supplies\nand collects their products.\nLeaves belts alone.")
@@ -211,6 +212,9 @@ help["control_center"] = (
 help["foreman_desk"] = (
  "Esmeralda: contrata o capataz.\nCuida de até 6 postos a\naté 12 blocos: leva comida\ne recontrata com esmeraldas\nda mesa. Monta a fila.",
  "Emerald: hires the foreman.\nManages up to 6 posts within\n12 blocks: brings food and\nrehires with the desk's\nemeralds. Queues transfers.")
+help["barracks"] = (
+ "Esmeralda: contrata o aldeão.\nAgachar com a mão vazia troca\na classe: milícia, guarda,\narqueiro ou mago. Treinar\ngasta a esmeralda do slot.\nComida: cada golpe é uma tarefa.",
+ "Emerald: hires the villager.\nSneak with an empty hand\ncycles militia, guard, archer\nor mage. Training spends the\nemerald in the slot.\nFood: each blow is one task.")
 help["farm_post"] = (
  "Esmeralda: contrata o aldeão\nadulto livre mais próximo.\nEle colhe o 9x9 e traz ao posto.\nCome 2 pontos por colheita.\nAgachar + chave: dispensa.",
  "Emerald: hires the nearest\nfree adult villager.\nHarvests the 9x9, brings it back.\nEats 2 points per harvest.\nSneak + wrench: dismiss.")
@@ -224,6 +228,15 @@ for key, pt, en in [
  ("veio.metric.tasks", "Colheitas feitas: %s", "Harvests done: %s"),
  ("veio.metric.ration", "Comida: %s tarefas", "Food: %s tasks"),
  ("veio.hint.farm_post", "Esmeralda: contratar aldeão", "Emerald: hire a villager"),
+ ("veio.hint.barracks.militia", "Milícia: alcance médio, três golpes", "Militia: medium range, three blows"),
+ ("veio.hint.barracks.guard", "Guarda: tanque, os monstros vão nele", "Guard: tank, monsters come for them"),
+ ("veio.hint.barracks.archer", "Arqueiro: atira de longe", "Archer: shoots from far away"),
+ ("veio.hint.barracks.mage", "Mago: dois golpes e fere outro", "Mage: two blows and wounds another"),
+ ("veio.barracks.militia", "Milícia pronta.", "Militia ready."),
+ ("veio.barracks.guard", "Guarda pronto. Os monstros vão nele.", "Guard ready. Monsters come for them."),
+ ("veio.barracks.archer", "Arqueiro pronto.", "Archer ready."),
+ ("veio.barracks.mage", "Mago pronto.", "Mage ready."),
+ ("veio.barracks.need_emerald", "Uma esmeralda no quartel treina a classe.", "An emerald in the barracks trains the class."),
  ("veio.worker.hired", "Aldeão contratado. Ele vai até as plantações maduras.", "Villager hired. They will walk to ripe crops."),
  ("veio.worker.staffed", "Este posto já tem um trabalhador.", "This post already has a worker."),
  ("veio.worker.none", "Nenhum aldeão adulto livre a até 8 blocos.", "No free adult villager within 8 blocks."),
@@ -311,7 +324,7 @@ categories=[
 ]
 order=[name for _,_,names in categories for name in names]
 # Blocos da vila operária: consulta no Guia da Vila Operária (fim deste arquivo).
-village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center"]
+village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center","barracks"]
 assert set(order)|set(village_order)==set(help), (set(order)|set(village_order))^set(help)
 for name,(pt,en) in help.items():
  label(f"veio.help.{name}",pt,en)
@@ -749,6 +762,9 @@ v_grow=vpage(
 v_trouble=vpage(
  "Quando um aldeão para\n\nSem comida: ponha pão.\nAusente: traga-o ou dispense (agachar + chave).\nCaminho obstruído: abra passagem.\nSaída cheia: esvazie ou use um celeiro.\nPasse o cursor no estado do painel para dicas.",
  "When a villager stops\n\nNo food: add bread.\nMissing: bring them back or dismiss (sneak + wrench).\nPath blocked: clear the way.\nOutput full: empty it or use a barn.\nHover over the panel status for tips.")
+v_barracks=vpage(
+ "Quartel\n\nQuatro lingotes de ferro, uma esmeralda e pedra lisa. A receita abre com os circuitos.\n\nEsmeralda contrata. Agachar com a mão vazia troca a classe, e cada troca gasta uma esmeralda do slot.\n\nMilícia: três golpes.\nGuarda: tanque, os monstros vão nele.\nArqueiro: atira de longe.\nMago: dois golpes e fere outro.\n\nCada golpe come uma tarefa. Sem comida, o soldado fica no posto. Um quartel, um soldado.",
+ "Barracks\n\nFour iron ingots, one emerald and smooth stone. The recipe unlocks with circuits.\n\nAn emerald hires. Sneak with an empty hand cycles the class, and each change spends an emerald from the slot.\n\nMilitia: three blows.\nGuard: tank, monsters come for them.\nArcher: shoots from far away.\nMage: two blows and wounds another.\n\nEach blow eats one task. With no food the soldier stays at the post. One barracks, one soldier.")
 v_food=vpage(
  "Comida\n\nCada tarefa gasta 2 pontos. Trigo vale 1, batata e cenoura 1, pão 6 (3 tarefas), carne assada 8 (4 tarefas), torta 10.\n\nComida pronta rende mais: monte moinho e cozinha cedo.",
  "Food\n\nEach task costs 2 points. Wheat is worth 1, potato and carrot 1, bread 6 (3 tasks), cooked meat 8 (4 tasks), pie 10.\n\nCooked food goes further: build a mill and kitchen early.")
@@ -770,7 +786,7 @@ vpages[v_blocks-1]={"text":"","extra":extra}
 vlinks=[("Começar","Start here",v_intro),("1. Trabalhador","1. Worker",v_hire),("2. Lavoura","2. Field",v_field),
  ("3. Cercados","3. Pens",v_pen),("4. Armazéns","4. Storage",v_store),("5. Carregadores","5. Haulers",v_haul),
  ("6. Capataz","6. Foreman",v_foreman),("7. Centro","7. Center",v_center),("Expandir zonas","Grow zones",v_expand),
- ("A vila cresce","Village growth",v_grow),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
+ ("A vila cresce","Village growth",v_grow),("Quartel","Barracks",v_barracks),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
 label("veio.village.title","Guia da Vila Operária","Worker Village Guide")
 extra=[{"translate":"veio.village.title","bold":True},{"text":"\n"}]
 for n,(pt,en,target) in enumerate(vlinks):

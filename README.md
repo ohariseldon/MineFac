@@ -197,10 +197,10 @@ Máquinas trabalhando poluem o chunk onde estão: gerador 6 por segundo, forno d
 1. Quando um chunk passa de 400, o chat avisa os jogadores próximos e explica o que fazer.
 2. Ataques só acontecem um dia inteiro depois desse aviso, só à noite e só se o chunk mais poluído passar de 1.200. Ao anoitecer, a barra de ação avisa.
 3. A onda surge na cara de quem está a até 64 blocos da fábrica (ou a 18 blocos da máquina, se não houver ninguém): quatro **Saqueadores** na primeira noite, crescendo com a poluição e com as noites, até doze. É no máximo uma onda por noite. O som é o de invasão.
-4. Eles correm até o jogador e batem como zumbi. Sem luta corpo a corpo, vão aos aldeões: quatro golpes matam um, e o posto dele fica parado até outra contratação. Sem jogador nem aldeão a 40 blocos, golpeiam a máquina no mesmo ritmo. Zumbis, esqueletos e aranhas da noite também caçam aldeões. Eles queimam ao sol.
+4. Eles correm até o jogador e batem como zumbi. Sem luta corpo a corpo, vão aos defensores do quartel (o guarda primeiro) e, sem soldado por perto, aos outros aldeões: quatro golpes matam um trabalhador, o guarda aguenta oito, e o posto fica parado até outra contratação. Sem jogador nem aldeão a 40 blocos, golpeiam a máquina no mesmo ritmo. Zumbis, esqueletos e aranhas da noite também caçam aldeões. Eles queimam ao sol.
 5. Máquina com integridade zerada para, sem perder estoque. Um **kit de reparo**, com o botão direito, recupera 50%.
 
-Muros vanilla barram o caminho, a torre Tesla abate Saqueadores e lavouras e módulos de eficiência reduzem a poluição. No modo pacífico não há ataques. A poluição fica em memória e recomeça ao reabrir o mundo.
+Muros vanilla barram o caminho, a torre Tesla abate Saqueadores, o quartel treina milícia, guarda, arqueiro e mago, e lavouras e módulos de eficiência reduzem a poluição. No modo pacífico não há ataques. A poluição fica em memória e recomeça ao reabrir o mundo.
 
 ## A fábrica no mundo
 
