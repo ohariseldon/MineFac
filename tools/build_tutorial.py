@@ -157,8 +157,8 @@ help["merger"] = (
 # Trabalhadores (frente Cloud): posto agrícola com aldeão contratado.
 label("block.veio.farm_post", "Posto do lavrador", "Farmhand Post")
 help["farm_post"] = (
- "Esmeralda: contrata o aldeão\nadulto livre mais próximo.\nEle colhe o 9x9 e traz ao posto.\nCome 1 ponto por colheita.\nAgachar + chave: dispensa.",
- "Emerald: hires the nearest\nfree adult villager.\nHarvests the 9x9, brings it back.\nEats 1 point per harvest.\nSneak + wrench: dismiss.")
+ "Esmeralda: contrata o aldeão\nadulto livre mais próximo.\nEle colhe o 9x9 e traz ao posto.\nCome 2 pontos por colheita.\nAgachar + chave: dispensa.",
+ "Emerald: hires the nearest\nfree adult villager.\nHarvests the 9x9, brings it back.\nEats 2 points per harvest.\nSneak + wrench: dismiss.")
 for key, pt, en in [
  ("veio.status.no_worker", "Sem trabalhador", "No worker"),
  ("veio.status.absent", "Trabalhador ausente", "Worker missing"),
@@ -215,7 +215,7 @@ slothelp={
  "planter":["Sementes, cenouras, batatas ou fungo do Nether."],
  "tree_farm":["Mudas de carvalho, bétula, pinheiro, selva, acácia ou cerejeira.","Produto.","Produto.","Produto."],
  "ranch":["Trigo, cenoura, batata, beterraba ou sementes.","Baldes vazios para ordenhar.","Produto.","Produto.","Produto."],
- "farm_post":["Comida do trabalhador: pão vale 6 colheitas.","Colheita entregue.","Colheita entregue.","Colheita entregue."],
+ "farm_post":["Comida do trabalhador: pão vale 3 colheitas.","Colheita entregue.","Colheita entregue.","Colheita entregue."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
 }
 slot_en={
@@ -244,7 +244,7 @@ slot_en={
  "planter":["Seeds, carrots, potatoes or nether wart."],
  "tree_farm":["Oak, birch, spruce, jungle, acacia or cherry saplings.","Product.","Product.","Product."],
  "ranch":["Wheat, carrots, potatoes, beetroot or seeds.","Empty buckets for milking.","Product.","Product.","Product."],
- "farm_post":["Worker food: bread pays for 6 harvests.","Delivered harvest.","Delivered harvest.","Delivered harvest."],
+ "farm_post":["Worker food: bread pays for 3 harvests.","Delivered harvest.","Delivered harvest.","Delivered harvest."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
 for block,lines in slothelp.items():

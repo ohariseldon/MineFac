@@ -5,8 +5,9 @@
 //! cacau). Não usa energia: o custo é a comida do trabalhador.
 use super::*;
 
-/// Posições examinadas por ciclo do posto: uma camada inteira; a volta leva 3 ciclos (30 ticks).
-const SCANS: i32 = 81;
+/// Posições examinadas por ciclo do posto: uma fileira do 9×9. A volta completa (243 blocos)
+/// leva 27 ciclos (270 ticks), no mesmo espírito da colheitadeira (3 blocos/tick).
+pub(super) const SCANS: i32 = 9;
 /// Plantas recusadas por caminho obstruído, esquecidas a cada volta completa.
 const MAX_SKIPPED: usize = 8;
 const ABSORB_PER_HARVEST: f32 = 3.0;

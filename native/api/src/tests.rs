@@ -362,3 +362,10 @@ fn panels_publish_as_many_values_as_the_menus_declare() {
     presentation::publish(&mut press);
     assert_eq!(press.data.len(), presentation::DATA_SLOTS);
 }
+
+#[test]
+fn farm_post_counts_as_item_input_for_belt_curves() {
+    assert!(has_item_inputs(workforce::FARM_POST));
+    assert!(has_item_inputs(HARVESTER));
+    assert!(!has_item_inputs(SOLAR));
+}

@@ -4,6 +4,7 @@
 //! Cada teste usa sua própria dimensão, UUIDs e ids, porque os registros são globais.
 use super::*;
 use horizon_client::mod_api::{BlockStateId, EntityRef};
+use std::cell::Cell;
 
 const POST: [i32; 3] = [0, 64, 0];
 /// Fora do alcance de entrega do posto: colher exige ir até lá.
@@ -14,6 +15,7 @@ struct Village {
     dimension: &'static str,
     crops: HashMap<[i32; 3], (String, u8)>,
     villagers: HashMap<u32, ([f64; 3], Uuid, i32)>,
+    looks: Cell<u32>,
 }
 
 impl Village {
@@ -39,6 +41,7 @@ impl Host for Village {
         self.dimension
     }
     fn block(&self, pos: [i32; 3]) -> String {
+        self.looks.set(self.looks.get() + 1);
         self.crops.get(&pos).map_or_else(|| "minecraft:air".to_owned(), |(id, _)| id.clone())
     }
     fn block_property(&self, pos: [i32; 3], key: &str) -> Option<String> {
@@ -85,6 +88,25 @@ fn hire_at(village: &mut Village, entity: &mut ModBlockEntity, pos: [i32; 3], no
 fn cycle(village: &mut Village, entity: &mut ModBlockEntity, now: u64) -> i32 {
     step(village, POST, entity, 0, now);
     number(entity, "Status")
+}
+
+/// A varredura incremental não encontra a planta no primeiro ciclo; avança até o predicado.
+fn step_until(
+    village: &mut Village,
+    entity: &mut ModBlockEntity,
+    mut now: u64,
+    pred: impl Fn(u64, i32, &ModBlockEntity) -> bool,
+) -> (u64, i32) {
+    let mut status = number(entity, "Status");
+    let limit = farm::AREA / farmhand::SCANS + 8;
+    for _ in 0..limit {
+        status = cycle(village, entity, now);
+        if pred(now, status, entity) {
+            return (now, status);
+        }
+        now += 1;
+    }
+    panic!("posto não alcançou o estado esperado (último status {status}, agora {now})");
 }
 
 fn outputs_of(entity: &ModBlockEntity) -> Vec<(String, u32)> {
@@ -135,30 +157,34 @@ fn farmhand_walks_harvests_and_carries_the_crop_home() {
     entity.items[0] = Some(ItemStack::new("minecraft:bread", 1));
     assert!(hire_at(&mut village, &mut entity, POST, 0));
 
-    assert_eq!(cycle(&mut village, &mut entity, 1), WALKING);
+    let (now, status) = step_until(&mut village, &mut entity, 1, |_, _, entity| target(entity) == Some(WHEAT));
+    assert_eq!(status, WALKING);
     assert_eq!(entity.items[0], None, "comeu o pão");
     assert_eq!(number(&entity, "Ration"), 6);
-    assert_eq!(order_for(9301, 1), Some(goal(WHEAT)), "o aldeão recebeu a ordem de ir até o trigo");
+    assert_eq!(number(&entity, "Info"), 3, "pão vale 3 colheitas");
+    assert_eq!(order_for(9301, now), Some(goal(WHEAT)), "o aldeão recebeu a ordem de ir até o trigo");
     assert_eq!(village.age(WHEAT), 7, "longe da planta, nada é colhido");
 
     village.walk(9301, WHEAT);
-    assert_eq!(cycle(&mut village, &mut entity, 2), 1);
+    let (now, status) = step_until(&mut village, &mut entity, now + 1, |_, _, entity| !carried(entity).is_empty());
+    assert_eq!(status, 1);
     assert_eq!(village.age(WHEAT), 0, "colhido e replantado");
-    assert_eq!(number(&entity, "Ration"), 5);
+    assert_eq!(number(&entity, "Ration"), 4);
+    assert_eq!(number(&entity, "Info"), 2);
     assert!(outputs_of(&entity).is_empty(), "o produto ainda está com o trabalhador");
     assert_eq!(carried(&entity).len(), 2);
-    assert_eq!(order_for(9301, 2), Some(goal(POST)), "volta ao posto");
+    assert_eq!(order_for(9301, now), Some(goal(POST)), "volta ao posto");
 
-    assert_eq!(cycle(&mut village, &mut entity, 3), WALKING, "precisa chegar ao posto para entregar");
+    assert_eq!(cycle(&mut village, &mut entity, now + 1), WALKING, "precisa chegar ao posto para entregar");
     village.walk(9301, [1, 64, 0]);
-    assert_eq!(cycle(&mut village, &mut entity, 4), 1);
+    assert_eq!(cycle(&mut village, &mut entity, now + 2), 1);
     assert!(carried(&entity).is_empty());
     assert_eq!(outputs_of(&entity), vec![("minecraft:wheat".into(), 1), ("minecraft:wheat_seeds".into(), 1)]);
     assert_eq!(number(&entity, "Total"), 1);
 
-    let statuses: Vec<i32> = (5..8).map(|now| cycle(&mut village, &mut entity, now)).collect();
-    assert_eq!(statuses.last(), Some(&NO_TASK), "uma volta sem nada maduro");
-    assert_eq!(order_for(9301, 7), None, "sem tarefa, o aldeão volta ao comportamento vanilla");
+    let (idle, status) = step_until(&mut village, &mut entity, now + 3, |_, status, _| status == NO_TASK);
+    assert_eq!(status, NO_TASK, "uma volta sem nada maduro");
+    assert_eq!(order_for(9301, idle), None, "sem tarefa, o aldeão volta ao comportamento vanilla");
 }
 
 #[test]
@@ -185,13 +211,17 @@ fn full_post_stops_before_harvesting() {
         entity.items[slot] = Some(ItemStack::new("minecraft:cobblestone", 64));
     }
     assert!(hire_at(&mut village, &mut entity, POST, 0));
-    assert_eq!(cycle(&mut village, &mut entity, 1), 3, "destino cheio");
+    let (now, status) = step_until(&mut village, &mut entity, 1, |_, status, _| status == 3);
+    assert_eq!(status, 3, "destino cheio");
     assert_eq!(village.age(WHEAT), 7, "a planta continua no campo");
     assert_eq!(number(&entity, "Ration"), 10, "sem trabalho, sem consumo");
     entity.items[3] = None;
-    assert_eq!(cycle(&mut village, &mut entity, 2), 3, "trigo e semente precisam de dois espaços");
+    assert_eq!(cycle(&mut village, &mut entity, now + 1), 3, "trigo e semente precisam de dois espaços");
     entity.items[2] = None;
-    assert_eq!(cycle(&mut village, &mut entity, 3), 1);
+    let (_, status) = step_until(&mut village, &mut entity, now + 2, |_, _, entity| {
+        number(entity, "Total") >= 1 || !carried(entity).is_empty()
+    });
+    assert_eq!(status, 1);
     assert_eq!(village.age(WHEAT), 0);
 }
 
@@ -202,16 +232,31 @@ fn blocked_path_gives_up_on_that_crop() {
     let mut entity = post();
     set_number(&mut entity, "Ration", 10);
     assert!(hire_at(&mut village, &mut entity, POST, 0));
+    let (found, status) = step_until(&mut village, &mut entity, 1, |_, _, entity| target(entity) == Some(WHEAT));
+    assert_eq!(status, WALKING);
     let mut status = WALKING;
-    for now in 1..=(WALK_LIMIT as u64 / EVERY as u64) {
+    let mut now = found;
+    for _ in 0..(WALK_LIMIT as u64 / EVERY as u64) {
+        now += 1;
         status = cycle(&mut village, &mut entity, now);
     }
     assert_eq!(status, PATH);
     assert_eq!(target(&entity), None);
     assert_eq!(village.age(WHEAT), 7, "sem chegar, nada é colhido");
     assert_eq!(number(&entity, "Ration"), 10);
-    for now in 100..103 {
-        assert_ne!(cycle(&mut village, &mut entity, now), WALKING, "a planta inalcançável fica de lado nesta volta");
+    assert_eq!(
+        entity.nbt.get(&"Skipped".into()),
+        Some(&Tag::IntArray(WHEAT.to_vec())),
+        "a planta inalcançável entra na lista desta volta",
+    );
+    for step in 1..=8 {
+        assert_ne!(
+            target(&entity),
+            Some(WHEAT),
+            "a planta inalcançável fica de lado nesta volta",
+        );
+        assert_ne!(cycle(&mut village, &mut entity, now + step), WALKING);
+        assert_eq!(entity.nbt.get(&"Skipped".into()), Some(&Tag::IntArray(WHEAT.to_vec())));
     }
 }
 
@@ -222,7 +267,7 @@ fn carried_crop_survives_dismissal_until_there_is_room() {
     let mut entity = post();
     set_number(&mut entity, "Ration", 10);
     assert!(hire_at(&mut village, &mut entity, POST, 0));
-    assert_eq!(cycle(&mut village, &mut entity, 1), 1);
+    let (now, _) = step_until(&mut village, &mut entity, 1, |_, _, entity| carried(entity).len() == 2);
     assert_eq!(carried(&entity).len(), 2);
     // O jogador enche o posto e dispensa o trabalhador antes da entrega.
     for slot in 1..4 {
@@ -230,10 +275,10 @@ fn carried_crop_survives_dismissal_until_there_is_room() {
     }
     assert!(dismiss(village.dimension, POST, &mut entity));
     assert_eq!(carried(&entity).len(), 2, "nada some");
-    assert_eq!(cycle(&mut village, &mut entity, 2), NO_WORKER);
+    assert_eq!(cycle(&mut village, &mut entity, now + 1), NO_WORKER);
     entity.items[1] = None;
     entity.items[2] = None;
-    cycle(&mut village, &mut entity, 3);
+    cycle(&mut village, &mut entity, now + 2);
     assert!(carried(&entity).is_empty());
     assert_eq!(outputs_of(&entity)[1..], [("minecraft:wheat".into(), 1), ("minecraft:wheat_seeds".into(), 1)]);
 }
@@ -251,8 +296,9 @@ fn reopened_world_finds_the_worker_by_uuid() {
     village.villager(9802, [5.5, 64.0, 5.5], [8, 0, 0, 1]);
     let mut reopened = post();
     reopened.nbt = saved;
-    assert_eq!(cycle(&mut village, &mut reopened, 1), WALKING);
-    assert_eq!(order_for(9802, 1), Some(goal(WHEAT)), "reconhecido pelo UUID");
+    let (now, status) = step_until(&mut village, &mut reopened, 1, |_, _, entity| target(entity) == Some(WHEAT));
+    assert_eq!(status, WALKING);
+    assert_eq!(order_for(9802, now), Some(goal(WHEAT)), "reconhecido pelo UUID");
     assert_eq!(number(&reopened, "Absent"), 0);
 }
 
@@ -299,4 +345,53 @@ fn work_goal_only_runs_with_a_fresh_order() {
     assert_eq!(order_for(10101, ORDER_FRESH + 1), None, "ordem vencida: comportamento vanilla");
     cancel(10101);
     assert_eq!(order_for(10101, 0), None);
+}
+
+#[test]
+fn idle_farmhand_scans_one_row_per_cycle() {
+    let mut village = Village::new("veio:test_work_scan");
+    village.crops.clear();
+    village.villager(10201, [1.5, 64.0, 1.5], [11, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 10);
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    village.looks.set(0);
+    cycle(&mut village, &mut entity, 1);
+    assert_eq!(village.looks.get(), farmhand::SCANS as u32, "uma fileira, não a camada inteira");
+    village.looks.set(0);
+    cycle(&mut village, &mut entity, 2);
+    assert_eq!(village.looks.get(), farmhand::SCANS as u32);
+}
+
+#[test]
+fn raw_wheat_does_not_pay_a_full_harvest() {
+    let mut village = Village::new("veio:test_work_wheat");
+    village.villager(10301, [3.5, 64.0, 3.5], [12, 0, 0, 1]);
+    let mut entity = post();
+    entity.items[0] = Some(ItemStack::new("minecraft:wheat", 1));
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    assert_eq!(cycle(&mut village, &mut entity, 1), NO_FOOD);
+    assert_eq!(number(&entity, "Ration"), 1, "comeu o trigo e ainda não cobre a colheita");
+    assert_eq!(number(&entity, "Info"), 0);
+    assert_eq!(village.age(WHEAT), 7, "sem pontos suficientes, a planta fica");
+    entity.items[0] = Some(ItemStack::new("minecraft:wheat", 1));
+    let (_, status) = step_until(&mut village, &mut entity, 2, |_, _, entity| !carried(entity).is_empty());
+    assert_eq!(status, 1);
+    assert_eq!(village.age(WHEAT), 0);
+    assert_eq!(number(&entity, "Ration"), 0);
+}
+
+#[test]
+fn two_carrots_cover_one_harvest() {
+    let mut village = Village::new("veio:test_work_carrot");
+    village.crops.insert(WHEAT, ("minecraft:carrots".into(), 7));
+    village.villager(10401, [3.5, 64.0, 3.5], [13, 0, 0, 1]);
+    let mut entity = post();
+    entity.items[0] = Some(ItemStack::new("minecraft:carrot", 2));
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    let (_, status) = step_until(&mut village, &mut entity, 1, |_, _, entity| !carried(entity).is_empty());
+    assert_eq!(status, 1);
+    assert_eq!(entity.items[0], None, "as duas cenouras pagaram a colheita");
+    assert_eq!(number(&entity, "Ration"), 0);
+    assert_eq!(village.age(WHEAT), 0);
 }

@@ -17,6 +17,7 @@ use horizon_client::mobs::Mob;
 use horizon_client::mobs::goals::{self, Cx, Goal};
 use horizon_client::mod_api::{ParticleOptions, ParticleType, Text};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 pub(super) mod farmhand;
@@ -36,6 +37,9 @@ pub(super) const WALKING: i32 = 23;
 /// Resposta de uma tarefa que ainda está procurando: o painel mantém o estado anterior.
 pub(super) const KEEP: i32 = -1;
 
+/// Pontos de comida gastos em cada colheita. Trigo cru vale 1 e não paga o ciclo;
+/// pão vale 6 e paga três colheitas.
+pub(super) const TASK_COST: i32 = 2;
 /// O posto age a cada 10 ticks, com a fase espalhada pela posição.
 const EVERY: i64 = 10;
 /// Aldeões a até esta distância do posto podem ser contratados por ele.
@@ -137,6 +141,9 @@ fn remember_entity(uuid: Uuid, entity: Option<u32>) {
 // ---------- Ordens de caminhada ----------
 
 static ORDERS: Mutex<Option<HashMap<u32, ([f64; 3], u64)>>> = Mutex::new(None);
+/// Atalho para o objetivo `Work`: aldeões ociosos não disputam o mutex quando nenhum
+/// posto tem ordem viva.
+static ORDERS_PENDING: AtomicBool = AtomicBool::new(false);
 
 /// Manda o aldeão `entity` andar até `target`.
 pub(super) fn order(entity: u32, target: [f64; 3], now: u64) {
@@ -146,6 +153,7 @@ pub(super) fn order(entity: u32, target: [f64; 3], now: u64) {
             orders.retain(|_, (_, issued)| now.saturating_sub(*issued) <= ORDER_FRESH);
         }
         orders.insert(entity, (target, now));
+        ORDERS_PENDING.store(true, Ordering::Release);
     }
 }
 
@@ -155,11 +163,17 @@ pub(super) fn cancel(entity: u32) {
         && let Some(orders) = orders.as_mut()
     {
         orders.remove(&entity);
+        if orders.is_empty() {
+            ORDERS_PENDING.store(false, Ordering::Release);
+        }
     }
 }
 
 /// Destino atual do aldeão, se o posto renovou a ordem há pouco.
 pub(super) fn order_for(entity: u32, now: u64) -> Option<[f64; 3]> {
+    if !ORDERS_PENDING.load(Ordering::Acquire) {
+        return None;
+    }
     let orders = ORDERS.lock().ok()?;
     let (target, issued) = orders.as_ref()?.get(&entity)?;
     (now.saturating_sub(*issued) <= ORDER_FRESH).then_some(*target)
@@ -239,6 +253,11 @@ pub(super) fn set_target(entity: &mut ModBlockEntity, pos: Option<[i32; 3]>) {
         None => { entity.nbt.remove(&"Target".into()); }
     }
     entity.nbt.remove(&"Walk".into());
+}
+
+/// Há carga a entregar? Evita montar o `Vec` de `Carried` em todo ciclo ocioso.
+fn has_load(entity: &ModBlockEntity) -> bool {
+    matches!(entity.nbt.get(&"Carried".into()), Some(Tag::List(list)) if !list.is_empty())
 }
 
 /// Itens que o trabalhador carrega do campo até o posto. Ficam no NBT do posto: salvar,
@@ -453,8 +472,12 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     step(host, pos, entity, time, now);
 }
 
+fn publish_ration(entity: &mut ModBlockEntity) {
+    set_number(entity, "Info", number(entity, "Ration") / TASK_COST);
+}
+
 pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64, now: u64) {
-    set_number(entity, "Info", number(entity, "Ration"));
+    publish_ration(entity);
     if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) != 0 {
         return;
     }
@@ -489,14 +512,14 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     set_number(entity, "Absent", 0);
     let status = work(host, pos, entity, id, at, now);
     set_number(entity, "Status", status);
-    set_number(entity, "Info", number(entity, "Ration"));
+    publish_ration(entity);
 }
 
 /// Uma etapa do trabalho com o aldeão encontrado em `at`. Devolve o estado do painel.
 fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32, at: [f64; 3], now: u64) -> i32 {
     let home = post_center(pos);
     // 1. Carregando: leva ao posto antes de qualquer outra tarefa.
-    if !carried(entity).is_empty() {
+    if has_load(entity) {
         order(id, home, now);
         if !near(at, home, POST_REACH) {
             return walk(entity, None);
@@ -508,8 +531,8 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         host.play_sound("minecraft:entity.villager.work_farmer", home, 4, 0.5, 1.0);
         return 1;
     }
-    // 2. Comida: cada tarefa gasta um ponto; o trabalhador come do slot 0.
-    if number(entity, "Ration") <= 0 && !eat(entity) {
+    // 2. Comida: cada tarefa gasta `TASK_COST` pontos; o trabalhador come do slot 0 até cobrir.
+    if !feed(entity, TASK_COST) {
         cancel(id);
         set_target(entity, None);
         return NO_FOOD;
@@ -538,7 +561,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
     match farmhand::perform(host, spot, entity) {
         Some(load) => {
             set_carried(entity, &load);
-            set_number(entity, "Ration", number(entity, "Ration") - 1);
+            set_number(entity, "Ration", number(entity, "Ration") - TASK_COST);
             set_number(entity, "Total", number(entity, "Total").saturating_add(1));
             set_target(entity, None);
             order(id, home, now);
@@ -569,7 +592,17 @@ fn walk(entity: &mut ModBlockEntity, spot: Option<[i32; 3]>) -> i32 {
     PATH
 }
 
-/// O trabalhador come um item do slot de comida. Valor = tarefas pagas.
+/// Come do slot 0 até `Ration` cobrir `need` pontos, ou falha se a comida acabar.
+fn feed(entity: &mut ModBlockEntity, need: i32) -> bool {
+    while number(entity, "Ration") < need {
+        if !eat(entity) {
+            return false;
+        }
+    }
+    true
+}
+
+/// O trabalhador come um item do slot de comida. Valor = pontos de `production.json`.
 pub(super) fn eat(entity: &mut ModBlockEntity) -> bool {
     let Some(stack) = entity.items[0].as_ref() else { return false };
     let Some(value) = production::pantry::value(&stack.item).filter(|_| stack.extra.is_none()) else { return false };

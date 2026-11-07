@@ -6,7 +6,7 @@ Primeira etapa da ordem em [frentes/CLOUD.md](frentes/CLOUD.md): um aldeão cont
 
 1. Obtenha a colheitadeira. O avanço **Lavoura mecanizada** passa a liberar a receita do **Posto do lavrador** (composteira, enxada de ferro, esmeralda e barril, em qualquer posição).
 2. Coloque o posto no meio de uma lavoura de até 9x9, como a colheitadeira. A camada do posto, a de baixo e a de cima são lidas.
-3. Ponha comida no slot da esquerda. O valor é o do armazém: trigo, cenoura ou batata pagam 1 colheita, pão 6, carne assada 8, torta de abóbora 10.
+3. Ponha comida no slot da esquerda. O valor é o do armazém, e cada colheita gasta **2 pontos**: um trigo não paga a colheita; duas cenouras ou batatas pagam uma; pão (6) paga 3; carne assada (8) paga 4; torta de abóbora (10) paga 5.
 4. Com uma **esmeralda** na mão, clique com o botão direito no posto. O aldeão adulto livre mais próximo, a até 8 blocos, é contratado e a esmeralda é gasta. Sem candidato, a esmeralda fica com o jogador.
 5. O trabalhador anda até uma planta madura, colhe (a planta fica replantada no estágio inicial, como na colheitadeira) e leva o produto de volta ao posto. Retire pelos três slots da direita ou ligue uma esteira no bocal.
 6. **Agachar + chave** no posto dispensa o trabalhador. Ele volta ao comportamento normal de aldeão.
@@ -36,16 +36,16 @@ O painel mostra também as colheitas feitas e quantas colheitas a comida guardad
 
 - **Presença física.** Colher exige o aldeão a até 1,8 bloco (horizontal) e 2 blocos (vertical) do centro da planta. Entregar exige até 2,5 blocos do posto. Não há teletransporte de itens nem de aldeões; o produto fica "na mão" do trabalhador (`Carried` no NBT do posto) entre a planta e o posto.
 - **Atribuição exclusiva.** Um aldeão pertence a no máximo um posto, e um posto tem no máximo um trabalhador. Bebês não são contratados.
-- **Conservação.** O espaço no posto é conferido antes da colheita. A carga só entra no posto quando cabe inteira. Dispensar com carga a mantém no posto até haver espaço; nada é destruído nem duplicado. A comida é consumida item a item, e cada colheita gasta um ponto.
+- **Conservação.** O espaço no posto é conferido antes da colheita. A carga só entra no posto quando cabe inteira. Dispensar com carga a mantém no posto até haver espaço; nada é destruído nem duplicado. A comida é consumida item a item até cobrir 2 pontos; cada colheita desconta esses 2 pontos.
 - **Saves.** O posto guarda o UUID do aldeão (`Worker`), a comida (`Ration`), o alvo (`Target`), a carga (`Carried`) e os contadores. Ao reabrir o mundo, o posto reencontra o aldeão pelo UUID entre os aldeões próximos, lendo no máximo 4 NBT a cada 10 ticks.
 - **Comportamento vanilla.** O aldeão só obedece enquanto o posto renova a ordem (a cada 10 ticks; ela vence em 60). Sem ordem — sem tarefa, sem comida, posto descarregado ou removido, ou dispensado — o objetivo de trabalho fica inativo e o cérebro vanilla continua no comando, incluindo comércio e profissão. Nenhum dado do aldeão é alterado.
-- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Com alvo conhecido, lê um bloco; procurando, lê uma camada de 81 posições por ciclo. Aldeões vêm do registro já mantido pelo rancho (`entity_tick_pre`); não há varredura de entidades.
+- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Com alvo conhecido, lê um bloco; procurando, lê uma fileira de 9 posições por ciclo (volta completa em 27 ciclos). Aldeões vêm do registro já mantido pelo rancho (`entity_tick_pre`); não há varredura de entidades. Sem ordem viva, o objetivo `Work` não disputa o mapa de destinos.
 
 ## Código
 
 - `native/api/src/workforce/mod.rs`: trabalhador, posto, atribuição, ordens de caminhada, objetivo `Work` registrado nos aldeões, ciclo genérico (carga → comida → tarefa) e painel.
 - `native/api/src/workforce/farmhand.rs`: a tarefa agrícola (`next`, `perform`, `skip`). Um novo setor acrescenta um submódulo com essas três funções e um caso no `match` de `work`.
-- `native/api/src/workforce/tests.rs`: 11 testes de atribuição exclusiva, ciclo físico, comida, saída cheia, caminho obstruído, conservação na dispensa, restauração pelo UUID, ausência e reivindicação vencida.
+- `native/api/src/workforce/tests.rs`: testes de atribuição exclusiva, ciclo físico, comida, saída cheia, caminho obstruído, conservação na dispensa, restauração pelo UUID, ausência, reivindicação vencida, orçamento da varredura e custo de 2 pontos por colheita.
 
 ### Contratos tocados (para Codex e Grok)
 
@@ -59,7 +59,7 @@ IDs, saves e campos existentes não mudaram. O posto é um bloco novo, sem migra
 
 ## Números para revisão (Grok)
 
-Contratação: 1 esmeralda. Comida: 1 ponto por colheita, valores de `tools/production.json` (`food`). Área 9x9x3. Tempo de desistência: 200 ticks. Ausência máxima: 6.000 ticks. A colheitadeira gasta 120 FE por colheita e varre a área em 4 s; o trabalhador depende da caminhada.
+Contratação: 1 esmeralda. Comida: 2 pontos por colheita, valores de `tools/production.json` (`food`). Área 9x9x3. Tempo de desistência: 200 ticks. Ausência máxima: 6.000 ticks. A colheitadeira gasta 120 FE por colheita e varre a área em 4 s; o trabalhador depende da caminhada. Calibração do Grok: [GROK-LOTE2.md](frentes/GROK-LOTE2.md).
 
 ## Verificações e limitações
 

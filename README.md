@@ -4,7 +4,7 @@ A 0.10.0 consolida as três frentes da rodada sobre a 0.9.1:
 
 - **Cloud — trabalhadores:** [posto do lavrador com aldeão contratado](TRABALHADORES.md). Uma esmeralda contrata um aldeão, que anda até as plantas maduras, colhe e traz o produto ao posto.
 - **Codex — interface de postos:** [consulta comum de estações](frentes/INTERFACE_POSTOS.md), com setor, inventários, motivo de espera e dica ao passar o cursor sobre o estado da máquina. O posto do lavrador já está registrado nela.
-- **Grok — lote 1:** [ticks mais leves e energia renovável utilizável](frentes/GROK-LOTE.md): roda d'água, cata-vento e biomassa reforçados; menos trabalho repetido em cabos, esteiras e sensores.
+- **Grok — lote 1:** [ticks mais leves e energia renovável utilizável](frentes/GROK-LOTE.md): roda d'água, cata-vento e biomassa reforçados; menos trabalho repetido em cabos, esteiras e sensores. **Lote 2:** [custos do posto e comida que fecha ciclo](frentes/GROK-LOTE2.md): varredura de 9 blocos por ciclo, pão paga 3 colheitas, trigo cru não fecha o ciclo sozinho.
 
 **Para jogar no Windows:** depois de clonar, abra `launcher.exe` na raiz do repositório (ou extraia `release/Veio-0.10.0.zip` em qualquer pasta e abra o `launcher.exe` de dentro). Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Se a instância não existir, ele a cria (`horizon-launcher instance create Veio`) e depois abre o jogo direto. Antes, instale o Horizon Launcher, entre com a conta e faça o Prepare uma vez. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo. Para gerar de novo: `python tools/package.py`.
 
