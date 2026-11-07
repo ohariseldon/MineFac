@@ -14,6 +14,7 @@ pub(super) fn draw_labels(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         DRILL | DRILL_MK2 => &["output"],
         GENERATOR => &["fuel"],
         BELT | FAST_BELT | SPLITTER => &[],
+        MERGER => &["left", "right"],
         INTEGRATOR | ALLOY | ELECTRONICS => &["input1", "input2", "output"],
         HUB => &["input1", "input2", "output1", "output2"],
         HARVESTER => &["fertilizer", "output", "", ""],

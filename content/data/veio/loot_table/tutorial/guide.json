@@ -13,7 +13,7 @@
               "components": {
                 "minecraft:written_book_content": {
                   "title": {
-                    "raw": "Veio 0.8"
+                    "raw": "Veio 0.8.1"
                   },
                   "author": "Veio",
                   "generation": 0,
@@ -28,7 +28,7 @@
                             "bold": true
                           },
                           {
-                            "text": "\n\n"
+                            "text": "\n"
                           },
                           {
                             "translate": "veio.guide.contents.0",
@@ -641,6 +641,18 @@
                             "click_event": {
                               "action": "change_page",
                               "page": 69
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.merger",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 71
                             }
                           },
                           {
@@ -1887,6 +1899,60 @@
                         "extra": [
                           {
                             "translate": "veio.guide.make.steel_pole"
+                          },
+                          {
+                            "text": "\n\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "veio.guide.use.merger"
+                          },
+                          {
+                            "text": "\n\n"
+                          },
+                          {
+                            "translate": "veio.guide.recipe_link",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 72
+                            }
+                          },
+                          {
+                            "text": " | "
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "veio.guide.make.merger"
                           },
                           {
                             "text": "\n\n"

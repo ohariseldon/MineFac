@@ -19,6 +19,7 @@ const ASSEMBLER: &str = "veio:assembler";
 const BELT: &str = "veio:belt";
 const FAST_BELT: &str = "veio:fast_belt";
 const SPLITTER: &str = "veio:splitter";
+const MERGER: &str = "veio:merger";
 const CUTTER: &str = "veio:cutter";
 const INTEGRATOR: &str = "veio:integrator";
 const COPPER: &str = "minecraft:raw_copper";
@@ -89,7 +90,10 @@ impl Hooks for Factory {
         })
     }
 
-    fn container_accepts(&self, _host: &dyn Host, event: &mut ContainerAcceptsEvent<'_>) -> Flow {
+    fn container_accepts(&self, host: &dyn Host, event: &mut ContainerAcceptsEvent<'_>) -> Flow {
+        if event.entity.id == MERGER {
+            return if logistics::accepts_merger(host, event) { Flow::Continue } else { Flow::Cancel };
+        }
         if event.entity.id == HUB {
             return if contracts::accepts(event.entity, event.slot, event.stack) { Flow::Continue } else { Flow::Cancel };
         }
@@ -259,7 +263,7 @@ impl Hooks for Factory {
 
 fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
-        SPLITTER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
+        SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE)
 }
 
@@ -289,6 +293,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         PRESS | ASSEMBLER | CUTTER | CRUSHER => (2, vec![0], vec![1]),
         INTEGRATOR | ALLOY | ELECTRONICS => (3, vec![0, 1], vec![2]),
         BELT | FAST_BELT | SPLITTER => (1, vec![0], vec![0]),
+        MERGER => (2, vec![0, 1], vec![0, 1]),
         GENERATOR => (1, vec![0], vec![]),
         GEOTHERMAL => (2, vec![0], vec![1]),
         SOLAR | BATTERY | TESLA => (1, vec![], vec![]),
@@ -302,6 +307,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
 /// Slots que o bocal da máquina esvazia.
 fn output_slots(block: &str) -> std::ops::Range<usize> {
     match block {
+        MERGER => 0..2,
         PRESS | ASSEMBLER | CUTTER | CRUSHER | GEOTHERMAL => 1..2,
         INTEGRATOR | ALLOY | ELECTRONICS => 2..3,
         HUB => 2..4,
@@ -385,6 +391,7 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (INTEGRATOR, 1) => is_plain(stack, GEAR),
         (HARVESTER, 0) => is_plain(stack, BONE_MEAL),
         (BELT | FAST_BELT | SPLITTER, 0) => true,
+        (MERGER, 0 | 1) => true,
         _ => false,
     }
 }
@@ -403,7 +410,7 @@ fn set_number(entity: &mut ModBlockEntity, key: &str, value: i32) {
 }
 
 fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, Option<ItemStack>) {
-    (number(entity, "Status"), number(entity, "Module"), entity.items.first().cloned().flatten())
+    (number(entity, "Status"), number(entity, "Module"), logistics::display_stack(entity).cloned())
 }
 
 fn center([x, y, z]: [i32; 3]) -> [f64; 3] {

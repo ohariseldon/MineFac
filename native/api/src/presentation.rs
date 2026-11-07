@@ -25,6 +25,7 @@ pub(super) fn screen(block: &str) -> Option<NativeScreen> {
     let slots = match block {
         DRILL | DRILL_MK2 | BELT | FAST_BELT | SPLITTER | GENERATOR => vec![Some([89.0, 45.0])],
         PRESS | ASSEMBLER | CUTTER | CRUSHER | GEOTHERMAL => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
+        MERGER => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
         INTEGRATOR | ALLOY | ELECTRONICS => vec![Some([35.0, 45.0]), Some([71.0, 45.0]), Some([143.0, 45.0])],
         SOLAR | BATTERY | TESLA => vec![None],
         HUB => vec![Some([26.0, 45.0]), Some([62.0, 45.0]), Some([116.0, 45.0]), Some([152.0, 45.0])],
@@ -138,12 +139,13 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     }
     let limit = read(5).max(capacity(event.block)).max(1);
     let energy = read(3).clamp(0, limit);
-    if !matches!(event.block, BELT | FAST_BELT | SPLITTER) {
+    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) {
         let energy_text = Text::tr("veio.energy", &[&energy, &limit]).plain();
         host.text(event.batch, &energy_text, [x + 10.0, y + 85.0], INK, false);
         gauge(host, event, [10.0, 95.0], 174.0, energy as f32 / limit as f32, 0xffe0a020);
     }
     let lines: Vec<String> = match event.block {
+        MERGER => vec![Text::tr("veio.hint.merger", &[]).plain()],
         GENERATOR => vec![Text::tr("veio.hint.fuel", &[]).plain()],
         GEOTHERMAL => vec![Text::tr("veio.hint.lava", &[]).plain()],
         SOLAR => vec![Text::tr("veio.hint.solar", &[]).plain()],
@@ -206,7 +208,7 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
         number(entity, "Utilization"), number(entity, "ContractStage"), number(entity, "Total"),
         number(entity, "Damage"), number(entity, "Module"), number(entity, "LocalSmog")];
     debug_assert_eq!(entity.data.len(), DATA_SLOTS);
-    let stack = entity.items.first().and_then(Option::as_ref);
+    let stack = logistics::display_stack(entity);
     let name = stack.map_or("", |stack| stack.item.as_ref()).to_owned();
     let count = stack.map_or(0, |stack| stack.count);
     entity.nbt.insert("DisplayItem".into(), Tag::String(name.as_str().into()));
@@ -255,7 +257,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     let (lamp_from, lamp_to, lamps) = match event.block {
         CABLE => ([7.0, 4.0, 7.0], [9.0, 4.4, 9.0], 1),
         SOLAR => ([7.0, 4.0, 0.2], [9.0, 5.0, 0.8], 1),
-        BELT | FAST_BELT | SPLITTER => ([0.2, 4.0, 7.0], [1.8, 4.4, 9.0], 1),
+        BELT | FAST_BELT | SPLITTER | MERGER => ([0.2, 4.0, 7.0], [1.8, 4.4, 9.0], 1),
         TESLA => ([7.0, 3.5, 1.6], [9.0, 4.5, 2.0], 4),
         _ => ([7.0, 11.0, 0.6], [9.0, 12.5, 1.0], 4),
     };
@@ -265,7 +267,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
         host.draw_cube(event.draw, lamp_from, lamp_to, FLAT, lamp);
         event.draw.pop();
     }
-    if matches!(event.block, BELT | FAST_BELT | SPLITTER) {
+    if matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) {
         let facing = host.block_state_property(event.state, "facing").unwrap_or("north");
         let normal = match facing {
             "north" => [0.0, 1.0],
@@ -296,7 +298,8 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
             if !name.is_empty() {
                 let distance = if status == 3 { 0.0 } else { t - 0.5 };
                 event.draw.push();
-                event.draw.translate([0.5 + normal[0] * distance, 0.25, 0.5 + normal[1] * distance]);
+                let height = if event.block == MERGER { 0.34 } else { 0.25 };
+                event.draw.translate([0.5 + normal[0] * distance, height, 0.5 + normal[1] * distance]);
                 event.draw.rotate_about([1.0, 0.0, 0.0], 90.0, [0.0; 3]);
                 event.draw.scale([0.4; 3]);
                 host.draw_item(event.draw, &ItemStack::new(&name, 1), DisplayContext::Fixed, None, 0);

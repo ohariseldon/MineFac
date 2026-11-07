@@ -1,0 +1,10 @@
+{
+  "parent": "veio:distribution",
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {"items": [{"items": "veio:gear"}]}
+    }
+  },
+  "rewards": {"recipes": ["veio:merger"]}
+}

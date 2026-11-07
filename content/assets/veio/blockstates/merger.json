@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/merger"
+    },
+    "facing=west": {
+      "model": "veio:block/merger",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/merger",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/merger",
+      "y": 270
+    }
+  }
+}

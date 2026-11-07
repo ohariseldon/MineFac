@@ -565,6 +565,24 @@ def main():
     out["block/belt_rail"] = render(stripes("y"), noise=False)
     out["block/fast_belt_rail"] = render(stripes("C"), noise=False)
     out["block/splitter_top"] = render(SPLITTER_TOP, salt=9)
+    out["block/merger_top"] = render([
+        "gggggggyyggggggg",
+        "ggggggyyyygggggg",
+        "gggggyyyyyyggggg",
+        "gggggggyyggggggg",
+        "gggggggyyggggggg",
+        "gggggggyyggggggg",
+        "gggggggyyggggggg",
+        "gggggggyyggggggg",
+        "ggyyyyyyyyyyyygg",
+        "ggyyyyyyyyyyyygg",
+        "gggggggggggggggg",
+        "gggggggggggggggg",
+        "gggggggggggggggg",
+        "gggggggggggggggg",
+        "gggggggggggggggg",
+        "gggggggggggggggg",
+    ], noise=False)
     out["block/battery_side"] = render(BATTERY, salt=11)
     out["block/tesla_coil"] = render(COIL, salt=13)
     out["gui/material"] = material()

@@ -45,6 +45,7 @@ BLOCKS = {
     "belt": ("belt", None, 1, [], 1.5),
     "fast_belt": ("belt", None, 1, [], 1.5),
     "splitter": ("splitter", None, 1, [], 1.5),
+    "merger": ("merger", None, 2, [], 1.5),
     "cable": ("cable", None, 0, [], 1.0),
     "pole": ("pole", None, 0, [], 1.0),
     "steel_pole": ("steel_pole", None, 0, [], 2.0),
@@ -78,7 +79,7 @@ TABS = {
         "efficiency_module", "productivity_module"]),
     "power": ("veio:generator", ["generator", "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
         "minecraft:coal", "minecraft:lava_bucket"]),
-    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "wrench"]),
+    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "wrench"]),
     "world": ("veio:harvester", ["harvester", "tesla", "repair_kit", "minecraft:bone_meal"]),
 }
 
@@ -142,7 +143,7 @@ def model(kind, name, tier):
             box([4, 13, 4], [12, 15, 12], "#crown"),
             box([6, 15, 6], [10, 16, 10], "#tip"),
         ]
-    if kind in ("belt", "splitter"):
+    if kind in ("belt", "splitter", "merger"):
         rail = "veio:block/fast_belt_rail" if name == "fast_belt" else "veio:block/belt_rail"
         textures = {
             "base": "minecraft:block/smooth_stone", "base_side": "minecraft:block/smooth_stone_slab_side",
@@ -158,6 +159,17 @@ def model(kind, name, tier):
         if kind == "splitter":
             textures["divider"] = "veio:block/splitter_top"
             elements.append(box([5, 3, 5], [11, 6, 11], {"up": "#divider", "*": "#iron"}))
+        if kind == "merger":
+            textures["junction"] = "veio:block/merger_top"
+            textures["lane_b"] = "veio:block/fast_belt_rail"
+            # Open both sides. The tapered forward nose marks the single outlet.
+            elements = [elements[0], elements[3],
+                box([0, 2, 5], [16, 3.25, 11], {"up": "#belt", "*": "#iron"}),
+                box([4, 3.25, 4], [12, 5, 12], {"up": "#junction", "*": "#iron"}),
+                box([6, 3, 0], [10, 4, 4], {"up": "#rail", "*": "#iron"}),
+                box([0, 3.25, 5], [2, 3.75, 11], {"up": "#rail", "*": "#iron"}),
+                box([14, 3.25, 5], [16, 3.75, 11], {"up": "#lane_b", "*": "#iron"}),
+                box([0, 2, 14], [16, 5, 16], {"up": "#rail", "*": "#iron"})]
         return textures, elements
     if kind == "pole":
         textures = {"wood": "minecraft:block/stripped_spruce_log", "glass": "minecraft:block/copper_block",
@@ -214,6 +226,7 @@ SHAPES = {
     "tesla": [[0, 0, 0, 1, 1, 1]],
     "belt": [[0, 0, 0, 1, 0.25, 1]],
     "splitter": [[0, 0, 0, 1, 0.375, 1]],
+    "merger": [[0, 0, 0, 1, 0.3125, 1]],
     "cable": [[0, 0, 0.375, 1, 0.25, 0.625], [0.375, 0, 0, 0.625, 0.25, 1]],
     "solar": [[0, 0, 0, 1, 0.34375, 1]],
     "battery": [[0.0625, 0, 0.0625, 0.9375, 1.025, 0.9375]],

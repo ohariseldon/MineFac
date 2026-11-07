@@ -1,6 +1,6 @@
 id = "veio"
 name = "Veio"
-version = "0.8.0"
+version = "0.8.1"
 description = "Automação industrial no mundo do Horizon."
 api = "0.2"
 side = "both"

@@ -321,5 +321,16 @@
   "veio.tutorial.repair.title": "8. Preparar reparos",
   "veio.tutorial.repair.description": "A poluição atrai Saqueadores. Tenha kits de reparo à mão.",
   "veio.tutorial.defense.title": "9. Defender a fábrica",
-  "veio.tutorial.defense.description": "Uma torre Tesla abastecida protege a fábrica à noite."
+  "veio.tutorial.defense.description": "Uma torre Tesla abastecida protege a fábrica à noite.",
+  "block.veio.merger": "Unificador de esteiras",
+  "veio.guide.role.left": "Ent. A",
+  "veio.guide.role.right": "Ent. B",
+  "veio.hint.merger": "Duas laterais > uma frente",
+  "veio.help.merger": "Une as duas entradas laterais.\nSaída única pela frente.\nAlterna A e B, até 5 itens/s.\nSem energia elétrica.\nUse a chave para girar.",
+  "veio.slothelp.merger.0": "A: lateral amarela. Olhando para a saída, fica à esquerda.",
+  "veio.slothelp.merger.1": "B: lateral azul. Olhando para a saída, fica à direita.",
+  "veio.guide.use.merger": "Unificador de esteiras\n\nUne as duas entradas laterais.\nSaída única pela frente.\nAlterna A e B, até 5 itens/s.\nSem energia elétrica.\nUse a chave para girar.",
+  "veio.guide.make.merger": "Fabricar Unificador de esteiras\n\n2 x Esteira\n1 x Engrenagem\n1 x Lingote de ferro\n\nResultado: 2",
+  "veio.tutorial.merger.title": "Duas linhas, uma saída",
+  "veio.tutorial.merger.description": "Conecte as entradas A e B pelas laterais. Você recebeu o guia atualizado."
 }

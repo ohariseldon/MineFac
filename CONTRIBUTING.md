@@ -41,7 +41,7 @@ As receitas do guia são extraídas das receitas de fabricação reais. Ao mudar
 
 ## Compilar e instalar para jogar
 
-A versão 0.6 foi compilada com Horizon `66f3981f522b24c250b21523a70080965b940424`, base `nightly-2026-11-05-66f3981`, Rust 1.99.1 e perfil `dev`. A 0.7 e a 0.8 foram escritas contra as assinaturas desse mesmo commit e conferida com a verificação offline; a primeira compilação pelo launcher confirma. As APIs do Horizon evoluem; conserve essa referência ao investigar incompatibilidades. O launcher resolve e prepara o ambiente nativo. Um `cargo build` isolado nesta pasta não substitui esse processo.
+A versão 0.8.1, incluindo a base 0.7/0.8 e o primeiro lote de logística, foi compilada com Horizon `66f3981f522b24c250b21523a70080965b940424`, base `nightly-2026-11-05-66f3981`, Rust 1.99.1 e perfil `dev`. As APIs do Horizon evoluem; conserve essa referência ao investigar incompatibilidades. O launcher resolve e prepara o ambiente nativo. Um `cargo build` isolado nesta pasta não substitui esse processo.
 
 Em uma máquina Windows com Horizon Launcher instalado e uma instância chamada Veio, execute, ajustando os caminhos:
 

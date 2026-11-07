@@ -321,5 +321,16 @@
   "veio.tutorial.repair.title": "8. Prepare repairs",
   "veio.tutorial.repair.description": "Pollution draws Raiders. Keep repair kits at hand.",
   "veio.tutorial.defense.title": "9. Defend the factory",
-  "veio.tutorial.defense.description": "A powered Tesla tower guards the factory at night."
+  "veio.tutorial.defense.description": "A powered Tesla tower guards the factory at night.",
+  "block.veio.merger": "Conveyor Merger",
+  "veio.guide.role.left": "In A",
+  "veio.guide.role.right": "In B",
+  "veio.hint.merger": "Two sides > one front",
+  "veio.help.merger": "Merges the two side inputs.\nSingle outlet at the front.\nAlternates A/B, up to 5/s.\nNeeds no electricity.\nTurn with the wrench.",
+  "veio.slothelp.merger.0": "A: yellow side. Left when facing the outlet.",
+  "veio.slothelp.merger.1": "B: cyan side. Right when facing the outlet.",
+  "veio.guide.use.merger": "Conveyor Merger\n\nMerges the two side inputs.\nSingle outlet at the front.\nAlternates A/B, up to 5/s.\nNeeds no electricity.\nTurn with the wrench.",
+  "veio.guide.make.merger": "Craft Conveyor Merger\n\n2 x Conveyor Belt\n1 x Gear\n1 x Iron ingot\n\nMakes: 2",
+  "veio.tutorial.merger.title": "Two lines, one outlet",
+  "veio.tutorial.merger.description": "Connect inputs A and B from the sides. You received the updated guide."
 }

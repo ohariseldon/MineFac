@@ -1,0 +1,32 @@
+{
+  "parent": "veio:tutorial/start",
+  "display": {
+    "icon": {
+      "id": "veio:merger"
+    },
+    "title": {
+      "translate": "veio.tutorial.merger.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.merger.description"
+    },
+    "announce_to_chat": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:merger"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "loot": [
+      "veio:tutorial/guide"
+    ]
+  }
+}

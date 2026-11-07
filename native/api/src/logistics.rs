@@ -9,7 +9,11 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
         && entity.items.get(outputs.clone()).is_some_and(|slots| slots.iter().any(Option::is_some))
         && let Some(facing) = output_direction(host, pos)
     {
-        if entity.id == SPLITTER {
+        if entity.id == MERGER {
+            if merge(host, pos, facing, entity, 2) > 0 {
+                set_number(entity, "MovedAt", stamp(time));
+            }
+        } else if entity.id == SPLITTER {
             let before = entity.items[0].as_ref().map_or(0, |stack| stack.count);
             split(host, pos, facing, entity, 2);
             if entity.items[0].as_ref().map_or(0, |stack| stack.count) < before {
@@ -31,8 +35,8 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
 }
 
 pub(super) fn update_status(entity: &mut ModBlockEntity, time: i64) -> bool {
-    if matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER) {
-        let status = if entity.items[0].is_none() { 0 }
+    if matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
+        let status = if entity.items.iter().all(Option::is_none) { 0 }
             else if stamp(time) - number(entity, "MovedAt") > 8 { 3 }
             else { 1 };
         set_number(entity, "Status", status);
@@ -40,6 +44,53 @@ pub(super) fn update_status(entity: &mut ModBlockEntity, time: i64) -> bool {
     }
     false
 }
+
+pub(super) fn display_stack(entity: &ModBlockEntity) -> Option<&ItemStack> {
+    if entity.id == MERGER {
+        entity.items.iter().find_map(Option::as_ref)
+    } else {
+        entity.items.first().and_then(Option::as_ref)
+    }
+}
+
+/// Input buffers stay separate so an upstream line cannot fill both lanes.
+pub(super) fn input_slot(output: Direction, face: Direction) -> Option<usize> {
+    if face == turn(output, false) { Some(0) }
+    else if face == turn(output, true) { Some(1) }
+    else { None }
+}
+
+pub(super) fn accepts_merger(host: &dyn Host, event: &ContainerAcceptsEvent<'_>) -> bool {
+    if event.slot >= 2 { return false; }
+    let Some(face) = event.face else { return true; };
+    output_direction(host, event.pos).is_some_and(|output| input_slot(output, face) == Some(event.slot))
+}
+
+/// The next successful transfer favors the other input. A blocked product
+/// stays in its own buffer while an accepted product can use the outlet.
+fn merge(host: &mut dyn Host, pos: [i32; 3], facing: Direction, entity: &mut ModBlockEntity, batch: u32) -> u32 {
+    let mut next = (number(entity, "NextInput") & 1) as usize;
+    let mut total = 0;
+    for _ in 0..batch {
+        let mut sent = false;
+        for slot in [next, 1 - next] {
+            let Some(stack) = entity.items.get(slot).and_then(Option::as_ref) else { continue; };
+            let moved = send(host, pos, facing, stack, 1);
+            if moved == 0 { continue; }
+            consume(&mut entity.items[slot], moved);
+            next = 1 - slot;
+            total += moved;
+            sent = true;
+            break;
+        }
+        if !sent { break; }
+    }
+    set_number(entity, "NextInput", next as i32);
+    total
+}
+
+#[cfg(test)]
+mod tests;
 
 pub(super) fn split(
     host: &mut dyn Host,

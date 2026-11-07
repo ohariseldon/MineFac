@@ -100,9 +100,18 @@ help={
  "Selecione na barra rápida.\nBotão direito gira máquinas\ne esteiras.\nConserva estoques e progresso.",
  "Select it in the hotbar.\nRight-click to turn machines\nand conveyors.\nKeeps contents and progress."),
 }
+label("block.veio.merger", "Unificador de esteiras", "Conveyor Merger")
+label("veio.guide.role.left", "Ent. A", "In A")
+label("veio.guide.role.right", "Ent. B", "In B")
+label("veio.hint.merger", "Duas laterais > uma frente", "Two sides > one front")
+label("veio.tutorial.merger.title", "Duas linhas, uma saída", "Two lines, one outlet")
+label("veio.tutorial.merger.description", "Conecte as entradas A e B pelas laterais. Você recebeu o guia atualizado.", "Connect inputs A and B from the sides. You received the updated guide.")
+help["merger"] = (
+ "Une as duas entradas laterais.\nSaída única pela frente.\nAlterna A e B, até 5 itens/s.\nSem energia elétrica.\nUse a chave para girar.",
+ "Merges the two side inputs.\nSingle outlet at the front.\nAlternates A/B, up to 5/s.\nNeeds no electricity.\nTurn with the wrench.")
 order=["generator","cable","drill","belt","press","assembler","wrench","cutter","integrator",
  "contract_hub","splitter","fast_belt","alloy_furnace","crusher","electronics","geothermal",
- "solar","battery","drill_mk2","harvester","tesla","pole","steel_pole"]
+ "solar","battery","drill_mk2","harvester","tesla","pole","steel_pole","merger"]
 for name,(pt,en) in help.items():
  label(f"veio.help.{name}",pt,en)
 
@@ -144,6 +153,8 @@ slot_en={
 }
 for block,lines in slothelp.items():
  for i,line in enumerate(lines): label(f"veio.slothelp.{block}.{i}",line,slot_en[block][i])
+label("veio.slothelp.merger.0", "A: lateral amarela. Olhando para a saída, fica à esquerda.", "A: yellow side. Left when facing the outlet.")
+label("veio.slothelp.merger.1", "B: lateral azul. Olhando para a saída, fica à direita.", "B: cyan side. Right when facing the outlet.")
 
 label("veio.guide.title","Guia do Veio","Veio Field Guide")
 label("veio.guide.help","Ajuda ?","Help ?")
@@ -284,12 +295,12 @@ links=[
  ("Postes e fios","Poles and wires",wiring),("Poluição e defesa","Pollution and defense",smog),
  ("Módulos","Modules",upgrades),
 ]
-extra=[{"translate":"veio.guide.title","bold":True},{"text":"\n\n"}]
+extra=[{"translate":"veio.guide.title","bold":True},{"text":"\n"}]
 for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.8"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.8.1"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -307,6 +318,12 @@ start={"display":{"icon":{"id":"minecraft:written_book"},"title":{"translate":"v
  "rewards":{"loot":["veio:tutorial/guide"],"recipes":["veio:guide","veio:generator","veio:cable","veio:drill","veio:belt","veio:press"],
  "function":"veio:tutorial/welcome"}}
 write(f"{D}/advancement/tutorial/start.json",start)
+write(f"{D}/advancement/tutorial/merger.json", {
+ "parent":"veio:tutorial/start",
+ "display":{"icon":{"id":"veio:merger"},"title":{"translate":"veio.tutorial.merger.title"},
+ "description":{"translate":"veio.tutorial.merger.description"},"announce_to_chat":False},
+ "criteria":{"obtain":{"trigger":"minecraft:inventory_changed","conditions":{"items":[{"items":"veio:merger"}]}}},
+ "rewards":{"loot":["veio:tutorial/guide"]}})
 p=root/D/"function/tutorial/welcome.mcfunction";p.parent.mkdir(parents=True,exist_ok=True)
 p.write_text('tellraw @s {"translate":"veio.guide.welcome","color":"gold"}\n',encoding="utf-8")
 stages=[

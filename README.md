@@ -1,6 +1,6 @@
-# Veio 0.8
+# Veio 0.8.1
 
-A divisão de trabalho entre produção na nuvem e logística local está em [COORDENACAO.md](COORDENACAO.md). A base 0.8 foi integrada dos pacotes 0.7 e 0.8, conferida contra os tipos reais da API do Horizon `66f3981` e verificada com os 19 testes offline. A compilação completa pelo launcher e a validação dentro do jogo ainda estão pendentes; a instância local permanece na versão 0.6.
+A divisão de trabalho entre produção na nuvem e logística local está em [COORDENACAO.md](COORDENACAO.md). Esta branch acrescenta o [primeiro lote de logística](LOGISTICA.md) à base 0.8 recebida nos ZIPs: unificador com duas entradas laterais, saída frontal e alternância entre linhas. A versão 0.8.1 passou na compilação completa pelo launcher com Horizon `66f3981`, na conferência de conteúdo e em 23 testes offline. O teste dentro do jogo fica com o usuário.
 
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 

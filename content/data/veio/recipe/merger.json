@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": ["veio:belt", "veio:belt", "veio:gear", "minecraft:iron_ingot"],
+  "result": {"id": "veio:merger", "count": 2}
+}

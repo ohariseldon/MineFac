@@ -1,0 +1,32 @@
+{
+  "template": "minecraft:stonecutter",
+  "item": true,
+  "properties": {
+    "hardness": 1.5,
+    "occludes": false
+  },
+  "shapes": {
+    "default": [
+      [
+        0,
+        0,
+        0,
+        1,
+        0.3125,
+        1
+      ]
+    ]
+  },
+  "collision_shapes": {
+    "default": [
+      [
+        0,
+        0,
+        0,
+        1,
+        0.3125,
+        1
+      ]
+    ]
+  }
+}
