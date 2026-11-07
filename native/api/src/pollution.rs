@@ -133,7 +133,7 @@ pub(super) fn diffuse(cells: &HashMap<(i32, i32), f32>) -> HashMap<(i32, i32), f
     next
 }
 
-/// Chamado no tick das máquinas; só um deles por dimensão faz o passo.
+/// Chamado no tick do mundo e no das máquinas. `world.updated` garante um passo por dimensão.
 pub(super) fn update(host: &mut dyn Host, time: i64) {
     if time.rem_euclid(STEP) != 0 {
         return;

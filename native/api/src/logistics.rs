@@ -190,8 +190,38 @@ fn incoming(host: &dyn Host, pos: [i32; 3], side: Direction) -> Option<i32> {
 
 const HORIZONTAL: [Direction; 4] = [Direction::North, Direction::East, Direction::South, Direction::West];
 
-fn refresh_path(host: &mut dyn Host, pos: [i32; 3], entity: &ModBlockEntity) {
+/// Assinatura da vizinhança: blocos ao redor, orientação e trava da chave.
+/// Quando não muda, a esteira não relê entradas nem reescreve `path`/`facing`.
+fn neighborhood_signature(host: &dyn Host, pos: [i32; 3], facing: &str, manual: i32) -> i32 {
+    let mut hash: u32 = 2166136261;
+    let mix = |hash: &mut u32, text: &str| {
+        for byte in text.as_bytes() {
+            *hash ^= u32::from(*byte);
+            *hash = hash.wrapping_mul(16777619);
+        }
+        *hash ^= 0xff;
+        *hash = hash.wrapping_mul(16777619);
+    };
+    mix(&mut hash, facing);
+    hash ^= manual as u32;
+    hash = hash.wrapping_mul(16777619);
+    mix(&mut hash, &host.block([pos[0], pos[1] + 1, pos[2]]));
+    for side in HORIZONTAL {
+        for dy in [0, 1, -1] {
+            mix(&mut hash, &host.block(adjacent(pos, side, dy)));
+        }
+    }
+    hash as i32
+}
+
+fn refresh_path(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     let Some(mut output) = output_direction(host, pos) else { return; };
+    let facing = host.block_property(pos, "facing").unwrap_or_default();
+    let manual = number(entity, "ManualDirection");
+    let sig = neighborhood_signature(host, pos, &facing, manual);
+    if number(entity, "PathReady") == 1 && number(entity, "PathSig") == sig {
+        return;
+    }
     let inputs: Vec<_> = HORIZONTAL.into_iter().filter_map(|side| incoming(host, pos, side).map(|dy| (side, dy))).collect();
     // Snap a corner only when one line feeds us and one existing line leaves us.
     // Empty space never overrides the direction chosen while building a new line.
@@ -201,7 +231,7 @@ fn refresh_path(host: &mut dyn Host, pos: [i32; 3], entity: &ModBlockEntity) {
                 let target = belt_target(host, pos, *side);
                 let block = host.block(target);
                 (is_belt(&block) && output_direction(host, target) != Some(side.opposite()))
-                    || (target[1] == pos[1] && !is_belt(&block) && layout(&block).is_some_and(|(_, ins, _)| !ins.is_empty()))
+                    || (target[1] == pos[1] && !is_belt(&block) && has_item_inputs(&block))
             }).collect();
         if candidates.len() == 1 && candidates[0] != output {
             output = candidates[0];
@@ -223,6 +253,10 @@ fn refresh_path(host: &mut dyn Host, pos: [i32; 3], entity: &ModBlockEntity) {
     if host.block_property(pos, "path").as_deref() != Some(path) {
         host.set_block_property(pos, "path", path);
     }
+    let facing_now = host.block_property(pos, "facing").unwrap_or_default();
+    let stored = if facing_now == facing { sig } else { neighborhood_signature(host, pos, &facing_now, manual) };
+    set_number(entity, "PathSig", stored);
+    set_number(entity, "PathReady", 1);
 }
 
 /// Coordinates follow the same path used by the generated belt models.

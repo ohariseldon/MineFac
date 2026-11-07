@@ -1,0 +1,13 @@
+[package]
+name = "veio-launcher"
+version = "0.10.0"
+edition = "2024"
+description = "Instala o Veio na instância do Horizon e abre o launcher."
+
+[[bin]]
+name = "launcher"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = "s"
+strip = true

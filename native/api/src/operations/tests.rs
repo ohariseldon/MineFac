@@ -76,3 +76,21 @@ fn extractor_and_infrastructure_do_not_accept_materials_in_output_or_dummy_slots
     assert!(!accepts_material(&station(SOLAR), 0, &ItemStack::new(PLATE, 1)));
     assert_eq!(inspect(&station(SOLAR)).unwrap().profile.kind, StationKind::Infrastructure);
 }
+
+#[test]
+fn farmhand_post_is_a_farming_station_and_worker_states_suggest_no_hiring() {
+    let mut entity = station(workforce::FARM_POST);
+    assert_eq!(profile(workforce::FARM_POST), Some(Profile { sector: Sector::Farming, kind: StationKind::Workstation }));
+    assert!(accepts_material(&entity, 0, &ItemStack::new("minecraft:bread", 1)));
+    assert!(!accepts_material(&entity, 1, &ItemStack::new("minecraft:bread", 1)));
+    set_number(&mut entity, "Status", workforce::NO_WORKER);
+    let view = inspect(&entity).unwrap();
+    assert_eq!(view.blockage, Blockage::Worker);
+    assert!(view.services.is_empty());
+    assert!(view.energy.is_none(), "o posto não usa FE");
+    set_number(&mut entity, "Status", workforce::NO_FOOD);
+    assert_eq!(inspect(&entity).unwrap().services, [Service::CheckInputs]);
+    for status in 0..presentation::STATUS_KEYS.len() as i32 {
+        assert_ne!(advice_key(status), "veio.operation.advice.unknown", "estado {status} sem dica");
+    }
+}

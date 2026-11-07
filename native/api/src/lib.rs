@@ -9,6 +9,7 @@ mod production;
 mod power;
 mod tutorial;
 mod upgrades;
+mod workforce;
 
 use horizon_client::mod_api::{
     BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
@@ -102,6 +103,11 @@ impl Hooks for Factory {
         let block = host.block(event.pos);
         if !is_factory_block(&block) {
             return Flow::Continue;
+        }
+        if workforce::is_post(&block)
+            && let Some(flow) = workforce::right_click(host, event.pos, &held)
+        {
+            return flow;
         }
         let pos = event.pos;
         let mut damage = 0;
@@ -204,12 +210,16 @@ impl Hooks for Factory {
         Flow::Continue
     }
 
-    fn tick(&self, _host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
+    fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
         defense::advance_clock();
+        if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
+            pollution::update(host, time);
+        }
     }
 
     fn register_goals(&self, event: &mut horizon_client::mod_api::RegisterGoalsEvent<'_>) {
         pollution::register_goals(event.mob);
+        workforce::register_goals(event.mob);
     }
 
     fn block_entity_render_bounding_box(&self, _host: &dyn Host,
@@ -270,7 +280,7 @@ fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
         SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE)
-        || production::is_machine(block)
+        || production::is_machine(block) || workforce::is_post(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
@@ -312,8 +322,19 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         CABLE | POLE | STEEL_POLE => (0, vec![], vec![]),
         HUB => (4, vec![0, 1], vec![2, 3]),
         HARVESTER => (4, vec![0], vec![1, 2, 3]),
+        _ if workforce::is_post(block) => return workforce::layout(block),
         _ => return production::layout(block),
     })
+}
+
+/// Há slot de entrada de itens? Evita alocar o `layout` só para decidir uma curva de esteira.
+fn has_item_inputs(block: &str) -> bool {
+    match block {
+        BELT | FAST_BELT | SPLITTER | MERGER | PRESS | ASSEMBLER | CUTTER | CRUSHER |
+        INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER => true,
+        DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE => false,
+        _ => production::has_inputs(block),
+    }
 }
 
 /// Slots que o bocal da máquina esvazia.
@@ -326,6 +347,7 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         HARVESTER => 1..4,
         GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE => 0..0,
         _ if production::is_machine(block) => production::outputs(block),
+        _ if workforce::is_post(block) => workforce::outputs(block),
         _ => 0..1,
     }
 }
@@ -335,6 +357,7 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (HUB, _) => contracts::valid_input(slot, stack),
         (BELT | FAST_BELT | SPLITTER, 0) => true,
         (MERGER, 0 | 1) => true,
+        _ if workforce::is_post(block) => workforce::accepts(block, slot, stack),
         // Entradas das máquinas de produção, pela tabela de receitas e combustíveis.
         _ => production::accepts(block, slot, stack),
     }
@@ -385,6 +408,10 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
         tick_power(host, pos, entity);
         return;
     }
+    if workforce::is_post(&entity.id) {
+        // Trabalhadores: sem energia; o custo é a comida do aldeão.
+        return workforce::tick(host, pos, entity, time);
+    }
     if needs_power(&entity.id) && host.neighbor_signal(host.dimension(), pos) > 0 {
         set_number(entity, "Status", 9);
         return;
@@ -404,32 +431,35 @@ fn tick_power(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     let mut energy = number(entity, "energy").min(limit);
     // Geração (produção); a distribuição abaixo é da logística.
     energy = production::generation::produce(host, pos, entity, energy, limit);
-    let offset = number(entity, "Port") as usize % 6;
-    for i in 0..6 {
-        let face = Direction::ALL[(i + offset) % 6];
-        let delta = face.normal();
-        let target = std::array::from_fn(|axis| pos[axis] + delta[axis]);
-        host.change_mod_block_entity(target, &mut |other| {
-            let storage = matches!(other.id.as_str(), CABLE | BATTERY) || power::tier(&other.id).is_some();
-            if !needs_power(&other.id) && !storage {
-                return;
-            }
-            let other_limit = capacity(&other.id);
-            let stored = number(other, "energy").min(other_limit);
-            // Equalize charge percentages, so large batteries can charge and discharge.
-            let offered = if storage {
-                ((i64::from(energy) * i64::from(other_limit)
-                    - i64::from(stored) * i64::from(limit))
-                    / i64::from(limit + other_limit)).clamp(0, 80) as i32
-            } else { energy.min(80) };
-            let accepted = offered.min(other_limit - stored);
-            if accepted > 0 {
-                set_number(other, "energy", stored + accepted);
-                energy -= accepted;
-            }
-        });
+    // A rede só empurra. Sem carga, as seis consultas a vizinhos não movem energia.
+    if energy > 0 {
+        let offset = number(entity, "Port") as usize % 6;
+        for i in 0..6 {
+            let face = Direction::ALL[(i + offset) % 6];
+            let delta = face.normal();
+            let target = std::array::from_fn(|axis| pos[axis] + delta[axis]);
+            host.change_mod_block_entity(target, &mut |other| {
+                let storage = matches!(other.id.as_str(), CABLE | BATTERY) || power::tier(&other.id).is_some();
+                if !needs_power(&other.id) && !storage {
+                    return;
+                }
+                let other_limit = capacity(&other.id);
+                let stored = number(other, "energy").min(other_limit);
+                // Equalize charge percentages, so large batteries can charge and discharge.
+                let offered = if storage {
+                    ((i64::from(energy) * i64::from(other_limit)
+                        - i64::from(stored) * i64::from(limit))
+                        / i64::from(limit + other_limit)).clamp(0, 80) as i32
+                } else { energy.min(80) };
+                let accepted = offered.min(other_limit - stored);
+                if accepted > 0 {
+                    set_number(other, "energy", stored + accepted);
+                    energy -= accepted;
+                }
+            });
+        }
+        set_number(entity, "Port", ((offset + 1) % 6) as i32);
     }
-    set_number(entity, "Port", ((offset + 1) % 6) as i32);
     set_number(entity, "energy", energy);
     let status = if energy == limit { 8 }
         else if energy == 0 { production::generation::empty_status(entity) }

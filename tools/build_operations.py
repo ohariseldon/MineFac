@@ -30,6 +30,12 @@ def add_labels(langs):
         "wind": ("Confira céu aberto, altitude e condições do vento.", "Check open sky, altitude and wind conditions."),
         "seeds": ("Abasteça as sementes ou mudas aceitas e confira o solo.", "Supply accepted seeds or saplings and check the soil."),
         "animals": ("Confira os animais compatíveis na área do rancho.", "Check compatible animals in the ranch area."),
+        "no_worker": ("Segure uma esmeralda e clique no posto perto de um aldeão adulto.", "Hold an emerald and click the post near an adult villager."),
+        "absent": ("Traga o trabalhador de volta ou dispense com agachar + chave.", "Bring the worker back or dismiss with sneak + wrench."),
+        "no_task": ("Plante e espere amadurecer na área 9x9 do posto.", "Plant crops in the post's 9x9 area and let them ripen."),
+        "no_food": ("Coloque comida no slot do trabalhador.", "Put food in the worker slot."),
+        "path": ("Abra caminho entre o posto e as plantas.", "Clear a walkable path between the post and the crops."),
+        "walking": ("O trabalhador está indo até a tarefa.", "The worker is walking to the task."),
         "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
     }
     for prefix, entries in (("sector", sectors), ("advice", advice)):

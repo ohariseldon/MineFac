@@ -33,11 +33,6 @@ pub(super) const FLOUR: &str = "veio:flour";
 #[allow(dead_code)]
 pub(super) const BIOMASS: &str = "veio:biomass";
 
-/// Máquinas novas deste módulo. As antigas (prensa, extratora...) seguem com id em `lib.rs`,
-/// mas suas receitas também vêm daqui.
-const NEW: [&str; 13] = [DRILL_MK3, ELECTRIC_FURNACE, MILL, KITCHEN, BIOMASS_GENERATOR, WATER_WHEEL,
-    WIND_TURBINE, STEAM_ENGINE, PLANTER, GROW_LAMP, TREE_FARM, RANCH, PANTRY];
-
 // Estados exibidos nos painéis, além dos de `presentation::STATUS_KEYS` 0-13.
 pub(super) const NO_WATER: i32 = 14;
 pub(super) const NO_WIND: i32 = 15;
@@ -74,7 +69,8 @@ pub(crate) struct Fuel {
 }
 
 pub(super) fn is_machine(block: &str) -> bool {
-    NEW.contains(&block)
+    matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | BIOMASS_GENERATOR | WATER_WHEEL |
+        WIND_TURBINE | STEAM_ENGINE | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PANTRY)
 }
 
 /// Máquinas que consomem energia: recebem pela rede, param com redstone, mostram métricas.
@@ -90,6 +86,12 @@ pub(super) fn generates(block: &str) -> bool {
 /// Fontes que queimam combustível: poluem apenas enquanto há queima.
 pub(super) fn burns(block: &str) -> bool {
     matches!(block, GENERATOR | GEOTHERMAL | BIOMASS_GENERATOR | STEAM_ENGINE)
+}
+
+/// Entrada de itens, sem alocar o `layout`.
+pub(super) fn has_inputs(block: &str) -> bool {
+    matches!(block, ELECTRIC_FURNACE | MILL | PANTRY | KITCHEN | BIOMASS_GENERATOR | STEAM_ENGINE |
+        PLANTER | TREE_FARM | RANCH)
 }
 
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
@@ -159,19 +161,39 @@ pub(super) fn emission(block: &str) -> f32 {
 
 /// Tick das máquinas de produção que consomem energia. Devolve `false` se não for uma delas.
 pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) -> bool {
-    let id = entity.id.clone();
-    match id.as_str() {
-        DRILL | DRILL_MK2 | DRILL_MK3 => extraction::tick(host, pos, entity, time),
-        HARVESTER => farm::tick(host, pos, entity, time),
-        PLANTER => crops::plant(host, pos, entity, time),
-        GROW_LAMP => crops::grow(host, pos, entity, time),
-        TREE_FARM => forestry::tick(host, pos, entity, time),
-        RANCH => ranch::tick(host, pos, entity, time),
-        PANTRY => pantry::tick(host, pos, entity, time),
-        id if recipes(id).next().is_some() => process(entity),
-        _ => return false,
+    if matches!(entity.id.as_str(), DRILL | DRILL_MK2 | DRILL_MK3) {
+        extraction::tick(host, pos, entity, time);
+        return true;
     }
-    true
+    if entity.id == HARVESTER {
+        farm::tick(host, pos, entity, time);
+        return true;
+    }
+    if entity.id == PLANTER {
+        crops::plant(host, pos, entity, time);
+        return true;
+    }
+    if entity.id == GROW_LAMP {
+        crops::grow(host, pos, entity, time);
+        return true;
+    }
+    if entity.id == TREE_FARM {
+        forestry::tick(host, pos, entity, time);
+        return true;
+    }
+    if entity.id == RANCH {
+        ranch::tick(host, pos, entity, time);
+        return true;
+    }
+    if entity.id == PANTRY {
+        pantry::tick(host, pos, entity, time);
+        return true;
+    }
+    if recipes(&entity.id).next().is_some() {
+        process(entity);
+        return true;
+    }
+    false
 }
 
 /// Primeira receita da máquina cujas entradas estão todas nos slots.
@@ -281,6 +303,7 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         STEAM_ENGINE => vec![tr("veio.hint.steam", &[])],
         WATER_WHEEL => vec![tr("veio.metric.output", &[&info]), tr("veio.hint.water_wheel", &[])],
         WIND_TURBINE => vec![tr("veio.metric.output", &[&info]), tr("veio.hint.wind", &[])],
+        SOLAR => vec![tr("veio.metric.output", &[&info]), tr("veio.hint.solar", &[])],
         PLANTER => vec![tr("veio.metric.planted", &[&read(9)]), tr("veio.hint.planter", &[])],
         GROW_LAMP => vec![tr("veio.metric.grown", &[&read(9)]), tr("veio.hint.grow_lamp", &[])],
         TREE_FARM => vec![tr("veio.metric.trees", &[&read(9)]), tr("veio.hint.tree_farm", &[])],

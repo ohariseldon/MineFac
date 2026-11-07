@@ -33,7 +33,7 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
     let sector = match block {
         DRILL | DRILL_MK2 | DRILL_MK3 => Sector::Extraction,
         PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE => Sector::Industry,
-        HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH => Sector::Farming,
+        HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH | workforce::FARM_POST => Sector::Farming,
         MILL | KITCHEN | PANTRY => Sector::Food,
         HUB => Sector::Projects,
         TESLA => Sector::Defense,
@@ -49,17 +49,20 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Blockage { None, Input, Output, Power, Fuel, Resource, Environment, Control, Damage, Unknown }
+/// `Worker`: the post's own villager is missing or not hired (`workforce`). No service is
+/// suggested for it; hiring stays an explicit player action.
+pub(crate) enum Blockage { None, Input, Output, Power, Fuel, Resource, Environment, Control, Damage, Worker, Unknown }
 
 pub(crate) fn blockage(status: i32) -> Blockage {
     match status {
-        0 | 1 | 8 | 11 => Blockage::None,
-        2 | 16 => Blockage::Input,
+        0 | 1 | 8 | 11 | 23 => Blockage::None,
+        2 | 16 | 21 => Blockage::Input,
         3 => Blockage::Output,
         4 | 12 => Blockage::Resource,
         5 => Blockage::Power,
         6 => Blockage::Fuel,
-        7 | 10 | 14 | 15 | 17 => Blockage::Environment,
+        7 | 10 | 14 | 15 | 17 | 20 | 22 => Blockage::Environment,
+        18 | 19 => Blockage::Worker,
         9 => Blockage::Control,
         13 => Blockage::Damage,
         _ => Blockage::Unknown,

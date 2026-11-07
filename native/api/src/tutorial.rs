@@ -10,7 +10,7 @@ pub(super) fn draw_labels(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     host.fill(event.batch, [x + 178.0, y + 5.0, 1.0, 9.0], 0xffffffff);
     host.text(event.batch, "?", [x + 181.0, y + 6.0], presentation::INK, false);
     let Some(layout) = presentation::screen(event.block) else { return; };
-    let roles: &[&str] = if let Some(roles) = production::roles(event.block) { roles } else { match event.block {
+    let roles: &[&str] = if let Some(roles) = production::roles(event.block).or_else(|| workforce::roles(event.block)) { roles } else { match event.block {
         DRILL | DRILL_MK2 => &["output"],
         GENERATOR => &["fuel"],
         BELT | FAST_BELT | SPLITTER => &[],
@@ -28,7 +28,7 @@ pub(super) fn draw_labels(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         }
         let label = Text::tr(&format!("veio.guide.role.{role}"), &[]).plain();
         let width = host.text_width(&label);
-        let grouped = matches!(event.block, HARVESTER | production::TREE_FARM | production::RANCH);
+        let grouped = matches!(event.block, HARVESTER | production::TREE_FARM | production::RANCH | workforce::FARM_POST);
         let center = if grouped && *role == "output" { sx + 26.0 } else { sx + 8.0 };
         host.text(event.batch, &label, [x + center - width / 2.0, y + sy + 20.0], presentation::SOFT_INK, false);
     }

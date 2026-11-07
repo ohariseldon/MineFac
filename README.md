@@ -1,10 +1,14 @@
-# Veio 0.9.1
+# Veio 0.10.0
 
-Trabalho paralelo: [Cloud — aldeões trabalhadores](frentes/CLOUD.md), [Grok — desempenho e balanceamento](frentes/GROK.md) e [Codex — expansão e integração](frentes/CODEX.md). Comece pelo [acordo de coordenação](COORDENACAO.md). As ordens descrevem próximas implementações.
+A 0.10.0 consolida as três frentes da rodada sobre a 0.9.1:
 
-Preparação para o próximo lote: [interface comum de postos](frentes/INTERFACE_POSTOS.md), com setor, inventários e motivos de espera. O código inclui ajuda contextual para o estado das máquinas. Essa preparação ainda não foi instalada na instância 0.9.1 e não implementa os aldeões trabalhadores.
+- **Cloud — trabalhadores:** [posto do lavrador com aldeão contratado](TRABALHADORES.md). Uma esmeralda contrata um aldeão, que anda até as plantas maduras, colhe e traz o produto ao posto.
+- **Codex — interface de postos:** [consulta comum de estações](frentes/INTERFACE_POSTOS.md), com setor, inventários, motivo de espera e dica ao passar o cursor sobre o estado da máquina. O posto do lavrador já está registrado nela.
+- **Grok — lote 1:** [ticks mais leves e energia renovável utilizável](frentes/GROK-LOTE.md): roda d'água, cata-vento e biomassa reforçados; menos trabalho repetido em cabos, esteiras e sensores.
 
-A versão 0.9.1 integra a produção 0.9 recebida da nuvem, o unificador e [esteiras com curvas e rampas](LOGISTICA.md). A divisão de trabalho está em [COORDENACAO.md](COORDENACAO.md). A integração passou na conferência de conteúdo, nos tipos reais do Horizon `66f3981` e em 40 testes offline. A compilação completa pelo launcher está sendo concluída; o teste dentro do jogo fica com o usuário.
+**Para jogar no Windows:** baixe ou gere o pacote `Veio-0.10.0.zip` (`python tools/package.py`), extraia e abra `launcher.exe`. Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Veja o `LEIA-ME.txt` do pacote.
+
+A integração passou na conferência de conteúdo e nos testes offline (61 regras do mod e 2 do launcher). A compilação nativa pelo Horizon Launcher e o teste dentro do jogo ainda precisam ser feitos na máquina do usuário; o `launcher.exe` executa essa compilação. Ordens das frentes: [Cloud](frentes/CLOUD.md), [Grok](frentes/GROK.md) e [Codex](frentes/CODEX.md); acordo em [COORDENACAO.md](COORDENACAO.md).
 
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 
@@ -94,7 +98,9 @@ Todas as texturas próprias são desenhadas em texto em `tools/build_textures.py
 O código evita trabalho por tick:
 
 - Postes se encontram por um registro em memória dividido em chunks e recalculam vizinhos e área a cada 2 segundos, em ticks escalonados. No tick comum, só percorrem essas listas.
-- A poluição é somada na máquina e entregue ao chunk uma vez por segundo; a difusão roda a cada 64 ticks.
+- A poluição é somada na máquina e entregue ao chunk uma vez por segundo; a difusão roda a cada 64 ticks, uma vez por dimensão e `game_time`.
+- Cabos e geradores sem carga não consultam vizinhos. Esteiras estáveis guardam uma assinatura da vizinhança e só relêem curvas quando um vizinho muda.
+- Painéis solares, rodas e cata-ventos relêem o mundo a cada 2 segundos, não a cada tick.
 - A torre Tesla consulta apenas os hostis vistos no tick anterior.
 - Fios, máquinas paradas e rotores não são redesenhados a cada quadro: o jogo guarda a geometria até o estado mudar, e as peças giratórias giram na placa de vídeo.
 
@@ -145,9 +151,9 @@ Um sinal de redstone pausa a produção e preserva o progresso. A saída continu
 
 | Fonte | Energia | Condição |
 |---|---|---|
-| Roda d'água | 6 FE/t por lado com água corrente, até 24 | Não polui |
-| Cata-vento | Até 32 FE/t, cresce com a altura (y 110 dá 16) e com chuva | Precisa de céu aberto; não polui |
-| Gerador a biomassa | 30 FE/t | Queima biomassa, plantas e feno |
+| Roda d'água | 8 FE/t por lado com água corrente, até 32 | Não polui |
+| Cata-vento | 8 FE/t no nível do mar, até 32; y 110 dá 16 e chuva ajuda | Precisa de céu aberto; não polui |
+| Gerador a biomassa | 40 FE/t, polui menos que o carvão | Queima biomassa, plantas e feno |
 | Caldeira a vapor | 120 FE/t e o dobro de energia por combustível | Precisa de água parada ao lado |
 
 **Lavoura.**

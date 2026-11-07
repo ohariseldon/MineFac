@@ -1,6 +1,6 @@
 # Trabalhar no MineFac / Veio
 
-Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.9.1**, com energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
+Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.10.0**, com aldeões trabalhadores, energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
 
 ## Começar na nuvem
 
@@ -25,6 +25,7 @@ A divisão atual é Cloud para trabalhadores, Grok para desempenho e balanceamen
 - `native/api/src/operations.rs`: interface comum de postos, motivos de espera e validação de entregas, preparada para integrar os trabalhadores. Veja [INTERFACE_POSTOS.md](frentes/INTERFACE_POSTOS.md).
 - `native/api/src/pollution.rs`: poluição por chunk, avisos, ondas noturnas e o objetivo dos Saqueadores.
 - `native/api/src/upgrades.rs`: módulos de velocidade, eficiência e produtividade.
+- `native/api/src/workforce/`: aldeões trabalhadores, postos e tarefas. Veja [TRABALHADORES.md](TRABALHADORES.md).
 - `native/api/src/tests.rs`: testes de regras.
 - `native/api/src/presentation.rs`: painéis no estilo vanilla e desenho animado das máquinas e esteiras.
 - `native/api/src/contracts.rs`: pedidos e recompensas da central de projetos.
@@ -42,6 +43,10 @@ Ao adicionar uma máquina: inclua-a em `BLOCKS` de `tools/build_content.py`, des
 As receitas do guia são extraídas das receitas de fabricação reais. Ao mudar ingredientes de máquinas, gere novamente o guia. Ao mudar regras de processamento, atualize também os textos explicativos do gerador do tutorial.
 
 ## Compilar e instalar para jogar
+
+O caminho simples é o pacote: `python tools/package.py` gera `dist/Veio-<versão>.zip` com `launcher.exe`, `content/` e `native/`. O `launcher.exe` (código em `launcher/`, só biblioteca padrão) roda o `native-build` abaixo quando a versão muda, copia `content/` para `horizon-mods/veio` da instância e abre o Horizon Launcher. Os caminhos ficam em `launcher.ini`, ao lado do executável. O executável e o ZIP não entram no Git.
+
+O processo manual continua valendo:
 
 A versão 0.8.1, incluindo a base 0.7/0.8 e o primeiro lote de logística, foi compilada com Horizon `66f3981f522b24c250b21523a70080965b940424`, base `nightly-2026-11-05-66f3981`, Rust 1.99.1 e perfil `dev`. As APIs do Horizon evoluem; conserve essa referência ao investigar incompatibilidades. O launcher resolve e prepara o ambiente nativo. Um `cargo build` isolado nesta pasta não substitui esse processo.
 

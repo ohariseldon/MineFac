@@ -11,7 +11,7 @@
     "components": {
       "minecraft:written_book_content": {
         "title": {
-          "raw": "Veio 0.9.1"
+          "raw": "Veio 0.10.0"
         },
         "author": "Veio",
         "generation": 0,
@@ -106,7 +106,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 25
+                    "page": 26
                   }
                 },
                 {
@@ -118,7 +118,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 26
+                    "page": 27
                   }
                 },
                 {
@@ -130,7 +130,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 27
+                    "page": 28
                   }
                 },
                 {
@@ -142,7 +142,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 28
+                    "page": 29
                   }
                 },
                 {
@@ -154,7 +154,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 29
+                    "page": 30
                   }
                 },
                 {
@@ -166,7 +166,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 },
                 {
@@ -292,6 +292,11 @@
           },
           {
             "raw": {
+              "translate": "veio.guide.page.25"
+            }
+          },
+          {
+            "raw": {
               "text": "",
               "extra": [
                 {
@@ -307,7 +312,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 31
+                    "page": 32
                   }
                 },
                 {
@@ -319,7 +324,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 32
+                    "page": 33
                   }
                 },
                 {
@@ -331,7 +336,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 33
+                    "page": 34
                   }
                 },
                 {
@@ -343,7 +348,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 34
+                    "page": 35
                   }
                 },
                 {
@@ -355,7 +360,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 35
+                    "page": 36
                   }
                 },
                 {
@@ -367,7 +372,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 36
+                    "page": 37
                   }
                 },
                 {
@@ -379,7 +384,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 37
+                    "page": 38
                   }
                 },
                 {
@@ -391,7 +396,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 39
                   }
                 },
                 {
@@ -403,7 +408,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 39
+                    "page": 40
                   }
                 },
                 {
@@ -415,7 +420,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 40
+                    "page": 41
                   }
                 },
                 {
@@ -449,7 +454,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 41
+                    "page": 42
                   }
                 },
                 {
@@ -461,7 +466,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 42
+                    "page": 43
                   }
                 },
                 {
@@ -473,7 +478,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 43
+                    "page": 44
                   }
                 },
                 {
@@ -485,7 +490,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 44
+                    "page": 45
                   }
                 },
                 {
@@ -497,18 +502,6 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 45
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "block.veio.mill",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
                     "page": 46
                   }
                 },
@@ -516,7 +509,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.electric_furnace",
+                  "translate": "block.veio.farm_post",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -528,7 +521,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.kitchen",
+                  "translate": "block.veio.mill",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -540,12 +533,36 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.pantry",
+                  "translate": "block.veio.electric_furnace",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
                     "page": 49
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.kitchen",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 50
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.pantry",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 51
                   }
                 },
                 {
@@ -579,7 +596,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 50
+                    "page": 52
                   }
                 },
                 {
@@ -591,7 +608,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 51
+                    "page": 53
                   }
                 },
                 {
@@ -603,7 +620,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 52
+                    "page": 54
                   }
                 },
                 {
@@ -615,7 +632,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 53
+                    "page": 55
                   }
                 },
                 {
@@ -627,7 +644,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 54
+                    "page": 56
                   }
                 },
                 {
@@ -639,7 +656,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 55
+                    "page": 57
                   }
                 },
                 {
@@ -651,7 +668,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 56
+                    "page": 58
                   }
                 },
                 {
@@ -663,7 +680,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 57
+                    "page": 59
                   }
                 },
                 {
@@ -697,7 +714,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 58
+                    "page": 60
                   }
                 },
                 {
@@ -709,7 +726,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 59
+                    "page": 61
                   }
                 },
                 {
@@ -721,7 +738,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 60
+                    "page": 62
                   }
                 },
                 {
@@ -733,7 +750,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 61
+                    "page": 63
                   }
                 },
                 {
@@ -745,7 +762,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 62
+                    "page": 64
                   }
                 },
                 {
@@ -757,7 +774,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 63
+                    "page": 65
                   }
                 },
                 {
@@ -769,7 +786,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 64
+                    "page": 66
                   }
                 },
                 {
@@ -781,7 +798,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 65
+                    "page": 67
                   }
                 },
                 {
@@ -815,7 +832,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 66
+                    "page": 68
                   }
                 },
                 {
@@ -827,7 +844,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 67
+                    "page": 69
                   }
                 },
                 {
@@ -861,7 +878,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 68
+                    "page": 70
                   }
                 },
                 {
@@ -873,7 +890,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 70
+                    "page": 72
                   }
                 },
                 {
@@ -885,7 +902,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 71
+                    "page": 73
                   }
                 },
                 {
@@ -897,7 +914,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 72
+                    "page": 74
                   }
                 },
                 {
@@ -909,7 +926,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 73
+                    "page": 75
                   }
                 },
                 {
@@ -921,7 +938,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 75
+                    "page": 77
                   }
                 },
                 {
@@ -933,7 +950,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 76
+                    "page": 78
                   }
                 },
                 {
@@ -945,7 +962,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 77
+                    "page": 79
                   }
                 },
                 {
@@ -957,7 +974,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 83
+                    "page": 85
                   }
                 },
                 {
@@ -969,7 +986,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 84
+                    "page": 86
                   }
                 },
                 {
@@ -1495,6 +1512,41 @@
                 },
                 {
                   "translate": "veio.guide.craft.ranch",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.farm_post",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.farm_post"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.farm_post",
                   "color": "dark_gray"
                 },
                 {
@@ -2389,7 +2441,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -2446,7 +2498,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -2490,7 +2542,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -2553,7 +2605,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -2606,7 +2658,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -2710,7 +2762,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -2757,7 +2809,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -2848,7 +2900,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -2939,7 +2991,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -3043,7 +3095,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -3147,7 +3199,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -3251,7 +3303,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -3355,7 +3407,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -3459,7 +3511,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -3544,7 +3596,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -3645,7 +3697,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -3776,7 +3828,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]
@@ -3916,7 +3968,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 }
               ]

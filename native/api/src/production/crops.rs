@@ -141,6 +141,10 @@ pub(crate) fn grow(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         set_number(entity, "Cooldown", cooldown - 1);
         return;
     }
+    if number(entity, "energy") < GROW_COST {
+        set_number(entity, "Status", 5);
+        return;
+    }
     let mut cursor = number(entity, "Scan");
     let mut acted = false;
     let mut starved = false;
