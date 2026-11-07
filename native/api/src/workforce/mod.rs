@@ -598,7 +598,7 @@ pub(super) fn candidate(host: &mut dyn Host, pos: [i32; 3], now: u64) -> Option<
     let dimension = host.dimension();
     let center = post_center(pos);
     // Posições do censo (até 5 s de idade); a distância exata não é crítica para contratar.
-    let mut nearby: Vec<(f64, u32)> = production::ranch::villager_positions(host, dimension).into_iter()
+    let mut nearby: Vec<(f64, u32)> = production::ranch::villager_positions(host, dimension).iter().copied()
         .filter(|(_, at)| near(*at, center, HIRE_RADIUS))
         .map(|(id, at)| ((at[0] - center[0]).hypot(at[2] - center[2]), id))
         .collect();
@@ -721,7 +721,7 @@ fn locate(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, uuid:
         remember_entity(uuid, None);
     }
     let center = post_center(pos);
-    let nearby: Vec<u32> = production::ranch::villager_positions(host, host.dimension()).into_iter()
+    let nearby: Vec<u32> = production::ranch::villager_positions(host, host.dimension()).iter().copied()
         .filter(|(_, at)| (at[0] - center[0]).hypot(at[2] - center[2]) <= SEARCH_RADIUS
             && (at[1] - center[1]).abs() <= SEARCH_RADIUS)
         .map(|(id, _)| id)

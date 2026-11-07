@@ -120,17 +120,16 @@ pub(super) fn split(
     entity: &mut ModBlockEntity,
     batch: u32,
 ) {
-    let key = "PreferRight".into();
-    let was_right = matches!(entity.nbt.get(&key), Some(Tag::Byte(1)));
+    let was_right = with_nbt_key("PreferRight", |key| matches!(entity.nbt.get(key), Some(Tag::Byte(1))));
     let mut prefer_right = was_right;
     let priority = logistics_controls::priority(entity);
-    let filter = logistics_controls::filter(entity);
+    let filtered = logistics_controls::has_filter(entity);
     for _ in 0..batch {
         let Some(stack) = entity.items[0].as_ref() else {
             break;
         };
-        let right = if let Some(filter) = filter.as_deref() {
-            stack.item.as_ref() != filter
+        let right = if filtered {
+            !logistics_controls::allows(entity, stack.item.as_ref())
         } else { match priority { 1 => false, 2 => true, _ => prefer_right } };
         let preferred = turn(facing, right);
         let moved = send(host, pos, preferred, stack, 1);
@@ -139,7 +138,7 @@ pub(super) fn split(
             consume(&mut entity.items[0], moved);
         } else {
             // A sorting filter never spills into the wrong lane.
-            if filter.is_some() { break; }
+            if filtered { break; }
             let moved = send(host, pos, preferred.opposite(), stack, 1);
             if moved == 0 {
                 break;
@@ -148,7 +147,9 @@ pub(super) fn split(
         }
     }
     if was_right != prefer_right {
-        entity.nbt.insert(key, Tag::Byte(i8::from(prefer_right)));
+        with_nbt_key("PreferRight", |key| {
+            entity.nbt.insert(key.clone(), Tag::Byte(i8::from(prefer_right)));
+        });
     }
 }
 
