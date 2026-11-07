@@ -90,3 +90,10 @@ branches de desempenho do Grok. Economia, moradia, LAN, noite e pesquisa de jazi
 continuam separadas. O trabalho local de tutorial, launcher e mapa foi preservado.
 Para mudar o cadastro de postes, atualizar sua revisão somente quando o conteúdo
 muda; alterá-la a cada leitura reiniciaria os trabalhos continuamente.
+
+Na última atualização apareceu `codex/interzone-logistics` (`90721ca`), com
+terminais de carga, rotas de drones e integração dos carregadores. A comparação
+foi conferida: não altera `power.rs` nem `budget.rs` e parte da base `65cab50`.
+Continua separada deste lote; ao integrá-la, preservar o gancho global de orçamento
+e manutenção acrescentado depois dessa base. O orçamento de fios não deve ser
+apresentado como uma cota das buscas de trilhos ou rotas desse transporte.
