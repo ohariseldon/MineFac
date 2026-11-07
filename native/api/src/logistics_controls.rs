@@ -2,17 +2,25 @@
 use super::*;
 
 pub(super) fn filter(entity: &ModBlockEntity) -> Option<String> {
-    match entity.nbt.get(nbt_key("LogisticsFilter")) {
+    with_nbt_key("LogisticsFilter", |key| match entity.nbt.get(key) {
         Some(Tag::String(value)) => {
             let value = value.to_string_lossy();
             (!value.is_empty()).then_some(value)
         }
         _ => None,
-    }
+    })
 }
 
 pub(super) fn has_filter(entity: &ModBlockEntity) -> bool {
-    matches!(entity.nbt.get(nbt_key("LogisticsFilter")), Some(Tag::String(value)) if !java_eq(value, ""))
+    with_nbt_key("LogisticsFilter", |key| matches!(entity.nbt.get(key), Some(Tag::String(value)) if !value.0.is_empty()))
+}
+
+/// `true` quando não há filtro ou quando o item é o escolhido. Sem montar `String`.
+pub(super) fn allows(entity: &ModBlockEntity, item: &str) -> bool {
+    with_nbt_key("LogisticsFilter", |key| match entity.nbt.get(key) {
+        Some(Tag::String(value)) if !value.0.is_empty() => java_eq(value, item),
+        _ => true,
+    })
 }
 
 pub(super) fn priority(entity: &ModBlockEntity) -> usize {
@@ -21,9 +29,13 @@ pub(super) fn priority(entity: &ModBlockEntity) -> usize {
 
 pub(super) fn set_filter(entity: &mut ModBlockEntity, item: Option<&str>) {
     if let Some(item) = item.filter(|item| !item.is_empty()) {
-        entity.nbt.insert("LogisticsFilter".into(), Tag::String(item.into()));
+        with_nbt_key("LogisticsFilter", |key| {
+            entity.nbt.insert(key.clone(), Tag::String(item.into()));
+        });
     } else {
-        entity.nbt.remove(&"LogisticsFilter".into());
+        with_nbt_key("LogisticsFilter", |key| {
+            entity.nbt.remove(key);
+        });
     }
     publish(entity);
 }

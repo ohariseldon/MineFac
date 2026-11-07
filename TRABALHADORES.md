@@ -38,7 +38,7 @@ O painel mostra também as colheitas feitas e quantas colheitas a comida guardad
 
 O teto de aldeões de cada vila passou a depender do desenvolvimento a até 64 blocos: **30** de base, mais **3** por posto com trabalhador, **5** por nível de zona, **2** por armazém e **20** por um centro de controle com administrador, até **150**. A natalidade é a mesma (1 chance em 6 a cada 5 min por adulto), contando os aldeões a até 48 blocos. Uma fábrica espalhada em vários lugares tem uma vila em cada lugar, cada uma com o seu teto.
 
-**Desempenho com vilas grandes:** as contagens de aldeões (natalidade, níveis de zona, contratação, procura do trabalhador, armazém da vila) usam um **censo** das posições (`ranch::villager_positions`), refeito a cada 100 ticks ou quando o conjunto de aldeões muda. Com 150 aldeões, cada consulta deixa de reler 150 posições. O teto lê os registros de postos, zonas e armazéns, sem varrer blocos.
+**Desempenho com vilas grandes:** as contagens de aldeões (natalidade, níveis de zona, contratação, procura do trabalhador, armazém da vila) usam um **censo** das posições (`ranch::villager_positions`), refeito a cada 100 ticks ou quando o conjunto de aldeões muda. Consultas no mesmo intervalo compartilham a lista, sem copiar as 150 posições. A lista de aldeões não passa pelos animais. O teto lê os registros de postos, zonas e armazéns, sem varrer blocos.
 
 ### Spawn no centro da vila
 
