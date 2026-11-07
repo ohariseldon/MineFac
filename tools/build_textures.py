@@ -317,6 +317,16 @@ MOTIFS.update({
         ".e.ee.e.",
         "........",
     ],
+    "shepherd_post": [
+        "........",
+        ".wwwww..",
+        "wwwwwwwk",
+        "wwwwwwwk",
+        ".wwwww..",
+        ".k.k.k..",
+        ".k.k.k..",
+        "NnNnNnNn",
+    ],
     "foreman_desk": [
         "...yy...",
         "..yYYy..",
@@ -345,7 +355,7 @@ MACHINE_TIER = {
     "drill_mk2": "steel",
     "drill_mk3": "steel", "electric_furnace": "copper", "mill": "copper", "kitchen": "iron", "pantry": "copper",
     "biomass_generator": "copper", "steam_engine": "steel", "planter": "iron", "tree_farm": "iron", "ranch": "copper",
-    "farm_post": "copper", "hauler_post": "iron", "foreman_desk": "copper",
+    "farm_post": "copper", "hauler_post": "iron", "foreman_desk": "copper", "shepherd_post": "copper",
 }
 
 def front(name):

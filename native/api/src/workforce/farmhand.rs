@@ -57,7 +57,7 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
 
 /// Colhe a planta ao lado do trabalhador. Devolve o que ele passa a carregar, ou `None` se a
 /// planta não estiver mais madura ou o produto não couber no posto.
-pub(super) fn perform(host: &mut dyn Host, spot: [i32; 3], entity: &ModBlockEntity) -> Option<Vec<(String, u32)>> {
+pub(super) fn perform(host: &mut dyn Host, spot: [i32; 3], entity: &mut ModBlockEntity) -> Option<Vec<(String, u32)>> {
     let crop = ripe(host, spot)?;
     if !farm::drops_fit(&entity.items[outputs(&entity.id)], crop.drops)
         || !host.set_block_property(spot, "age", &crop.reset.to_string())

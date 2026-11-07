@@ -3,7 +3,7 @@
 //!
 //! Cada teste usa sua própria dimensão, UUIDs e ids, porque os registros são globais.
 use super::*;
-use horizon_client::mod_api::{BlockStateId, EntityRef};
+use horizon_client::mod_api::{BlockStateId, EntityRef, NativeItemEntity};
 
 const POST: [i32; 3] = [0, 64, 0];
 /// Fora do alcance de entrega do posto: colher exige ir até lá.
@@ -16,6 +16,8 @@ struct Village {
     villagers: HashMap<u32, ([f64; 3], Uuid, i32)>,
     /// Outros blocos com entidade: máquinas e postos atendidos.
     stations: HashMap<[i32; 3], ModBlockEntity>,
+    animals: HashMap<u32, ([f64; 3], Compound)>,
+    drops: Vec<NativeItemEntity>,
 }
 
 impl Village {
@@ -62,12 +64,29 @@ impl Host for Village {
         true
     }
     fn entity(&self, id: u32) -> Option<EntityRef> {
-        self.villagers.contains_key(&id).then(|| EntityRef::new(id))
+        (self.villagers.contains_key(&id) || self.animals.contains_key(&id)).then(|| EntityRef::new(id))
     }
     fn entity_position(&self, entity: EntityRef) -> Option<[f64; 3]> {
         self.villagers.get(&entity.id()).map(|(at, _, _)| *at)
+            .or_else(|| self.animals.get(&entity.id()).map(|(at, _)| *at))
+    }
+    fn entity_merge_nbt(&mut self, entity: EntityRef, nbt: Compound) -> bool {
+        let Some((_, data)) = self.animals.get_mut(&entity.id()) else { return false };
+        data.extend(nbt);
+        true
+    }
+    fn item_entities(&self, _: &str, min: [f64; 3], max: [f64; 3]) -> Vec<NativeItemEntity> {
+        self.drops.iter().filter(|drop| (0..3).all(|axis| (min[axis]..=max[axis]).contains(&drop.position[axis]))).cloned().collect()
+    }
+    fn set_item_entity(&mut self, _: &str, id: u32, stack: ItemStack) -> bool {
+        let Some(index) = self.drops.iter().position(|drop| drop.id == id) else { return false };
+        if stack.count == 0 { self.drops.remove(index); } else { self.drops[index].stack = stack; }
+        true
     }
     fn entity_nbt(&mut self, entity: EntityRef) -> Option<Compound> {
+        if let Some((_, data)) = self.animals.get(&entity.id()) {
+            return Some(data.clone());
+        }
         let (_, uuid, age) = self.villagers.get(&entity.id())?;
         Some(Compound::from([("UUID".into(), Tag::IntArray(uuid.to_vec())), ("Age".into(), Tag::Int(*age))]))
     }
@@ -510,4 +529,145 @@ fn supply_returns_to_the_stock_when_the_machine_no_longer_takes_it() {
     cycle(&mut village, &mut hauler, now + 2);
     assert_eq!(hauler.items[1], Some(ItemStack::new("minecraft:raw_copper", 10)), "de volta ao estoque");
     assert!(hauler.items[4..].iter().all(Option::is_none), "insumo não vira produto");
+}
+
+// ---------- Fila de tarefas do capataz ----------
+
+const HAULER_AT: [i32; 3] = [10, 64, 10];
+const MILL_AT: [i32; 3] = [8, 64, 12];
+
+/// Mesa com capataz contratado e comida, num mundo sem plantas.
+fn desk_with_foreman(village: &mut Village, villager: u32, uuid: Uuid) -> ModBlockEntity {
+    village.crops.clear();
+    village.villager(villager, [9.5, 64.0, 8.5], uuid);
+    let mut desk = block(FOREMAN_DESK);
+    set_number(&mut desk, "Ration", 50);
+    assert!(assign(village.dimension, DESK, &mut desk, (uuid, villager), 0));
+    desk
+}
+
+#[test]
+fn queue_moves_harvested_wheat_from_the_farm_post_to_the_mill() {
+    let mut village = Village::new("veio:test_work_queue");
+    let mut desk = desk_with_foreman(&mut village, 12001, [20, 0, 0, 1]);
+    desk.items[0] = Some(ItemStack::new("minecraft:bread", foreman::DESK_FOOD));
+    let mut farm = block(FARM_POST);
+    farm.items[1] = Some(ItemStack::new("minecraft:wheat", 10));
+    village.stations.insert(MANAGED, farm);
+    village.stations.insert(MILL_AT, block(production::MILL));
+    let now = cycles_at(&mut village, DESK, &mut desk, 1, 40, |desk| !foreman::queue(desk).is_empty());
+    let task = foreman::queue(&desk).remove(0);
+    assert_eq!((task.from, task.slot, task.item.as_str(), task.count, task.to, task.into),
+        (MANAGED, 1, "minecraft:wheat", 10, MILL_AT, 0));
+    village.stations.insert(DESK, desk);
+
+    // Um carregador perto pega a tarefa antes das próprias.
+    village.villager(12002, [10.5, 64.0, 11.5], [20, 0, 0, 2]);
+    let mut hauler = block(HAULER_POST);
+    set_number(&mut hauler, "Ration", 10);
+    assert!(assign(village.dimension, HAULER_AT, &mut hauler, ([20, 0, 0, 2], 12002), now));
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 1);
+    assert_eq!(order_for(12002, now + 1), Some(goal(MANAGED)), "vai buscar no lavrador");
+    assert_eq!(foreman::queue(&village.stations[&DESK])[0].by.map(|(by, _)| by), Some(HAULER_AT));
+    village.walk(12002, [11, 64, 8]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 2);
+    assert_eq!(carried(&hauler), vec![("minecraft:wheat".to_owned(), 10)]);
+    assert_eq!(village.stations[&MANAGED].items[1], None);
+    assert!(foreman::queue(&village.stations[&DESK]).is_empty(), "tarefa sai da fila ao pegar os itens");
+    village.walk(12002, [8, 64, 11]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 3);
+    assert_eq!(village.stations[&MILL_AT].items[0], Some(ItemStack::new("minecraft:wheat", 10)));
+    assert!(carried(&hauler).is_empty());
+}
+
+#[test]
+fn queue_brings_pantry_emeralds_to_the_desk_and_frees_abandoned_tasks() {
+    let mut village = Village::new("veio:test_work_queue_desk");
+    let mut desk = desk_with_foreman(&mut village, 12101, [21, 0, 0, 1]);
+    let mut pantry = block(production::PANTRY);
+    pantry.items[1] = Some(ItemStack::new(WAGE, 3));
+    village.stations.insert(MILL_AT, pantry);
+    let now = cycles_at(&mut village, DESK, &mut desk, 1, 40, |desk| !foreman::queue(desk).is_empty());
+    let task = foreman::queue(&desk).remove(0);
+    assert_eq!((task.item.as_str(), task.count, task.to, task.into), (WAGE, 3, DESK, 3), "esmeraldas vão para o slot da mesa");
+    village.stations.insert(DESK, desk);
+    let first = foreman::claim_task(&mut village, HAULER_AT, now);
+    assert!(matches!(first, Some(Plan::Fetch { .. })));
+    assert_eq!(foreman::claim_task(&mut village, [10, 64, 6], now), None, "já pega por outro carregador");
+    // A mesa continua ativa e mantém a tarefa marcada enquanto a marca vale.
+    let mut desk = village.stations.remove(&DESK).unwrap();
+    for later in now + 150..now + 154 {
+        cycle_at(&mut village, DESK, &mut desk, later);
+    }
+    assert!(foreman::queue(&desk).iter().any(|task| task.by.is_some()), "tarefa pega continua na fila");
+    village.stations.insert(DESK, desk);
+    // O primeiro carregador sumiu: a marca vence e a tarefa fica livre.
+    assert!(matches!(foreman::claim_task(&mut village, [10, 64, 6], now + 201), Some(Plan::Fetch { .. })));
+}
+
+// ---------- Pastor ----------
+
+fn animal(village: &mut Village, id: u32, kind: &str, at: [f64; 3], nbt: &[(&str, Tag)]) {
+    let data = nbt.iter().map(|(key, value)| ((*key).into(), value.clone())).collect();
+    village.animals.insert(id, (at, data));
+    production::ranch::observe(village.dimension, id, kind);
+}
+
+fn shepherd_with_worker(village: &mut Village, villager: u32, uuid: Uuid, at: [f64; 3]) -> ModBlockEntity {
+    village.crops.clear();
+    village.villager(villager, at, uuid);
+    let mut post = block(SHEPHERD_POST);
+    set_number(&mut post, "Ration", 10);
+    assert!(hire_at(village, &mut post, POST, 0));
+    post
+}
+
+#[test]
+fn shepherd_picks_up_eggs_and_shears_sheep_beside_them() {
+    let mut village = Village::new("veio:test_work_shepherd");
+    let mut post = shepherd_with_worker(&mut village, 13001, [30, 0, 0, 1], [5.5, 64.0, 5.5]);
+    village.drops.push(NativeItemEntity { id: 13050, position: [3.5, 64.0, 3.5], stack: ItemStack::new("minecraft:egg", 2), pickup_delay: 0 });
+    assert_eq!(cycle(&mut village, &mut post, 1), WALKING);
+    assert_eq!(village.drops.len(), 1, "longe do ovo, nada é recolhido");
+    village.walk(13001, [3, 64, 3]);
+    cycle(&mut village, &mut post, 2);
+    assert!(village.drops.is_empty());
+    assert_eq!(carried(&post), vec![("minecraft:egg".to_owned(), 2)]);
+    village.walk(13001, [1, 64, 0]);
+    cycle(&mut village, &mut post, 3);
+    assert_eq!(post.items[2], Some(ItemStack::new("minecraft:egg", 2)));
+
+    animal(&mut village, 13003, "minecraft:sheep", [-2.5, 64.0, 1.5], &[("Age", Tag::Int(0)), ("Color", Tag::Byte(14))]);
+    assert_eq!(cycle(&mut village, &mut post, 4), WALKING);
+    village.walk(13001, [-2, 64, 1]);
+    cycle(&mut village, &mut post, 5);
+    assert_eq!(village.animals[&13003].1.get(&"Sheared".into()), Some(&Tag::Byte(1)));
+    assert_eq!(carried(&post), vec![("minecraft:red_wool".to_owned(), 1 + 13003 % 3)]);
+    assert_eq!(number(&post, "Total"), 2);
+}
+
+#[test]
+fn shepherd_feeds_a_breeding_pair_and_then_stops() {
+    let mut village = Village::new("veio:test_work_shepherd_feed");
+    let mut post = shepherd_with_worker(&mut village, 13101, [31, 0, 0, 1], [2.5, 64.0, 2.5]);
+    post.items[1] = Some(ItemStack::new("minecraft:wheat", 5));
+    animal(&mut village, 13102, "minecraft:cow", [2.5, 64.0, 2.5], &[("Age", Tag::Int(0))]);
+    animal(&mut village, 13103, "minecraft:cow", [3.5, 64.0, 2.5], &[("Age", Tag::Int(0))]);
+    cycle(&mut village, &mut post, 1);
+    cycle(&mut village, &mut post, 2);
+    let in_love = |village: &Village, id| village.animals[&id].1.get(&"InLove".into()) == Some(&Tag::Int(600));
+    assert!(in_love(&village, 13102) && in_love(&village, 13103), "os dois comeram");
+    assert_eq!(post.items[1], Some(ItemStack::new("minecraft:wheat", 3)));
+    assert_eq!(cycle(&mut village, &mut post, 3), IDLE_WORK, "par pronto: não gasta mais ração");
+    assert_eq!(post.items[1], Some(ItemStack::new("minecraft:wheat", 3)));
+}
+
+#[test]
+fn shepherd_does_not_start_feeding_a_lonely_animal() {
+    let mut village = Village::new("veio:test_work_shepherd_alone");
+    let mut post = shepherd_with_worker(&mut village, 13201, [32, 0, 0, 1], [2.5, 64.0, 2.5]);
+    post.items[1] = Some(ItemStack::new("minecraft:wheat", 5));
+    animal(&mut village, 13202, "minecraft:cow", [2.5, 64.0, 2.5], &[("Age", Tag::Int(0))]);
+    assert_eq!(cycle(&mut village, &mut post, 1), IDLE_WORK);
+    assert_eq!(post.items[1], Some(ItemStack::new("minecraft:wheat", 5)));
 }

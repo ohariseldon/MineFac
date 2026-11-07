@@ -26,10 +26,12 @@ use std::sync::Mutex;
 pub(super) mod farmhand;
 pub(super) mod foreman;
 pub(super) mod hauler;
+pub(super) mod shepherd;
 
 pub(super) const FARM_POST: &str = "veio:farm_post";
 pub(super) const HAULER_POST: &str = "veio:hauler_post";
 pub(super) const FOREMAN_DESK: &str = "veio:foreman_desk";
+pub(super) const SHEPHERD_POST: &str = "veio:shepherd_post";
 pub(super) const VILLAGER: &str = "minecraft:villager";
 /// Contratar custa uma esmeralda, paga só quando a contratação dá certo.
 pub(super) const WAGE: &str = "minecraft:emerald";
@@ -77,7 +79,7 @@ const MAX_SKIPPED: usize = 8;
 pub(super) type Uuid = [i32; 4];
 
 pub(super) fn is_post(block: &str) -> bool {
-    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK)
+    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST)
 }
 
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
@@ -88,6 +90,8 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         HAULER_POST => (7, vec![0, 1, 2, 3], vec![4, 5, 6]),
         // Comida (do capataz e dos postos); esmeraldas para contratar.
         FOREMAN_DESK => (4, vec![0, 1, 2, 3], vec![]),
+        // Comida; ração para os animais; produtos (lã, ovos, penas).
+        SHEPHERD_POST => (5, vec![0, 1], vec![2, 3, 4]),
         _ => return None,
     })
 }
@@ -96,6 +100,7 @@ pub(super) fn outputs(block: &str) -> std::ops::Range<usize> {
     match block {
         FARM_POST => 1..4,
         HAULER_POST => 4..7,
+        SHEPHERD_POST => 2..5,
         _ => 0..0,
     }
 }
@@ -110,6 +115,7 @@ pub(super) fn stock_slots(block: &str) -> std::ops::Range<usize> {
     match block {
         HAULER_POST => 1..4,
         FOREMAN_DESK => 0..4,
+        SHEPHERD_POST => 1..2,
         _ => 0..0,
     }
 }
@@ -124,7 +130,8 @@ pub(super) fn is_food(item: &str) -> bool {
 
 pub(super) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
     plain(stack) && match (block, slot) {
-        (FARM_POST | HAULER_POST, 0) | (FOREMAN_DESK, 0..=2) => is_food(&stack.item),
+        (FARM_POST | HAULER_POST | SHEPHERD_POST, 0) | (FOREMAN_DESK, 0..=2) => is_food(&stack.item),
+        (SHEPHERD_POST, 1) => production::ranch::is_feed(&stack.item),
         (HAULER_POST, 1..=3) => true,
         (FOREMAN_DESK, 3) => stack.item.as_ref() == WAGE,
         _ => false,
@@ -488,10 +495,20 @@ fn set_list(entity: &mut ModBlockEntity, key: &str, list: &[[i32; 3]]) {
 pub(super) fn scan_blocks(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, radius: i32,
     per_cycle: i32, max: usize, wanted: &dyn Fn(&str) -> bool) -> Option<Vec<[i32; 3]>>
 {
+    scan_named(host, pos, entity, "Area", radius, per_cycle, max, wanted, true)
+}
+
+/// Como `scan_blocks`, com as chaves NBT começando por `key` (um posto pode ter mais de uma
+/// varredura). `forget` esquece os alvos pulados ao fim de cada volta.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn scan_named(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, key: &str, radius: i32,
+    per_cycle: i32, max: usize, wanted: &dyn Fn(&str) -> bool, forget: bool) -> Option<Vec<[i32; 3]>>
+{
+    let (scan, partial) = (format!("{key}Scan"), format!("{key}Found"));
     let side = radius * 2 + 1;
     let area = side * side * 3;
-    let mut cursor = number(entity, "AreaScan") % area;
-    let mut found = get_list(entity, "AreaFound").unwrap_or_default();
+    let mut cursor = number(entity, &scan) % area;
+    let mut found = get_list(entity, &partial).unwrap_or_default();
     for _ in 0..per_cycle {
         let spot = area_position(pos, radius, cursor);
         if spot != pos && found.len() < max && wanted(&host.block(spot)) {
@@ -500,14 +517,16 @@ pub(super) fn scan_blocks(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockE
         cursor += 1;
         if cursor >= area {
             cursor = 0;
-            set_list(entity, "Area", &found);
+            set_list(entity, key, &found);
             found.clear();
-            clear_skipped(entity);
+            if forget {
+                clear_skipped(entity);
+            }
         }
     }
-    set_number(entity, "AreaScan", cursor);
-    set_list(entity, "AreaFound", &found);
-    get_list(entity, "Area")
+    set_number(entity, &scan, cursor);
+    set_list(entity, &partial, &found);
+    get_list(entity, key)
 }
 
 /// Ordem de atendimento: o alvo atual primeiro, depois um rodízio que começa em `Pick`.
@@ -708,18 +727,24 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return;
     };
     set_number(entity, "Absent", 0);
+    if entity.id == FOREMAN_DESK {
+        foreman::organize(host, pos, entity, now);
+    }
     let status = work(host, pos, entity, id, at, now);
     set_number(entity, "Status", status);
     set_number(entity, "Info", number(entity, "Ration"));
 }
 
 /// Tarefa escolhida por um adaptador de setor.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub(super) enum Plan {
     /// Ir até `spot`, a até `reach` blocos, e executar a ação do setor ao chegar.
     Visit { spot: [i32; 3], reach: f64 },
     /// Pegar `count` itens do slot `from` do posto e levá-los ao bloco `to` (slot `into`).
     Bring { from: usize, count: u32, to: [i32; 3], into: usize, kind: Carry },
+    /// Tarefa da fila do capataz (`desk`, número `task`): buscar `count` de `item` no slot
+    /// `slot` do bloco `from` e levar ao slot `into` do bloco `to`.
+    Fetch { desk: [i32; 3], task: i32, from: [i32; 3], slot: usize, item: String, count: u32, to: [i32; 3], into: usize },
 }
 
 fn block_goal(spot: [i32; 3]) -> [f64; 3] {
@@ -766,6 +791,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         FARM_POST => farmhand::plan(host, pos, entity, now),
         HAULER_POST => hauler::plan(host, pos, entity, now),
         FOREMAN_DESK => foreman::plan(host, pos, entity, now),
+        SHEPHERD_POST => shepherd::plan(host, pos, entity, now),
         _ => Err(NO_TASK),
     };
     let plan = match plan {
@@ -791,6 +817,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             let result = match entity.id.as_str() {
                 FARM_POST => farmhand::perform(host, spot, entity),
                 HAULER_POST => hauler::perform(host, spot, entity),
+                SHEPHERD_POST => shepherd::perform(host, spot, entity, now),
                 _ => None,
             };
             set_target(entity, None);
@@ -823,6 +850,38 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             }
             consume(&mut entity.items[from], taken);
             set_carried(entity, &[(item, taken)], Some(to), kind, into);
+            set_number(entity, "Walk", 0);
+            order(id, block_goal(to), now);
+            WALKING
+        }
+        Plan::Fetch { desk, task, from, slot, item, count, to, into } => {
+            if !reserve(dimension, from, pos, now) {
+                skip(entity, from);
+                set_target(entity, None);
+                return number(entity, "Status");
+            }
+            let goal = block_goal(from);
+            order(id, goal, now);
+            if !near(at, goal, POST_REACH) {
+                return walk(entity, Some(from));
+            }
+            // Ao lado da origem: pega o que ainda estiver lá, e só do item combinado.
+            let mut taken = 0;
+            host.change_mod_block_entity(from, &mut |source| {
+                if let Some(stack) = source.items.get(slot).and_then(Option::as_ref)
+                    && is_plain(stack, &item)
+                {
+                    taken = count.min(stack.count);
+                    consume(&mut source.items[slot], taken);
+                }
+            });
+            foreman::complete(host, desk, task);
+            set_target(entity, None);
+            unreserve(dimension, pos);
+            if taken == 0 {
+                return 1;
+            }
+            set_carried(entity, &[(item, taken)], Some(to), Carry::Supply, into);
             set_number(entity, "Walk", 0);
             order(id, block_goal(to), now);
             WALKING
@@ -942,7 +1001,8 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         FARM_POST => (tr("veio.metric.tasks", &[&read(9)]), "veio.hint.farm_post"),
         HAULER_POST => (tr("veio.metric.trips", &[&read(9)]), "veio.hint.hauler_post"),
         // O capataz publica os postos atendidos em `Rate` (slot 6), livre fora das máquinas elétricas.
-        FOREMAN_DESK => (tr("veio.metric.posts", &[&read(6), &read(9)]), "veio.hint.foreman_desk"),
+        FOREMAN_DESK => (tr("veio.metric.posts", &[&read(6), &read(7)]), "veio.hint.foreman_desk"),
+        SHEPHERD_POST => (tr("veio.metric.chores", &[&read(9)]), "veio.hint.shepherd_post"),
         _ => return None,
     };
     Some(vec![first, tr("veio.metric.ration", &[&read(12)]), tr(hint, &[])])
@@ -954,6 +1014,7 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         HAULER_POST => vec![Some([17.0, 45.0]), Some([44.0, 45.0]), Some([62.0, 45.0]), Some([80.0, 45.0]),
             Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
         FOREMAN_DESK => vec![Some([44.0, 45.0]), Some([62.0, 45.0]), Some([80.0, 45.0]), Some([134.0, 45.0])],
+        SHEPHERD_POST => vec![Some([17.0, 45.0]), Some([39.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
         _ => return None,
     })
 }
@@ -963,6 +1024,7 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         FARM_POST => &["food", "output", "", ""],
         HAULER_POST => &["food", "supply", "", "", "output", "", ""],
         FOREMAN_DESK => &["food", "", "", "wage"],
+        SHEPHERD_POST => &["food", "feed", "output", "", ""],
         _ => return None,
     })
 }
