@@ -1,0 +1,31 @@
+{
+  "parent": "veio:engineering",
+  "display": {
+    "icon": {
+      "id": "veio:silicon"
+    },
+    "title": {
+      "translate": "advancement.veio.silicon.title"
+    },
+    "description": {
+      "translate": "advancement.veio.silicon.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:silicon"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:electronics"
+    ]
+  }
+}

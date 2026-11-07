@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:gear",
+    "veio:belt",
+    "veio:belt",
+    "minecraft:redstone"
+  ],
+  "result": {
+    "id": "veio:splitter",
+    "count": 2
+  }
+}

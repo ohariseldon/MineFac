@@ -1,0 +1,13 @@
+{
+  "title": "itemGroup.veio.power",
+  "icon": "veio:generator",
+  "items": [
+    "veio:generator",
+    "veio:solar",
+    "veio:geothermal",
+    "veio:battery",
+    "veio:cable",
+    "minecraft:coal",
+    "minecraft:lava_bucket"
+  ]
+}

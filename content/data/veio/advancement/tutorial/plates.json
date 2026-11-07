@@ -1,0 +1,28 @@
+{
+  "parent": "veio:tutorial/drill",
+  "display": {
+    "icon": {
+      "id": "veio:copper_plate"
+    },
+    "title": {
+      "translate": "veio.tutorial.plates.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.plates.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:copper_plate"
+          }
+        ]
+      }
+    }
+  }
+}

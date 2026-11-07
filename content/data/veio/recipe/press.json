@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:copper_ingot",
+    "minecraft:iron_ingot",
+    "minecraft:piston",
+    "minecraft:smooth_stone"
+  ],
+  "result": {
+    "id": "veio:press",
+    "count": 1
+  }
+}

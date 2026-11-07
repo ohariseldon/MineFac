@@ -1,0 +1,28 @@
+{
+  "parent": "veio:tutorial/generator",
+  "display": {
+    "icon": {
+      "id": "veio:drill"
+    },
+    "title": {
+      "translate": "veio.tutorial.drill.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.drill.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:drill"
+          }
+        ]
+      }
+    }
+  }
+}

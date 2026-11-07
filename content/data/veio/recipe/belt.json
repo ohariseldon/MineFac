@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:copper_ingot",
+    "minecraft:stick",
+    "minecraft:stick"
+  ],
+  "result": {
+    "id": "veio:belt",
+    "count": 16
+  }
+}

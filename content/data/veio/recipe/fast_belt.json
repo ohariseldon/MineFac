@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:gear",
+    "veio:belt",
+    "veio:belt"
+  ],
+  "result": {
+    "id": "veio:fast_belt",
+    "count": 8
+  }
+}

@@ -1,0 +1,9 @@
+.build/
+.launcher/
+.game/
+target/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example

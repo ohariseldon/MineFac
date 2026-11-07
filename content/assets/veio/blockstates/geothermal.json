@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/geothermal"
+    },
+    "facing=west": {
+      "model": "veio:block/geothermal",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/geothermal",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/geothermal",
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "parent": "veio:distribution",
+  "display": {
+    "icon": {
+      "id": "veio:splitter"
+    },
+    "title": {
+      "translate": "advancement.veio.routing.title"
+    },
+    "description": {
+      "translate": "advancement.veio.routing.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:splitter",
+            "count": {
+              "min": 1
+            }
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": []
+  }
+}

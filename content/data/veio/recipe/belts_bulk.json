@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:steel_plate",
+    "veio:copper_plate",
+    "minecraft:stick",
+    "minecraft:stick"
+  ],
+  "result": {
+    "id": "veio:belt",
+    "count": 64
+  }
+}

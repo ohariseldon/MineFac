@@ -1,0 +1,32 @@
+{
+  "parent": "veio:root",
+  "display": {
+    "icon": {
+      "id": "veio:generator"
+    },
+    "title": {
+      "translate": "veio.power.title"
+    },
+    "description": {
+      "translate": "veio.power.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:copper_ingot"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:generator",
+      "veio:cable"
+    ]
+  }
+}

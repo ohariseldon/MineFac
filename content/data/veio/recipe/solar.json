@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:circuit",
+    "veio:silicon",
+    "veio:silicon",
+    "minecraft:gold_ingot",
+    "minecraft:glass",
+    "minecraft:glass"
+  ],
+  "result": {
+    "id": "veio:solar",
+    "count": 2
+  }
+}

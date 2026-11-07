@@ -1,0 +1,28 @@
+{
+  "parent": "veio:tutorial/start",
+  "display": {
+    "icon": {
+      "id": "veio:generator"
+    },
+    "title": {
+      "translate": "veio.tutorial.generator.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.generator.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:generator"
+          }
+        ]
+      }
+    }
+  }
+}

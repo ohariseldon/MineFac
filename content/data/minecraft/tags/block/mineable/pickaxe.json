@@ -1,0 +1,22 @@
+{
+  "values": [
+    "veio:alloy_furnace",
+    "veio:assembler",
+    "veio:battery",
+    "veio:belt",
+    "veio:cable",
+    "veio:crusher",
+    "veio:cutter",
+    "veio:drill",
+    "veio:drill_mk2",
+    "veio:electronics",
+    "veio:fast_belt",
+    "veio:generator",
+    "veio:geothermal",
+    "veio:integrator",
+    "veio:press",
+    "veio:solar",
+    "veio:splitter",
+    "veio:contract_hub"
+  ]
+}

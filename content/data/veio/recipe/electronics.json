@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:steel_plate",
+    "veio:wire",
+    "veio:module",
+    "minecraft:crafting_table"
+  ],
+  "result": {
+    "id": "veio:electronics",
+    "count": 1
+  }
+}

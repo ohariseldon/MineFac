@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:copper_plate",
+    "veio:copper_plate",
+    "minecraft:piston",
+    "minecraft:crafting_table"
+  ],
+  "result": {
+    "id": "veio:assembler",
+    "count": 1
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/battery"
+    },
+    "facing=west": {
+      "model": "veio:block/battery",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/battery",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/battery",
+      "y": 270
+    }
+  }
+}

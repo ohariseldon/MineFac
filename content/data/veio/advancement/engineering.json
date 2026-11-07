@@ -1,0 +1,33 @@
+{
+  "parent": "veio:gears",
+  "display": {
+    "icon": {
+      "id": "veio:gear"
+    },
+    "title": {
+      "translate": "advancement.veio.engineering.title"
+    },
+    "description": {
+      "translate": "advancement.veio.engineering.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:gear"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:wrench",
+      "veio:crusher",
+      "veio:alloy_furnace"
+    ]
+  }
+}

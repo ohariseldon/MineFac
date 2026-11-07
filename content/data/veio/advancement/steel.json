@@ -1,0 +1,35 @@
+{
+  "parent": "veio:engineering",
+  "display": {
+    "icon": {
+      "id": "veio:steel_plate"
+    },
+    "title": {
+      "translate": "advancement.veio.steel.title"
+    },
+    "description": {
+      "translate": "advancement.veio.steel.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:steel_plate"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:battery",
+      "veio:geothermal",
+      "veio:electronics",
+      "veio:belts_bulk",
+      "veio:cables_bulk"
+    ]
+  }
+}

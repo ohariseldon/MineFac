@@ -1,0 +1,32 @@
+{
+  "parent": "veio:frames",
+  "display": {
+    "icon": {
+      "id": "veio:module"
+    },
+    "title": {
+      "translate": "advancement.veio.modules.title"
+    },
+    "description": {
+      "translate": "advancement.veio.modules.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:module",
+            "count": {
+              "min": 1
+            }
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": []
+  }
+}

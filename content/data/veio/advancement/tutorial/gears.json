@@ -1,0 +1,28 @@
+{
+  "parent": "veio:tutorial/plates",
+  "display": {
+    "icon": {
+      "id": "veio:gear"
+    },
+    "title": {
+      "translate": "veio.tutorial.gears.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.gears.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:gear"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "title": "itemGroup.veio.logistics",
+  "icon": "veio:belt",
+  "items": [
+    "veio:belt",
+    "veio:fast_belt",
+    "veio:splitter",
+    "veio:wrench"
+  ]
+}

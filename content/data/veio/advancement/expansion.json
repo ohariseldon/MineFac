@@ -1,0 +1,32 @@
+{
+  "parent": "veio:gears",
+  "display": {
+    "icon": {
+      "id": "veio:fast_belt"
+    },
+    "title": {
+      "translate": "advancement.veio.expansion.title"
+    },
+    "description": {
+      "translate": "advancement.veio.expansion.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:fast_belt",
+            "count": {
+              "min": 8
+            }
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": []
+  }
+}

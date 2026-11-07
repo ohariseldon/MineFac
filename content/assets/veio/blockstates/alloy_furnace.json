@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/alloy_furnace"
+    },
+    "facing=west": {
+      "model": "veio:block/alloy_furnace",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/alloy_furnace",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/alloy_furnace",
+      "y": 270
+    }
+  }
+}

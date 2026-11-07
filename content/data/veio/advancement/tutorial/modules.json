@@ -1,0 +1,28 @@
+{
+  "parent": "veio:tutorial/frames",
+  "display": {
+    "icon": {
+      "id": "veio:module"
+    },
+    "title": {
+      "translate": "veio.tutorial.modules.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.modules.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:module"
+          }
+        ]
+      }
+    }
+  }
+}

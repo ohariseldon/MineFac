@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:module",
+    "minecraft:furnace",
+    "minecraft:bucket"
+  ],
+  "result": {
+    "id": "veio:geothermal",
+    "count": 1
+  }
+}

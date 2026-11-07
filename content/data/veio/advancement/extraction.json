@@ -1,0 +1,32 @@
+{
+  "parent": "veio:root",
+  "display": {
+    "icon": {
+      "id": "veio:drill"
+    },
+    "title": {
+      "translate": "advancement.veio.extraction.title"
+    },
+    "description": {
+      "translate": "advancement.veio.extraction.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:drill",
+            "count": {
+              "min": 1
+            }
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": []
+  }
+}

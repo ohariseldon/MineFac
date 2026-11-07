@@ -1,0 +1,32 @@
+{
+  "parent": "veio:silicon",
+  "display": {
+    "icon": {
+      "id": "veio:circuit"
+    },
+    "title": {
+      "translate": "advancement.veio.circuits.title"
+    },
+    "description": {
+      "translate": "advancement.veio.circuits.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:circuit"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:solar",
+      "veio:drill_mk2"
+    ]
+  }
+}

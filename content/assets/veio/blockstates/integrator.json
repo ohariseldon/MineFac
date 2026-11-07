@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/integrator"
+    },
+    "facing=west": {
+      "model": "veio:block/integrator",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/integrator",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/integrator",
+      "y": 270
+    }
+  }
+}

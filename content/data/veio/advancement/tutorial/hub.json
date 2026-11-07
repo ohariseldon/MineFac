@@ -1,0 +1,28 @@
+{
+  "parent": "veio:tutorial/modules",
+  "display": {
+    "icon": {
+      "id": "veio:contract_hub"
+    },
+    "title": {
+      "translate": "veio.tutorial.hub.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.hub.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:contract_hub"
+          }
+        ]
+      }
+    }
+  }
+}

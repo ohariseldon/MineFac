@@ -1,0 +1,29 @@
+{
+  "parent": "veio:steel",
+  "display": {
+    "icon": {
+      "id": "veio:geothermal"
+    },
+    "title": {
+      "translate": "advancement.veio.lava.title"
+    },
+    "description": {
+      "translate": "advancement.veio.lava.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:geothermal"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": []
+  }
+}

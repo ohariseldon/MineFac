@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "veio:gear",
+    "minecraft:furnace",
+    "minecraft:coal"
+  ],
+  "result": {
+    "id": "veio:alloy_furnace",
+    "count": 1
+  }
+}

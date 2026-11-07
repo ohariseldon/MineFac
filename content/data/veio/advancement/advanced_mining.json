@@ -1,0 +1,29 @@
+{
+  "parent": "veio:circuits",
+  "display": {
+    "icon": {
+      "id": "veio:drill_mk2"
+    },
+    "title": {
+      "translate": "advancement.veio.advanced_mining.title"
+    },
+    "description": {
+      "translate": "advancement.veio.advanced_mining.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:drill_mk2"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": []
+  }
+}

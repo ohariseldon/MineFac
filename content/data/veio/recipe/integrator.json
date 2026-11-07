@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:frame",
+    "veio:gear",
+    "minecraft:piston",
+    "minecraft:redstone"
+  ],
+  "result": {
+    "id": "veio:integrator",
+    "count": 1
+  }
+}

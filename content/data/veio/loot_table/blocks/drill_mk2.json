@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "veio:drill_mk2"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "veio:blocks/drill_mk2"
+}

@@ -1,0 +1,28 @@
+{
+  "parent": "veio:tutorial/gears",
+  "display": {
+    "icon": {
+      "id": "veio:frame"
+    },
+    "title": {
+      "translate": "veio.tutorial.frames.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.frames.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:frame"
+          }
+        ]
+      }
+    }
+  }
+}
