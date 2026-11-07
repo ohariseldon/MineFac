@@ -8,6 +8,7 @@ mod production;
 mod power;
 mod tutorial;
 mod upgrades;
+mod workforce;
 
 use horizon_client::mod_api::{
     BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
@@ -107,6 +108,11 @@ impl Hooks for Factory {
         let block = host.block(event.pos);
         if !is_factory_block(&block) {
             return Flow::Continue;
+        }
+        if workforce::is_post(&block)
+            && let Some(flow) = workforce::right_click(host, event.pos, &held)
+        {
+            return flow;
         }
         let pos = event.pos;
         let mut damage = 0;
@@ -215,6 +221,7 @@ impl Hooks for Factory {
 
     fn register_goals(&self, event: &mut horizon_client::mod_api::RegisterGoalsEvent<'_>) {
         pollution::register_goals(event.mob);
+        workforce::register_goals(event.mob);
     }
 
     fn block_entity_render_bounding_box(&self, _host: &dyn Host,
@@ -275,7 +282,7 @@ fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
         SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE)
-        || production::is_machine(block)
+        || production::is_machine(block) || workforce::is_post(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
@@ -317,6 +324,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         CABLE | POLE | STEEL_POLE => (0, vec![], vec![]),
         HUB => (4, vec![0, 1], vec![2, 3]),
         HARVESTER => (4, vec![0], vec![1, 2, 3]),
+        _ if workforce::is_post(block) => return workforce::layout(block),
         _ => return production::layout(block),
     })
 }
@@ -331,6 +339,7 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         HARVESTER => 1..4,
         GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE => 0..0,
         _ if production::is_machine(block) => production::outputs(block),
+        _ if workforce::is_post(block) => workforce::outputs(block),
         _ => 0..1,
     }
 }
@@ -340,6 +349,7 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (HUB, _) => contracts::valid_input(slot, stack),
         (BELT | FAST_BELT | SPLITTER, 0) => true,
         (MERGER, 0 | 1) => true,
+        _ if workforce::is_post(block) => workforce::accepts(block, slot, stack),
         // Entradas das máquinas de produção, pela tabela de receitas e combustíveis.
         _ => production::accepts(block, slot, stack),
     }
@@ -389,6 +399,10 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
     if is_power_block(&entity.id) {
         tick_power(host, pos, entity);
         return;
+    }
+    if workforce::is_post(&entity.id) {
+        // Trabalhadores: sem energia; o custo é a comida do aldeão.
+        return workforce::tick(host, pos, entity, time);
     }
     if needs_power(&entity.id) && host.neighbor_signal(host.dimension(), pos) > 0 {
         set_number(entity, "Status", 9);

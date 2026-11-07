@@ -22,7 +22,7 @@ vanilla={
  "grindstone":("Rebolo","Grindstone"),"smoker":("Defumador","Smoker"),"barrel":("Barril","Barrel"),
  "dispenser":("Ejetor","Dispenser"),"white_wool":("Lã branca","White wool"),"iron_axe":("Machado de ferro","Iron axe"),
  "shears":("Tesoura","Shears"),"hay_block":("Fardo de feno","Hay bale"),"glowstone":("Pedra luminosa","Glowstone"),
- "diamond":("Diamante","Diamond"),
+ "diamond":("Diamante","Diamond"),"emerald":("Esmeralda","Emerald"),
 }
 def item_name(item,code):
  ns,name=item.split(":")
@@ -152,9 +152,32 @@ label("veio.tutorial.merger.description", "Conecte as entradas A e B pelas later
 help["merger"] = (
  "Une as duas entradas laterais.\nSaída única pela frente.\nAlterna A e B, até 5 itens/s.\nSem energia elétrica.\nUse a chave para girar.",
  "Merges the two side inputs.\nSingle outlet at the front.\nAlternates A/B, up to 5/s.\nNeeds no electricity.\nTurn with the wrench.")
+# Trabalhadores (frente Cloud): posto agrícola com aldeão contratado.
+label("block.veio.farm_post", "Posto do lavrador", "Farmhand Post")
+help["farm_post"] = (
+ "Esmeralda: contrata o aldeão\nadulto livre mais próximo.\nEle colhe o 9x9 e traz ao posto.\nCome 1 ponto por colheita.\nAgachar + chave: dispensa.",
+ "Emerald: hires the nearest\nfree adult villager.\nHarvests the 9x9, brings it back.\nEats 1 point per harvest.\nSneak + wrench: dismiss.")
+for key, pt, en in [
+ ("veio.status.no_worker", "Sem trabalhador", "No worker"),
+ ("veio.status.absent", "Trabalhador ausente", "Worker missing"),
+ ("veio.status.no_task", "Nada maduro", "Nothing ripe"),
+ ("veio.status.no_food", "Trabalhador sem comida", "Worker has no food"),
+ ("veio.status.path", "Caminho obstruído", "Path blocked"),
+ ("veio.status.walking", "Trabalhador a caminho", "Worker on the way"),
+ ("veio.metric.tasks", "Colheitas feitas: %s", "Harvests done: %s"),
+ ("veio.metric.ration", "Comida: %s colheitas", "Food: %s harvests"),
+ ("veio.hint.farm_post", "Esmeralda: contratar aldeão", "Emerald: hire a villager"),
+ ("veio.worker.hired", "Aldeão contratado. Ele vai até as plantações maduras.", "Villager hired. They will walk to ripe crops."),
+ ("veio.worker.staffed", "Este posto já tem um trabalhador.", "This post already has a worker."),
+ ("veio.worker.none", "Nenhum aldeão adulto livre a até 8 blocos.", "No free adult villager within 8 blocks."),
+ ("veio.worker.dismissed", "Trabalhador dispensado. Ele volta à vida de aldeão.", "Worker dismissed. They return to village life."),
+ ("advancement.veio.workforce.title", "Mão de obra", "Hired Hands"),
+ ("advancement.veio.workforce.description", "Contrate um aldeão para colher a lavoura.", "Hire a villager to harvest your fields."),
+]:
+ label(key, pt, en)
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
- ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
+ ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","farm_post","mill","electric_furnace","kitchen","pantry"]),
  ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
  ("Logística","Logistics",["belt","fast_belt","splitter","merger","cable","pole","steel_pole","wrench"]),
  ("Projetos e defesa","Projects and defense",["contract_hub","tesla"]),
@@ -190,6 +213,7 @@ slothelp={
  "planter":["Sementes, cenouras, batatas ou fungo do Nether."],
  "tree_farm":["Mudas de carvalho, bétula, pinheiro, selva, acácia ou cerejeira.","Produto.","Produto.","Produto."],
  "ranch":["Trigo, cenoura, batata, beterraba ou sementes.","Baldes vazios para ordenhar.","Produto.","Produto.","Produto."],
+ "farm_post":["Comida do trabalhador: pão vale 6 colheitas.","Colheita entregue.","Colheita entregue.","Colheita entregue."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
 }
 slot_en={
@@ -218,6 +242,7 @@ slot_en={
  "planter":["Seeds, carrots, potatoes or nether wart."],
  "tree_farm":["Oak, birch, spruce, jungle, acacia or cherry saplings.","Product.","Product.","Product."],
  "ranch":["Wheat, carrots, potatoes, beetroot or seeds.","Empty buckets for milking.","Product.","Product.","Product."],
+ "farm_post":["Worker food: bread pays for 6 harvests.","Delivered harvest.","Delivered harvest.","Delivered harvest."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
 for block,lines in slothelp.items():
@@ -331,6 +356,9 @@ page(
 food=page(
  "Comida e povoado\n\nTrigo > moinho > farinha > cozinha > pão.\nCarnes do rancho > fornalha elétrica.\n\nO armazém paga esmeraldas pela comida, mais por comida pronta, e 50% a mais com aldeões perto.",
  "Food and village\n\nWheat > mill > flour > kitchen > bread.\nRanch meat > electric furnace.\n\nThe pantry pays emeralds for food, more for cooked food, and 50% more with villagers near.")
+page(
+ "Trabalhadores\n\nNo começo você opera a lavoura. Depois, contrate um aldeão: esmeralda no posto do lavrador.\n\nEle anda até a planta madura, colhe e traz ao posto. Máquinas seguem automáticas.\n\nComida no posto paga o trabalho.",
+ "Workers\n\nAt first you run the farm. Later, hire a villager: emerald on a farmhand post.\n\nThey walk to ripe crops, harvest and bring them back. Machines stay automatic.\n\nFood in the post pays for the work.")
 help["belt"] = (
  "Curvas e rampas automáticas.\nConecte esteiras vizinhas.\nRampas vencem 1 bloco.\nChave fixa a direção.\nAgachar + chave: automático.",
  "Automatic turns and ramps.\nConnect neighboring belts.\nRamps span one block up.\nWrench locks the direction.\nSneak + wrench: automatic.")

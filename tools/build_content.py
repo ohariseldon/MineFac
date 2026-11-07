@@ -63,6 +63,8 @@ BLOCKS = {
     "tree_farm": ("machine", "iron", 4, [1, 2, 3], 2.0),
     "ranch": ("machine", "wood", 5, [2, 3, 4], 1.5),
     "steel_pole": ("steel_pole", None, 0, [], 2.0),
+    # Trabalhadores: posto onde um aldeão contratado trabalha.
+    "farm_post": ("machine", "wood", 4, [1, 2, 3], 1.5),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
 }
@@ -97,7 +99,7 @@ TABS = {
         "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
         "minecraft:coal", "minecraft:lava_bucket"]),
     "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "wrench"]),
-    "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "mill", "kitchen",
+    "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "mill", "kitchen",
         "pantry", "flour", "biomass", "tesla", "repair_kit", "minecraft:bone_meal"]),
 }
 

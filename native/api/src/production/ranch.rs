@@ -48,6 +48,11 @@ pub(crate) fn recent(dimension: &str) -> Vec<(u32, u8)> {
     mobs.iter().filter(|(_, (_, stamp))| now.saturating_sub(*stamp) <= FRESH).map(|(id, (kind, _))| (*id, *kind)).collect()
 }
 
+/// Ids dos aldeões vistos há pouco nesta dimensão. Usado pelos postos de trabalho.
+pub(crate) fn recent_villagers(dimension: &str) -> Vec<u32> {
+    recent(dimension).into_iter().filter(|(_, kind)| *kind == VILLAGER).map(|(id, _)| id).collect()
+}
+
 /// Quantos aldeões há a até `radius` blocos.
 pub(crate) fn villagers_near(host: &dyn Host, center: [f64; 3], radius: f64) -> i32 {
     recent(host.dimension()).into_iter()

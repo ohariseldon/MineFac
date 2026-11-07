@@ -24,6 +24,7 @@ A divisão atual é Cloud para trabalhadores, Grok para desempenho e balanceamen
 - `native/api/src/power.rs`: postes, fios aéreos e área de alimentação.
 - `native/api/src/pollution.rs`: poluição por chunk, avisos, ondas noturnas e o objetivo dos Saqueadores.
 - `native/api/src/upgrades.rs`: módulos de velocidade, eficiência e produtividade.
+- `native/api/src/workforce/`: aldeões trabalhadores, postos e tarefas. Veja [TRABALHADORES.md](TRABALHADORES.md).
 - `native/api/src/tests.rs`: testes de regras.
 - `native/api/src/presentation.rs`: painéis no estilo vanilla e desenho animado das máquinas e esteiras.
 - `native/api/src/contracts.rs`: pedidos e recompensas da central de projetos.

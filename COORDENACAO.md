@@ -27,6 +27,7 @@ O usuário testa a versão jogável. Evitar recompilar ou abrir o jogo a cada it
 - `native/api/src/power.rs`: postes e fios aéreos, mantidos localmente.
 - `native/api/src/farm.rs`: colheitadeira; compartilhada quando trabalhadores ou novas funções agrícolas exigirem integração.
 - `native/api/src/lib.rs`: reúne ganchos, registros e distribuição adjacente de energia. Receitas e jazidas estão em `production/`. Evite substituí-lo inteiro em uma entrega; envie alterações pequenas e descreva quais funções mudou.
+- `native/api/src/workforce/`: trabalhadores (Cloud). Posto, atribuição exclusiva por UUID, ordens de caminhada, objetivo `Work` dos aldeões e tarefas por setor (`farmhand.rs`). Estados 18-23 do painel. Detalhes e contratos tocados em [TRABALHADORES.md](TRABALHADORES.md).
 - `presentation.rs`, `tutorial.rs`, traduções e geradores de conteúdo são compartilhados. Preserve as entradas do outro lado ao acrescentar conteúdo.
 
 O transporte consulta `output_slots` para descobrir quais slots uma máquina permite esvaziar. Produção define suas entradas, saídas e filtros em `layout`/`accepts`. O transporte entrega itens por `Host::insert_item` e desconta da origem somente a quantidade aceita. Receita, consumo de ingredientes e criação de produtos continuam na produção. Estoque cheio deve parar o fluxo sem destruir itens.

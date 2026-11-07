@@ -16,9 +16,11 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 18] = [
+pub(super) const STATUS_KEYS: [&str; 24] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
+    // Postos de trabalho (`workforce`).
+    "no_worker", "absent", "no_task", "no_food", "path", "walking",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
@@ -30,6 +32,7 @@ pub(super) fn screen(block: &str) -> Option<NativeScreen> {
         SOLAR | BATTERY | TESLA => vec![None],
         HUB => vec![Some([26.0, 45.0]), Some([62.0, 45.0]), Some([116.0, 45.0]), Some([152.0, 45.0])],
         HARVESTER => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0])],
+        _ if workforce::is_post(block) => workforce::screen_slots(block)?,
         _ => production::screen_slots(block)?,
     };
     Some(NativeScreen {
@@ -132,19 +135,21 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     // Seta entre a última entrada e a primeira saída; nas demais máquinas, uma barra.
     let first_output = output_slots(event.block).start;
     let positions = &machine_slots;
-    if first_output > 0 && first_output < positions.len() && event.block != HARVESTER {
+    let post = workforce::is_post(event.block);
+    if first_output > 0 && first_output < positions.len() && event.block != HARVESTER && !post {
         arrow(host, event, positions[first_output - 1][0] + 16.0, positions[first_output][0], progress);
-    } else if !matches!(event.block, BATTERY | CABLE | SOLAR) && production::shows_progress(event.block) {
+    } else if !matches!(event.block, BATTERY | CABLE | SOLAR) && production::shows_progress(event.block) && !post {
         gauge(host, event, [10.0, 75.0], 174.0, progress, 0xff3fae3f);
     }
     let limit = read(5).max(capacity(event.block)).max(1);
     let energy = read(3).clamp(0, limit);
-    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) && event.block != production::PANTRY {
+    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) && event.block != production::PANTRY && !post {
         let energy_text = Text::tr("veio.energy", &[&energy, &limit]).plain();
         host.text(event.batch, &energy_text, [x + 10.0, y + 85.0], INK, false);
         gauge(host, event, [10.0, 95.0], 174.0, energy as f32 / limit as f32, 0xffe0a020);
     }
-    let lines: Vec<String> = if let Some(lines) = production::panel_lines(event.block, event.data) { lines } else { match event.block {
+    let lines: Vec<String> = if let Some(lines) = production::panel_lines(event.block, event.data)
+        .or_else(|| workforce::panel_lines(event.block, event.data)) { lines } else { match event.block {
         MERGER => vec![Text::tr("veio.hint.merger", &[]).plain()],
         GENERATOR => vec![Text::tr("veio.hint.fuel", &[]).plain()],
         GEOTHERMAL => vec![Text::tr("veio.hint.lava", &[]).plain()],
@@ -221,10 +226,10 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
 /// Cor das luzes no mundo: fortes, para ler de longe.
 pub(super) fn lamp_color(status: usize) -> u32 {
     match status {
-        1 => 0x5dff5d,
-        3 => 0xffaa00,
-        2 | 10 | 11 | 16 | 17 => 0xffe14d,
-        4..=6 | 12..=15 => 0xff4040,
+        1 | 23 => 0x5dff5d,
+        3 | 22 => 0xffaa00,
+        2 | 10 | 11 | 16 | 17 | 18 | 20 | 21 => 0xffe14d,
+        4..=6 | 12..=15 | 19 => 0xff4040,
         7 => 0xd9b84a,
         8 => 0x55aaff,
         9 => 0xcc66ff,
@@ -235,10 +240,10 @@ pub(super) fn lamp_color(status: usize) -> u32 {
 /// Cor do texto de estado sobre o painel cinza.
 pub(super) fn text_color(status: usize) -> u32 {
     match status {
-        1 => 0x1e7a1e,
-        3 => 0x9a5a00,
-        2 | 10 | 11 | 16 | 17 => 0x6b5a00,
-        4..=6 | 12..=15 => 0xaa1f1f,
+        1 | 23 => 0x1e7a1e,
+        3 | 22 => 0x9a5a00,
+        2 | 10 | 11 | 16 | 17 | 18 | 20 | 21 => 0x6b5a00,
+        4..=6 | 12..=15 | 19 => 0xaa1f1f,
         7 => 0x7a6420,
         8 => 0x1f4fa8,
         9 => 0x7a2fa0,

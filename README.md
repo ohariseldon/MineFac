@@ -1,6 +1,6 @@
 # Veio 0.9.1
 
-Trabalho paralelo: [Cloud — aldeões trabalhadores](frentes/CLOUD.md), [Grok — desempenho e balanceamento](frentes/GROK.md) e [Codex — expansão e integração](frentes/CODEX.md). Comece pelo [acordo de coordenação](COORDENACAO.md). As ordens descrevem próximas implementações.
+Trabalho paralelo: [Cloud — aldeões trabalhadores](frentes/CLOUD.md), [Grok — desempenho e balanceamento](frentes/GROK.md) e [Codex — expansão e integração](frentes/CODEX.md). Comece pelo [acordo de coordenação](COORDENACAO.md). As ordens descrevem próximas implementações. A primeira entrega da frente Cloud, o [posto do lavrador com aldeão contratado](TRABALHADORES.md), está implementada e aguarda teste no jogo.
 
 A versão 0.9.1 integra a produção 0.9 recebida da nuvem, o unificador e [esteiras com curvas e rampas](LOGISTICA.md). A divisão de trabalho está em [COORDENACAO.md](COORDENACAO.md). A integração passou na conferência de conteúdo, nos tipos reais do Horizon `66f3981` e em 40 testes offline. A compilação completa pelo launcher está sendo concluída; o teste dentro do jogo fica com o usuário.
 

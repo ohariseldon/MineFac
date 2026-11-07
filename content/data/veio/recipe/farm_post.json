@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:composter",
+    "minecraft:iron_hoe",
+    "minecraft:emerald",
+    "minecraft:barrel"
+  ],
+  "result": {
+    "id": "veio:farm_post",
+    "count": 1
+  }
+}
