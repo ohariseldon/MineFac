@@ -88,6 +88,10 @@ pub(crate) fn plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
         set_number(entity, "Status", NO_SEEDS);
         return;
     };
+    if number(entity, "energy") < PLANT_COST {
+        set_number(entity, "Status", 5);
+        return;
+    }
     let mut cursor = number(entity, "Scan");
     let mut planted_now = false;
     for _ in 0..3 {

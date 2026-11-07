@@ -54,6 +54,10 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(5) != 0 {
         return;
     }
+    if number(entity, "energy") < PLANT_COST {
+        set_number(entity, "Status", 5);
+        return;
+    }
     let index = number(entity, "Scan") as usize % SPOTS.len();
     let (dx, dz) = SPOTS[index];
     let base = [pos[0] + dx, pos[1], pos[2] + dz];
