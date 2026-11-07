@@ -65,6 +65,12 @@ nas branches próprias: não foram fundidas como parte deste orçamento.
 A pesquisa `research/connected-veins` contém projeto e protótipo, sem implementação
 de geração no runtime; também não foi integrada aqui.
 
+Na atualização final também apareceram `cursor/grok-lan-c7d9` (entrada na vila
+do anfitrião), `cursor/grok-noite-c7d9` (ataques noturnos e novos caches de alvos)
+e a revisão de moradia `19a311e`. Foram conferidas separadamente. A noite altera
+poluição e objetivos de mobs; precisa de medição própria e não deve ser anunciada
+como coberta por estas cotas de fábrica. Nenhuma delas foi mesclada neste lote.
+
 Para novas tarefas de manutenção, usar `budget::request` antes de consultar o
 mundo ou avançar o cursor. Se negar, preservar o estado, consultar caches completos
 quando possível e tentar novamente no ciclo adequado. Não chamar `begin_tick`
