@@ -230,7 +230,10 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
         number(entity, "Damage"), number(entity, "Module"),
         // Slot 12: poluição local na torre Tesla; nas máquinas de produção, a leitura própria
         // (pureza, FE/t gerado, animais, aldeões).
-        if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") },
+        if entity.id == TESLA { number(entity, "LocalSmog") }
+        // Central: seleção do farol opcional; estágio e contador mantêm os slots 8 e 9.
+        else if entity.id == HUB { i32::from(contracts::beacon_selected(entity)) }
+        else { number(entity, "Info") },
     ];
     debug_assert_eq!(values.len(), DATA_SLOTS);
     // Centro de controle e marcos de zona publicam os próprios números.

@@ -33,6 +33,8 @@ def item_name(item,code):
   if key in langs[code]: return langs[code][key]
  return name
 
+label("veio.contract.optional_beacon", "Farol: estrela no slot 1", "Beacon: star in slot 1")
+
 # Every help entry describes the actual slot order and material conversion.
 help={
  "generator":(
@@ -490,8 +492,11 @@ world=page(
  "Fábrica e mundo\n\nColheitadeira: plante ao redor dela e ligue uma esteira.\n\nTorre Tesla: protege a base à noite. Junte acumuladores ao solar.\n\nOssos dos monstros viram farinha no triturador.",
  "Factory and world\n\nHarvester: build the farm around it and belt the crops away.\n\nTesla tower: guards the base at night. Pair solar with batteries.\n\nMonster bones become bone meal in the crusher.")
 page(
- "Comércio\n\nDepois dos quatro projetos, a central exporta sem fim: 4 circuitos e 4 chapas de aço viram 4 esmeraldas e frascos de experiência.\n\nUse as esmeraldas com os aldeões da sua vila.",
- "Trade\n\nAfter the four projects, the hub keeps exporting: 4 circuits and 4 steel plates become 4 emeralds and experience bottles.\n\nSpend emeralds with your villagers.")
+ "Comércio\n\nDepois do projeto do povoado, a central exporta sem fim: 4 circuitos e 4 chapas de aço viram 4 esmeraldas e 2 frascos de experiência.",
+ "Trade\n\nAfter the village project, the hub keeps exporting: 4 circuits and 4 steel plates become 4 emeralds and 2 experience bottles.")
+page(
+ "Farol opcional\n\nDepois do povoado, esvazie as entradas da central. Coloque primeiro 1 estrela do Nether na entrada 1 e depois 48 circuitos na 2.\n\nReceba 1 farol e 2 extratoras Mk.II. Retire as saídas antes de voltar a exportar.",
+ "Optional beacon\n\nAfter the village project, empty the hub inputs. Put 1 Nether star in input 1 first, then 48 circuits in input 2.\n\nReceive 1 beacon and 2 Mk.II extractors. Clear outputs before returning to exports.")
 production=page(
  "Escada de produção\n\nCada melhoria resolve um gargalo e revela o próximo: jazida, energia, fio, poluição.\n\nVeios grandes rendem mais: a extratora lê o 3x3 abaixo dela. Jazida pura dobra a velocidade.",
  "Production ladder\n\nEach upgrade fixes one bottleneck and reveals the next: vein, power, wire, pollution.\n\nBig veins pay off: the extractor reads the 3x3 below. A pure vein doubles its speed.")
