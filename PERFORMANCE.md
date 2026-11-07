@@ -33,6 +33,12 @@ Não muda arte, modelos ou interface do jogador.
 
 ## Medição reproduzível
 
+Nota posterior: a reconstrução em execução passou a usar etapas em
+`power/rebuild.rs`; o cenário `dense_pole_links` deste benchmark histórico mantém
+o resolvedor anterior como referência de equivalência. Ele não mede o agendador
+incremental. Os limites e testes do novo caminho estão em
+[frentes/REDES-INCREMENTAIS.md](frentes/REDES-INCREMENTAIS.md).
+
 Referência instrumentada: `b4c09cf`, sem as otimizações de execução deste lote.
 Código otimizado medido: `e4166a6`. Os relatórios guardam os SHAs completos em
 [performance/before.json](performance/before.json) e
