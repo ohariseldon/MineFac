@@ -5,7 +5,7 @@ Este repositório contém o Veio, um jogo de automação industrial executado co
 ## Começar na nuvem
 
 1. Clone este repositório e crie uma branch a partir da `main` atualizada.
-2. Leia o [README](README.md) para conhecer o comportamento implementado.
+2. Leia o [README](README.md), a [coordenação das três frentes](COORDENACAO.md) e a ordem da sua frente: [Cloud](frentes/CLOUD.md), [Grok](frentes/GROK.md) ou [Codex](frentes/CODEX.md).
 3. Execute `python tools/check_project.py`. Requer Python 3.11 ou superior e nenhuma biblioteca adicional.
 4. Execute `python tools/check_rust.py`. Requer Rust 1.90 ou superior e funciona sem internet.
 5. Faça as alterações e envie um pull request para `main`. Atualize sua branch antes de integrar trabalhos simultâneos.
@@ -16,7 +16,7 @@ A verificação Rust compila `native/api/src` contra `native/offline-check/horiz
 
 ## Onde alterar
 
-A divisão entre produção na nuvem e logística local está em [COORDENACAO.md](COORDENACAO.md). Consulte esse acordo antes de alterar arquivos compartilhados. O transporte de itens está em `native/api/src/logistics.rs`; postes e fios estão em `native/api/src/power.rs`.
+A divisão atual é Cloud para trabalhadores, Grok para desempenho e balanceamento, e Codex para expansão e integração. Consulte [COORDENACAO.md](COORDENACAO.md) antes de alterar arquivos compartilhados. O transporte de itens está em `native/api/src/logistics.rs`; postes e fios estão em `native/api/src/power.rs`.
 
 - `native/api/src/lib.rs`: simulação, energia, inventários, transporte, combustíveis, jazidas e regras de interação.
 - `native/api/src/farm.rs`: colheitadeira.

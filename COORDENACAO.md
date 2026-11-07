@@ -1,28 +1,39 @@
-# Produção e logística
+# Coordenação das três frentes
 
-Divisão definida pelo usuário após a entrega dos pacotes 0.7 e 0.8.
+Divisão atual definida pelo usuário após a integração da 0.9.1. Ela substitui a divisão anterior entre produção na nuvem e logística local. As ordens abaixo são trabalho futuro, não funcionalidades já implementadas.
 
 ## Responsáveis
 
-- **Agente da nuvem — produção:** extratores, processamento, construtores, receitas industriais, geração de energia (combustível, solar e outras fontes), alimentos, fazendas, plantações e balanceamento dessas cadeias.
-- **Agente local — logística:** esteiras, transporte de itens, braços que transferem itens, divisores (splitters), unificadores (mergers/uniters), postes, transmissores, fios e cabos de distribuição de energia.
-- **Integração combinada:** armazenamento de energia, interfaces de inventário e energia, registros, menus, tutorial, contratos, defesa e poluição. Não foram atribuídos integralmente a um dos lados pelo usuário. Alterações que cruzem essas áreas precisam explicar a interface afetada.
+- **Cloud — aldeões trabalhadores e coordenação:** implementar a passagem da operação pelo jogador para a delegação a aldeões, começando por fazendas e estações de trabalho, com coordenadores setoriais numa etapa posterior. Ordem completa: [frentes/CLOUD.md](frentes/CLOUD.md).
+- **Grok — desempenho e balanceamento:** investigar custos reais de simulação, corrigir ineficiências e calibrar números e progressão com justificativas. Ordem completa: [frentes/GROK.md](frentes/GROK.md).
+- **Codex local — expansão e integração:** continuar máquinas, funcionalidades, logística e suas conexões com o mundo do Minecraft; integrar as três frentes e preparar as versões jogáveis. Ordem completa: [frentes/CODEX.md](frentes/CODEX.md).
 
-Geração de energia pertence à produção; distribuição pertence à logística. Os postes recebidos na 0.8 são preservados e passam à manutenção local.
+Geração e distribuição continuam sendo sistemas distintos no código. Essa separação técnica não representa mais uma atribuição exclusiva de toda a produção ao Cloud: a nova frente dele é o sistema de trabalhadores.
+
+## Fluxo compartilhado
+
+1. Partir da `main` atualizada. A base de código desta rodada é a **0.9.1**, commit `26599ecd7d8e94f9889a84da42b3928ad3156a9e`; este documento e as ordens acrescentam a coordenação da rodada.
+2. Trabalhar em branches próprias: `cloud/villagers`, `grok/performance-balance` e `codex/expansion`. Ambos os agentes da nuvem podem commitar e publicar suas branches.
+3. Usar commits pequenos e descrever alterações em arquivos compartilhados. Abrir PR para `main`; o Codex local integra e resolve os conflitos. Evitar commits concorrentes diretamente na `main`, substituição integral de arquivos compartilhados e qualquer push forçado.
+4. Mudanças em contratos entre sistemas devem vir acompanhadas da interface proposta e de uma implementação compatível. Se houver dependência, deixar a integração explícita no PR, sem bloquear o trabalho independente.
+5. Não incrementar versões nem regerar todos os assets por rotina. A versão consolidada e a compilação final ficam com a integração local. Quando um gerador mudar, incluir suas saídas relevantes no mesmo commit.
+6. Ao concluir um lote, informar o que mudou, como usar, verificações realizadas, limitações e requisitos de migração. Separar teste offline, conferência da API real, compilação pelo launcher e teste dentro do jogo.
+
+O usuário testa a versão jogável. Evitar recompilar ou abrir o jogo a cada iteração. Dados pessoais, mundos, executáveis e caches ficam fora do Git; os arquivos pesados locais permanecem no E:.
 
 ## Arquivos e interfaces
 
 - `native/api/src/logistics.rs`: transporte atual e estado das esteiras. Ponto de entrada para os próximos trabalhos locais de itens.
 - `native/api/src/power.rs`: postes e fios aéreos, mantidos localmente.
-- `native/api/src/farm.rs`: agricultura, mantida pela nuvem.
-- `native/api/src/lib.rs`: ainda reúne receitas, geração, cabos e registros compartilhados. Evite substituí-lo inteiro em uma entrega; envie alterações pequenas e descreva quais funções mudou. A geração e os cabos ainda compartilham `tick_power`.
+- `native/api/src/farm.rs`: colheitadeira; compartilhada quando trabalhadores ou novas funções agrícolas exigirem integração.
+- `native/api/src/lib.rs`: reúne ganchos, registros e distribuição adjacente de energia. Receitas e jazidas estão em `production/`. Evite substituí-lo inteiro em uma entrega; envie alterações pequenas e descreva quais funções mudou.
 - `presentation.rs`, `tutorial.rs`, traduções e geradores de conteúdo são compartilhados. Preserve as entradas do outro lado ao acrescentar conteúdo.
 
 O transporte consulta `output_slots` para descobrir quais slots uma máquina permite esvaziar. Produção define suas entradas, saídas e filtros em `layout`/`accepts`. O transporte entrega itens por `Host::insert_item` e desconta da origem somente a quantidade aceita. Receita, consumo de ingredientes e criação de produtos continuam na produção. Estoque cheio deve parar o fluxo sem destruir itens.
 
 A energia compartilhada permanece em `energy` no NBT, em FE, respeitando `capacity`. Produtores adicionam energia; redes transferem; consumidores descontam seu custo. Não mude nomes de campos, capacidades ou regras de acesso sem explicar o impacto nos saves e na rede. Mantenha os IDs existentes.
 
-## Produção (agente da nuvem)
+## Mapa da produção recebida na 0.9
 
 - `native/api/src/production/`: extração (`extraction.rs`), motor de receitas (`mod.rs`), geração (`generation.rs`), semeadora e lâmpada (`crops.rs`), silvicultura (`forestry.rs`), rancho e registro de animais e aldeões (`ranch.rs`), armazém do povoado (`pantry.rs`) e testes (`tests.rs`).
 - `native/api/src/production/data.rs` é gerado por `tools/build_production.py` a partir de `tools/production.json` (receitas, jazidas, combustíveis e valores de comida). Não edite o `.rs` à mão.
@@ -45,17 +56,17 @@ Itens que entram e saem das máquinas novas seguem `layout`/`outputs`, então es
 
 ## Próximas entregas locais de logística
 
-Esta lista é planejamento; não representa funcionalidades já implementadas.
+Curvas, rampas, indicação de bloqueio e unificador já foram entregues na 0.9.1. As prioridades seguintes de logística são planejamento:
 
-1. Melhorar a leitura das entradas, saídas e direção das esteiras, incluindo curvas e indicação de bloqueio.
-2. Introduzir um unificador com entradas explícitas, saída única e atendimento alternado para evitar que uma linha monopolize a outra.
-3. Introduzir braços de transferência com origem/destino visíveis, reserva de energia e comportamento seguro quando o destino encher.
-4. Evoluir filtros e prioridades de divisores e unificadores.
-5. Revisar alcance, conexões, capacidade e indicação visual da rede elétrica existente.
+1. Introduzir braços de transferência com origem/destino visíveis, reserva de energia e comportamento seguro quando o destino encher.
+2. Evoluir filtros e prioridades de divisores e unificadores.
+3. Revisar alcance, conexões, capacidade e indicação visual da rede elétrica existente.
 
 As novas ferramentas devem facilitar escala e manutenção. O tutorial deve acompanhar cada entrega.
 
-## Troca por ZIP sem GitHub
+## Alternativa por ZIP se o acesso ao GitHub falhar
+
+O fluxo principal agora é commit e PR. O intercâmbio por ZIP continua disponível como alternativa, com o SHA exato da base e uma lista de arquivos alterados e removidos.
 
 O pacote 0.8 já contém a 0.7; não aplique a 0.7 novamente sobre ele. Os dois patches originais foram integrados em sequência, preservando autoria e remoções de arquivos antigos.
 

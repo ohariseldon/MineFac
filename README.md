@@ -1,5 +1,7 @@
 # Veio 0.9.1
 
+Trabalho paralelo: [Cloud — aldeões trabalhadores](frentes/CLOUD.md), [Grok — desempenho e balanceamento](frentes/GROK.md) e [Codex — expansão e integração](frentes/CODEX.md). Comece pelo [acordo de coordenação](COORDENACAO.md). As ordens descrevem próximas implementações.
+
 A versão 0.9.1 integra a produção 0.9 recebida da nuvem, o unificador e [esteiras com curvas e rampas](LOGISTICA.md). A divisão de trabalho está em [COORDENACAO.md](COORDENACAO.md). A integração passou na conferência de conteúdo, nos tipos reais do Horizon `66f3981` e em 40 testes offline. A compilação completa pelo launcher está sendo concluída; o teste dentro do jogo fica com o usuário.
 
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
