@@ -24,7 +24,7 @@ A fábrica faz parte do mundo do Minecraft: extrai das jazidas vanilla, queima c
 
 ## Transporte entre zonas
 
-A integração de [terminais ferroviários e portos de drones](TRANSPORTES.md) permite definir o produto enviado e recebido por zona. O capataz cria as tarefas dos carregadores para abastecer os terminais e usar o que chega. Vagões com baú conectam-se por funis; drones levam até 16 itens entre portos a até 64 blocos, com energia, ida e volta. A entrega aguarda compilação pelo launcher e teste no jogo; consulte o documento para configuração, circuitos e limites.
+A integração de [terminais, drones e caravanas](TRANSPORTES.md) permite ligar zonas por cor e definir os produtos de ida e volta. Aldeões abastecem e retiram as cargas pela fila do capataz. Vagões com baú usam funis; drones levam até 16 itens a até 64 blocos; cavalos, burros/mulas e porcos caminham entre terminais com capacidades e rações diferentes. Um Guia de Transportes é entregue ao obter o primeiro terminal. A entrega aguarda compilação pelo launcher e teste no jogo; rotas terrestres de até 512 blocos dependem de áreas simuladas.
 
 ## Tutorial dentro do jogo
 

@@ -1,0 +1,236 @@
+{
+  "type": "minecraft:generic",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": {
+                    "raw": "Transportes"
+                  },
+                  "author": "Veio",
+                  "generation": 0,
+                  "resolved": true,
+                  "pages": [
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "veio.transport.title",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.1",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 2
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.2",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 3
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.3",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 4
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.4",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 5
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.5",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 6
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.6",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 7
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.7",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 8
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.8",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 9
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.9",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 10
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.10",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 11
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.transport.contents.11",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 12
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.1"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.2"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.3"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.4"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.5"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.6"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.7"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.8"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.9"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.10"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.transport.page.11"
+                      }
+                    }
+                  ]
+                },
+                "minecraft:custom_name": {
+                  "translate": "veio.transport.title",
+                  "italic": false
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

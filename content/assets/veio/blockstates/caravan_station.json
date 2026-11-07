@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/caravan_station"
+    },
+    "facing=west": {
+      "model": "veio:block/caravan_station",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/caravan_station",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/caravan_station",
+      "y": 270
+    }
+  }
+}

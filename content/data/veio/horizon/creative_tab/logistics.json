@@ -11,6 +11,7 @@
     "veio:long_inserter",
     "veio:freight_station",
     "veio:drone_port",
+    "veio:caravan_station",
     "veio:route_card",
     "veio:wrench",
     "minecraft:rail",

@@ -337,3 +337,25 @@ fn pantry_pays_more_for_processed_food_and_villages() {
     assert_eq!(pantry::credit("minecraft:bread", 2, true), 6 * 2 * 150);
     assert!(pantry::value("minecraft:stone").is_none());
 }
+
+#[test]
+fn a_ranch_never_treats_saddled_transport_pigs_as_surplus_meat() {
+    use horizon_client::mod_api::EntityRef;
+    struct RidingPigs;
+    impl Host for RidingPigs {
+        fn dimension(&self) -> &'static str { "veio:protected_transport_pigs" }
+        fn entity(&self, id: u32) -> Option<EntityRef> { Some(EntityRef::new(id)) }
+        fn entity_position(&self, _: EntityRef) -> Option<[f64; 3]> { Some([0.5, 64.0, 0.5]) }
+        fn entity_nbt(&mut self, _: EntityRef) -> Option<Compound> {
+            Some(Compound::from([("Age".into(), Tag::Int(0)), ("Saddle".into(), Tag::Byte(1))]))
+        }
+        fn item_entities(&self, _: &str, _: [f64; 3], _: [f64; 3]) -> Vec<horizon_client::mod_api::NativeItemEntity> { Vec::new() }
+        fn kill_mob(&mut self, _: &str, _: u32) -> bool { panic!("a saddled pig must not be slaughtered") }
+    }
+    let mut host = RidingPigs;
+    for id in 200100..200112 { ranch::observe(host.dimension(), id, "minecraft:pig"); }
+    let mut pen = machine(RANCH);
+    ranch::tick(&mut host, [0, 64, 0], &mut pen, 0);
+    assert_eq!(number(&pen, "Info"), 0, "mounts do not enter the farm's breeding/culling pool");
+    assert_eq!(number(&pen, "Status"), NO_ANIMALS);
+}

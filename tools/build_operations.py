@@ -41,6 +41,9 @@ def add_labels(langs):
         "no_wage": ("Coloque esmeraldas na mesa para recontratar trabalhadores.", "Put emeralds in the desk to rehire workers."),
         "zone": ("Postos perto da borda trabalham nesta zona.", "Posts near the border work in this zone."),
         "storing": ("A fila do capataz guarda e retira itens daqui.", "The foreman's queue stores and takes items here."),
+        "caravan_animal": ("Aproxime animal adulto equipado e use um laço no terminal; não precisa gastar o laço.", "Bring an equipped adult animal and use a lead on the terminal; the lead is kept."),
+        "caravan_feed": ("Cavalo/burro: trigo, maçã ou feno; porco: cenoura, batata ou beterraba.", "Horse/donkey: wheat, apple or hay; pig: carrot, potato or beetroot."),
+        "caravan_busy": ("Desmonte e retire o laço do animal para liberar a viagem.", "Dismount and unleash the animal to resume its trip."),
         "freight_route": ("Use exatamente dois terminais do mesmo tipo e canal; confira filtros, distância e destino carregado.", "Use exactly two terminals of the same type and channel; check filters, range and loaded destination."),
         "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
     }

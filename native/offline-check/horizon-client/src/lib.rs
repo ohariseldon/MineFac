@@ -675,11 +675,16 @@ pub mod mobs {
     pub struct MobWorld<'w> {
         _world: std::marker::PhantomData<&'w ()>,
     }
+    impl<'w> MobWorld<'w> {
+        /// Offline fixture, not a Horizon API method.
+        pub fn fixture() -> Self { Self { _world: std::marker::PhantomData } }
+    }
     #[derive(Default)]
     pub struct Navigation {
         pub done: bool,
     }
     impl Navigation {
+        pub fn stop(&mut self) { self.done = true; }
         pub fn is_done(&self) -> bool {
             self.done
         }
@@ -690,7 +695,11 @@ pub mod mobs {
         pub targets: goals::GoalSelector,
         pub nav: Navigation,
     }
+    #[derive(Default)]
+    pub struct Extra { pub rider: Option<u32>, pub leash: Option<()>, pub leash_pending: Option<()> }
     pub struct Mob {
+        pub rider: Option<()>,
+        pub extra: Extra,
         pub id: u32,
         pub kind: Arc<MobType>,
         pub position: Vec3,

@@ -18,7 +18,7 @@ fn port(kind: &str, item: Option<&str>) -> ModBlockEntity {
 }
 
 #[derive(Default)]
-struct World { nodes: HashMap<[i32; 3], ModBlockEntity>, held: Option<String>, paused: bool, obstructed: bool, unloaded: bool }
+struct World { nodes: HashMap<[i32; 3], ModBlockEntity>, held: Option<String>, paused: bool, obstructed: bool, unloaded: bool, normal: bool }
 impl Host for World {
     fn dimension(&self) -> &'static str { "veio:freight_test" }
     fn level(&self, _: &str) -> Option<LevelRef> { Some(LevelRef::new(self.dimension())) }
@@ -26,7 +26,7 @@ impl Host for World {
     fn level_block(&self, _: LevelRef, _: [i32; 3]) -> Option<String> { Some(if self.obstructed { "minecraft:stone" } else { "minecraft:air" }.into()) }
     fn neighbor_signal(&mut self, _: &str, _: [i32; 3]) -> i32 { i32::from(self.paused) }
     fn held(&self) -> Option<(String, u32, bool)> { self.held.clone().map(|s| (s, 1, false)) }
-    fn sneaking(&self) -> bool { true }
+    fn sneaking(&self) -> bool { !self.normal }
     fn block_entity_sync(&mut self, _: [i32; 3]) {}
     fn change_mod_block_entity(&mut self, at: [i32; 3], f: &mut dyn FnMut(&mut ModBlockEntity)) -> bool {
         if let Some(node) = self.nodes.get_mut(&at) { f(node); true } else { false }
@@ -280,4 +280,18 @@ fn a_rail_terminal_keeps_its_receive_filter_when_the_remote_zone_unloads() {
     assert!(accepts_delivery(&station, 3, &ItemStack::new(PLATE, 1)));
     assert!(!accepts_plan(&station, 3, &ItemStack::new(PLATE, 1)));
     assert_eq!(number(&station, "Status"), 27);
+}
+
+
+#[test]
+fn matching_dyes_connect_two_ports_without_cycling_the_card_or_consuming_dye() {
+    let _guard = SERIAL.lock().unwrap();
+    let mut world = World::default(); world.normal = true;
+    world.nodes.insert(A, port(DRONE, None)); world.nodes.insert(B, port(DRONE, None));
+    world.held = Some("minecraft:blue_dye".into());
+    right_click(&mut world, A, DRONE); right_click(&mut world, B, DRONE);
+    assert_eq!(channel(&world.nodes[&A]), channel(&world.nodes[&B]));
+    assert_eq!(channel(&world.nodes[&A]), 12);
+    assert_eq!(world.held().unwrap().1, 1);
+    assert!(export(&world.nodes[&A]).is_none(), "color setup is not a cargo request");
 }
