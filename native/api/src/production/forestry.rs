@@ -51,9 +51,18 @@ pub(crate) fn drops(species: &Species, trunk: u32, felled_before: i32) -> Vec<(&
 
 pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     // Uma vaga a cada 5 ticks: a volta completa leva 2 segundos.
-    if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(5) != 0 {
+    if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(5) != 0 && number(entity, "TerrainPending") == 0 {
         return;
     }
+    if number(entity, "energy") < PLANT_COST {
+        set_number(entity, "Status", 5);
+        return;
+    }
+    if !budget::request(budget::Lane::Terrain, host.dimension(), pos, 24) {
+        set_number(entity, "TerrainPending", 1);
+        return;
+    }
+    set_number(entity, "TerrainPending", 0);
     let index = number(entity, "Scan") as usize % SPOTS.len();
     let (dx, dz) = SPOTS[index];
     let base = [pos[0] + dx, pos[1], pos[2] + dz];

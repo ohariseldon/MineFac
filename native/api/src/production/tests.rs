@@ -3,6 +3,60 @@ use super::*;
 use horizon_client::mod_api::{BlockStateId, NativeBlockEdit, ParticleOptions};
 use std::collections::HashMap;
 
+#[test]
+fn exhausted_global_terrain_budget_preserves_inputs_energy_and_cursor_then_resumes() {
+    use std::cell::Cell;
+    struct Probe { reads: Cell<usize> }
+    impl Host for Probe {
+        fn dimension(&self) -> &'static str { "veio:terrain-budget-test" }
+        fn block(&self, _: [i32; 3]) -> String {
+            self.reads.set(self.reads.get() + 1);
+            "minecraft:air".into()
+        }
+    }
+    for id in [HARVESTER, PLANTER, TREE_FARM, GROW_LAMP] {
+        let mut host = Probe { reads: Cell::new(0) };
+        let mut entity = machine(id);
+        if id == PLANTER { entity.items[0] = Some(ItemStack::new("minecraft:wheat_seeds", 8)); }
+        budget::begin_tick(0);
+        assert!(budget::request(budget::Lane::Terrain, host.dimension(), [999; 3], 384));
+        tick(&mut host, [0; 3], &mut entity, 0);
+        assert_eq!(host.reads.get(), 0, "{id}");
+        assert_eq!(number(&entity, "energy"), 2000);
+        assert_eq!(number(&entity, "Scan"), 0);
+        if id == PLANTER { assert_eq!(entity.items[0].as_ref().unwrap().count, 8); }
+        budget::begin_tick(1);
+        tick(&mut host, [0; 3], &mut entity, 1);
+        assert!(host.reads.get() > 0, "{id} must resume after admission");
+    }
+}
+
+#[test]
+fn unpowered_field_machines_do_no_world_scan_and_resume_when_funded() {
+    use std::cell::Cell;
+    struct Probe { reads: Cell<usize> }
+    impl Host for Probe {
+        fn dimension(&self) -> &'static str { "veio:budget-fixture" }
+        fn block(&self, _: [i32; 3]) -> String {
+            self.reads.set(self.reads.get() + 1);
+            "minecraft:air".into()
+        }
+    }
+    for id in [HARVESTER, PLANTER, TREE_FARM] {
+        let mut host = Probe { reads: Cell::new(0) };
+        let mut entity = machine(id);
+        if id == PLANTER { entity.items[0] = Some(ItemStack::new("minecraft:wheat_seeds", 8)); }
+        set_number(&mut entity, "energy", 0);
+        for time in 0..120 { tick(&mut host, [0; 3], &mut entity, time); }
+        assert_eq!(host.reads.get(), 0, "{id}");
+        assert_eq!(number(&entity, "Scan"), 0);
+        assert_eq!(number(&entity, "Status"), 5);
+        set_number(&mut entity, "energy", 2000);
+        tick(&mut host, [0; 3], &mut entity, 120);
+        assert!(host.reads.get() > 0, "{id} must wake immediately on its next work phase");
+    }
+}
+
 fn machine(id: &str) -> ModBlockEntity {
     let mut entity = ModBlockEntity::default();
     entity.id = id.to_owned();

@@ -4,7 +4,7 @@
 
 - **Cloud — vila operária:** postos do lavrador, pastor e carregador, mesa do capataz com fila de tarefas, zonas de lavoura e de cercado com níveis, celeiro e silo, centro de controle com metas, vilas que crescem até 150 aldeões, spawn no centro da vila e o Guia da Vila Operária. Detalhes em [TRABALHADORES.md](TRABALHADORES.md).
 - **Codex — logística:** [braços de transferência](frentes/CODEX-BRACOS.md) (básico, rápido e longo, com filtro), divisor e unificador com prioridades e filtro, e os controles de fluxo do [lote integrado de logística](frentes/CODEX-LOGISTICA.md).
-- **Grok — desempenho e balanceamento:** lotes 1 e 3 a 7 ([7: tick sem alocação repetida](frentes/GROK-LOTE7.md)).
+- **Grok — desempenho e balanceamento:** lotes 1 e 3 a 8 ([7: tick sem alocação repetida](frentes/GROK-LOTE7.md), [8: censo compartilhado](frentes/GROK-LOTE8.md)).
 
 Histórico: a 0.14.0 fez as vilas crescerem com a fábrica até 150 aldeões (com um censo de posições para manter o custo baixo), põe o jogador no centro da vila ao entrar e ao renascer, e leva os sistemas da vila para um segundo livro, o Guia da Vila Operária, com sua própria aba de avanços; inclui o lote 6 do Grok. A 0.13.0 trouxe zonas de lavoura e de cercado com níveis de expansão, celeiro e silo, o centro de controle (painel de gestão com metas) e vilas que crescem até 30 aldeões, além dos lotes 4 e 5 do Grok. A 0.12.0 acrescentou a fila de tarefas do capataz e o posto do pastor, e inclui o [lote 3 do Grok](frentes/GROK-LOTE3.md) (varreduras mais baratas e comida que custa 2 pontos por tarefa). A 0.11.0 trouxe o carregador e o capataz, e a 0.10.0 consolidou as três frentes da rodada sobre a 0.9.1:
 

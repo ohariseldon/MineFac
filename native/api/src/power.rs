@@ -2,7 +2,8 @@
 //! da sua área, como os postes do Factorio.
 //!
 //! Custo: cada poste guarda em NBT a lista de vizinhos (`Links`) e de blocos de energia da área
-//! (`Area`), recalculadas a cada 40 ticks. No tick comum só percorre essas listas. Os postes
+//! (`Area`). A cada 40 ticks atualiza os fios e inicia a varredura da área em lotes pequenos.
+//! A transferência percorre as listas completas. Os postes
 //! se encontram por um registro em memória dividido em chunks.
 use super::*;
 use horizon_client::mod_api::{BlockEntitySubmitEvent, Tag};
@@ -27,6 +28,8 @@ pub(super) const STEEL: Tier = Tier { reach: 16, area: 3, rate: 400, capacity: 4
 /// No máximo seis fios por poste, para a malha não virar uma teia.
 const MAX_LINKS: usize = 6;
 const REFRESH: i64 = 40;
+/// Limit world lookups for area discovery; energy transfer still runs every tick.
+const AREA_READS_PER_TICK: i32 = 8;
 
 pub(super) fn tier(block: &str) -> Option<&'static Tier> {
     match block {
@@ -107,6 +110,106 @@ fn nearest(pos: [i32; 3], steel: bool, candidates: &[([i32; 3], bool)]) -> Vec<[
 #[cfg(test)]
 mod optimization_tests {
     use super::*;
+
+    #[test]
+    fn thousand_poles_obey_one_global_area_quota_and_all_finish() {
+        use std::cell::Cell;
+        struct Probe { reads: Cell<usize> }
+        impl Host for Probe {
+            fn dimension(&self) -> &'static str { "veio:global-budget-test" }
+            fn block(&self, _: [i32; 3]) -> String {
+                self.reads.set(self.reads.get() + 1);
+                "minecraft:air".into()
+            }
+        }
+        let host = Probe { reads: Cell::new(0) };
+        let mut poles: Vec<_> = (0..1000).map(|_| ModBlockEntity::default()).collect();
+        let mut total = 0;
+        for tick in 0..220 {
+            budget::begin_tick(tick);
+            host.reads.set(0);
+            for (index, pole) in poles.iter_mut().enumerate() {
+                scan_area(&host, [index as i32, 0, 0], pole, WOOD.area, tick == 0);
+            }
+            assert!(host.reads.get() <= 512, "global quota exceeded in tick {tick}");
+            total += host.reads.get();
+        }
+        assert_eq!(total, 74000);
+        assert!(poles.iter().all(|pole| number(pole, "AreaScan") == 0 && pole.nbt.contains_key(nbt_key("Area"))));
+    }
+
+    #[test]
+    fn incremental_area_bounds_peak_reads_and_publishes_only_complete_results() {
+        use std::cell::Cell;
+        struct Probe { reads: Cell<usize> }
+        impl Host for Probe {
+            fn dimension(&self) -> &'static str { "veio:budget-fixture" }
+            fn block(&self, _: [i32; 3]) -> String {
+                self.reads.set(self.reads.get() + 1);
+                PRESS.into()
+            }
+        }
+        for radius in [WOOD.area, STEEL.area] {
+            let host = Probe { reads: Cell::new(0) };
+            let mut pole = ModBlockEntity::default();
+            let old = vec![99, 0, 0];
+            pole.nbt.insert(nbt_key("Area").clone(), Tag::IntArray(old));
+            let total = (radius * 2 + 1).pow(2) * 3;
+            let ticks = (total + AREA_READS_PER_TICK - 1) / AREA_READS_PER_TICK;
+            for tick in 0..ticks {
+                host.reads.set(0);
+                scan_area(&host, [0; 3], &mut pole, radius, tick == 0);
+                assert!(host.reads.get() <= AREA_READS_PER_TICK as usize);
+                if tick + 1 < ticks { assert_eq!(offsets(&pole, "Area").collect::<Vec<_>>(), [[99, 0, 0]]); }
+                // Persisted partial work resumes after saving/loading the entity.
+                pole = pole.clone();
+            }
+            let expected: Vec<_> = (-radius..=radius).flat_map(|x| (-radius..=radius)
+                .flat_map(move |z| (-1..=1).map(move |y| [x, y, z])))
+                .filter(|at| *at != [0; 3]).collect();
+            assert_eq!(offsets(&pole, "Area").collect::<Vec<_>>(), expected);
+            assert_eq!(number(&pole, "AreaScan"), 0);
+            host.reads.set(0);
+            scan_area(&host, [0; 3], &mut pole, radius, false);
+            assert_eq!(host.reads.get(), 0);
+        }
+    }
+
+    #[test]
+    fn area_refresh_keeps_delivering_power_and_removes_stale_consumers_when_complete() {
+        struct Grid { consumer: ModBlockEntity }
+        impl Host for Grid {
+            fn dimension(&self) -> &'static str { "veio:incremental-power-test" }
+            fn block(&self, _: [i32; 3]) -> String { "minecraft:air".into() }
+            fn change_mod_block_entity(&mut self, pos: [i32; 3], change: &mut dyn FnMut(&mut ModBlockEntity)) -> bool {
+                if pos != [1, 0, 0] { return false; }
+                change(&mut self.consumer);
+                true
+            }
+        }
+        let mut pole = ModBlockEntity::default();
+        pole.id = POLE.into();
+        set_number(&mut pole, "energy", 200);
+        pole.nbt.insert(nbt_key("Area").clone(), Tag::IntArray(vec![1, 0, 0]));
+        let mut host = Grid { consumer: ModBlockEntity::default() };
+        host.consumer.id = PRESS.into();
+        budget::begin_tick(0);
+        assert!(budget::request(budget::Lane::Topology, host.dimension(), [999; 3], 2));
+        assert!(budget::request(budget::Lane::Area, host.dimension(), [999; 3], 512));
+        tick(&mut host, [0; 3], &mut pole, 0);
+        assert_eq!(number(&host.consumer, "energy"), WOOD.rate);
+        assert_eq!(number(&pole, "energy") + number(&host.consumer, "energy"), 200);
+        assert!(number(&pole, "AreaScan") > 0);
+        assert_eq!(number(&pole, "TopologyPending"), 1);
+        // The mock world reports air: the old entry must disappear after the scan.
+        for time in 1..=10 {
+            budget::begin_tick(time as u64);
+            tick(&mut host, [0; 3], &mut pole, time);
+        }
+        assert_eq!(offsets(&pole, "Area").len(), 0);
+        assert_eq!(number(&pole, "TopologyPending"), 0);
+        assert_eq!(number(&pole, "energy") + number(&host.consumer, "energy"), 200);
+    }
 
     #[test]
     fn ranked_connections_match_original_sorted_selection_with_ties_and_mixed_tiers() {
@@ -217,12 +320,64 @@ fn powered(block: &str) -> bool {
     needs_power(block) || is_power_block(block) || tier(block).is_some()
 }
 
+fn scan_area(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, radius: i32, due: bool) {
+    let side = radius * 2 + 1;
+    let total = side * side * 3;
+    let mut cursor = number(entity, "AreaScan") - 1;
+    if cursor < 0 || cursor >= total {
+        if !due && entity.nbt.contains_key(nbt_key("Area")) { return; }
+        cursor = 0;
+        match entity.nbt.get_mut(nbt_key("AreaFound")) {
+            Some(Tag::IntArray(pending)) => pending.clear(),
+            _ => { entity.nbt.insert(nbt_key("AreaFound").clone(), Tag::IntArray(Vec::new())); }
+        }
+    }
+    if !budget::request(budget::Lane::Area, host.dimension(), pos, AREA_READS_PER_TICK as u32) {
+        set_number(entity, "AreaScan", cursor + 1);
+        return;
+    }
+    // Keep the previous complete area active until all cells have been checked.
+    // The scratch buffer is reused on subsequent refreshes, including after load.
+    let Some(Tag::IntArray(pending)) = entity.nbt.get_mut(nbt_key("AreaFound")) else {
+        set_number(entity, "AreaScan", 0);
+        return;
+    };
+    let end = (cursor + AREA_READS_PER_TICK).min(total);
+    for cell in cursor..end {
+        let offset = [cell / (side * 3) - radius, cell % 3 - 1, (cell / 3) % side - radius];
+        if offset != [0; 3] && powered(&host.block(add(pos, offset))) {
+            pending.extend_from_slice(&offset);
+        }
+    }
+    if end < total {
+        set_number(entity, "AreaScan", end + 1);
+        return;
+    }
+    let complete = std::mem::take(pending);
+    let previous = if let Some(area) = entity.nbt.get_mut(nbt_key("Area")) {
+        std::mem::replace(area, Tag::IntArray(complete))
+    } else {
+        entity.nbt.insert(nbt_key("Area").clone(), Tag::IntArray(complete));
+        Tag::IntArray(Vec::new())
+    };
+    let mut scratch = match previous { Tag::IntArray(values) => values, _ => Vec::new() };
+    scratch.clear();
+    *entity.nbt.get_mut(nbt_key("AreaFound")).expect("area scratch exists") = Tag::IntArray(scratch);
+    set_number(entity, "AreaScan", 0);
+}
+
 pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) -> bool {
     let Some(own) = tier(&entity.id) else { return false };
     let steel = entity.id == STEEL_POLE;
     let dimension = host.dimension();
     let mut changed = false;
-    if (time + i64::from((pos[0] ^ pos[2]) & 31)).rem_euclid(REFRESH) == 0 || !entity.nbt.contains_key(nbt_key("Links")) {
+    let due = (time + i64::from((pos[0] ^ pos[2]) & 31)).rem_euclid(REFRESH) == 0;
+    if due || !entity.nbt.contains_key(nbt_key("Links")) {
+        set_number(entity, "TopologyPending", 1);
+    }
+    if number(entity, "TopologyPending") != 0
+        && budget::request(budget::Lane::Topology, dimension, pos, 1) {
+        set_number(entity, "TopologyPending", 0);
         register(dimension, pos, steel);
         let reader: &dyn Host = host;
         // Confere os candidatos no mundo: um poste quebrado sai do registro.
@@ -242,18 +397,8 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         let linked: Vec<[i32; 3]> = links(pos, steel, around).into_iter()
             .map(|at| [at[0] - pos[0], at[1] - pos[1], at[2] - pos[2]]).collect();
         changed |= set_offsets(entity, "Links", &linked);
-        let mut area = Vec::new();
-        for dx in -own.area..=own.area {
-            for dz in -own.area..=own.area {
-                for dy in -1..=1 {
-                    if (dx, dy, dz) != (0, 0, 0) && powered(&reader.block(add(pos, [dx, dy, dz]))) {
-                        area.push([dx, dy, dz]);
-                    }
-                }
-            }
-        }
-        set_offsets(entity, "Area", &area);
     }
+    scan_area(host, pos, entity, own.area, due);
     let limit = own.capacity;
     let mut energy = number(entity, "energy").min(limit);
     let area = offsets(entity, "Area");

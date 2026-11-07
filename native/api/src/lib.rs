@@ -1,3 +1,4 @@
+mod budget;
 mod presentation;
 mod contracts;
 mod freight;
@@ -239,6 +240,7 @@ impl Hooks for Factory {
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
         defense::advance_clock();
+        budget::begin_tick(defense::clock());
         workforce::spawn::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
@@ -435,6 +437,8 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Herd" => key!("Herd"),
         "Info" => key!("Info"),
         "Level" => key!("Level"),
+        "LogisticsFilter" => key!("LogisticsFilter"),
+        "LogisticsPaused" => key!("LogisticsPaused"),
         "Links" => key!("Links"),
         "LocalSmog" => key!("LocalSmog"),
         "ManualDirection" => key!("ManualDirection"),
@@ -443,10 +447,10 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "MeterItems" => key!("MeterItems"),
         "MeterReady" => key!("MeterReady"),
         "Swing" => key!("Swing"),
-        "LogisticsPaused" => key!("LogisticsPaused"),
-        "LogisticsFilter" => key!("LogisticsFilter"),
         "RoutingPriority" => key!("RoutingPriority"),
         "AreaScan" => key!("AreaScan"),
+        "TopologyPending" => key!("TopologyPending"),
+        "TerrainPending" => key!("TerrainPending"),
         "AreaFound" => key!("AreaFound"),
         "Posts" => key!("Posts"),
         "Queue" => key!("Queue"),
@@ -468,6 +472,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Organize" => key!("Organize"),
         "PathReady" => key!("PathReady"),
         "PathSig" => key!("PathSig"),
+        "PreferRight" => key!("PreferRight"),
         "Pick" => key!("Pick"),
         "Port" => key!("Port"),
         "Produced" => key!("Produced"),
