@@ -12,7 +12,9 @@ simulação. Nenhuma mudança de arte, receita, custo de energia ou geração.
 - Agricultura: 384 unidades; colheitadeira e semeadora reservam 12 por tentativa,
   lâmpada oito e silvicultora 24. São pesos de trabalho por lote, não uma contagem
   exata de consultas nem milissegundos de CPU.
-- Reconstrução das conexões de postes: duas reconstruções por tick.
+- Reconstrução das conexões de postes: 4.096 etapas por tick, em lotes de até 64
+  por atendimento. Coleta, ranking e preparação dos fios agora são retomáveis;
+  detalhes em [REDES-INCREMENTAIS.md](REDES-INCREMENTAIS.md).
 - Coordenação: quatro admissões de atualização da rede/fila de capatazes por tick.
   A cadência interna de reconstrução da fila permanece; nem toda admissão produz
   uma fila nova.
@@ -101,13 +103,11 @@ o executável completo nem abrir o jogo nesta entrega.
   disponíveis durante o adiamento da varredura.
 
 É um orçamento global **das tarefas conectadas**, por quantidade de trabalho,
-não um temporizador capaz de interromper qualquer código Rust. Uma reconstrução
-individual de fios ainda depende da densidade de postes; uma admissão de fila
-ainda depende do tamanho do recorte. Elas agora têm frequência global limitada,
-mas seu processamento interno não foi transformado em uma corrotina.
+não um temporizador capaz de interromper qualquer código Rust. A reconstrução
+individual de fios agora avança por etapas; uma admissão de fila dos capatazes
+ainda depende do tamanho do recorte e não foi dividida internamente.
 
 Callbacks básicos por bloco, renderização, IA/pathfinding do Minecraft, difusão
 da poluição e geração de terreno não estão sujeitos a estas cotas. Não há garantia
 de FPS ou de que qualquer fábrica, de qualquer tamanho, caiba em um tick. O próximo
-passo de proteção para redes extremas é dividir também a reconstrução individual
-dos fios, seguido de medição de tempo de tick no Horizon real.
+passo é medir o tempo de tick no Horizon real e o custo das demais tarefas.
