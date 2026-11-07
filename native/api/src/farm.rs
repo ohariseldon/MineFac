@@ -81,6 +81,7 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         set_number(entity, "Status", 5);
         return;
     }
+    if !budget::request(budget::Lane::Terrain, host.dimension(), pos, 12) { return; }
     let mut cursor = number(entity, "Scan");
     let mut acted = false;
     for _ in 0..SCANS_PER_TICK {

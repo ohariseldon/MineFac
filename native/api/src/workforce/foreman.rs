@@ -265,6 +265,7 @@ fn queue_outputs(block: &str) -> Vec<usize> {
 pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
     let dimension = host.dimension();
     register_desk(dimension, pos, now);
+    if !budget::request(budget::Lane::Planning, dimension, pos, 1) { return; }
     let Some(network) = scan_named(host, pos, entity, "Area", RADIUS, SCAN, MAX_NETWORK, &networked, true) else { return };
     let round = (number(entity, "Organize") + 1) % ORGANIZE_EVERY;
     set_number(entity, "Organize", round);
