@@ -3,6 +3,10 @@
   "icon": "veio:generator",
   "items": [
     "veio:generator",
+    "veio:biomass_generator",
+    "veio:water_wheel",
+    "veio:wind_turbine",
+    "veio:steam_engine",
     "veio:geothermal",
     "veio:solar",
     "veio:battery",

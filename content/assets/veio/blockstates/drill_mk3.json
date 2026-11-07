@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/drill_mk3"
+    },
+    "facing=west": {
+      "model": "veio:block/drill_mk3",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/drill_mk3",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/drill_mk3",
+      "y": 270
+    }
+  }
+}

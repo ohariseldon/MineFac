@@ -28,7 +28,9 @@
   },
   "rewards": {
     "recipes": [
-      "veio:fast_belt"
+      "veio:fast_belt",
+      "veio:kitchen",
+      "veio:biomass_generator"
     ]
   }
 }

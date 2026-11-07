@@ -1,0 +1,31 @@
+{
+  "parent": "veio:contracts",
+  "display": {
+    "icon": {
+      "id": "veio:pantry"
+    },
+    "title": {
+      "translate": "advancement.veio.market.title"
+    },
+    "description": {
+      "translate": "advancement.veio.market.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:pantry"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0"
+    ]
+  ]
+}

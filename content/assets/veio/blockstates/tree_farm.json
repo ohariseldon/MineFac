@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/tree_farm"
+    },
+    "facing=west": {
+      "model": "veio:block/tree_farm",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/tree_farm",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/tree_farm",
+      "y": 270
+    }
+  }
+}

@@ -30,7 +30,8 @@
     "recipes": [
       "veio:drill",
       "veio:belt",
-      "veio:press"
+      "veio:press",
+      "veio:mill"
     ]
   }
 }

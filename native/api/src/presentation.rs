@@ -16,9 +16,9 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 14] = [
+pub(super) const STATUS_KEYS: [&str; 18] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
-    "crops", "watch", "tier", "damaged",
+    "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
@@ -30,7 +30,7 @@ pub(super) fn screen(block: &str) -> Option<NativeScreen> {
         SOLAR | BATTERY | TESLA => vec![None],
         HUB => vec![Some([26.0, 45.0]), Some([62.0, 45.0]), Some([116.0, 45.0]), Some([152.0, 45.0])],
         HARVESTER => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0])],
-        _ => return None,
+        _ => production::screen_slots(block)?,
     };
     Some(NativeScreen {
         width: WIDTH,
@@ -134,17 +134,17 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     let positions = &machine_slots;
     if first_output > 0 && first_output < positions.len() && event.block != HARVESTER {
         arrow(host, event, positions[first_output - 1][0] + 16.0, positions[first_output][0], progress);
-    } else if !matches!(event.block, BATTERY | CABLE | SOLAR) {
+    } else if !matches!(event.block, BATTERY | CABLE | SOLAR) && production::shows_progress(event.block) {
         gauge(host, event, [10.0, 75.0], 174.0, progress, 0xff3fae3f);
     }
     let limit = read(5).max(capacity(event.block)).max(1);
     let energy = read(3).clamp(0, limit);
-    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) {
+    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) && event.block != production::PANTRY {
         let energy_text = Text::tr("veio.energy", &[&energy, &limit]).plain();
         host.text(event.batch, &energy_text, [x + 10.0, y + 85.0], INK, false);
         gauge(host, event, [10.0, 95.0], 174.0, energy as f32 / limit as f32, 0xffe0a020);
     }
-    let lines: Vec<String> = match event.block {
+    let lines: Vec<String> = if let Some(lines) = production::panel_lines(event.block, event.data) { lines } else { match event.block {
         MERGER => vec![Text::tr("veio.hint.merger", &[]).plain()],
         GENERATOR => vec![Text::tr("veio.hint.fuel", &[]).plain()],
         GEOTHERMAL => vec![Text::tr("veio.hint.lava", &[]).plain()],
@@ -164,7 +164,7 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
             Text::tr("veio.metric.rate", &[&read(6)]).plain(),
             Text::tr("veio.metric.utilization", &[&read(7)]).plain(),
         ],
-    };
+    } };
     let mut lines = lines;
     // Terceira linha: módulo, emissão e integridade, só quando houver algo a dizer.
     let mut extra = Vec::new();
@@ -206,7 +206,10 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
     entity.data = vec![number(entity, "Status"), progress, duration,
         number(entity, "energy"), number(entity, "Burn"), capacity(&entity.id), number(entity, "Rate"),
         number(entity, "Utilization"), number(entity, "ContractStage"), number(entity, "Total"),
-        number(entity, "Damage"), number(entity, "Module"), number(entity, "LocalSmog")];
+        number(entity, "Damage"), number(entity, "Module"),
+        // Slot 12: poluição local na torre Tesla; nas máquinas de produção, a leitura própria
+        // (pureza, FE/t gerado, animais, aldeões).
+        if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") }];
     debug_assert_eq!(entity.data.len(), DATA_SLOTS);
     let stack = logistics::display_stack(entity);
     let name = stack.map_or("", |stack| stack.item.as_ref()).to_owned();
@@ -220,8 +223,8 @@ pub(super) fn lamp_color(status: usize) -> u32 {
     match status {
         1 => 0x5dff5d,
         3 => 0xffaa00,
-        2 | 10 | 11 => 0xffe14d,
-        4..=6 | 12 | 13 => 0xff4040,
+        2 | 10 | 11 | 16 | 17 => 0xffe14d,
+        4..=6 | 12..=15 => 0xff4040,
         7 => 0xd9b84a,
         8 => 0x55aaff,
         9 => 0xcc66ff,
@@ -234,8 +237,8 @@ pub(super) fn text_color(status: usize) -> u32 {
     match status {
         1 => 0x1e7a1e,
         3 => 0x9a5a00,
-        2 | 10 | 11 => 0x6b5a00,
-        4..=6 | 12 | 13 => 0xaa1f1f,
+        2 | 10 | 11 | 16 | 17 => 0x6b5a00,
+        4..=6 | 12..=15 => 0xaa1f1f,
         7 => 0x7a6420,
         8 => 0x1f4fa8,
         9 => 0x7a2fa0,
@@ -252,6 +255,9 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     if power::tier(event.block).is_some() {
         return power::draw(host, event);
     }
+    if production::draw(host, event) {
+        return;
+    }
     let status = (number(event.entity, "Status") as usize).min(STATUS_KEYS.len() - 1);
     let lamp = lamp_color(status);
     let (lamp_from, lamp_to, lamps) = match event.block {
@@ -259,6 +265,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
         SOLAR => ([7.0, 4.0, 0.2], [9.0, 5.0, 0.8], 1),
         BELT | FAST_BELT | SPLITTER | MERGER => ([0.2, 4.0, 7.0], [1.8, 4.4, 9.0], 1),
         TESLA => ([7.0, 3.5, 1.6], [9.0, 4.5, 2.0], 4),
+        production::GROW_LAMP => ([7.0, 13.0, 3.6], [9.0, 14.0, 4.0], 4),
         _ => ([7.0, 11.0, 0.6], [9.0, 12.5, 1.0], 4),
     };
     for side in 0..lamps {
@@ -319,7 +326,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
                 event.draw.pop();
             }
             event.draw.still();
-        } else if status == 1 && needs_power(event.block) {
+        } else if status == 1 && needs_power(event.block) && event.block != production::GROW_LAMP {
             // Rotor no teto: gira enquanto a máquina trabalha.
             event.draw.spin([0.0, 1.0, 0.0], [0.5, 1.0, 0.5], 6.0, 0.0);
             host.draw_cube(event.draw, [4.0, 16.0, 7.25], [12.0, 16.5, 8.75], FLAT, 0x9a9a9a);

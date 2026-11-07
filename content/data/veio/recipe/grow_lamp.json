@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:circuit",
+    "minecraft:glowstone",
+    "veio:steel_plate"
+  ],
+  "result": {
+    "id": "veio:grow_lamp",
+    "count": 1
+  }
+}

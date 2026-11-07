@@ -34,7 +34,7 @@ pub(super) fn emission(block: &str) -> f32 {
         DRILL | CRUSHER | GEOTHERMAL => 2.0,
         DRILL_MK2 | ALLOY => 4.0,
         PRESS | ASSEMBLER | CUTTER | INTEGRATOR | ELECTRONICS => 1.0,
-        _ => 0.0,
+        _ => production::emission(block),
     }
 }
 
@@ -87,7 +87,7 @@ pub(super) fn emit(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, 
         return;
     }
     let working = match entity.id.as_str() {
-        GENERATOR | GEOTHERMAL => number(entity, "Burn") > 0,
+        id if production::burns(id) => number(entity, "Burn") > 0,
         _ => number(entity, "Status") == 1,
     };
     let ticks = number(entity, "SmogTicks") + i32::from(working);

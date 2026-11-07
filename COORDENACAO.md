@@ -22,6 +22,27 @@ O transporte consulta `output_slots` para descobrir quais slots uma máquina per
 
 A energia compartilhada permanece em `energy` no NBT, em FE, respeitando `capacity`. Produtores adicionam energia; redes transferem; consumidores descontam seu custo. Não mude nomes de campos, capacidades ou regras de acesso sem explicar o impacto nos saves e na rede. Mantenha os IDs existentes.
 
+## Produção (agente da nuvem)
+
+- `native/api/src/production/`: extração (`extraction.rs`), motor de receitas (`mod.rs`), geração (`generation.rs`), semeadora e lâmpada (`crops.rs`), silvicultura (`forestry.rs`), rancho e registro de animais e aldeões (`ranch.rs`), armazém do povoado (`pantry.rs`) e testes (`tests.rs`).
+- `native/api/src/production/data.rs` é gerado por `tools/build_production.py` a partir de `tools/production.json` (receitas, jazidas, combustíveis e valores de comida). Não edite o `.rs` à mão.
+- `native/api/src/farm.rs`: colheitadeira, agora também cana, cacto, bambu, abóbora e melancia.
+
+Interfaces que a produção oferece ao resto do código (todas em `production/mod.rs`): `is_machine`, `consumes`, `generates`, `burns`, `layout`, `outputs`, `accepts`, `tick`, `emission`, `accepts_modules`, `screen_slots`, `roles`, `panel_lines`, `shows_progress`, `draw`.
+
+Pontos de contato em arquivos compartilhados, mantidos pequenos:
+
+- `lib.rs`: as listas `is_factory_block`, `needs_power`, `is_power_block`, `layout`, `output_slots` e `accepts` consultam a produção no fim. As receitas e jazidas saíram de `tick_factory`, que agora chama `production::tick`. Em `tick_power`, só o trecho de geração virou `production::generation::produce`; a distribuição está intacta. O estado sem energia vem de `production::generation::empty_status`.
+- `lib.rs`: nova função `is_generator(block)`, usada por `power.rs` no lugar de `matches!(… GENERATOR | SOLAR | GEOTHERMAL)`. Novas fontes de energia entram por ela; a rede só precisa puxar de quem ela aponta.
+- `lib.rs`: `entity_tick_pre` também chama `production::ranch::observe`; `block_entity_render_bounding_box` também chama `production::generation::bounds`; `visual_signature` inclui o NBT `Info`.
+- `presentation.rs` e `tutorial.rs`: consultam `production::screen_slots`, `panel_lines`, `roles` e `draw` antes das regras antigas. Os estados 14 a 17 (`water`, `wind`, `seeds`, `animals`) foram acrescentados ao fim de `STATUS_KEYS`. O slot de dados 12 mostra o NBT `Info` das máquinas de produção (pureza, FE/t gerado, animais, aldeões); na torre Tesla segue sendo a poluição local.
+- `pollution.rs`: máquinas novas emitem por `production::emission`; quem queima combustível polui só enquanto há queima (`production::burns`).
+- `upgrades.rs`: módulos valem também em `production::accepts_modules`.
+- `defense.rs`: nova `clock()` só de leitura, usada pelo registro de animais.
+- `tools/build_tutorial.py`: uma página por máquina, índices por categoria e páginas de receitas geradas do `production.json`. As entradas de logística foram preservadas na categoria "Logística".
+
+Itens que entram e saem das máquinas novas seguem `layout`/`outputs`, então esteiras, divisores e futuros braços funcionam sem casos especiais.
+
 ## Próximas entregas locais de logística
 
 Esta lista é planejamento; não representa funcionalidades já implementadas.

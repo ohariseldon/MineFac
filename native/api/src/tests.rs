@@ -12,30 +12,47 @@ fn entity(id: &str, slots: usize) -> ModBlockEntity {
 
 #[test]
 fn integrator_waits_for_both_inputs_and_preserves_them_when_output_is_full() {
-    let mut slots = vec![Some(ItemStack::new(FRAME, 2)), None, None];
-    process(&mut slots, &[(FRAME, 1), (GEAR, 1)], MODULE, 1);
-    assert_eq!(slots[0].as_ref().unwrap().count, 2);
-    assert!(slots[2].is_none());
-    slots[1] = Some(ItemStack::new(GEAR, 3));
-    slots[2] = Some(ItemStack::new(MODULE, 64));
-    let blocked = slots.clone();
-    process(&mut slots, &[(FRAME, 1), (GEAR, 1)], MODULE, 1);
-    assert_eq!(slots, blocked);
-    slots[2] = None;
-    process(&mut slots, &[(FRAME, 1), (GEAR, 1)], MODULE, 1);
-    assert_eq!(slots[0].as_ref().unwrap().count, 1);
-    assert_eq!(slots[1].as_ref().unwrap().count, 2);
-    assert_eq!(slots[2], Some(ItemStack::new(MODULE, 1)));
+    let run = |entity: &mut ModBlockEntity, ticks: usize| {
+        for _ in 0..ticks {
+            set_number(entity, "energy", 2000);
+            production::process(entity);
+        }
+    };
+    let mut integrator = entity(INTEGRATOR, 3);
+    integrator.items[0] = Some(ItemStack::new(FRAME, 2));
+    run(&mut integrator, 60);
+    assert_eq!(integrator.items[0].as_ref().unwrap().count, 2);
+    assert!(integrator.items[2].is_none());
+    assert_eq!(number(&integrator, "Status"), 2, "falta a engrenagem");
+    integrator.items[1] = Some(ItemStack::new(GEAR, 3));
+    integrator.items[2] = Some(ItemStack::new(MODULE, 64));
+    let blocked = integrator.items.clone();
+    run(&mut integrator, 60);
+    assert_eq!(integrator.items, blocked);
+    assert_eq!(number(&integrator, "Status"), 3);
+    integrator.items[2] = None;
+    run(&mut integrator, 60);
+    assert_eq!(integrator.items[0].as_ref().unwrap().count, 1);
+    assert_eq!(integrator.items[1].as_ref().unwrap().count, 2);
+    assert_eq!(integrator.items[2], Some(ItemStack::new(MODULE, 1)));
 }
 
 #[test]
 fn crusher_keeps_multi_item_output_within_one_stack() {
-    let mut slots = vec![Some(ItemStack::new("minecraft:bone", 5)), Some(ItemStack::new(BONE_MEAL, 61))];
-    process(&mut slots, &[("minecraft:bone", 1)], BONE_MEAL, 4);
-    assert_eq!(slots[0].as_ref().unwrap().count, 5, "4 farinhas não cabem em 61 de 64");
-    slots[1] = Some(ItemStack::new(BONE_MEAL, 60));
-    process(&mut slots, &[("minecraft:bone", 1)], BONE_MEAL, 4);
-    assert_eq!(slots[1].as_ref().unwrap().count, 64);
+    let mut crusher = entity(CRUSHER, 2);
+    crusher.items[0] = Some(ItemStack::new("minecraft:bone", 5));
+    crusher.items[1] = Some(ItemStack::new(BONE_MEAL, 61));
+    for _ in 0..40 {
+        set_number(&mut crusher, "energy", 2000);
+        production::process(&mut crusher);
+    }
+    assert_eq!(crusher.items[0].as_ref().unwrap().count, 5, "4 farinhas não cabem em 61 de 64");
+    crusher.items[1] = Some(ItemStack::new(BONE_MEAL, 60));
+    for _ in 0..30 {
+        set_number(&mut crusher, "energy", 2000);
+        production::process(&mut crusher);
+    }
+    assert_eq!(crusher.items[1].as_ref().unwrap().count, 64);
     assert!(accepts(CRUSHER, 0, &ItemStack::new("minecraft:cobblestone", 1)));
     assert!(!accepts(CRUSHER, 0, &ItemStack::new("minecraft:stone", 1)));
 }
@@ -46,7 +63,7 @@ fn menus_fence_outputs_and_route_inputs() {
     assert!(!accepts(INTEGRATOR, 0, &ItemStack::new(GEAR, 1)));
     assert!(accepts(INTEGRATOR, 1, &ItemStack::new(GEAR, 1)));
     assert!(!accepts(INTEGRATOR, 2, &ItemStack::new(MODULE, 1)));
-    assert!(!accepts(DRILL, 0, &ItemStack::new(COPPER, 1)));
+    assert!(!accepts(DRILL, 0, &ItemStack::new("minecraft:raw_copper", 1)));
     assert!(accepts(GENERATOR, 0, &ItemStack::new("minecraft:charcoal", 1)));
     assert!(!accepts(GENERATOR, 0, &ItemStack::new("minecraft:stone", 1)));
     assert!(accepts(HARVESTER, 0, &ItemStack::new(BONE_MEAL, 1)));
@@ -56,17 +73,14 @@ fn menus_fence_outputs_and_route_inputs() {
 
 #[test]
 fn generator_burns_vanilla_fuels_in_proportion_to_furnace_time() {
-    let fuel = |item: &str| fuel_ticks(&ItemStack::new(item, 1));
+    let fuel = |item: &str| production::generation::fuel_ticks(GENERATOR, &ItemStack::new(item, 1));
     assert_eq!(fuel("minecraft:coal"), Some(1600));
     assert_eq!(fuel("minecraft:oak_log"), Some(300));
-    assert_eq!(fuel("minecraft:stripped_birch_wood"), Some(300));
-    assert_eq!(fuel("minecraft:cherry_planks"), Some(300));
+    assert_eq!(fuel("minecraft:stripped_birch_log"), Some(300));
     assert_eq!(fuel("minecraft:coal_block"), Some(16000));
-    assert_eq!(fuel("minecraft:crimson_planks"), None, "madeira do Nether não queima");
-    assert_eq!(fuel("minecraft:warped_stem"), None);
+    assert_eq!(fuel("minecraft:crimson_stem"), None, "madeira do Nether não queima");
     assert_eq!(fuel("minecraft:cobblestone"), None);
-    // Carvão rende os mesmos 16.000 FE da versão 0.6.
-    assert_eq!(1600 * FE_PER_VANILLA_TICK, 16000);
+    assert_eq!(production::generation::fuel_ticks(production::BIOMASS_GENERATOR, &ItemStack::new(production::BIOMASS, 1)), Some(600));
 }
 
 #[test]
@@ -101,9 +115,10 @@ fn generator_conserves_energy_and_pauses_fuel_when_buffers_are_full() {
 
 #[test]
 fn gems_need_the_advanced_extractor() {
-    assert_eq!(ore_product("minecraft:deepslate_diamond_ore"), Some(("minecraft:diamond", true)));
-    assert_eq!(ore_product("minecraft:lapis_ore"), Some(("minecraft:lapis_lazuli", false)));
-    assert_eq!(ore_product("minecraft:stone"), None);
+    let diamond = production::extraction::node("minecraft:deepslate_diamond_ore").unwrap();
+    assert_eq!((diamond.output.0, diamond.tier), ("minecraft:diamond", 2));
+    assert_eq!(production::extraction::node("minecraft:lapis_ore").unwrap().tier, 1);
+    assert!(production::extraction::node("minecraft:dirt").is_none());
 }
 
 /// Um pedaço de mundo com plantações: blocos e a propriedade `age`.

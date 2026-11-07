@@ -28,7 +28,10 @@ def main():
     def visit(node):
         if isinstance(node, dict):
             if "translate" in node:
-                assert all(node["translate"] in lang for lang in languages), node["translate"]
+                key = node["translate"]
+                # Nomes vanilla vêm das traduções do próprio jogo.
+                vanilla = key.startswith(("item.minecraft.", "block.minecraft."))
+                assert vanilla or all(key in lang for lang in languages), key
             if node.get("click_event", {}).get("action") == "change_page":
                 assert 1 <= node["click_event"]["page"] <= len(pages), node["click_event"]
             for child in node.values():
@@ -79,6 +82,11 @@ def check_assets(languages):
     slots = int(re.search(r"const DATA_SLOTS: usize = (\d+);", source).group(1))
     for menu in (data / "horizon/menu").glob("*.json"):
         assert read_json(menu)["data_slots"] == slots, f"{menu.name}: data_slots deve ser {slots}, como no painel"
+    production = json.loads((ROOT / "tools/production.json").read_text(encoding="utf-8"))
+    generated = (ROOT / "native/api/src/production/data.rs").read_text(encoding="utf-8")
+    counts = (generated.count("    Recipe {"), generated.count("    Node {"))
+    assert counts == (len(production["recipes"]), len(production["nodes"])), \
+        "data.rs desatualizado: rode python tools/build_production.py"
     unlocked = set()
     for advancement in (data / "advancement").rglob("*.json"):
         unlocked.update(read_json(advancement).get("rewards", {}).get("recipes", []))

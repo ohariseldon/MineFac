@@ -410,6 +410,45 @@ pub mod mod_api {
         fn sneaking(&self) -> bool {
             unimplemented!("sneaking")
         }
+        fn edit_blocks(&mut self, dimension: &str, edit: &NativeBlockEdit) -> Result<u64, String> {
+            unimplemented!("edit_blocks")
+        }
+        fn entity_nbt(&mut self, entity: EntityRef) -> Option<Compound> {
+            unimplemented!("entity_nbt")
+        }
+        fn entity_merge_nbt(&mut self, entity: EntityRef, nbt: Compound) -> bool {
+            unimplemented!("entity_merge_nbt")
+        }
+        fn item_entities(&self, dimension: &str, min: [f64; 3], max: [f64; 3]) -> Vec<NativeItemEntity> {
+            unimplemented!("item_entities")
+        }
+        fn set_item_entity(&mut self, dimension: &str, id: u32, stack: ItemStack) -> bool {
+            unimplemented!("set_item_entity")
+        }
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub struct NativeBlockRun {
+        pub x: i32,
+        pub z: i32,
+        pub y: i32,
+        pub height: u32,
+        pub surface: Option<NativeHeightmap>,
+        pub block: u32,
+        pub only: Option<u32>,
+    }
+    #[derive(Clone, Debug, PartialEq, Default)]
+    pub struct NativeBlockEdit {
+        pub palette: Vec<String>,
+        pub filters: Vec<String>,
+        pub runs: Vec<NativeBlockRun>,
+    }
+    #[derive(Clone, Debug)]
+    pub struct NativeItemEntity {
+        pub id: u32,
+        pub position: [f64; 3],
+        pub stack: ItemStack,
+        pub pickup_delay: u32,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]

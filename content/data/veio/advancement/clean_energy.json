@@ -1,0 +1,42 @@
+{
+  "parent": "veio:power",
+  "display": {
+    "icon": {
+      "id": "veio:water_wheel"
+    },
+    "title": {
+      "translate": "advancement.veio.clean_energy.title"
+    },
+    "description": {
+      "translate": "advancement.veio.clean_energy.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:water_wheel"
+          }
+        ]
+      }
+    },
+    "get_1": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:wind_turbine"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0",
+      "get_1"
+    ]
+  ]
+}

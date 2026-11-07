@@ -31,13 +31,13 @@ mod preview {
     #[test]
     #[ignore]
     fn preview() {
-        let screens: [(&str, [i32; 10]); 6] = [
-            ("veio:press", [1, 18, 30, 1500, 0, 2000, 24, 87, 0, 120]),
-            ("veio:alloy_furnace", [2, 0, 120, 600, 0, 2000, 6, 40, 0, 12]),
-            ("veio:harvester", [1, 120, 243, 1300, 0, 2000, 14, 60, 0, 52]),
-            ("veio:tesla", [11, 0, 40, 18000, 0, 20000, 0, 0, 0, 7]),
-            ("veio:generator", [1, 210, 400, 1200, 210, 2000, 0, 0, 0, 0]),
-            ("veio:contract_hub", [2, 0, 1, 0, 0, 2000, 0, 0, 4, 3]),
+        let screens: [(&str, [i32; 13]); 6] = [
+            ("veio:kitchen", [1, 30, 80, 1500, 0, 2000, 12, 70, 0, 40, 0, 2, 0]),
+            ("veio:drill_mk3", [1, 4, 5, 1800, 0, 2000, 240, 98, 0, 900, 0, 1, 3]),
+            ("veio:ranch", [1, 0, 1, 900, 0, 2000, 3, 40, 0, 12, 0, 0, 7]),
+            ("veio:pantry", [1, 42, 60, 0, 0, 2000, 0, 0, 0, 5, 0, 0, 4]),
+            ("veio:wind_turbine", [1, 0, 1, 1200, 0, 2000, 0, 0, 0, 0, 0, 0, 16]),
+            ("veio:steam_engine", [14, 0, 266, 0, 0, 2000, 0, 0, 0, 0, 30, 0, 0]),
         ];
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../target/screens.jsonl");
         let mut out = std::fs::File::create(&path).unwrap();

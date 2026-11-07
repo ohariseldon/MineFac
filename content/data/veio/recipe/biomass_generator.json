@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:furnace",
+    "veio:gear",
+    "veio:copper_plate",
+    "veio:copper_plate"
+  ],
+  "result": {
+    "id": "veio:biomass_generator",
+    "count": 1
+  }
+}

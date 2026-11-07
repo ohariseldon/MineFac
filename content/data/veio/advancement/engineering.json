@@ -28,7 +28,8 @@
       "veio:wrench",
       "veio:crusher",
       "veio:alloy_furnace",
-      "veio:repair_kit"
+      "veio:repair_kit",
+      "veio:wind_turbine"
     ]
   }
 }

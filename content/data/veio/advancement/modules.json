@@ -28,7 +28,8 @@
   },
   "rewards": {
     "recipes": [
-      "veio:harvester"
+      "veio:harvester",
+      "veio:planter"
     ]
   }
 }

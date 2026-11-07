@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/water_wheel"
+    },
+    "facing=west": {
+      "model": "veio:block/water_wheel",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/water_wheel",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/water_wheel",
+      "y": 270
+    }
+  }
+}

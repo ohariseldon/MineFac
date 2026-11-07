@@ -1,4 +1,4 @@
-# Veio 0.8.1
+# Veio 0.9
 
 A divisão de trabalho entre produção na nuvem e logística local está em [COORDENACAO.md](COORDENACAO.md). Esta branch acrescenta o [primeiro lote de logística](LOGISTICA.md) à base 0.8 recebida nos ZIPs: unificador com duas entradas laterais, saída frontal e alternância entre linhas. A versão 0.8.1 passou na compilação completa pelo launcher com Horizon `66f3981`, na conferência de conteúdo e em 23 testes offline. O teste dentro do jogo fica com o usuário.
 
@@ -123,6 +123,42 @@ O progresso é salvo na central colocada. Sua desmontagem inicia uma central nov
 As máquinas de produção passam a mostrar itens produzidos por minuto e porcentagem de tempo ativo. A primeira leitura usa a amostra parcial; depois as leituras fecham a cada minuto de simulação com a máquina carregada. Falta de materiais, falta de energia, saída cheia e suspensão por redstone contam como tempo de espera. Uma linha equilibrada pode esperar ao atingir o estoque desejado.
 
 Um sinal de redstone pausa a produção e preserva o progresso. A saída continua escoando produtos. Alavancas permitem comando manual; comparadores e circuitos de redstone podem transformar estoque em sinal de parada. O painel informa a suspensão.
+
+## Produção (0.9)
+
+**Jazidas e pureza.** A extratora lê o quadrado 3x3 logo abaixo dela. Com 1 ou 2 blocos da mesma jazida, ela é impura e trabalha na metade da velocidade. De 3 a 6 blocos é normal. De 7 a 9 é pura e trabalha no dobro. Além dos minérios, há jazidas infinitas de pedra, ardósia, areia, areia vermelha, cascalho, argila, netherrack, areia das almas, pedra-negra e pedra do End. Obsidiana e ametista exigem a Mk.II; detritos ancestrais, a Mk.III. A Mk.III é quatro vezes mais rápida que a Mk.I.
+
+**Receitas.** Todas as receitas de máquina estão em `tools/production.json` e aparecem no guia.
+
+| Máquina | Faz |
+|---|---|
+| Fornalha elétrica | Funde e assa como a fornalha vanilla, 2,5x mais rápido: minérios, vidro, pedra, tijolo, carvão vegetal, carnes e batata |
+| Moinho | Trigo vira farinha, cana vira o dobro de açúcar, plantas e troncos viram biomassa |
+| Cozinha industrial | Pão, biscoito, bolo, torta de abóbora, cenoura e maçã douradas, sopa de beterraba e ensopado de cogumelo |
+| Alternativas | Silício de areia no forno de ligas (sem ir ao Nether), chapas a partir de lingotes, circuito com redstone |
+
+**Energia.**
+
+| Fonte | Energia | Condição |
+|---|---|---|
+| Roda d'água | 6 FE/t por lado com água corrente, até 24 | Não polui |
+| Cata-vento | Até 32 FE/t, cresce com a altura (y 110 dá 16) e com chuva | Precisa de céu aberto; não polui |
+| Gerador a biomassa | 30 FE/t | Queima biomassa, plantas e feno |
+| Caldeira a vapor | 120 FE/t e o dobro de energia por combustível | Precisa de água parada ao lado |
+
+**Lavoura.**
+- A colheitadeira também corta cana, cacto e bambu acima da base, e colhe abóbora e melancia presas a um caule.
+- A **semeadora** planta sementes, cenouras, batatas, beterrabas, caules e fungo do Nether em solo vazio.
+- A **lâmpada de cultivo** adianta um estágio de uma planta a cada 4 ticks, com 50 FE cada, e ilumina a lavoura.
+- A **silvicultora** planta mudas numa grade com passo de 3 blocos, derruba árvores crescidas, replanta a mesma espécie e entrega troncos, gravetos e maçãs.
+
+**Rancho.** Com ração, reproduz vacas, ovelhas, porcos, galinhas, coelhos e cabras até 10 adultos por espécie. Também:
+- tosquia ovelhas;
+- ordenha com baldes vazios;
+- recolhe ovos, penas, couro e carnes do chão;
+- abate o excedente acima do teto. Animais com nome nunca são abatidos.
+
+**Armazém do povoado.** Compra comida e paga uma esmeralda a cada 60 pontos de valor. Comida pronta vale mais que o ingrediente cru: um pão vale 6, contra 1 de cada trigo. Com 3 ou mais aldeões a até 48 blocos, o armazém paga 50% a mais. Construir a vila perto da fábrica compensa.
 
 ## Gargalos e melhorias
 

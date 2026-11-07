@@ -3,6 +3,15 @@
   "icon": "veio:harvester",
   "items": [
     "veio:harvester",
+    "veio:planter",
+    "veio:grow_lamp",
+    "veio:tree_farm",
+    "veio:ranch",
+    "veio:mill",
+    "veio:kitchen",
+    "veio:pantry",
+    "veio:flour",
+    "veio:biomass",
     "veio:tesla",
     "veio:repair_kit",
     "minecraft:bone_meal"

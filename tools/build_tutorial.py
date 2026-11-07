@@ -19,6 +19,10 @@ vanilla={
  "bucket":("Balde","Bucket"),"book":("Livro","Book"),"paper":("Papel","Paper"),
  "iron_hoe":("Enxada de ferro","Iron hoe"),"composter":("Composteira","Composter"),
  "lightning_rod":("Para-raios","Lightning rod"),"copper_block":("Bloco de cobre","Block of copper"),
+ "grindstone":("Rebolo","Grindstone"),"smoker":("Defumador","Smoker"),"barrel":("Barril","Barrel"),
+ "dispenser":("Ejetor","Dispenser"),"white_wool":("Lã branca","White wool"),"iron_axe":("Machado de ferro","Iron axe"),
+ "shears":("Tesoura","Shears"),"hay_block":("Fardo de feno","Hay bale"),"glowstone":("Pedra luminosa","Glowstone"),
+ "diamond":("Diamante","Diamond"),
 }
 def item_name(item,code):
  ns,name=item.split(":")
@@ -96,6 +100,45 @@ help={
  "steel_pole":(
  "Fios de até 16 blocos.\nAlimenta num raio de 3.\n400 FE/t por fio: resolve\no gargalo da madeira.",
  "Wires up to 16 blocks.\nPowers within 3 blocks.\n400 FE/t per wire: fixes\nthe wooden pole bottleneck."),
+ "drill_mk3":(
+ "Quatro vezes a Mk.I.\nÚnica que extrai detritos\nancestrais. Gasta 30 FE/t.\nVeios puros dobram o ritmo.",
+ "Four times the Mk.I.\nThe only one that mines\nancient debris. 30 FE/t.\nPure veins double the pace."),
+ "electric_furnace":(
+ "Funde minérios, areia,\npedra, argila e troncos.\nAssa carnes e batatas.\n2,5x a fornalha comum.",
+ "Smelts ores, sand, stone,\nclay and logs.\nCooks meat and potatoes.\n2.5x a regular furnace."),
+ "mill":(
+ "Trigo vira farinha.\nCana vira 2 de açúcar.\nPlantas e troncos viram\nbiomassa.",
+ "Wheat becomes flour.\nSugar cane gives 2 sugar.\nPlants and logs become\nbiomass."),
+ "kitchen":(
+ "Dois ingredientes.\nPão, biscoito, bolo, torta,\nsopa e cenoura dourada.\nVeja as receitas no guia.",
+ "Two ingredients.\nBread, cookies, cake, pie,\nsoup and golden carrots.\nSee recipes in the guide."),
+ "pantry":(
+ "Compra comida da fábrica\ne paga esmeraldas.\nComida pronta vale mais;\num povoado dá +50%.",
+ "Buys the factory's food\nand pays in emeralds.\nCooked food is worth more;\na village adds 50%."),
+ "biomass_generator":(
+ "Queima biomassa, plantas\ne feno. 30 FE/t.\nLigue à lavoura e ao\nmoinho: energia renovável.",
+ "Burns biomass, plants\nand hay. 30 FE/t.\nFeed it from farms and\nthe mill: renewable power."),
+ "steam_engine":(
+ "Precisa de água parada ao\nlado. 120 FE/t e o dobro\nde energia por combustível.\nUsa os do gerador.",
+ "Needs still water beside\nit. 120 FE/t and double\nthe energy per fuel.\nTakes generator fuels."),
+ "water_wheel":(
+ "Encoste em água corrente.\n6 FE/t por lado com fluxo,\naté 24. Não polui e não\nusa combustível.",
+ "Place by flowing water.\n6 FE/t per side with flow,\nup to 24. No pollution,\nno fuel."),
+ "wind_turbine":(
+ "Céu aberto acima.\nRende mais no alto: y 110\ndá 16 FE/t. Chuva e\ntempestade ajudam.",
+ "Needs open sky.\nStronger up high: y 110\ngives 16 FE/t. Rain and\nstorms help."),
+ "grow_lamp":(
+ "Instale acima da lavoura.\nAdianta um estágio a cada\n4 ticks, 50 FE cada.\nTambém ilumina a noite.",
+ "Place above your crops.\nAdvances a stage every\n4 ticks, 50 FE each.\nAlso lights the night."),
+ "planter":(
+ "Sementes no slot. Planta\nem terra arada vazia num\n9x9. Fungo do Nether vai\nem areia das almas.",
+ "Seeds in the slot. Plants\non empty farmland in 9x9.\nNether wart goes on\nsoul sand."),
+ "tree_farm":(
+ "Mudas no slot. Planta a\ncada 3 blocos em volta e\ncorta árvores crescidas.\nReplanta a mesma espécie.",
+ "Saplings in the slot.\nPlants every 3 blocks and\nfells grown trees.\nReplants the same kind."),
+ "ranch":(
+ "Ração: reproduz até 10 por\nespécie. Tosquia ovelhas,\nordenha com baldes e\nrecolhe ovos e penas.",
+ "Feed: breeds up to 10 per\nkind. Shears sheep, milks\nwith buckets and picks up\neggs and feathers."),
  "wrench":(
  "Selecione na barra rápida.\nBotão direito gira máquinas\ne esteiras.\nConserva estoques e progresso.",
  "Select it in the hotbar.\nRight-click to turn machines\nand conveyors.\nKeeps contents and progress."),
@@ -109,9 +152,15 @@ label("veio.tutorial.merger.description", "Conecte as entradas A e B pelas later
 help["merger"] = (
  "Une as duas entradas laterais.\nSaída única pela frente.\nAlterna A e B, até 5 itens/s.\nSem energia elétrica.\nUse a chave para girar.",
  "Merges the two side inputs.\nSingle outlet at the front.\nAlternates A/B, up to 5/s.\nNeeds no electricity.\nTurn with the wrench.")
-order=["generator","cable","drill","belt","press","assembler","wrench","cutter","integrator",
- "contract_hub","splitter","fast_belt","alloy_furnace","crusher","electronics","geothermal",
- "solar","battery","drill_mk2","harvester","tesla","pole","steel_pole","merger"]
+categories=[
+ ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
+ ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
+ ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
+ ("Logística","Logistics",["belt","fast_belt","splitter","merger","cable","pole","steel_pole","wrench"]),
+ ("Projetos e defesa","Projects and defense",["contract_hub","tesla"]),
+]
+order=[name for _,_,names in categories for name in names]
+assert set(order)==set(help), set(order)^set(help)
 for name,(pt,en) in help.items():
  label(f"veio.help.{name}",pt,en)
 
@@ -131,6 +180,16 @@ slothelp={
  "belt":["Itens guardados neste trecho da esteira."],
  "fast_belt":["Itens guardados neste trecho da esteira."],
  "splitter":["Itens aguardando as saídas laterais."],
+ "drill_mk3":["Produto extraído. Retire ou ligue uma esteira."],
+ "electric_furnace":["Coloque o que deseja fundir ou assar.","Recolha o produto."],
+ "mill":["Trigo, cana, plantas ou troncos.","Recolha farinha, açúcar ou biomassa."],
+ "kitchen":["Ingrediente principal: farinha, abóbora...","Segundo ingrediente: cacau, açúcar, ouro...","Recolha a comida pronta."],
+ "pantry":["Coloque comida para vender.","Recolha as esmeraldas."],
+ "biomass_generator":["Biomassa, plantas ou feno."],
+ "steam_engine":["Carvão, madeira ou outro combustível."],
+ "planter":["Sementes, cenouras, batatas ou fungo do Nether."],
+ "tree_farm":["Mudas de carvalho, bétula, pinheiro, selva, acácia ou cerejeira.","Produto.","Produto.","Produto."],
+ "ranch":["Trigo, cenoura, batata, beterraba ou sementes.","Baldes vazios para ordenhar.","Produto.","Produto.","Produto."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
 }
 slot_en={
@@ -149,6 +208,16 @@ slot_en={
  "belt":["Items held by this conveyor segment."],
  "fast_belt":["Items held by this conveyor segment."],
  "splitter":["Items waiting for the side outputs."],
+ "drill_mk3":["Extracted product. Take it or connect a belt."],
+ "electric_furnace":["Insert what you want to smelt or cook.","Collect the product."],
+ "mill":["Wheat, sugar cane, plants or logs.","Collect flour, sugar or biomass."],
+ "kitchen":["Main ingredient: flour, pumpkin...","Second ingredient: cocoa, sugar, gold...","Collect the finished food."],
+ "pantry":["Insert food to sell.","Collect the emeralds."],
+ "biomass_generator":["Biomass, plants or hay."],
+ "steam_engine":["Coal, wood or another fuel."],
+ "planter":["Seeds, carrots, potatoes or nether wart."],
+ "tree_farm":["Oak, birch, spruce, jungle, acacia or cherry saplings.","Product.","Product.","Product."],
+ "ranch":["Wheat, carrots, potatoes, beetroot or seeds.","Empty buckets for milking.","Product.","Product.","Product."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
 for block,lines in slothelp.items():
@@ -184,6 +253,8 @@ components={
  "circuit":("Duas fiações e um silício no montador de circuitos.","Two copper wiring and one silicon in a circuit assembler."),
 }
 components.update({
+ "flour":("Trigo no moinho. Vai para pão, biscoito e bolo na cozinha.","Wheat in the mill. Used for bread, cookies and cake."),
+ "biomass":("Plantas ou troncos no moinho. Combustível do gerador a biomassa.","Plants or logs in the mill. Fuel for the biomass generator."),
  "repair_kit":("Botão direito numa máquina danificada: recupera 50% da integridade.","Right-click a damaged machine: restores 50% integrity."),
  "speed_module":("Botão direito numa máquina: 40% mais rápida, mais energia e poluição.","Right-click a machine: 40% faster, more power and pollution."),
  "efficiency_module":("Botão direito numa máquina: 40% menos energia e metade da poluição.","Right-click a machine: 40% less power and half the pollution."),
@@ -251,56 +322,114 @@ world=page(
 page(
  "Comércio\n\nDepois dos quatro projetos, a central exporta sem fim: 4 circuitos e 4 chapas de aço viram 4 esmeraldas e frascos de experiência.\n\nUse as esmeraldas com os aldeões da sua vila.",
  "Trade\n\nAfter the four projects, the hub keeps exporting: 4 circuits and 4 steel plates become 4 emeralds and experience bottles.\n\nSpend emeralds with your villagers.")
-index_pages=[]
-for group in range(5):
- index_pages.append(len(pages)+1);pages.append(None)
+production=page(
+ "Escada de produção\n\nCada melhoria resolve um gargalo e revela o próximo: jazida, energia, fio, poluição.\n\nVeios grandes rendem mais: a extratora lê o 3x3 abaixo dela. Jazida pura dobra a velocidade.",
+ "Production ladder\n\nEach upgrade fixes one bottleneck and reveals the next: vein, power, wire, pollution.\n\nBig veins pay off: the extractor reads the 3x3 below. A pure vein doubles its speed.")
+page(
+ "Energia\n\nRoda d'água e cata-vento: grátis, fracos e limpos.\nGerador e biomassa: médios.\nVapor: forte, precisa de água.\nGeotérmico e solar: escalam.\n\nAcumuladores seguram a noite.",
+ "Power\n\nWater wheel and wind: free, weak and clean.\nGenerator and biomass: medium.\nSteam: strong, needs water.\nGeothermal and solar: scale up.\n\nBatteries carry the night.")
+food=page(
+ "Comida e povoado\n\nTrigo > moinho > farinha > cozinha > pão.\nCarnes do rancho > fornalha elétrica.\n\nO armazém paga esmeraldas pela comida, mais por comida pronta, e 50% a mais com aldeões perto.",
+ "Food and village\n\nWheat > mill > flour > kitchen > bread.\nRanch meat > electric furnace.\n\nThe pantry pays emeralds for food, more for cooked food, and 50% more with villagers near.")
+category_pages=[]
+for _ in categories:
+ category_pages.append(len(pages)+1);pages.append(None)
+recipe_index=len(pages)+1;pages.append(None)
 references={}
 for name in order:
+ kind="item" if name=="wrench" else "block"
  title={code:item_name("veio:"+name,code) for code in langs}
  usage_key=f"veio.guide.use.{name}"
- for code in langs:
-  langs[code][usage_key]=title[code]+"\n\n"+help[name][0 if code=="pt_br" else 1]
- use_index=len(pages)+1; recipe_index=use_index+1
- pages.append({"text":"","extra":[{"translate":usage_key},{"text":"\n\n"},
-  {"translate":"veio.guide.recipe_link","color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":recipe_index}},
-  {"text":" | "},{"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}}]})
  recipe=read(f"{D}/recipe/{name}.json")
  ingredients=Counter(recipe["ingredients"])
+ made=recipe["result"].get("count",1)
  recipe_key=f"veio.guide.make.{name}"
+ craft_key=f"veio.guide.craft.{name}"
  for code in langs:
-  lines=[("Fabricar " if code=="pt_br" else "Craft ")+title[code],""]
+  pt=code=="pt_br"
+  langs[code][usage_key]=help[name][0 if pt else 1]
+  lines=[("Fabricar " if pt else "Craft ")+title[code],""]
   lines += [f"{count} x {item_name(item,code)}" for item,count in ingredients.items()]
-  lines += ["",("Resultado: " if code=="pt_br" else "Makes: ")+str(recipe["result"].get("count",1))]
+  lines += ["",("Resultado: " if pt else "Makes: ")+str(made)]
   langs[code][recipe_key]="\n".join(lines)
- pages.append({"text":"","extra":[{"translate":recipe_key},{"text":"\n\n"},
+  parts=", ".join(f"{count} {item_name(item,code)}" for item,count in ingredients.items())
+  langs[code][craft_key]=("Fabricar: " if pt else "Craft: ")+parts+(f" ({made})" if made>1 else "")
+ references[name]=len(pages)+1
+ pages.append({"text":"","extra":[{"translate":f"{kind}.veio.{name}","bold":True},{"text":"\n"},
+  {"translate":usage_key},{"text":"\n"},{"translate":craft_key,"color":"dark_gray"},{"text":"\n"},
   {"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}}]})
- references[name]=use_index
-for g,index in enumerate(index_pages):
- members=order[g*5:g*5+5]
- key=f"veio.guide.index.{g}"
- label(key,"Máquinas e ferramentas\n\n","Machines and tools\n\n")
- extra=[{"translate":key}]
+for g,(pt,en,members) in enumerate(categories):
+ key=f"veio.guide.category.{g}"
+ label(key,pt,en)
+ extra=[{"translate":key,"bold":True},{"text":"\n"}]
  for name in members:
-  kind="block" if name!="wrench" else "item"
+  kind="item" if name=="wrench" else "block"
   extra.extend([{"translate":f"{kind}.veio.{name}","color":"dark_blue","underlined":True,
                  "click_event":{"action":"change_page","page":references[name]}},{"text":"\n"}])
- extra.extend([{"text":"\n"},{"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}}])
- pages[index-1]={"text":"","extra":extra}
+ extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
+ pages[category_pages[g]-1]={"text":"","extra":extra}
+
+# Receitas das máquinas, geradas de tools/production.json. Os nomes vanilla usam as chaves do
+# próprio jogo, então aparecem no idioma do jogador.
+production_data=json.loads((root.parent/"tools/production.json").read_text(encoding="utf-8"))
+BLOCK_ITEMS={"sand","red_sand","gravel","cobblestone","stone","smooth_stone","cobbled_deepslate","deepslate",
+ "glass","netherrack","cactus","wet_sponge","sponge","ancient_debris","clay","pumpkin","brown_mushroom",
+ "red_mushroom","sugar_cane","kelp","cake","coal_block","dried_kelp_block","hay_block","bamboo"}
+label("veio.guide.group.logs","Qualquer tronco","Any log")
+label("veio.guide.group.plants","Plantas, folhas ou mudas","Plants, leaves or saplings")
+label("veio.guide.group.coal","Carvão","Coal")
+label("veio.guide.recipes","Receitas das máquinas","Machine recipes")
+label("veio.guide.alt","alternativa","alternate")
+def name_component(item):
+ if item.startswith("@"):
+  return {"translate":f"veio.guide.group.{item[1:]}"}
+ ns,path=item.split(":")
+ if ns=="veio":
+  return {"translate":f"item.veio.{path}"}
+ return {"translate":f"{'block' if path in BLOCK_ITEMS else 'item'}.minecraft.{path}"}
+machines=[]
+for recipe in production_data["recipes"]:
+ if recipe["machine"] not in machines: machines.append(recipe["machine"])
+recipe_pages={}
+PER_PAGE=4
+for machine in machines:
+ entries=[r for r in production_data["recipes"] if r["machine"]==machine]
+ for start in range(0,len(entries),PER_PAGE):
+  chunk=entries[start:start+PER_PAGE]
+  extra=[{"translate":f"block.veio.{machine}","bold":True}]
+  if len(entries)>PER_PAGE:
+   extra.append({"text":f" {start//PER_PAGE+1}/{(len(entries)+PER_PAGE-1)//PER_PAGE}"})
+  extra.append({"text":"\n"})
+  for r in chunk:
+   extra.append({"text":"\n"})
+   for i,(item,count) in enumerate(r["in"]):
+    if i: extra.append({"text":" + "})
+    extra.extend([{"text":f"{count} "},name_component(item)])
+   extra.extend([{"text":" > ","color":"dark_gray"},{"text":f"{r['out'][1]} "},name_component(r["out"][0])])
+   if r.get("alt"):
+    extra.extend([{"text":" ("},{"translate":"veio.guide.alt","italic":True},{"text":")"}])
+  extra.extend([{"text":"\n"},{"translate":"veio.guide.recipes","color":"dark_blue","click_event":{"action":"change_page","page":recipe_index}}])
+  recipe_pages.setdefault(machine,len(pages)+1)
+  pages.append({"text":"","extra":extra})
+extra=[{"translate":"veio.guide.recipes","bold":True},{"text":"\n"}]
+for machine in machines:
+ extra.extend([{"translate":f"block.veio.{machine}","color":"dark_blue","underlined":True,
+  "click_event":{"action":"change_page","page":recipe_pages[machine]}},{"text":"\n"}])
+extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
+pages[recipe_index-1]={"text":"","extra":extra}
+# O sumário cabe numa página: 12 entradas. "Resolver falhas" e "Fábrica e mundo" seguem na leitura.
 links=[
- ("Começar","Start here",intro),("Materiais","Gather materials",materials),
- ("Montar a linha","Build the line",layout),("Resolver falhas","Troubleshoot",troubleshoot),
- ("Máquinas A","Machines A",index_pages[0]),("Máquinas B","Machines B",index_pages[1]),
- ("Máquinas C","Machines C",index_pages[2]),("Máquinas D","Machines D",index_pages[3]),
- ("Máquinas E","Machines E",index_pages[4]),("Fábrica e mundo","Factory and world",world),
+ ("Começar","Start here",intro),
+ ("Escada de produção","Production ladder",production),("Comida e povoado","Food and village",food),
  ("Postes e fios","Poles and wires",wiring),("Poluição e defesa","Pollution and defense",smog),
  ("Módulos","Modules",upgrades),
-]
+]+[(pt,en,category_pages[g]) for g,(pt,en,_) in enumerate(categories)]+[("Receitas","Recipes",recipe_index)]
 extra=[{"translate":"veio.guide.title","bold":True},{"text":"\n"}]
 for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.8.1"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.9"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",

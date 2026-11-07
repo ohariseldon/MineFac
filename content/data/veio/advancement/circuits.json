@@ -29,7 +29,8 @@
       "veio:drill_mk2",
       "veio:tesla",
       "veio:speed_module",
-      "veio:efficiency_module"
+      "veio:efficiency_module",
+      "veio:grow_lamp"
     ]
   }
 }

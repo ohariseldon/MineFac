@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:smoker",
+    "veio:gear",
+    "veio:copper_plate",
+    "veio:copper_plate"
+  ],
+  "result": {
+    "id": "veio:kitchen",
+    "count": 1
+  }
+}

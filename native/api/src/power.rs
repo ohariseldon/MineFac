@@ -202,7 +202,7 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             let stored = number(other, "energy").min(capacity);
             let flow = if needs_power(&other.id) {
                 energy.min(own.rate).min(capacity - stored).max(0)
-            } else if matches!(other.id.as_str(), GENERATOR | SOLAR | GEOTHERMAL) {
+            } else if is_generator(&other.id) {
                 balance(energy, limit, stored, capacity, own.rate).min(0)
             } else if matches!(other.id.as_str(), CABLE | BATTERY) {
                 balance(energy, limit, stored, capacity, own.rate)

@@ -14,7 +14,8 @@
   },
   "rewards": {
     "recipes": [
-      "veio:contract_hub"
+      "veio:contract_hub",
+      "veio:pantry"
     ]
   }
 }

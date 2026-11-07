@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:dispenser",
+    "veio:gear",
+    "veio:iron_plate"
+  ],
+  "result": {
+    "id": "veio:planter",
+    "count": 1
+  }
+}

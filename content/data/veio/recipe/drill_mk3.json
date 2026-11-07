@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:drill_mk2",
+    "veio:module",
+    "veio:module",
+    "veio:circuit",
+    "veio:circuit",
+    "minecraft:diamond",
+    "minecraft:diamond"
+  ],
+  "result": {
+    "id": "veio:drill_mk3",
+    "count": 1
+  }
+}

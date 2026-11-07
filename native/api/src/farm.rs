@@ -75,6 +75,7 @@ pub(super) fn store(slots: &mut [Option<ItemStack>], item: &str, count: u32) -> 
 }
 
 pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
+    production::crops::flush(host, pos, entity, time);
     let mut cursor = number(entity, "Scan");
     let mut acted = false;
     for _ in 0..SCANS_PER_TICK {
@@ -110,6 +111,12 @@ enum Visit {
 
 fn visit(host: &mut dyn Host, target: [i32; 3], entity: &mut ModBlockEntity) -> Visit {
     let block = host.block(target);
+    if let Some(item) = production::crops::tall(&block) {
+        return visit_tall(host, target, entity, item);
+    }
+    if let Some(fruit) = production::crops::fruit(&block) {
+        return visit_fruit(host, target, entity, fruit);
+    }
     let Some(crop) = crop(&block) else { return Visit::Skip };
     let Some(age) = host.block_property(target, "age").and_then(|age| age.parse::<u8>().ok()) else {
         return Visit::Skip;
@@ -154,6 +161,55 @@ fn visit(host: &mut dyn Host, target: [i32; 3], entity: &mut ModBlockEntity) -> 
     let at = center(target);
     host.send_particles(&ParticleOptions::simple(ParticleType::HappyVillager), None, at, [0.3, 0.2, 0.3], 0.0, 8);
     host.play_sound("minecraft:item.bone_meal.use", at, 4, 0.5, 1.0);
+    Visit::Acted
+}
+
+/// Corta cana, cacto ou bambu acima da base. Só a base é visitada: ela tem outro bloco embaixo.
+fn visit_tall(host: &mut dyn Host, [x, y, z]: [i32; 3], entity: &mut ModBlockEntity, item: &'static str) -> Visit {
+    let plant = host.block([x, y, z]);
+    if host.block([x, y - 1, z]) == plant || production::crops::is_queued(entity, [x, y + 1, z]) {
+        return Visit::Skip;
+    }
+    let height = (1..16).take_while(|dy| host.block([x, y + dy, z]) == plant).count() as u32;
+    if height == 0 {
+        return Visit::Skip;
+    }
+    collect(host, [x, y + 1, z], height as i32, entity, &[(item, height)])
+}
+
+/// Colhe abóbora ou melancia presa a um caule; o caule continua produzindo.
+fn visit_fruit(host: &mut dyn Host, [x, y, z]: [i32; 3], entity: &mut ModBlockEntity,
+    (item, count, stem): (&'static str, u32, &'static str)) -> Visit
+{
+    let attached = [[x + 1, y, z], [x - 1, y, z], [x, y, z + 1], [x, y, z - 1]].into_iter()
+        .any(|side| host.block(side) == stem);
+    if !attached || production::crops::is_queued(entity, [x, y, z]) {
+        return Visit::Skip;
+    }
+    collect(host, [x, y, z], 1, entity, &[(item, count)])
+}
+
+/// Guarda os produtos e agenda a remoção dos blocos colhidos.
+fn collect(host: &mut dyn Host, from: [i32; 3], height: i32, entity: &mut ModBlockEntity, drops: &[(&'static str, u32)]) -> Visit {
+    if production::crops::queue_full(entity) {
+        return Visit::Wait(1);
+    }
+    if !drops_fit(&entity.items[1..4], drops) {
+        return Visit::Wait(3);
+    }
+    let energy = number(entity, "energy");
+    if energy < HARVEST_COST {
+        return Visit::Wait(5);
+    }
+    for &(item, count) in drops {
+        store(&mut entity.items[1..4], item, count);
+    }
+    set_number(entity, "energy", energy - HARVEST_COST);
+    set_number(entity, "Produced", number(entity, "Produced").saturating_add(1));
+    set_number(entity, "Total", number(entity, "Total").saturating_add(1));
+    pollution::absorb(host.dimension(), from, ABSORB_PER_HARVEST);
+    production::crops::enqueue(entity, from, height, production::crops::AIR);
+    host.play_sound("minecraft:block.crop.break", center(from), 4, 0.6, 1.0);
     Visit::Acted
 }
 

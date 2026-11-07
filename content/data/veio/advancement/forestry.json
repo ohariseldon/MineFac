@@ -1,0 +1,31 @@
+{
+  "parent": "veio:steel",
+  "display": {
+    "icon": {
+      "id": "veio:tree_farm"
+    },
+    "title": {
+      "translate": "advancement.veio.forestry.title"
+    },
+    "description": {
+      "translate": "advancement.veio.forestry.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:tree_farm"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0"
+    ]
+  ]
+}

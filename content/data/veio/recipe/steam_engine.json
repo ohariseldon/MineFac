@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:gear",
+    "veio:gear",
+    "minecraft:furnace",
+    "minecraft:bucket"
+  ],
+  "result": {
+    "id": "veio:steam_engine",
+    "count": 1
+  }
+}

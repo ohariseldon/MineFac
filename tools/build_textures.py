@@ -216,15 +216,109 @@ MOTIFS = {
         "........",
     ],
 }
+MOTIFS.update({
+    "electric_furnace": [
+        "eeeeeeee",
+        "e..y...e",
+        "e.yy...e",
+        "eyyyyy.e",
+        "e...yy.e",
+        "e...y..e",
+        "eoOOOOoe",
+        "eeeeeeee",
+    ],
+    "mill": [
+        "W.cccc.W",
+        ".cbbbbc.",
+        "cbbeebbc",
+        "cbeWWebc",
+        "cbeWWebc",
+        "cbbeebbc",
+        ".cbbbbc.",
+        "W.cccc.W",
+    ],
+    "kitchen": [
+        "........",
+        "..nnnn..",
+        ".nWWWWn.",
+        "nWVWVWWn",
+        "nWWWWWWn",
+        ".NNNNNN.",
+        "eeeeeeee",
+        ".e....e.",
+    ],
+    "biomass_generator": [
+        "...LL...",
+        "..LKKL..",
+        ".LKLLKL.",
+        "..LKKL..",
+        "...KK...",
+        "eR.R.R.e",
+        "eoOooOoe",
+        "eeeeeeee",
+    ],
+    "steam_engine": [
+        ".w.w.w..",
+        "w.w.w.w.",
+        "eeeeeeee",
+        "ebbbbbbe",
+        "ecccccce",
+        "e.eeee.e",
+        "eRoOoRoe",
+        "eeeeeeee",
+    ],
+    "planter": [
+        "...ee...",
+        "..eYYe..",
+        "...ee...",
+        "...V....",
+        ".....V..",
+        "..V.....",
+        "NnNnNnNn",
+        "nNnNnNnN",
+    ],
+    "tree_farm": [
+        "..LLLL..",
+        ".LKLLKL.",
+        "LLKLLKLL",
+        ".LLKKLL.",
+        "...nn...",
+        "...nn..b",
+        "...nn.bb",
+        "NNNNNNNN",
+    ],
+    "ranch": [
+        "........",
+        ".k.kk.k.",
+        ".wkwwkw.",
+        ".wwkwww.",
+        ".kwwwkk.",
+        "..pppp..",
+        "..pkkp..",
+        "........",
+    ],
+    "pantry": [
+        "nnnnnnnn",
+        "nWWnooRn",
+        "nWWnRoon",
+        "nnnnnnnn",
+        "nqqnGHGn",
+        "nqqnHGHn",
+        "nnnnnnnn",
+        "........",
+    ],
+})
 MACHINE_TIER = {
     "drill": "copper", "press": "copper", "assembler": "copper", "generator": "copper",
     "contract_hub": "copper", "cutter": "iron", "integrator": "iron", "crusher": "iron",
     "alloy_furnace": "iron", "harvester": "iron", "electronics": "steel", "geothermal": "steel",
     "drill_mk2": "steel",
+    "drill_mk3": "steel", "electric_furnace": "copper", "mill": "copper", "kitchen": "iron", "pantry": "copper",
+    "biomass_generator": "copper", "steam_engine": "steel", "planter": "iron", "tree_farm": "iron", "ranch": "copper",
 }
 
 def front(name):
-    motif = MOTIFS["drill" if name == "drill_mk2" else name]
+    motif = MOTIFS["drill" if name in ("drill_mk2", "drill_mk3") else name]
     rows = [list(row) for row in FRONT]
     for y, line in enumerate(motif):
         for x, char in enumerate(line):
@@ -232,6 +326,8 @@ def front(name):
                 rows[5 + y][4 + x] = char
     if name == "drill_mk2":  # Faixa azul: a versão avançada.
         rows[3][3:13] = list("uuuuuuuuuu")
+    if name == "drill_mk3":  # Faixa dourada: a última extratora.
+        rows[3][3:13] = list("yYyYyYyYyY")
     return render(["".join(r) for r in rows], salt=len(name), mapping=TIERS[MACHINE_TIER[name]])
 
 TOP = [
@@ -547,6 +643,44 @@ def module_card(light):
     ]
     return render(rows, salt=len(light), mapping={"1": light[0], "2": light[1]})
 
+FLOUR = [
+    "................",
+    "................",
+    "......nnnn......",
+    ".....n....n.....",
+    "......nnnn......",
+    ".....bwwwwb.....",
+    "....bwwwwwwb....",
+    "...bwwwWwwwwb...",
+    "...bwwwwwwwwb...",
+    "...bwwwwwWwwb...",
+    "...bwwwwwwwwb...",
+    "...cbwwwwwwbc...",
+    "....ccbbbbcc....",
+    "................",
+    "................",
+    "................",
+]
+
+BIOMASS = [
+    "................",
+    "................",
+    "................",
+    "...KKKKKKKKKK...",
+    "..KLLKLLLKLLLK..",
+    "..KLVLLKLLVLLK..",
+    "..KLLLKLLLLKLK..",
+    "..KKLLLLVLLLLK..",
+    "..KLLKLLLLKLLK..",
+    "..KLLLLVLLLLKK..",
+    "..KVLLKLLLKLLK..",
+    "...KKKKKKKKKK...",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
 def material():
     """Textura clara e uniforme que o bloco tinge nas luzes e peças animadas."""
     rows = []
@@ -600,6 +734,8 @@ def main():
     out["item/speed_module"] = module_card("uv")
     out["item/efficiency_module"] = module_card("HG")
     out["item/productivity_module"] = module_card("oO")
+    out["item/flour"] = render(FLOUR, salt=12)
+    out["item/biomass"] = render(BIOMASS, salt=13)
     for name, pixels in out.items():
         write_png(ROOT / f"{name}.png", pixels)
     print(f"{len(out)} texturas 16x16 em {ROOT.relative_to(ROOT.parents[3])}")

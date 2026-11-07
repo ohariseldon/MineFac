@@ -4,6 +4,7 @@
   "items": [
     "veio:drill",
     "veio:drill_mk2",
+    "veio:drill_mk3",
     "veio:press",
     "veio:assembler",
     "veio:cutter",
@@ -11,6 +12,7 @@
     "veio:crusher",
     "veio:alloy_furnace",
     "veio:electronics",
+    "veio:electric_furnace",
     "veio:contract_hub",
     "veio:wrench",
     "veio:copper_plate",

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:module",
+    "minecraft:shears",
+    "minecraft:hay_block",
+    "veio:steel_plate"
+  ],
+  "result": {
+    "id": "veio:ranch",
+    "count": 1
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:gear",
+    "veio:gear",
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "minecraft:white_wool",
+    "minecraft:white_wool",
+    "minecraft:white_wool"
+  ],
+  "result": {
+    "id": "veio:wind_turbine",
+    "count": 1
+  }
+}

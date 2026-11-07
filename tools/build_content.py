@@ -48,6 +48,20 @@ BLOCKS = {
     "merger": ("merger", None, 2, [], 1.5),
     "cable": ("cable", None, 0, [], 1.0),
     "pole": ("pole", None, 0, [], 1.0),
+    # Produção (0.9): extração, processamento, energia, lavoura e comida.
+    "drill_mk3": ("machine", "steel", 1, [0], 2.5),
+    "electric_furnace": ("machine", "copper", 2, [1], 1.5),
+    "mill": ("machine", "copper", 2, [1], 1.5),
+    "kitchen": ("machine", "iron", 3, [2], 1.5),
+    "pantry": ("machine", "wood", 2, [1], 1.5),
+    "biomass_generator": ("generator", "copper", 1, [], 1.5),
+    "steam_engine": ("generator", "steel", 1, [], 2.0),
+    "water_wheel": ("water_wheel", None, 1, [0], 1.5),
+    "wind_turbine": ("wind_turbine", None, 1, [0], 2.0),
+    "grow_lamp": ("grow_lamp", None, 1, [0], 1.0),
+    "planter": ("machine", "iron", 1, [], 1.5),
+    "tree_farm": ("machine", "iron", 4, [1, 2, 3], 2.0),
+    "ranch": ("machine", "wood", 5, [2, 3, 4], 1.5),
     "steel_pole": ("steel_pole", None, 0, [], 2.0),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
@@ -70,17 +84,21 @@ ITEMS = {
     "speed_module": ("minecraft:echo_shard", 16),
     "efficiency_module": ("minecraft:echo_shard", 16),
     "productivity_module": ("minecraft:echo_shard", 16),
+    "flour": ("minecraft:sugar", 64),
+    "biomass": ("minecraft:wheat", 64),
 }
 
 TABS = {
-    "industry": ("veio:press", ["drill", "drill_mk2", "press", "assembler", "cutter", "integrator",
-        "crusher", "alloy_furnace", "electronics", "contract_hub", "wrench", "copper_plate", "iron_plate",
+    "industry": ("veio:press", ["drill", "drill_mk2", "drill_mk3", "press", "assembler", "cutter", "integrator",
+        "crusher", "alloy_furnace", "electronics", "electric_furnace", "contract_hub", "wrench", "copper_plate", "iron_plate",
         "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module", "speed_module",
         "efficiency_module", "productivity_module"]),
-    "power": ("veio:generator", ["generator", "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
+    "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
+        "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
         "minecraft:coal", "minecraft:lava_bucket"]),
     "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "wrench"]),
-    "world": ("veio:harvester", ["harvester", "tesla", "repair_kit", "minecraft:bone_meal"]),
+    "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "mill", "kitchen",
+        "pantry", "flour", "biomass", "tesla", "repair_kit", "minecraft:bone_meal"]),
 }
 
 FACES = ("down", "up", "north", "south", "west", "east")
@@ -194,6 +212,30 @@ def model(kind, name, tier):
             box([12.5, 27.5, 7.5], [13.5, 29, 8.5], "#glass", uv={"side": [0, 0, 1, 1.5], "up": [0, 0, 1, 1]}),
             box([7.5, 29, 7.5], [8.5, 31, 8.5], "#glass", uv={"side": [0, 0, 1, 2], "up": [0, 0, 1, 1]}),
         ]
+    if kind == "water_wheel":
+        # As pás são desenhadas pelo bloco e giram com a água; o modelo traz o suporte e o eixo.
+        textures = {"post": "minecraft:block/stripped_oak_log", "axle": "minecraft:block/oak_log",
+                    "particle": "minecraft:block/oak_planks"}
+        return textures, [
+            box([0, 0, 6], [2, 10, 10], "#post"),
+            box([14, 0, 6], [16, 10, 10], "#post"),
+            box([2, 7, 7], [14, 9, 9], "#axle"),
+        ]
+    if kind == "wind_turbine":
+        textures = {"mast": "minecraft:block/iron_block", "body": "minecraft:block/polished_deepslate",
+                    "hub": "minecraft:block/copper_block", "particle": "minecraft:block/iron_block"}
+        return textures, [
+            box([7, 0, 7], [9, 24, 9], "#mast", uv={"side": [7, 0, 9, 16], "up": [7, 7, 9, 9]}),
+            box([6, 24, 5], [10, 30, 10], "#body", uv={"side": [3, 5, 8, 11], "up": [6, 5, 10, 10]}),
+            box([7, 27, 10], [9, 29, 11], "#hub", uv={"side": [0, 0, 2, 2], "up": [0, 0, 2, 1]}),
+        ]
+    if kind == "grow_lamp":
+        textures = {"post": "minecraft:block/iron_block", "glow": "minecraft:block/glowstone",
+                    "top": TIER_TOP["steel"], "particle": "minecraft:block/glowstone"}
+        return textures, [
+            box([7, 0, 7], [9, 12, 9], "#post"),
+            box([4, 12, 4], [12, 15, 12], {"up": "#top", "down": "#glow", "*": "#glow"}),
+        ]
     if kind == "cable":
         textures = {"wire": "minecraft:block/black_wool", "joint": "minecraft:block/copper_block",
                     "particle": "minecraft:block/black_wool"}
@@ -232,6 +274,9 @@ SHAPES = {
     "battery": [[0.0625, 0, 0.0625, 0.9375, 1.025, 0.9375]],
     "pole": [[0.375, 0, 0.375, 0.625, 1.5, 0.625]],
     "steel_pole": [[0.3125, 0, 0.3125, 0.6875, 1.5, 0.6875]],
+    "water_wheel": [[0, 0, 0, 1, 1, 1]],
+    "wind_turbine": [[0.4375, 0, 0.4375, 0.5625, 1.5, 0.5625]],
+    "grow_lamp": [[0.25, 0, 0.25, 0.75, 0.9375, 0.75]],
 }
 
 def write(path, value):
@@ -252,8 +297,11 @@ def main():
         # Sem menu, um template sem tela própria: a terracota esmaltada só gira com o jogador.
         template = "minecraft:black_glazed_terracotta" if kind in ("cable", "pole", "steel_pole") else "minecraft:stonecutter"
         shape = {"default": SHAPES[kind]}
+        properties = {"hardness": hardness, "occludes": False}
+        if kind == "grow_lamp":
+            properties["light"] = 15  # A lâmpada ilumina a lavoura à noite.
         write(D / f"horizon/block/{name}.json", {"template": template, "item": True,
-            "properties": {"hardness": hardness, "occludes": False},
+            "properties": properties,
             "shapes": shape, "collision_shapes": shape})
         if slots:
             write(D / f"horizon/menu/{name}.json", {"slots": slots, "data_slots": 13, "results": results})

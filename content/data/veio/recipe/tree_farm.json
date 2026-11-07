@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:module",
+    "minecraft:iron_axe",
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "minecraft:dispenser"
+  ],
+  "result": {
+    "id": "veio:tree_farm",
+    "count": 1
+  }
+}

@@ -1,6 +1,6 @@
 # Trabalhar no MineFac / Veio
 
-Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.8.0**, com energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
+Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.9.0**, com energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
 
 ## Começar na nuvem
 
@@ -30,6 +30,7 @@ A divisão entre produção na nuvem e logística local está em [COORDENACAO.md
 - `native/api/src/tutorial.rs`: ajuda no inventário, rótulos e dicas dos painéis.
 - `content/data/veio`: registros, receitas, avanços e tabelas de saque.
 - `tools/build_content.py`: lista única de blocos e itens. Gera modelos, blockstates, registros, menus, saques, abas criativas e a tag de picareta.
+- `tools/production.json` e `tools/build_production.py`: receitas, jazidas, combustíveis e valores de comida. O script gera `native/api/src/production/data.rs`; rode-o ao mudar o JSON. O guia lê o mesmo JSON.
 - `tools/build_textures.py`: pixel art 16x16 desenhada em texto. Gera todos os PNG do Veio.
 - `content/assets/veio`: traduções `pt_br` e `en_us` e os arquivos gerados acima.
 - `tools/build_tutorial.py`: fonte das páginas do guia, ajuda traduzida e roteiro inicial. Rode este script ao alterar o tutorial e inclua os JSON gerados no mesmo commit.

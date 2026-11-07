@@ -27,7 +27,8 @@
     "recipes": [
       "veio:generator",
       "veio:cable",
-      "veio:pole"
+      "veio:pole",
+      "veio:water_wheel"
     ]
   }
 }

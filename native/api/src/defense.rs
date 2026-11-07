@@ -34,6 +34,11 @@ pub(super) fn hostile(kind: &str) -> bool {
         | "minecraft:creaking" | "minecraft:hoglin" | "veio:raider")
 }
 
+/// Relógio do mod: conta os ticks do jogo (janela e servidor) para envelhecer registros.
+pub(super) fn clock() -> u64 {
+    CLOCK.load(Ordering::Relaxed)
+}
+
 pub(super) fn advance_clock() {
     CLOCK.fetch_add(1, Ordering::Relaxed);
 }

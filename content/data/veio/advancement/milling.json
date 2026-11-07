@@ -1,0 +1,31 @@
+{
+  "parent": "veio:root",
+  "display": {
+    "icon": {
+      "id": "veio:flour"
+    },
+    "title": {
+      "translate": "advancement.veio.milling.title"
+    },
+    "description": {
+      "translate": "advancement.veio.milling.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:flour"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0"
+    ]
+  ]
+}

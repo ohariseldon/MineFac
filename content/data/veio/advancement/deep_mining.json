@@ -1,0 +1,31 @@
+{
+  "parent": "veio:upgrades",
+  "display": {
+    "icon": {
+      "id": "veio:drill_mk3"
+    },
+    "title": {
+      "translate": "advancement.veio.deep_mining.title"
+    },
+    "description": {
+      "translate": "advancement.veio.deep_mining.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:drill_mk3"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0"
+    ]
+  ]
+}

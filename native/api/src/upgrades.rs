@@ -44,6 +44,7 @@ pub(super) fn index(item: &str) -> Option<i32> {
 /// Máquinas de receita e extratoras aceitam módulos.
 pub(super) fn supports(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS)
+        || production::accepts_modules(block)
 }
 
 pub(super) fn apply(duration: i32, draw: i32, effect: Effect) -> (i32, i32) {

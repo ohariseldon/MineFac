@@ -28,7 +28,8 @@
   },
   "rewards": {
     "recipes": [
-      "veio:assembler"
+      "veio:assembler",
+      "veio:electric_furnace"
     ]
   }
 }
