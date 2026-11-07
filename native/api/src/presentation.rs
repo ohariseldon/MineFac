@@ -16,11 +16,11 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 24] = [
+pub(super) const STATUS_KEYS: [&str; 26] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
-    "no_worker", "absent", "no_task", "no_food", "path", "walking",
+    "no_worker", "absent", "no_task", "no_food", "path", "walking", "idle_work", "no_wage",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
@@ -243,7 +243,7 @@ pub(super) fn lamp_color(status: usize) -> u32 {
     match status {
         1 | 23 => 0x5dff5d,
         3 | 22 => 0xffaa00,
-        2 | 10 | 11 | 16 | 17 | 18 | 20 | 21 => 0xffe14d,
+        2 | 10 | 11 | 16 | 17 | 18 | 20 | 21 | 24 | 25 => 0xffe14d,
         4..=6 | 12..=15 | 19 => 0xff4040,
         7 => 0xd9b84a,
         8 => 0x55aaff,
@@ -257,7 +257,7 @@ pub(super) fn text_color(status: usize) -> u32 {
     match status {
         1 | 23 => 0x1e7a1e,
         3 | 22 => 0x9a5a00,
-        2 | 10 | 11 | 16 | 17 | 18 | 20 | 21 => 0x6b5a00,
+        2 | 10 | 11 | 16 | 17 | 18 | 20 | 21 | 24 | 25 => 0x6b5a00,
         4..=6 | 12..=15 | 19 => 0xaa1f1f,
         7 => 0x7a6420,
         8 => 0x1f4fa8,

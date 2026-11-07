@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:chest",
+    "minecraft:hopper",
+    "minecraft:emerald",
+    "veio:iron_plate"
+  ],
+  "result": {
+    "id": "veio:hauler_post",
+    "count": 1
+  }
+}

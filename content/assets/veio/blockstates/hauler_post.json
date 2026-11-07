@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/hauler_post"
+    },
+    "facing=west": {
+      "model": "veio:block/hauler_post",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/hauler_post",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/hauler_post",
+      "y": 270
+    }
+  }
+}

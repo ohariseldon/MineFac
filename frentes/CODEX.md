@@ -12,7 +12,7 @@ Leia [COORDENACAO.md](../COORDENACAO.md). Esta frente continua a expansão das f
 
 ## Ordem inicial de trabalho
 
-Entrega em desenvolvimento sobre a 0.10.0: [braço de transferência básico](CODEX-BRACOS.md), na branch `codex/inserters`. A documentação inclui as interfaces de energia, inventário e postos preservadas e o estado das verificações. A atribuição de aldeões continua na frente Cloud.
+Entrega em desenvolvimento sobre a 0.11.0: [braço de transferência básico](CODEX-BRACOS.md), na branch `codex/inserters`. A documentação inclui as interfaces de energia, inventário e postos preservadas e o estado das verificações. A atribuição de aldeões continua na frente Cloud.
 
 1. Incorporar o feedback do usuário ao testar a 0.9.1. Priorizar falhas que impeçam construir ou entender uma fábrica.
 2. Entregar braços de transferência com origem e destino visíveis, consumo de energia, conservação de itens e estado de bloqueio.

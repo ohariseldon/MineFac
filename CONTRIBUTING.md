@@ -1,6 +1,6 @@
 # Trabalhar no MineFac / Veio
 
-Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.10.0**, com aldeões trabalhadores, energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
+Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.11.0**, com aldeões trabalhadores, energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
 
 ## Começar na nuvem
 
@@ -44,7 +44,7 @@ As receitas do guia são extraídas das receitas de fabricação reais. Ao mudar
 
 ## Compilar e instalar para jogar
 
-O caminho simples é o pacote: `python tools/package.py` gera `dist/Veio-<versão>.zip` com `launcher.exe`, `content/` e `native/`. O `launcher.exe` (código em `launcher/`, só biblioteca padrão) roda o `native-build` abaixo quando a versão muda, copia `content/` para `horizon-mods/veio` da instância e abre o Horizon Launcher. Os caminhos ficam em `launcher.ini`, ao lado do executável. Por enquanto, a pedido do usuário, o `launcher.exe` da raiz e `release/Veio-<versão>.zip` ficam no Git para facilitar a abertura em outro PC. Ao mudar a versão ou o launcher, rode `python tools/package.py` e copie `dist/Veio-<versão>.zip` para `release/` e `launcher/target/.../launcher.exe` para a raiz.
+O caminho simples é o pacote: `python tools/package.py` gera `dist/Veio-<versão>.zip` com `launcher.exe`, `content/` e `native/`. O `launcher.exe` (código em `launcher/`, só biblioteca padrão) roda o `native-build` abaixo quando a versão muda, copia `content/` para `horizon-mods/veio` da instância e abre o Horizon Launcher. Os caminhos ficam em `launcher.ini`, ao lado do executável. Por enquanto, a pedido do usuário, o `launcher.exe` da raiz e `release/Veio-<versão>.zip` ficam no Git para facilitar a abertura em outro PC. O `launcher.exe` só recompila o código nativo quando a versão muda: suba a versão em toda entrega que mude `native/`. Ao mudar a versão ou o launcher, rode `python tools/package.py` e copie `dist/Veio-<versão>.zip` para `release/` e `launcher/target/.../launcher.exe` para a raiz.
 
 O processo manual continua valendo:
 

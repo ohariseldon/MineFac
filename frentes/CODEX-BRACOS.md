@@ -26,6 +26,8 @@ O perfil é `Sector::Logistics` / `StationKind::Transport`: o braço recebe ener
 
 Foram aprovadas 67 regras offline (seis cenários novos do braço), a verificação de conteúdo e a compilação de metadados contra a API real `66f3981`. Os cenários cobrem energia, redstone, destino cheio ou filtrado, fonte vazia, quatro orientações, conservação e retomada sem repetição após salvar.
 
-A compilação completa pelo launcher e a conferência visual no jogo estão pendentes. A versão consolidada permanece 0.10.0: esta branch não atualiza `release/Veio-0.10.0.zip` nem recompila o `launcher.exe`. Para testar o código da branch, feche o jogo e execute o launcher da raiz com `--rebuild`; abrir apenas o ZIP antigo não inclui o braço. A próxima consolidação deverá atualizar a versão e o pacote para ativar o rebuild automático normal.
+A compilação completa pelo launcher e a conferência visual no jogo estão pendentes. A versão consolidada permanece 0.10.0: esta branch não atualiza `release/Veio-0.11.0.zip` nem recompila o `launcher.exe`. Para testar o código da branch, feche o jogo e execute o launcher da raiz com `--rebuild`; abrir apenas o ZIP antigo não inclui o braço. A próxima consolidação deverá atualizar a versão e o pacote para ativar o rebuild automático normal.
 
 Filtros configuráveis, braços rápidos e ajuste de alcance são trabalho posterior. Este lote entrega o braço básico, sua receita, visual, controles, painel e guia.
+
+Compatibiliza??o com a 0.11.0 conclu?da: 73 regras offline aprovadas, 403 JSON, 91 p?ginas e 54 texturas conferidos. O transportador e o coordenador do Cloud foram preservados; bra?os continuam classificados como transporte e fora das tarefas de abastecimento de m?quinas.

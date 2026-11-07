@@ -21,15 +21,16 @@ pub(super) fn draw_labels(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         SOLAR | BATTERY | TESLA => &[],
         _ => &["input", "output"],
     } };
-    for (slot, role) in layout.slots.iter().zip(roles) {
+    for (index, (slot, role)) in layout.slots.iter().zip(roles).enumerate() {
         let Some([sx, sy]) = slot else { continue; };
         if role.is_empty() {
             continue;
         }
         let label = Text::tr(&format!("veio.guide.role.{role}"), &[]).plain();
         let width = host.text_width(&label);
-        let grouped = matches!(event.block, HARVESTER | production::TREE_FARM | production::RANCH | workforce::FARM_POST);
-        let center = if grouped && *role == "output" { sx + 26.0 } else { sx + 8.0 };
+        // Um rótulo seguido de papéis vazios cobre um grupo de três slots: centraliza no do meio.
+        let grouped = roles.get(index + 1).is_some_and(|next| next.is_empty());
+        let center = if grouped { sx + 26.0 } else { sx + 8.0 };
         host.text(event.batch, &label, [x + center - width / 2.0, y + sy + 20.0], presentation::SOFT_INK, false);
     }
 }
