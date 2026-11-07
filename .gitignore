@@ -9,3 +9,6 @@ __pycache__/
 !.env.example
 native/offline-check/Cargo.lock
 dist/
+
+# Caminhos pessoais gravados pelo launcher.exe
+launcher.ini

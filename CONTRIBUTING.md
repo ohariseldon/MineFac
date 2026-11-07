@@ -44,7 +44,7 @@ As receitas do guia são extraídas das receitas de fabricação reais. Ao mudar
 
 ## Compilar e instalar para jogar
 
-O caminho simples é o pacote: `python tools/package.py` gera `dist/Veio-<versão>.zip` com `launcher.exe`, `content/` e `native/`. O `launcher.exe` (código em `launcher/`, só biblioteca padrão) roda o `native-build` abaixo quando a versão muda, copia `content/` para `horizon-mods/veio` da instância e abre o Horizon Launcher. Os caminhos ficam em `launcher.ini`, ao lado do executável. O executável e o ZIP não entram no Git.
+O caminho simples é o pacote: `python tools/package.py` gera `dist/Veio-<versão>.zip` com `launcher.exe`, `content/` e `native/`. O `launcher.exe` (código em `launcher/`, só biblioteca padrão) roda o `native-build` abaixo quando a versão muda, copia `content/` para `horizon-mods/veio` da instância e abre o Horizon Launcher. Os caminhos ficam em `launcher.ini`, ao lado do executável. Por enquanto, a pedido do usuário, o `launcher.exe` da raiz e `release/Veio-<versão>.zip` ficam no Git para facilitar a abertura em outro PC. Ao mudar a versão ou o launcher, rode `python tools/package.py` e copie `dist/Veio-<versão>.zip` para `release/` e `launcher/target/.../launcher.exe` para a raiz.
 
 O processo manual continua valendo:
 
