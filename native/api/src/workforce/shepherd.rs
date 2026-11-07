@@ -12,7 +12,8 @@ use super::*;
 use production::ranch;
 
 pub(super) const RADIUS: f64 = 6.0;
-const MAX_READS: usize = 12;
+/// NBT de animais lidos por ciclo, em rodízio (o mesmo teto do `locate` dos aldeões).
+pub(super) const MAX_READS: usize = 4;
 const SHEEP: u8 = 1;
 /// Ações guardadas em `Action` enquanto o trabalhador anda.
 const GATHER: i32 = 1;
@@ -39,14 +40,26 @@ struct Seen {
     color: i32,
 }
 
-fn animals(host: &mut dyn Host, pos: [i32; 3]) -> Vec<Seen> {
-    let mut list = Vec::new();
+/// Animais no raio (sem NBT) e a fatia cujo NBT foi lido neste ciclo.
+fn animals(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) -> (Vec<(u32, u8, [f64; 3])>, Vec<Seen>) {
+    let mut nearby: Vec<(u32, u8, [f64; 3])> = Vec::new();
     for (id, kind) in ranch::recent(host.dimension()) {
-        if kind == ranch::VILLAGER || list.len() >= MAX_READS {
+        if kind == ranch::VILLAGER {
             continue;
         }
         let Some(handle) = host.entity(id) else { continue };
         let Some(at) = handle.position(host).filter(|at| in_range(*at, pos)) else { continue };
+        nearby.push((id, kind, at));
+    }
+    if nearby.is_empty() {
+        return (nearby, Vec::new());
+    }
+    let start = number(entity, "Herd") as usize % nearby.len();
+    set_number(entity, "Herd", (start + MAX_READS) as i32);
+    let mut list = Vec::new();
+    for step in 0..MAX_READS.min(nearby.len()) {
+        let (id, kind, at) = nearby[(start + step) % nearby.len()];
+        let Some(handle) = host.entity(id) else { continue };
         let Some(nbt) = host.entity_nbt(handle) else { continue };
         list.push(Seen {
             id, kind, at,
@@ -56,7 +69,30 @@ fn animals(host: &mut dyn Host, pos: [i32; 3]) -> Vec<Seen> {
             color: ranch::tag_int(&nbt, "Color"),
         });
     }
-    list
+    (nearby, list)
+}
+
+/// Se o alvo atual ainda precisa da ação, só atualiza a posição — o animal anda.
+fn follow(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) -> Option<Plan> {
+    let id = number(entity, "TargetMob") as u32;
+    let action = number(entity, "Action");
+    if id == 0 || action == 0 || action == GATHER {
+        return None;
+    }
+    let handle = host.entity(id)?;
+    let at = handle.position(host).filter(|at| in_range(*at, pos))?;
+    let nbt = host.entity_nbt(handle)?;
+    match action {
+        SHEAR if ranch::tag_int(&nbt, "Sheared") == 0 && ranch::tag_int(&nbt, "Age") >= 0 => {
+            Some(choose(entity, SHEAR, id, at))
+        }
+        FEED if ranch::tag_int(&nbt, "InLove") == 0 && ranch::tag_int(&nbt, "Age") >= 0
+            && entity.items[FEED_SLOT].as_ref().is_some_and(|stack| plain(stack)) =>
+        {
+            Some(choose(entity, FEED, id, at))
+        }
+        _ => None,
+    }
 }
 
 fn wool(color: i32) -> String {
@@ -89,7 +125,10 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         }
         full = true;
     }
-    let herd = animals(host, pos);
+    if let Some(plan) = follow(host, pos, entity) {
+        return Ok(plan);
+    }
+    let (nearby, herd) = animals(host, pos, entity);
     // 2. Ovelhas para tosquiar.
     for sheep in herd.iter().filter(|animal| animal.kind == SHEEP && animal.adult && !animal.sheared) {
         if farm::drops_fit(&room, &[(wool(sheep.color).as_str(), 3)]) {
@@ -101,7 +140,7 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let feed = entity.items[FEED_SLOT].as_ref().filter(|stack| plain(stack)).map(|stack| stack.item.to_string());
     if let Some(item) = feed {
         for &kind in ranch::feeds(&item) {
-            let population = herd.iter().filter(|animal| animal.kind == kind).count();
+            let population = nearby.iter().filter(|(_, seen, _)| *seen == kind).count();
             let ready: Vec<&Seen> = herd.iter().filter(|animal| animal.kind == kind && animal.adult && !animal.in_love).collect();
             let loving = herd.iter().any(|animal| animal.kind == kind && animal.in_love);
             // Um já comeu: alimenta o par dele. Senão, precisa de dois prontos.
@@ -111,7 +150,7 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         }
     }
     set_target(entity, None);
-    Err(if full { 3 } else if herd.is_empty() { production::NO_ANIMALS } else { IDLE_WORK })
+    Err(if full { 3 } else if nearby.is_empty() { production::NO_ANIMALS } else { IDLE_WORK })
 }
 
 /// Executa a ação ao lado do alvo. Devolve a carga (vazia ao alimentar) ou `None` se o alvo

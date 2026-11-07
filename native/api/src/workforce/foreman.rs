@@ -16,6 +16,7 @@
 //! não renovada vence e a tarefa volta a ficar livre. Ao pegar os itens na origem, o carregador
 //! tira a tarefa da fila (`complete`).
 use super::*;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 pub(super) const RADIUS: i32 = 12;
@@ -127,15 +128,20 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
 // ---------- Fila de tarefas ----------
 
 static DESKS: Mutex<Vec<(String, [i32; 3], u64)>> = Mutex::new(Vec::new());
+static DESKS_PENDING: AtomicBool = AtomicBool::new(false);
 
 fn register_desk(dimension: &str, pos: [i32; 3], now: u64) {
     if let Ok(mut desks) = DESKS.lock() {
         desks.retain(|(dim, at, seen)| !(dim == dimension && *at == pos) && now.saturating_sub(*seen) <= TASK_STALE);
         desks.push((dimension.to_owned(), pos, now));
+        DESKS_PENDING.store(true, Ordering::Release);
     }
 }
 
 fn desks_near(dimension: &str, at: [i32; 3], now: u64) -> Vec<[i32; 3]> {
+    if !DESKS_PENDING.load(Ordering::Acquire) {
+        return Vec::new();
+    }
     DESKS.lock().map(|desks| desks.iter()
         .filter(|(dim, desk, seen)| dim == dimension && now.saturating_sub(*seen) <= TASK_STALE
             && distance(*desk, at) <= DESK_RANGE)
@@ -307,6 +313,9 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
 /// Tarefa da fila para o carregador em `hauler`: a que ele já pegou, ou a primeira livre cuja
 /// origem e destino estejam ao alcance dele.
 pub(super) fn claim_task(host: &mut dyn Host, hauler: [i32; 3], now: u64) -> Option<Plan> {
+    if !DESKS_PENDING.load(Ordering::Acquire) {
+        return None;
+    }
     let dimension = host.dimension();
     for desk in desks_near(dimension, hauler, now) {
         let mut claimed = None;
