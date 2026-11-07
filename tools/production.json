@@ -6,12 +6,12 @@
     "coal": ["minecraft:coal", "minecraft:charcoal"]
   },
   "recipes": [
-    {"machine": "press", "in": [["minecraft:raw_copper", 1]], "out": ["veio:copper_plate", 1], "ticks": 30, "power": 8},
-    {"machine": "press", "in": [["minecraft:raw_iron", 1]], "out": ["veio:iron_plate", 1], "ticks": 30, "power": 8},
-    {"machine": "press", "in": [["minecraft:raw_gold", 1]], "out": ["minecraft:gold_ingot", 1], "ticks": 40, "power": 10},
-    {"machine": "press", "in": [["minecraft:copper_ingot", 1]], "out": ["veio:copper_plate", 1], "ticks": 15, "power": 8, "alt": true},
-    {"machine": "press", "in": [["minecraft:iron_ingot", 1]], "out": ["veio:iron_plate", 1], "ticks": 15, "power": 8, "alt": true},
-    {"machine": "assembler", "in": [["veio:copper_plate", 2]], "out": ["veio:gear", 1], "ticks": 40, "power": 12},
+    {"machine": "press", "in": [["minecraft:raw_copper", 1]], "out": ["veio:copper_plate", 1], "ticks": 80, "power": 8},
+    {"machine": "press", "in": [["minecraft:raw_iron", 1]], "out": ["veio:iron_plate", 1], "ticks": 80, "power": 8},
+    {"machine": "press", "in": [["minecraft:raw_gold", 1]], "out": ["minecraft:gold_ingot", 1], "ticks": 120, "power": 10},
+    {"machine": "press", "in": [["minecraft:copper_ingot", 1]], "out": ["veio:copper_plate", 1], "ticks": 40, "power": 8, "alt": true},
+    {"machine": "press", "in": [["minecraft:iron_ingot", 1]], "out": ["veio:iron_plate", 1], "ticks": 40, "power": 8, "alt": true},
+    {"machine": "assembler", "in": [["veio:copper_plate", 2]], "out": ["veio:gear", 1], "ticks": 80, "power": 12},
     {"machine": "cutter", "in": [["veio:copper_plate", 1]], "out": ["veio:wire", 1], "ticks": 20, "power": 6},
     {"machine": "cutter", "in": [["veio:iron_plate", 1]], "out": ["veio:frame", 1], "ticks": 30, "power": 8},
     {"machine": "integrator", "in": [["veio:frame", 1], ["veio:gear", 1]], "out": ["veio:module", 1], "ticks": 60, "power": 16},
