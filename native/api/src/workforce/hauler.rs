@@ -17,6 +17,9 @@ pub(super) const RADIUS: i32 = 6;
 /// Uma fileira do 13×13 por ciclo; a volta (507 blocos) leva 32 ciclos.
 pub(super) const SCAN: i32 = 16;
 const MAX_STATIONS: usize = 12;
+/// Máquinas inspecionadas por ciclo depois da primeira volta. 12 máquinas ociosas
+/// levam 4 ciclos (2 s) para uma volta de inspeção, em vez de 12 `inspect` a cada 10 ticks.
+pub(super) const LOOKS: usize = 3;
 /// Itens levados ou recolhidos por viagem.
 pub(super) const BATCH: u32 = 16;
 /// O carregador mantém cada entrada com até esta quantidade.
@@ -93,10 +96,12 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let avoid = skipped(entity);
     let mut blocked = false;
     let mut topping = None;
+    let mut inspected = 0;
     for spot in visiting_order(entity, &stations) {
         if avoid.contains(&spot) || reserved_by_other(dimension, spot, pos, now) {
             continue;
         }
+        inspected += 1;
         let Some(look) = look(host, spot, &stock, &room) else { continue };
         blocked |= look.output_blocked;
         let bring = |(from, into, count)| Plan::Bring { from, count, to: spot, into, kind: Carry::Supply };
@@ -110,6 +115,9 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         }
         if topping.is_none() {
             topping = look.feed.map(|feed| (spot, bring(feed)));
+        }
+        if inspected >= LOOKS {
+            break;
         }
     }
     if let Some((spot, plan)) = topping {

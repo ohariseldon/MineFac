@@ -27,6 +27,8 @@ struct Village {
     /// Esmeraldas no inventário do jogador.
     emeralds: u32,
     summoned: Vec<[f64; 3]>,
+    edits: Cell<u32>,
+    reads: Cell<u32>,
 }
 
 impl Village {
@@ -59,6 +61,7 @@ impl Host for Village {
         self.crops.get(&pos).map_or_else(|| "minecraft:air".to_owned(), |(id, _)| id.clone())
     }
     fn change_mod_block_entity(&mut self, pos: [i32; 3], change: &mut dyn FnMut(&mut ModBlockEntity)) -> bool {
+        self.edits.set(self.edits.get() + 1);
         let Some(station) = self.stations.get_mut(&pos) else { return false };
         change(station);
         true
@@ -94,6 +97,7 @@ impl Host for Village {
         true
     }
     fn entity_nbt(&mut self, entity: EntityRef) -> Option<Compound> {
+        self.reads.set(self.reads.get() + 1);
         if let Some((_, data)) = self.animals.get(&entity.id()) {
             return Some(data.clone());
         }
@@ -992,4 +996,40 @@ fn villages_grow_with_births_until_the_cap() {
     village.villagers.get_mut(&15001).unwrap().0 = [0.5, 64.0, 0.5];
     village::observe(&mut village, "veio:test_work_births", 15001, now);
     assert_eq!(village::pending("veio:test_work_births"), 0, "acima do teto não há nascimento");
+}
+
+#[test]
+fn idle_hauler_inspects_a_few_stations_per_cycle() {
+    let mut village = Village::new("veio:test_work_hauler_looks");
+    village.crops.clear();
+    village.villager(13401, [1.5, 64.0, 1.5], [34, 0, 0, 1]);
+    for i in 0..12 {
+        let mut press = block(PRESS);
+        set_number(&mut press, "Status", 2);
+        village.stations.insert([1 + i % 6, 64, i / 6], press);
+    }
+    let mut hauler = block(HAULER_POST);
+    set_number(&mut hauler, "Ration", 10);
+    assert!(hire_at(&mut village, &mut hauler, POST, 0));
+    cycles_at(&mut village, POST, &mut hauler, 1, HAULER_SWEEP, |post| number(post, "Rate") >= 12);
+    village.edits.set(0);
+    cycle(&mut village, &mut hauler, 50);
+    assert_eq!(village.edits.get(), hauler::LOOKS as u32, "não inspeciona as 12 máquinas ociosas no mesmo ciclo");
+}
+
+#[test]
+fn walking_shepherd_follows_the_target_without_rereading_the_herd() {
+    let mut village = Village::new("veio:test_work_shepherd_follow");
+    let mut post = shepherd_with_worker(&mut village, 13301, [33, 0, 0, 1], [5.5, 64.0, 5.5]);
+    for i in 0..8 {
+        animal(&mut village, 13310 + i, "minecraft:cow", [1.5, 64.0, 1.5], &[("Age", Tag::Int(0))]);
+    }
+    animal(&mut village, 13320, "minecraft:sheep", [-2.5, 64.0, 1.5], &[("Age", Tag::Int(0)), ("Color", Tag::Byte(0))]);
+    village.reads.set(0);
+    cycle(&mut village, &mut post, 1);
+    assert!(village.reads.get() <= shepherd::MAX_READS as u32);
+    let found = cycles_at(&mut village, POST, &mut post, 2, 12, |entity| number(entity, "Action") == 2);
+    village.reads.set(0);
+    assert_eq!(cycle(&mut village, &mut post, found + 1), WALKING);
+    assert_eq!(village.reads.get(), 1, "só o alvo atual");
 }

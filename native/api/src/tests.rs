@@ -368,5 +368,6 @@ fn workforce_posts_count_as_item_input_for_belt_curves() {
     assert!(has_item_inputs(workforce::FARM_POST));
     assert!(has_item_inputs(workforce::HAULER_POST));
     assert!(has_item_inputs(workforce::FOREMAN_DESK));
+    assert!(has_item_inputs(workforce::SHEPHERD_POST));
     assert!(!has_item_inputs(SOLAR));
 }
