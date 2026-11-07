@@ -456,6 +456,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Progress" => key!("Progress"),
         "Queued" => key!("Queued"),
         "Rate" => key!("Rate"),
+        "Role" => key!("Role"),
         "Ration" => key!("Ration"),
         "Recipe" => key!("Recipe"),
         "Refresh" => key!("Refresh"),

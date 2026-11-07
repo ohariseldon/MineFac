@@ -397,6 +397,9 @@ pub(super) fn note_players(host: &dyn Host) {
 }
 
 fn nearest_villager(at: [f64; 3]) -> Option<(u32, [f64; 3])> {
+    if let Some(guard) = workforce::barracks::shield(at) {
+        return Some(guard);
+    }
     VILLAGERS.lock().ok()?.iter()
         .map(|(id, pos)| ((pos[0] - at[0]).hypot(pos[2] - at[2]), *id, *pos))
         .filter(|(distance, _, _)| *distance <= 28.0)
@@ -435,7 +438,7 @@ pub(super) fn harm_villagers(host: &mut dyn Host) {
                 wounds.push((id, 1));
                 1
             };
-            if hits >= VILLAGER_BLOWS {
+            if hits >= workforce::barracks::toughness(id).unwrap_or(VILLAGER_BLOWS) {
                 wounds.retain(|(seen, _)| *seen != id);
                 dead.push(id);
             } else {
