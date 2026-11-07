@@ -1,6 +1,7 @@
 mod presentation;
 mod contracts;
 mod logistics;
+pub(crate) mod operations;
 mod defense;
 mod farm;
 mod pollution;
@@ -88,13 +89,7 @@ impl Hooks for Factory {
     }
 
     fn container_accepts(&self, host: &dyn Host, event: &mut ContainerAcceptsEvent<'_>) -> Flow {
-        if event.entity.id == MERGER {
-            return if logistics::accepts_merger(host, event) { Flow::Continue } else { Flow::Cancel };
-        }
-        if event.entity.id == HUB {
-            return if contracts::accepts(event.entity, event.slot, event.stack) { Flow::Continue } else { Flow::Cancel };
-        }
-        if accepts(&event.entity.id, event.slot, event.stack) {
+        if operations::accepts_delivery(host, event) {
             Flow::Continue
         } else {
             Flow::Cancel

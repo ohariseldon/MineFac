@@ -523,5 +523,7 @@ for name,item,pt,en,pdesc,edesc in stages:
  "description":{"translate":key+".description"},"announce_to_chat":False,"show_toast":False},
  "criteria":{"obtain":{"trigger":"minecraft:inventory_changed","conditions":{"items":[{"items":item}]}}}}
  write(f"{D}/advancement/tutorial/{name}.json",obj);parent="veio:tutorial/"+name
+from build_operations import add_labels
+add_labels(langs)
 for code,data in langs.items():write(f"{A}/lang/{code}.json",data)
 print("Guide pages:",len(pages))

@@ -23,6 +23,8 @@ O usuário testa a versão jogável. Evitar recompilar ou abrir o jogo a cada it
 
 ## Arquivos e interfaces
 
+A preparação comum de postos está descrita em [frentes/INTERFACE_POSTOS.md](frentes/INTERFACE_POSTOS.md). Cloud deve usar essa consulta como ponto de integração para tarefas e inventários; ela não implementa atribuições nem substitui suas transações.
+
 - `native/api/src/logistics.rs`: transporte atual e estado das esteiras. Ponto de entrada para os próximos trabalhos locais de itens.
 - `native/api/src/power.rs`: postes e fios aéreos, mantidos localmente.
 - `native/api/src/farm.rs`: colheitadeira; compartilhada quando trabalhadores ou novas funções agrícolas exigirem integração.

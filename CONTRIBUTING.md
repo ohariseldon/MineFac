@@ -22,6 +22,7 @@ A divisão atual é Cloud para trabalhadores, Grok para desempenho e balanceamen
 - `native/api/src/farm.rs`: colheitadeira.
 - `native/api/src/defense.rs`: torre Tesla e registro de monstros hostis.
 - `native/api/src/power.rs`: postes, fios aéreos e área de alimentação.
+- `native/api/src/operations.rs`: interface comum de postos, motivos de espera e validação de entregas, preparada para integrar os trabalhadores. Veja [INTERFACE_POSTOS.md](frentes/INTERFACE_POSTOS.md).
 - `native/api/src/pollution.rs`: poluição por chunk, avisos, ondas noturnas e o objetivo dos Saqueadores.
 - `native/api/src/upgrades.rs`: módulos de velocidade, eficiência e produtividade.
 - `native/api/src/workforce/`: aldeões trabalhadores, postos e tarefas. Veja [TRABALHADORES.md](TRABALHADORES.md).
