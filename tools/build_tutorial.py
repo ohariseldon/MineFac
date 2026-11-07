@@ -33,6 +33,23 @@ def item_name(item,code):
   if key in langs[code]: return langs[code][key]
  return name
 
+label("advancement.veio.freight.title", "Entre zonas", "Between zones")
+label("advancement.veio.freight.description", "Defina carga e retorno em um terminal de transporte.", "Define dispatch and return cargo at a freight terminal.")
+label("advancement.veio.drone_transport.title", "Entrega aérea", "Air delivery")
+label("advancement.veio.drone_transport.description", "Conecte dois portos e alimente os drones com energia.", "Connect two ports and power their drones.")
+label("block.veio.freight_station", "Terminal ferroviário", "Rail freight terminal")
+label("block.veio.drone_port", "Porto de drones", "Drone port")
+label("item.veio.route_card", "Cartão de rota", "Route card")
+label("veio.status.freight_route", "Confira o par e o canal", "Check pair and channel")
+label("veio.freight.rail", "Vagões: carga e descarga por funis", "Minecarts: hopper loading/unloading")
+label("veio.freight.outbound", "Drone levando a carga", "Drone delivering cargo")
+label("veio.freight.return", "Drone retornando", "Drone returning")
+label("veio.freight.ready", "Aguardando carga para o drone", "Waiting for drone cargo")
+label("veio.freight.channel", "Canal: %s (0 desliga)", "Channel: %s (0 disables)")
+label("veio.guide.role.dispatch", "Enviar", "Dispatch")
+label("veio.guide.role.received", "Recebido", "Received")
+label("veio.guide.role.inflight", "Voo", "Flight")
+
 # Every help entry describes the actual slot order and material conversion.
 help={
  "generator":(
@@ -302,11 +319,17 @@ for key, pt, en in [
  ("advancement.veio.coordination.description", "Um capataz alimenta e recontrata os trabalhadores dos postos.", "A foreman feeds and rehires the workers of your posts."),
 ]:
  label(key, pt, en)
+help["freight_station"] = (
+ "Cartão: escolhe canal.\nAgachar + item: envio.\nItem sem agachar: recebimento.\nFunis ligam os vagões.",
+ "Card: choose channel.\nSneak + item: outgoing filter.\nItem without sneak: receive.\nHoppers connect minecarts.")
+help["drone_port"] = (
+ "Par de portos, mesmo canal.\nAté 64 blocos, 16 itens/voo.\nPrecisa energia e caminho livre.\nAgachar + chave: chama de volta.",
+ "Pair ports on one channel.\n64-block range, 16 items/flight.\nNeeds power and a clear path.\nSneak + wrench: recall.")
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
  ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
- ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","wrench"]),
+ ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","freight_station","drone_port","wrench"]),
  ("Projetos e defesa","Projects and defense",["contract_hub","tesla"]),
 ]
 order=[name for _,_,names in categories for name in names]
@@ -390,6 +413,12 @@ slot_en={
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
+for name in ("freight_station", "drone_port"):
+ slothelp[name] = ["Carga para enviar. O filtro é copiado com agachar + item."]*3 + ["Carga recebida. O carregador pode levar às máquinas."]*3
+ slot_en[name] = ["Dispatch stock. Sneak + item copies its filter."]*3 + ["Received stock. Haulers can feed it to machines."]*3
+ if name == "drone_port":
+  slothelp[name].append("Carga em voo, conservada aqui até a entrega. Retirar impede a entrega.")
+  slot_en[name].append("Flight cargo is kept here until delivery. Taking it prevents delivery.")
 for block,lines in slothelp.items():
  for i,line in enumerate(lines): label(f"veio.slothelp.{block}.{i}",line,slot_en[block][i])
 label("veio.slothelp.merger.0", "A: lateral amarela. Olhando para a saída, fica à esquerda.", "A: yellow side. Left when facing the outlet.")
@@ -423,6 +452,7 @@ components={
  "circuit":("Duas fiações e um silício no montador de circuitos.","Two copper wiring and one silicon in a circuit assembler."),
 }
 components.update({
+ "route_card":("Use no terminal para escolher canal 0-16; agachado volta um. Dois terminais do mesmo tipo por canal. Não gasta o cartão.","Use on a terminal to select channel 0-16; sneak goes back one. Two terminals of the same type per channel. Card is kept."),
  "flour":("Trigo no moinho. Vai para pão, biscoito e bolo na cozinha.","Wheat in the mill. Used for bread, cookies and cake."),
  "biomass":("Plantas ou troncos no moinho. Combustível do gerador a biomassa.","Plants or logs in the mill. Fuel for the biomass generator."),
  "repair_kit":("Botão direito numa máquina danificada: recupera 50% da integridade.","Right-click a damaged machine: restores 50% integrity."),
@@ -538,6 +568,12 @@ page(
 page(
  "Parar e medir\n\nRedstone pausa braços e esteiras. Esteiras reagem em até 8 ticks.\n\nPainéis mostram itens/min. Divisor filtrado: iguais à esquerda, outros à direita.",
  "Stop and measure\n\nRedstone pauses arms and belts. Belts respond within 8 ticks.\n\nPanels show items/min. A sorting splitter sends matching left, other right.")
+page(
+ "Rotas entre zonas\n\nCartão no terminal: canal 1 a 16. Use exatamente dois terminais do mesmo tipo por canal. Agachar + item copia o produto a enviar.\n\nCarregadores e capataz levam o envio e usam o recebido. Cada ponta pode enviar um produto diferente.",
+ "Inter-zone routes\n\nCard on terminal: channel 1 to 16. Use exactly two terminals of one type per channel. Sneak + item copies the outgoing product.\n\nHaulers and foremen fill dispatch and use received stock. Each end may send a different product.")
+page(
+ "Vagões e drones\n\nTrens: funis ligam terminal e vagão com baú. Separe descarga e carga; trilhos e redstone definem a viagem.\n\nDrones: até 64 blocos, 16 itens por voo. Energize os portos e deixe livre o trajeto a 3 blocos acima deles. Agachar + chave chama de volta.",
+ "Minecarts and drones\n\nTrains: hoppers link terminal and chest minecart. Separate unloading and loading; rails and redstone define travel.\n\nDrones: up to 64 blocks, 16 items/flight. Power ports and clear the path 3 blocks above them. Sneak + wrench recalls.")
 category_pages=[]
 for _ in categories:
  category_pages.append(len(pages)+1);pages.append(None)

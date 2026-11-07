@@ -16,13 +16,13 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 28] = [
+pub(super) const STATUS_KEYS: [&str; 29] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
     "no_worker", "absent", "no_task", "no_food", "path", "walking", "idle_work", "no_wage",
     // Zonas e armazéns.
-    "zone", "storing",
+    "zone", "storing", "freight_route",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
@@ -34,6 +34,7 @@ pub(super) fn screen(block: &str) -> Option<NativeScreen> {
         SOLAR | BATTERY | TESLA | inserters::ID | inserters::FAST | inserters::LONG => vec![None],
         HUB => vec![Some([26.0, 45.0]), Some([62.0, 45.0]), Some([116.0, 45.0]), Some([152.0, 45.0])],
         HARVESTER => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0])],
+        _ if freight::owns(block) => freight::screen_slots(block)?,
         _ if workforce::owns(block) => workforce::screen_slots(block)?,
         _ => production::screen_slots(block)?,
     };
@@ -142,20 +143,21 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     let first_output = output_slots(event.block).start;
     let positions = &machine_slots;
     let post = workforce::owns(event.block);
-    if first_output > 0 && first_output < positions.len() && event.block != HARVESTER && !post {
+    if first_output > 0 && first_output < positions.len() && event.block != HARVESTER && !post && !freight::owns(event.block) {
         arrow(host, event, positions[first_output - 1][0] + 16.0, positions[first_output][0], progress);
-    } else if !matches!(event.block, BATTERY | CABLE | SOLAR) && production::shows_progress(event.block) && !post {
+    } else if !matches!(event.block, BATTERY | CABLE | SOLAR) && production::shows_progress(event.block) && !post && !freight::owns(event.block) {
         gauge(host, event, [10.0, 75.0], 174.0, progress, 0xff3fae3f);
     }
     let limit = read(5).max(capacity(event.block)).max(1);
     let energy = read(3).clamp(0, limit);
-    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) && event.block != production::PANTRY && !post {
+    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) && event.block != production::PANTRY && event.block != freight::RAIL && !post {
         let energy_text = Text::tr("veio.energy", &[&energy, &limit]).plain();
         host.text(event.batch, &energy_text, [x + 10.0, y + 85.0], INK, false);
         gauge(host, event, [10.0, 95.0], 174.0, energy as f32 / limit as f32, 0xffe0a020);
     }
     let lines: Vec<String> = if let Some(lines) = production::panel_lines(event.block, event.data)
-        .or_else(|| workforce::panel_lines(event.block, event.data)) { lines } else { match event.block {
+        .or_else(|| workforce::panel_lines(event.block, event.data))
+        .or_else(|| freight::panel_lines(event.block, event.data)) { lines } else { match event.block {
         inserters::ID | inserters::FAST | inserters::LONG => vec![
             Text::tr(if read(0) == 0 { "veio.hint.inserter_wait" } else if event.block == inserters::FAST { "veio.hint.fast_inserter" } else if event.block == inserters::LONG { "veio.hint.long_inserter" } else { "veio.hint.inserter" }, &[]).plain(),
             Text::tr("veio.metric.rate", &[&read(6)]).plain(),
@@ -232,7 +234,7 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
         };
         [number(entity, "Status"), progress, duration,
             number(entity, "energy"), number(entity, "Burn"), capacity(&entity.id), number(entity, "Rate"),
-            number(entity, "Utilization"), number(entity, "ContractStage"), number(entity, "Total"),
+            number(entity, "Utilization"), if freight::owns(&entity.id) { number(entity, "FlightPhase") } else { number(entity, "ContractStage") }, number(entity, "Total"),
             number(entity, "Damage"), number(entity, "Module"),
             if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") }]
     };
@@ -299,6 +301,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
         return power::draw(host, event);
     }
     if inserters::is_arm(event.block) { return inserters::draw(host, event); }
+    if freight::owns(event.block) { freight::draw(host, event); return; }
     if production::draw(host, event) || workforce::zones::draw(host, event) {
         return;
     }

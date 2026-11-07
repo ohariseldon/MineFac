@@ -46,6 +46,8 @@
     "veio:barn",
     "veio:silo",
     "veio:control_center",
+    "veio:freight_station",
+    "veio:drone_port",
     "veio:solar",
     "veio:battery"
   ]
