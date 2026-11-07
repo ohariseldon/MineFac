@@ -27,6 +27,8 @@ struct Village {
     /// Esmeraldas no inventário do jogador.
     emeralds: u32,
     summoned: Vec<[f64; 3]>,
+    parts: HashMap<[i32; 3], String>,
+    notices: Vec<String>,
     commands: Vec<String>,
     players: Vec<horizon_client::mod_api::NativeServerPlayer>,
     edits: Cell<u32>,
@@ -69,7 +71,9 @@ impl Host for Village {
         true
     }
     fn block_property(&self, pos: [i32; 3], key: &str) -> Option<String> {
-        (key == "age").then(|| self.crops.get(&pos).map(|(_, age)| age.to_string())).flatten()
+        self.parts.get(&pos).cloned().or_else(|| {
+            (key == "age").then(|| self.crops.get(&pos).map(|(_, age)| age.to_string())).flatten()
+        })
     }
     fn set_block_property(&mut self, pos: [i32; 3], key: &str, value: &str) -> bool {
         let Some((_, age)) = self.crops.get_mut(&pos) else { return false };
@@ -110,6 +114,10 @@ impl Host for Village {
         true
     }
     fn play_sound(&mut self, _: &str, _: [f64; 3], _: usize, _: f32, _: f32) -> bool {
+        true
+    }
+    fn action_bar(&mut self, _: u128, line: horizon_client::mod_api::Text) -> bool {
+        self.notices.push(line.plain());
         true
     }
     fn edit_blocks(&mut self, _: &str, edit: &horizon_client::mod_api::NativeBlockEdit) -> Result<u64, String> {
@@ -1026,6 +1034,46 @@ fn villages_grow_with_births_until_the_cap() {
     village.villagers.get_mut(&15001).unwrap().0 = [0.5, 64.0, 0.5];
     village::observe(&mut village, "veio:test_work_births", 15001, now);
     assert_eq!(village::pending("veio:test_work_births"), 0, "acima do teto não há nascimento");
+}
+
+#[test]
+fn full_houses_stop_births_and_ask_for_more() {
+    let dimension = "veio:test_work_houses";
+    let mut village = Village::new(dimension);
+    village.crops.insert([2, 64, 1], ("minecraft:red_bed".into(), 0));
+    village.crops.insert([3, 64, 1], ("minecraft:red_bed".into(), 0));
+    village.parts.insert([3, 64, 1], "foot".into());
+    for now in 0..2_000 {
+        village::scan_homes(&mut village, dimension, [0.5, 64.0, 0.5], now);
+        if village::homes(dimension, [0, 64, 0]).is_some() {
+            break;
+        }
+    }
+    assert_eq!(village::homes(dimension, [0, 64, 0]), Some(1), "a cabeceira conta, o pé da cama não");
+    for (index, id) in (15201..15204).enumerate() {
+        village.villager(id, [index as f64, 64.0, 0.0], [52, 0, 0, index as i32]);
+    }
+    village.players.push(player(1, "tester", [0.5, 64.0, 0.5]));
+    village.players[0].dimension = dimension.to_owned();
+    let now = (0..village::CHECK * village::CHANCE * 4)
+        .map(|step| step * village::CHECK + (village::CHECK - 15201 % village::CHECK))
+        .find(|now| {
+            village::observe(&mut village, dimension, 15201, *now);
+            !village.notices.is_empty()
+        })
+        .expect("com uma cama e três aldeões, o jogo pede casas");
+    assert_eq!(village::pending(dimension), 0, "sem cama livre, não nasce");
+    assert_eq!(village.notices[0], "veio.village.need_houses");
+    village.notices.clear();
+    // Mais uma cabeceira na volta seguinte: o aviso some e o nascimento volta a ser possível.
+    village.crops.insert([4, 64, 1], ("minecraft:white_bed".into(), 0));
+    for step in 0..2_000 {
+        village::scan_homes(&mut village, dimension, [0.5, 64.0, 0.5], now + 1 + step);
+        if village::homes(dimension, [0, 64, 0]) == Some(2) {
+            break;
+        }
+    }
+    assert_eq!(village::homes(dimension, [0, 64, 0]), Some(2));
 }
 
 #[test]
