@@ -1,5 +1,11 @@
 # Coordenação das três frentes
 
+Orçamento compartilhado de manutenção da fábrica: ler
+[frentes/ORCAMENTO-GLOBAL.md](frentes/ORCAMENTO-GLOBAL.md) ao acrescentar buscas,
+varreduras de rede ou planejamento. O relógio global repõe as cotas; máquinas e
+dimensões não devem repô-las. Transferências e transações de inventário continuam
+fora desse adiamento.
+
 Divisão atual definida pelo usuário após a integração da 0.9.1. Ela substitui a divisão anterior entre produção na nuvem e logística local. As ordens abaixo são trabalho futuro, não funcionalidades já implementadas.
 
 ## Responsáveis

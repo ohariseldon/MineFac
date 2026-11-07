@@ -558,6 +558,10 @@ pub(super) fn scan_blocks(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockE
 pub(super) fn scan_named(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, key: &str, radius: i32,
     per_cycle: i32, max: usize, wanted: &dyn Fn(&str) -> bool, forget: bool) -> Option<Vec<[i32; 3]>>
 {
+    if !budget::request(budget::Lane::Workforce, host.dimension(), pos, per_cycle.max(1) as u32) {
+        // Existing assignments keep using the last complete discovery result.
+        return get_list(entity, key);
+    }
     let (scan, partial) = (format!("{key}Scan"), format!("{key}Found"));
     let side = radius * 2 + 1;
     let area = side * side * 3;

@@ -112,10 +112,38 @@ mod optimization_tests {
     use super::*;
 
     #[test]
+    fn thousand_poles_obey_one_global_area_quota_and_all_finish() {
+        use std::cell::Cell;
+        struct Probe { reads: Cell<usize> }
+        impl Host for Probe {
+            fn dimension(&self) -> &'static str { "veio:global-budget-test" }
+            fn block(&self, _: [i32; 3]) -> String {
+                self.reads.set(self.reads.get() + 1);
+                "minecraft:air".into()
+            }
+        }
+        let host = Probe { reads: Cell::new(0) };
+        let mut poles: Vec<_> = (0..1000).map(|_| ModBlockEntity::default()).collect();
+        let mut total = 0;
+        for tick in 0..220 {
+            budget::begin_tick(tick);
+            host.reads.set(0);
+            for (index, pole) in poles.iter_mut().enumerate() {
+                scan_area(&host, [index as i32, 0, 0], pole, WOOD.area, tick == 0);
+            }
+            assert!(host.reads.get() <= 512, "global quota exceeded in tick {tick}");
+            total += host.reads.get();
+        }
+        assert_eq!(total, 74000);
+        assert!(poles.iter().all(|pole| number(pole, "AreaScan") == 0 && pole.nbt.contains_key(nbt_key("Area"))));
+    }
+
+    #[test]
     fn incremental_area_bounds_peak_reads_and_publishes_only_complete_results() {
         use std::cell::Cell;
         struct Probe { reads: Cell<usize> }
         impl Host for Probe {
+            fn dimension(&self) -> &'static str { "veio:budget-fixture" }
             fn block(&self, _: [i32; 3]) -> String {
                 self.reads.set(self.reads.get() + 1);
                 PRESS.into()
@@ -165,13 +193,21 @@ mod optimization_tests {
         pole.nbt.insert(nbt_key("Area").clone(), Tag::IntArray(vec![1, 0, 0]));
         let mut host = Grid { consumer: ModBlockEntity::default() };
         host.consumer.id = PRESS.into();
+        budget::begin_tick(0);
+        assert!(budget::request(budget::Lane::Topology, host.dimension(), [999; 3], 2));
+        assert!(budget::request(budget::Lane::Area, host.dimension(), [999; 3], 512));
         tick(&mut host, [0; 3], &mut pole, 0);
         assert_eq!(number(&host.consumer, "energy"), WOOD.rate);
         assert_eq!(number(&pole, "energy") + number(&host.consumer, "energy"), 200);
         assert!(number(&pole, "AreaScan") > 0);
+        assert_eq!(number(&pole, "TopologyPending"), 1);
         // The mock world reports air: the old entry must disappear after the scan.
-        for time in 1..10 { tick(&mut host, [0; 3], &mut pole, time); }
+        for time in 1..=10 {
+            budget::begin_tick(time as u64);
+            tick(&mut host, [0; 3], &mut pole, time);
+        }
         assert_eq!(offsets(&pole, "Area").len(), 0);
+        assert_eq!(number(&pole, "TopologyPending"), 0);
         assert_eq!(number(&pole, "energy") + number(&host.consumer, "energy"), 200);
     }
 
@@ -296,6 +332,10 @@ fn scan_area(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, radius
             _ => { entity.nbt.insert(nbt_key("AreaFound").clone(), Tag::IntArray(Vec::new())); }
         }
     }
+    if !budget::request(budget::Lane::Area, host.dimension(), pos, AREA_READS_PER_TICK as u32) {
+        set_number(entity, "AreaScan", cursor + 1);
+        return;
+    }
     // Keep the previous complete area active until all cells have been checked.
     // The scratch buffer is reused on subsequent refreshes, including after load.
     let Some(Tag::IntArray(pending)) = entity.nbt.get_mut(nbt_key("AreaFound")) else {
@@ -333,6 +373,11 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let mut changed = false;
     let due = (time + i64::from((pos[0] ^ pos[2]) & 31)).rem_euclid(REFRESH) == 0;
     if due || !entity.nbt.contains_key(nbt_key("Links")) {
+        set_number(entity, "TopologyPending", 1);
+    }
+    if number(entity, "TopologyPending") != 0
+        && budget::request(budget::Lane::Topology, dimension, pos, 1) {
+        set_number(entity, "TopologyPending", 0);
         register(dimension, pos, steel);
         let reader: &dyn Host = host;
         // Confere os candidatos no mundo: um poste quebrado sai do registro.

@@ -92,6 +92,7 @@ pub(crate) fn plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
         set_number(entity, "Status", 5);
         return;
     }
+    if !budget::request(budget::Lane::Terrain, host.dimension(), pos, 12) { return; }
     let mut cursor = number(entity, "Scan");
     let mut planted_now = false;
     for _ in 0..3 {
@@ -149,6 +150,7 @@ pub(crate) fn grow(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         set_number(entity, "Status", 5);
         return;
     }
+    if !budget::request(budget::Lane::Terrain, host.dimension(), pos, 8) { return; }
     let mut cursor = number(entity, "Scan");
     let mut acted = false;
     let mut starved = false;

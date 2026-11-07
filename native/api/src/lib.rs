@@ -1,3 +1,4 @@
+mod budget;
 mod presentation;
 mod contracts;
 mod logistics;
@@ -232,6 +233,7 @@ impl Hooks for Factory {
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
         defense::advance_clock();
+        budget::begin_tick(defense::clock());
         workforce::spawn::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
@@ -426,6 +428,8 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Swing" => key!("Swing"),
         "RoutingPriority" => key!("RoutingPriority"),
         "AreaScan" => key!("AreaScan"),
+        "TopologyPending" => key!("TopologyPending"),
+        "TerrainPending" => key!("TerrainPending"),
         "AreaFound" => key!("AreaFound"),
         "Posts" => key!("Posts"),
         "Queue" => key!("Queue"),
