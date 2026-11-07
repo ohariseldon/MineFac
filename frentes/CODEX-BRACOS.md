@@ -1,6 +1,6 @@
 # Braço de transferência — primeiro lote
 
-Desenvolvido sobre a consolidação 0.10.0, em `codex/inserters`. O launcher, o pacote de release e os sistemas de trabalhadores permanecem sob os contratos da base. Este lote acrescenta `veio:inserter` e não altera a IA dos aldeões nem os números de produção e energia definidos pelo Grok.
+Desenvolvido sobre a consolidação 0.10.0 e compatibilizado com a 0.11.0, em `codex/inserters`. O launcher, o pacote de release e os sistemas de trabalhadores permanecem sob os contratos da base. Este lote acrescenta `veio:inserter` e não altera a IA dos aldeões nem os números de produção e energia definidos pelo Grok.
 
 ## Uso
 
@@ -26,8 +26,8 @@ O perfil é `Sector::Logistics` / `StationKind::Transport`: o braço recebe ener
 
 Foram aprovadas 67 regras offline (seis cenários novos do braço), a verificação de conteúdo e a compilação de metadados contra a API real `66f3981`. Os cenários cobrem energia, redstone, destino cheio ou filtrado, fonte vazia, quatro orientações, conservação e retomada sem repetição após salvar.
 
-A compilação completa pelo launcher e a conferência visual no jogo estão pendentes. A versão consolidada permanece 0.10.0: esta branch não atualiza `release/Veio-0.11.0.zip` nem recompila o `launcher.exe`. Para testar o código da branch, feche o jogo e execute o launcher da raiz com `--rebuild`; abrir apenas o ZIP antigo não inclui o braço. A próxima consolidação deverá atualizar a versão e o pacote para ativar o rebuild automático normal.
+A compilação completa pelo launcher e a conferência visual no jogo estão pendentes. A versão consolidada permanece 0.11.0: esta branch não atualiza `release/Veio-0.11.0.zip` nem recompila o `launcher.exe`. Para testar o código da branch, feche o jogo e execute o launcher da raiz com `--rebuild`; abrir apenas o ZIP antigo não inclui o braço. A próxima consolidação deverá atualizar a versão e o pacote para ativar o rebuild automático normal.
 
 Filtros configuráveis, braços rápidos e ajuste de alcance são trabalho posterior. Este lote entrega o braço básico, sua receita, visual, controles, painel e guia.
 
-Compatibiliza??o com a 0.11.0 conclu?da: 73 regras offline aprovadas, 403 JSON, 91 p?ginas e 54 texturas conferidos. O transportador e o coordenador do Cloud foram preservados; bra?os continuam classificados como transporte e fora das tarefas de abastecimento de m?quinas.
+Compatibilização com a 0.11.0 concluída: 73 regras offline aprovadas, 403 JSON, 91 páginas e 54 texturas conferidos. O transportador e o coordenador do Cloud foram preservados; braços continuam classificados como transporte e fora das tarefas de abastecimento de máquinas.
