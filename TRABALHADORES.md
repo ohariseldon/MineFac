@@ -32,6 +32,44 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## Quarta entrega: zonas, armazenagem, centro de controle e vilas maiores
+
+### Zonas de lavoura e de cercado
+
+- **Marco de lavoura** e **marco de cercado** (estaca com placa verde ou marrom) ficam no centro da área. A borda aparece desenhada no chão, com estacas nos cantos.
+- Tamanhos por nível: 9x9, 13x13, 17x17 e 21x21 (o último é cerca de cinco vezes uma horta de vila). Sempre três camadas: a do marco, a de baixo e a de cima.
+- **Expansão aos poucos:** com uma esmeralda na mão, o clique no marco libera o próximo nível se a zona tiver trabalho feito e a vila tiver aldeões suficientes a até 48 blocos:
+
+| Nível | Esmeraldas | Trabalho feito na zona | Aldeões |
+| --- | --- | --- | --- |
+| 2 (13x13) | 8 | 32 | 6 |
+| 3 (17x17) | 16 | 128 | 12 |
+| 4 (21x21) | 32 | 384 | 20 |
+
+- **O jogador escolhe o tamanho:** a chave (sem agachar) alterna entre os níveis já liberados.
+- **Grupos:** todo posto do tipo certo a até 3 blocos da borda trabalha na zona inteira. Um aldeão pode cuidar de uma lavoura, ou vários postos podem dividir a mesma lavoura (as reservas evitam disputa).
+- **Lavoura:** além de colher, o lavrador **ara** grama e terra com ar em cima e água a até 4 blocos, e **planta** em terra arada vazia as sementes que colheu (cenoura e batata servem de semente; fungo do Nether vai em areia das almas). A semente no slot do marco escolhe a cultura daquela lavoura: assim há campos variados. Plantar e arar não gastam comida.
+- **Cercado:** o pastor trabalha no cercado inteiro. A ração no slot do marco define o cercado: trigo para vacas, ovelhas e cabras; cenoura para porcos e coelhos; sementes para o galinheiro. Galinheiro coberto, área aberta e cercas são construídos pelo jogador; o marco define a área de trabalho.
+- O painel do marco mostra nível, área, trabalho feito e o que falta para o próximo nível.
+
+### Celeiro e silo
+
+- **Celeiro:** 27 espaços, qualquer item. **Silo:** 18 espaços, só grãos, sementes, ração e comida.
+- Funis põem e tiram itens como num baú; o bocal não esvazia o armazém numa esteira.
+- Na fila do capataz, os armazéns são o último destino (recebem o que nenhuma máquina, a mesa ou o pastor quis) e a última origem (abastecem máquinas, a mesa e a ração do pastor quando os produtos novos não bastam). Estoque não vai de um armazém para outro.
+
+### Centro de controle
+
+- Contrate um **administrador** com uma esmeralda; ele fica ao lado do centro. A comida dele é gasta a cada 2 minutos de painel atualizado.
+- O painel mostra, para os blocos a até 64 blocos: trabalhadores contratados e quantos estão ativos, quantos esperam (saída cheia, sem trabalhador, ausente, sem comida, caminho obstruído, sem esmeralda) e quantos estão sem comida, lavouras e cercados, ocupação dos armazéns, tarefas na fila dos capatazes e até **3 metas**.
+- **Metas:** um item num slot de meta pede `quantidade x 16` daquele item guardados nos armazéns da área; a barra mostra o progresso.
+- **Relatório:** clicar no centro com um livro manda ao chat os postos que precisam de atenção (posição e motivo), cada zona com o que falta para o próximo nível, os armazéns e as metas.
+- Os números vêm dos registros em memória que postos, zonas e armazéns atualizam no próprio tick; o centro não varre blocos.
+
+### Vilas maiores
+
+- A cada 5 minutos (fase espalhada pelo id), cada aldeão adulto tem 1 chance em 6 de ter um filho, se houver pelo menos 2 aldeões a até 32 blocos e menos de 30. O vanilla limita a vila pelas camas; o teto de 30 é o triplo de uma vila grande. O bebê nasce no tick seguinte de um bloco do Veio na mesma dimensão.
+
 ## Terceira entrega: fila de tarefas e pastor
 
 ### Fila de tarefas do capataz
@@ -98,7 +136,7 @@ Cada posto reserva o alvo atual (planta, máquina ou posto atendido) num registr
 - **Conservação.** O espaço no posto é conferido antes da colheita. A carga só entra no posto quando cabe inteira. Dispensar com carga a mantém no posto até haver espaço; nada é destruído nem duplicado. A comida é consumida item a item até cobrir 2 pontos; cada tarefa concluída desconta esses 2 pontos.
 - **Saves.** O posto guarda o UUID do aldeão (`Worker`), a comida (`Ration`), o alvo (`Target`), a carga (`Carried`) e os contadores. Ao reabrir o mundo, o posto reencontra o aldeão pelo UUID entre os aldeões próximos, lendo no máximo 4 NBT a cada 10 ticks.
 - **Comportamento vanilla.** O aldeão só obedece enquanto o posto renova a ordem (a cada 10 ticks; ela vence em 60). Sem ordem — sem tarefa, sem comida, posto descarregado ou removido, ou dispensado — o objetivo de trabalho fica inativo e o cérebro vanilla continua no comando, incluindo comércio e profissão. Nenhum dado do aldeão é alterado.
-- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Lavrador: 9 blocos/ciclo; carregador: 16 blocos e 3 inspeções de máquina; capataz: 25; pastor: 4 NBT de animais, e o alvo atual não relê o rebanho. Aldeões e animais vêm do registro do rancho (`entity_tick_pre`). Sem ordem, reserva ou mesa, os objetivos não disputam os mapas.
+- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Lavrador: 9 blocos/ciclo sem zona, uma fileira da zona com zona; carregador: 16 blocos e 3 inspeções de máquina; capataz: 25 blocos de varredura e 3 inspeções de posto; pastor: 4 NBT de animais, e o alvo atual não relê o rebanho. A fila relê cada bloco da rede uma vez a cada 40 ticks. Aldeões e animais vêm do registro do rancho (`entity_tick_pre`). Sem ordem, reserva ou mesa, os objetivos não disputam os mapas.
 
 ## Código
 
@@ -109,6 +147,14 @@ Cada posto reserva o alvo atual (planta, máquina ou posto atendido) num registr
 - `native/api/src/workforce/tests.rs`: 17 testes. Além dos 11 da primeira entrega: abastecer e recolher uma prensa, ignorar esteiras e outros postos, reserva entre dois carregadores, capataz alimentando e recontratando, capataz sem esmeralda e esmeralda devolvida, e insumo devolvido ao estoque quando a máquina deixa de aceitar.
 
 ### Contratos tocados (para Codex e Grok)
+
+Quarta entrega:
+
+- `lib.rs`: `workforce::owns` (postos, marcos e armazéns) substitui `is_post` no registro, layout, saídas, entradas e tick; `entity_tick_pre` chama `workforce::village::observe` para aldeões; a área de desenho dos marcos cobre a zona; armazéns contam como entrada para as curvas das esteiras.
+- `presentation.rs`: estados 26 (`zone`) e 27 (`storing`); centro de controle e marcos publicam os próprios 13 valores do painel; o centro tem tela própria (como a central de projetos); marcos desenham a borda no lugar das luzes.
+- `operations.rs`: `StationKind::Storage` (celeiro e silo, setor logística); centro de controle no setor de coordenação.
+- Registros novos em memória: `ZONES`, `STORES`, `POSTS` e a fila de nascimentos.
+- O livro do guia está com 99 páginas; o limite é 100.
 
 Terceira entrega:
 
@@ -136,6 +182,8 @@ IDs, saves e campos existentes não mudaram. O posto é um bloco novo, sem migra
 
 ## Números para revisão (Grok)
 
+Zonas: lados 9/13/17/21; níveis 2-4 custam 8/16/32 esmeraldas, 32/128/384 tarefas na zona e 6/12/20 aldeões a 48 blocos; postos a até 3 blocos da borda usam a zona. Centro: raio 64, metas x16, comida do administrador a cada 120 ciclos. Natalidade: 1/6 a cada 6.000 ticks por adulto, mínimo 2 e teto 30 aldeões a 32 blocos.
+
 Fila: rede de até 24 blocos a 12 da mesa, 8 tarefas, refeita a cada 40 ticks, marca vence em 200 ticks; carregadores a 16 da mesa, origem e destino a 12 do carregador; mesa pede comida abaixo de 16. Pastor: raio 6, lê até 12 animais por ciclo, lã 1 a 3 por ovelha. Receita do pastor: tesoura, laço, fardo de feno, esmeralda.
 
 Carregador: 16 itens por viagem de abastecimento, 32 por recolhida, entradas mantidas com até 16, raio 6, até 12 máquinas. Capataz: raio 12, até 6 postos, reabastece abaixo de 4 e leva até 8 itens de comida, 1 esmeralda por recontratação. Receitas: carregador (baú, funil, esmeralda, chapa de ferro); capataz (atril, sino, 2 esmeraldas).
@@ -144,7 +192,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0 e 78 na 0.12.0, já com o lote 3 do Grok; prévia dos quatro painéis).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0 e 90 na 0.13.0, já com os lotes 3, 4 e 5 do Grok; prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
@@ -154,6 +202,15 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 - Dois pastores podem perseguir o mesmo animal (a reserva é por bloco, e o animal anda); o segundo só encontra o animal já atendido e procura outro.
 - A rede da mesa guarda os primeiros 24 blocos encontrados; numa base muito densa, postos podem ficar de fora.
 - O carregador, depois da primeira volta, ainda inspeciona até 12 máquinas a cada 10 ticks quando escolhe a próxima viagem; um teto de inspeções por ciclo fica para um lote seguinte.
+
+## Teste sugerido ao usuário (quarta entrega)
+
+1. Coloque um marco de lavoura com um posto do lavrador perto da borda, água e grama dentro da área, e trigo no posto. O lavrador deve arar perto da água, plantar e colher. Ponha uma cenoura no marco: só cenoura deve ser plantada.
+2. Com trabalho feito e 6 aldeões perto, clique o marco com 8 esmeraldas: a borda cresce para 13x13. A chave alterna entre 9x9 e 13x13.
+3. Marco de cercado com cenoura no slot, um pastor, porcos e vacas: só os porcos recebem ração.
+4. Celeiro perto da mesa do capataz: sobras devem ir para ele.
+5. Centro de controle com administrador: confira os números e use um livro no centro para o relatório. Ponha 4 pães numa meta.
+6. Numa vila, espere alguns minutos de jogo perto de blocos do Veio: devem nascer bebês até cerca de 30 aldeões.
 
 ## Teste sugerido ao usuário (terceira entrega)
 

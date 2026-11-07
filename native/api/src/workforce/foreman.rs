@@ -16,13 +16,14 @@
 //! não renovada vence e a tarefa volta a ficar livre. Ao pegar os itens na origem, o carregador
 //! tira a tarefa da fila (`complete`).
 use super::*;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 pub(super) const RADIUS: i32 = 12;
 /// Uma fileira do 25×25 por ciclo; a volta (1875 blocos) leva 75 ciclos.
 pub(super) const SCAN: i32 = 25;
 pub(super) const MAX_POSTS: usize = 6;
+/// Postos inspecionados por ciclo depois da primeira volta da rede.
+pub(super) const LOOKS: usize = 3;
 /// Abaixo disto (comida guardada no posto e pontos do trabalhador), o capataz reabastece.
 pub(super) const LOW_FOOD: u32 = 4;
 const FOOD_BATCH: u32 = 8;
@@ -77,7 +78,11 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let dimension = host.dimension();
     // A rede é varrida por `organize`, que roda antes em cada ciclo.
     let Some(network) = get_list(entity, "Area") else { return Err(KEEP) };
-    let posts: Vec<[i32; 3]> = network.into_iter().filter(|spot| managed(&host.block(*spot))).take(MAX_POSTS).collect();
+    // `Posts` vem do recorte da fila; até a primeira, filtra a Área (mais `block()`).
+    let posts: Vec<[i32; 3]> = match get_list(entity, "Posts") {
+        Some(posts) => posts.into_iter().take(MAX_POSTS).collect(),
+        None => network.into_iter().filter(|spot| managed(&host.block(*spot))).take(MAX_POSTS).collect(),
+    };
     set_number(entity, "Rate", posts.len() as i32);
     if posts.is_empty() {
         set_target(entity, None);
@@ -86,38 +91,47 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let has_wage = entity.items[EMERALD_SLOT].as_ref().is_some_and(|stack| is_plain(stack, WAGE));
     let avoid = skipped(entity);
     let mut needs_wage = false;
+    let mut inspected = 0;
     for spot in visiting_order(entity, &posts) {
         if avoid.contains(&spot) || reserved_by_other(dimension, spot, pos, now) {
             continue;
         }
-        let Some(post) = look(host, spot) else { continue };
+        inspected += 1;
+        let Some(post) = look(host, spot) else {
+            if inspected >= LOOKS {
+                break;
+            }
+            continue;
+        };
         if !post.staffed {
             if has_wage {
                 set_target(entity, Some(spot));
                 return Ok(Plan::Bring { from: EMERALD_SLOT, count: 1, to: spot, into: 0, kind: Carry::Wage });
             }
             needs_wage = true;
-            continue;
+        } else {
+            let stored = post.food.as_ref().map_or(0, |(_, count)| *count);
+            if post.ration < LOW_FOOD as i32 && stored < LOW_FOOD {
+                let supply = food_slots(&entity.id).find_map(|from| {
+                    let stack = entity.items[from].as_ref().filter(|stack| plain(stack) && is_food(&stack.item))?;
+                    let room = match &post.food {
+                        None => 64,
+                        Some((item, count)) if *item == *stack.item => 64 - (*count).min(64),
+                        Some(_) => 0,
+                    };
+                    // Deixa um item para o próprio capataz.
+                    let spare = if number(entity, "Ration") >= TASK_COST { stack.count } else { stack.count.saturating_sub(1) };
+                    let count = FOOD_BATCH.min(spare).min(room);
+                    (count > 0).then_some((from, count))
+                });
+                if let Some((from, count)) = supply {
+                    set_target(entity, Some(spot));
+                    return Ok(Plan::Bring { from, count, to: spot, into: 0, kind: Carry::Supply });
+                }
+            }
         }
-        let stored = post.food.as_ref().map_or(0, |(_, count)| *count);
-        if post.ration >= LOW_FOOD as i32 || stored >= LOW_FOOD {
-            continue;
-        }
-        let supply = food_slots(&entity.id).find_map(|from| {
-            let stack = entity.items[from].as_ref().filter(|stack| plain(stack) && is_food(&stack.item))?;
-            let room = match &post.food {
-                None => 64,
-                Some((item, count)) if *item == *stack.item => 64 - (*count).min(64),
-                Some(_) => 0,
-            };
-            // Deixa um item para o próprio capataz.
-            let spare = if number(entity, "Ration") >= TASK_COST { stack.count } else { stack.count.saturating_sub(1) };
-            let count = FOOD_BATCH.min(spare).min(room);
-            (count > 0).then_some((from, count))
-        });
-        if let Some((from, count)) = supply {
-            set_target(entity, Some(spot));
-            return Ok(Plan::Bring { from, count, to: spot, into: 0, kind: Carry::Supply });
+        if inspected >= LOOKS {
+            break;
         }
     }
     rotate(entity, posts.len());
@@ -128,20 +142,15 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
 // ---------- Fila de tarefas ----------
 
 static DESKS: Mutex<Vec<(String, [i32; 3], u64)>> = Mutex::new(Vec::new());
-static DESKS_PENDING: AtomicBool = AtomicBool::new(false);
 
 fn register_desk(dimension: &str, pos: [i32; 3], now: u64) {
     if let Ok(mut desks) = DESKS.lock() {
         desks.retain(|(dim, at, seen)| !(dim == dimension && *at == pos) && now.saturating_sub(*seen) <= TASK_STALE);
         desks.push((dimension.to_owned(), pos, now));
-        DESKS_PENDING.store(true, Ordering::Release);
     }
 }
 
 fn desks_near(dimension: &str, at: [i32; 3], now: u64) -> Vec<[i32; 3]> {
-    if !DESKS_PENDING.load(Ordering::Acquire) {
-        return Vec::new();
-    }
     DESKS.lock().map(|desks| desks.iter()
         .filter(|(dim, desk, seen)| dim == dimension && now.saturating_sub(*seen) <= TASK_STALE
             && distance(*desk, at) <= DESK_RANGE)
@@ -256,27 +265,36 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
     if round != 0 {
         return;
     }
+    // Uma leitura por bloco: fontes e destinos saem do mesmo recorte.
+    let mut nodes: Vec<([i32; 3], ModBlockEntity)> = Vec::new();
+    for &spot in &network {
+        host.change_mod_block_entity(spot, &mut |node| {
+            nodes.push((spot, node.clone()));
+        });
+    }
+    let posts: Vec<[i32; 3]> = nodes.iter()
+        .filter(|(_, node)| managed(&node.id))
+        .map(|(spot, _)| *spot)
+        .take(MAX_POSTS)
+        .collect();
+    set_list(entity, "Posts", &posts);
     let mut tasks: Vec<Task> = queue(entity).into_iter()
         .filter(|task| task.by.is_some_and(|(_, seen)| now.saturating_sub(seen) <= TASK_STALE))
         .collect();
-    // Produtos disponíveis: (bloco, slot, item, quantidade). Armazéns vêm por último: produtos
-    // novos saem das máquinas antes de mexer no estoque.
+    // Armazéns vêm por último, como origem e como destino: produtos novos saem das máquinas
+    // antes de mexer no estoque, e o estoque só recebe o que sobrou.
+    nodes.sort_by_key(|(_, node)| storage::is_store(&node.id));
+    let stores: Vec<[i32; 3]> = nodes.iter().filter(|(_, node)| storage::is_store(&node.id)).map(|(spot, _)| *spot).collect();
+    // Produtos disponíveis: (bloco, slot, item, quantidade).
     let mut sources: Vec<([i32; 3], usize, String, u32)> = Vec::new();
-    let mut stores: Vec<[i32; 3]> = Vec::new();
-    for &spot in &network {
-        host.change_mod_block_entity(spot, &mut |node| {
-            if storage::is_store(&node.id) {
-                stores.push(spot);
+    for (spot, node) in &nodes {
+        for slot in queue_outputs(&node.id) {
+            if let Some(stack) = node.items.get(slot).and_then(Option::as_ref).filter(|stack| plain(stack)) {
+                sources.push((*spot, slot, stack.item.to_string(), stack.count));
             }
-            for slot in queue_outputs(&node.id) {
-                if let Some(stack) = node.items.get(slot).and_then(Option::as_ref).filter(|stack| plain(stack)) {
-                    sources.push((spot, slot, stack.item.to_string(), stack.count));
-                }
-            }
-        });
+        }
     }
     sources.retain(|(spot, slot, _, _)| !tasks.iter().any(|task| task.from == *spot && task.slot == *slot));
-    sources.sort_by_key(|(spot, _, _, _)| stores.contains(spot));
     let mut next_id = number(entity, "TaskId");
     let mut plan_for = |sink: &ModBlockEntity, spot: [i32; 3], tasks: &mut Vec<Task>, sources: &mut Vec<([i32; 3], usize, String, u32)>| {
         // A mesa só pede comida quando está acabando; o resto da comida segue para as máquinas.
@@ -309,14 +327,12 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
     };
     // A própria mesa primeiro: comida e esmeraldas mantêm o resto funcionando.
     plan_for(entity, pos, &mut tasks, &mut sources);
-    // Depois as máquinas e os postos; armazéns por último, com o que sobrar.
-    let order = network.iter().filter(|spot| !stores.contains(spot)).chain(network.iter().filter(|spot| stores.contains(spot)));
-    for &spot in order {
+    for (spot, sink) in &nodes {
         // Destino com entrega a caminho (reservado por um carregador) não recebe outra.
-        if tasks.len() >= MAX_QUEUE || reserved_by_other(dimension, spot, pos, now) {
+        if tasks.len() >= MAX_QUEUE || reserved_by_other(dimension, *spot, pos, now) {
             continue;
         }
-        host.change_mod_block_entity(spot, &mut |sink| plan_for(sink, spot, &mut tasks, &mut sources));
+        plan_for(sink, *spot, &mut tasks, &mut sources);
     }
     set_number(entity, "TaskId", next_id);
     set_queue(entity, &tasks);
@@ -328,9 +344,6 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
 /// Tarefa da fila para o carregador em `hauler`: a que ele já pegou, ou a primeira livre cuja
 /// origem e destino estejam ao alcance dele.
 pub(super) fn claim_task(host: &mut dyn Host, hauler: [i32; 3], now: u64) -> Option<Plan> {
-    if !DESKS_PENDING.load(Ordering::Acquire) {
-        return None;
-    }
     let dimension = host.dimension();
     for desk in desks_near(dimension, hauler, now) {
         let mut claimed = None;

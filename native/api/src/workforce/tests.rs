@@ -1033,3 +1033,41 @@ fn walking_shepherd_follows_the_target_without_rereading_the_herd() {
     assert_eq!(cycle(&mut village, &mut post, found + 1), WALKING);
     assert_eq!(village.reads.get(), 1, "só o alvo atual");
 }
+
+#[test]
+fn queue_reads_each_network_block_once_per_refresh() {
+    let mut village = Village::new("veio:test_work_queue_once");
+    village.crops.clear();
+    village.villager(13501, [9.5, 64.0, 8.5], [35, 0, 0, 1]);
+    for i in 0..8 {
+        village.stations.insert([8 + i, 64, 9], block(PRESS));
+    }
+    let mut desk = block(FOREMAN_DESK);
+    set_number(&mut desk, "Ration", 10);
+    assert!(assign(village.dimension, DESK, &mut desk, ([35, 0, 0, 1], 13501), 0));
+    let found = cycles_at(&mut village, DESK, &mut desk, 1, 100, |desk| get_list(desk, "Posts").is_some());
+    village.edits.set(0);
+    cycles_at(&mut village, DESK, &mut desk, found + 1, 5, |desk| number(desk, "Organize") == 0);
+    assert_eq!(village.edits.get(), 8, "uma leitura por máquina, não fontes e destinos em passadas separadas");
+}
+
+#[test]
+fn idle_foreman_inspects_a_few_posts_per_cycle() {
+    let mut village = Village::new("veio:test_work_foreman_looks");
+    village.crops.clear();
+    village.villager(13601, [9.5, 64.0, 8.5], [36, 0, 0, 1]);
+    for i in 0..6 {
+        village.stations.insert([9 + i, 64, 8], block(FARM_POST));
+    }
+    let mut desk = block(FOREMAN_DESK);
+    set_number(&mut desk, "Ration", 10);
+    assert!(assign(village.dimension, DESK, &mut desk, ([36, 0, 0, 1], 13601), 0));
+    let found = cycles_at(&mut village, DESK, &mut desk, 1, 100, |desk| {
+        get_list(desk, "Posts").is_some_and(|posts| posts.len() >= 6)
+    });
+    village.edits.set(0);
+    village.looks.set(0);
+    cycle_at(&mut village, DESK, &mut desk, found + 1);
+    assert_eq!(village.looks.get(), foreman::SCAN as u32, "não relê a Área para achar os postos");
+    assert_eq!(village.edits.get(), foreman::LOOKS as u32, "não inspeciona os 6 postos no mesmo ciclo");
+}

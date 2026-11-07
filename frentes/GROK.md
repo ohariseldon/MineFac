@@ -32,4 +32,4 @@ A atualização das curvas está em `logistics.rs`; postes em `power.rs`; produ�
 - Entregue o diagnóstico, as alterações concretas, a comparação reproduzível e as limitações num documento curto no PR. Registre riscos de gameplay e pontos de teste.
 - Faça as verificações necessárias ao concluir cada lote; evite repetir testes de jogo a cada ajuste. Termine com commits e PR, sem incrementar a versão consolidada por conta própria.
 
-O primeiro lote (custos de tick, esteiras estáveis, cabos ociosos e energia renovável) está em [GROK-LOTE.md](GROK-LOTE.md). O terceiro (postos da 0.11.0, comida e varredura) está em [GROK-LOTE3.md](GROK-LOTE3.md). O quarto (inspeções do carregador e NBT do pastor) está em [GROK-LOTE4.md](GROK-LOTE4.md).
+O primeiro lote (custos de tick, esteiras estáveis, cabos ociosos e energia renovável) está em [GROK-LOTE.md](GROK-LOTE.md). O terceiro (postos da 0.11.0, comida e varredura) está em [GROK-LOTE3.md](GROK-LOTE3.md). O quarto (inspeções do carregador e NBT do pastor) está em [GROK-LOTE4.md](GROK-LOTE4.md). O quinto (fila do capataz) está em [GROK-LOTE5.md](GROK-LOTE5.md).
