@@ -14,7 +14,7 @@ Histórico: a 0.14.0 fez as vilas crescerem com a fábrica até 150 aldeões (co
 
 **Para jogar no Windows:** depois de clonar, abra `launcher.exe` na raiz do repositório (ou extraia `release/Veio-0.15.0.zip` em qualquer pasta e abra o `launcher.exe` de dentro). Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Se a instância não existir, ele a cria (`horizon-launcher instance create Veio`) e depois abre o jogo direto. Antes, instale o Horizon Launcher, entre com a conta e faça o Prepare uma vez. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo. Para gerar de novo: `python tools/package.py`.
 
-A integração passou na conferência de conteúdo e nos testes offline (108 regras do mod e 2 do launcher). A compilação nativa pelo Horizon Launcher e o teste dentro do jogo ainda precisam ser feitos na máquina do usuário; o `launcher.exe` executa essa compilação. Ordens das frentes: [Cloud](frentes/CLOUD.md), [Grok](frentes/GROK.md) e [Codex](frentes/CODEX.md); acordo em [COORDENACAO.md](COORDENACAO.md).
+A integração passou na conferência de conteúdo e nos testes offline (109 regras do mod e 2 do launcher). A compilação nativa pelo Horizon Launcher e o teste dentro do jogo ainda precisam ser feitos na máquina do usuário; o `launcher.exe` executa essa compilação. Ordens das frentes: [Cloud](frentes/CLOUD.md), [Grok](frentes/GROK.md) e [Codex](frentes/CODEX.md); acordo em [COORDENACAO.md](COORDENACAO.md).
 
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 

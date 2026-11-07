@@ -217,7 +217,11 @@ impl Hooks for Factory {
         defense::observe(event.dimension, event.entity, event.kind);
         production::ranch::observe(event.dimension, event.entity, event.kind);
         if event.kind == "minecraft:villager" {
-            workforce::village::observe(host, event.dimension, event.entity, defense::clock());
+            let now = defense::clock();
+            workforce::village::observe(host, event.dimension, event.entity, now);
+            if let Some(at) = host.entity(event.entity).and_then(|entity| entity.position(host)) {
+                workforce::village::scan_homes(host, event.dimension, at, now);
+            }
         }
         Flow::Continue
     }
