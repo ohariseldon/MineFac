@@ -10,6 +10,7 @@ def add_labels(langs):
         "logistics": ("Setor: logística", "Sector: logistics"),
         "projects": ("Setor: projetos", "Sector: projects"),
         "defense": ("Setor: defesa", "Sector: defense"),
+        "workforce": ("Setor: coordenação de trabalhadores", "Sector: worker coordination"),
     }
     advice = {
         "idle": ("Confira os insumos e a configuração da estação.", "Check station inputs and setup."),
@@ -36,6 +37,8 @@ def add_labels(langs):
         "no_food": ("Coloque comida no slot do trabalhador.", "Put food in the worker slot."),
         "path": ("Abra caminho entre o posto e as plantas.", "Clear a walkable path between the post and the crops."),
         "walking": ("O trabalhador está indo até a tarefa.", "The worker is walking to the task."),
+        "idle_work": ("Nada a atender: abasteça o estoque ou aguarde produtos.", "Nothing to serve: stock the post or wait for products."),
+        "no_wage": ("Coloque esmeraldas na mesa para recontratar trabalhadores.", "Put emeralds in the desk to rehire workers."),
         "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
     }
     for prefix, entries in (("sector", sectors), ("advice", advice)):
