@@ -48,6 +48,36 @@ fn measure(name: &str, runs: usize, mut run: impl FnMut()) {
         elapsed.as_nanos(), c.allocations, c.bytes, c.keys, c.fallback);
 }
 
+#[test]
+fn stable_publication_and_network_ticks_allocate_nothing() {
+    let mut arms = node(inserters::ID);
+    logistics_controls::set_filter(&mut arms, Some(PLATE));
+    let mut cable = node(CABLE);
+    let mut console = node(workforce::CONTROL_CENTER);
+    let mut zone = node(workforce::zones::PEN_MARKER);
+    let mut machine = node(PRESS);
+    let mut pole = node(POLE);
+    pole.nbt.insert("Area".into(), Tag::IntArray(vec![1,0,0,2,0,0]));
+    pole.nbt.insert("Links".into(), Tag::IntArray(vec![3,0,0]));
+    let mut grid = Grid { targets: vec![node(PRESS), node(BATTERY), node(POLE)], callbacks: 0 };
+    let mut step = || {
+        logistics_controls::publish(&mut arms);
+        presentation::publish(&mut cable);
+        presentation::publish(&mut console);
+        presentation::publish(&mut zone);
+        record_performance(&mut machine, 0);
+        power::tick(&mut grid, [0; 3], &mut pole, 1);
+    };
+    for _ in 0..16 { step(); }
+    COUNTS.with(|c| c.set(Counts::default()));
+    ACTIVE.with(|c| c.set(true));
+    for _ in 0..64 { step(); }
+    ACTIVE.with(|c| c.set(false));
+    let counts = COUNTS.with(Cell::get);
+    assert_eq!(counts.allocations, 0);
+    assert_eq!(counts.fallback, 0);
+}
+
 fn node(id: &str) -> ModBlockEntity {
     let mut n = ModBlockEntity::default();
     n.id = id.into();
@@ -113,7 +143,7 @@ fn profile_scale() {
     let candidates: Vec<_> = (-4..=4).flat_map(|x| (-4..=4).map(move |z| ([x,0,z], false)))
         .filter(|(p, _)| *p != [0; 3]).collect();
     measure("dense_pole_links", 100, || {
-        black_box(power::links([0; 3], false, |pos| candidates.iter().copied().filter(|(p, _)| *p != pos).collect()));
+        black_box(power::links([0; 3], false, |pos| candidates.iter().copied().filter(move |(p, _)| *p != pos)));
     });
 
     let mut factory = Factory { nodes: Default::default(), queries: 0 };

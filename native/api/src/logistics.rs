@@ -4,17 +4,18 @@ use super::*;
 
 pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let [x, _, z] = pos;
-    if is_belt(&entity.id) && time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4 {
+    // No transfer or topology operation can run outside this existing phase.
+    if time.rem_euclid(8) != i64::from((x ^ z) & 1) * 4 { return; }
+    if is_belt(&entity.id) {
         refresh_path(host, pos, entity);
     }
-    if transport(&entity.id) && time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4 {
+    if transport(&entity.id) {
         let paused = host.neighbor_signal(host.dimension(), pos) > 0;
         set_number(entity, "LogisticsPaused", i32::from(paused));
         if paused { return; }
     }
     let outputs = output_slots(&entity.id);
-    if time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4
-        && entity.items.get(outputs.clone()).is_some_and(|slots| slots.iter().any(Option::is_some))
+    if entity.items.get(outputs.clone()).is_some_and(|slots| slots.iter().any(Option::is_some))
         && let Some(facing) = output_direction(host, pos)
     {
         if entity.id == MERGER {
