@@ -20,11 +20,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 README = """Veio {version}
 
-1. Instale o Horizon Launcher e crie uma instância chamada Veio.
+1. Instale o Horizon Launcher, entre com a conta e faça o Prepare na página Play (uma vez).
 2. Feche o jogo e abra launcher.exe nesta pasta.
-3. Na primeira vez, informe a pasta horizon-mods da instância (o caminho fica em launcher.ini).
-4. O launcher compila o código nativo (só quando a versão muda), instala o conteúdo e abre o
-   Horizon Launcher. Selecione a instância Veio e jogue.
+3. O launcher cria a instância Veio se ela não existir, compila o código nativo (só quando a
+   versão muda; a primeira vez leva de 20 a 30 minutos), instala o conteúdo e abre o jogo.
+4. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo.
 
 Opções: launcher.exe --rebuild (compila de novo), --skip-build (só copia o conteúdo).
 Mantenha launcher.exe, content e native juntos nesta pasta.

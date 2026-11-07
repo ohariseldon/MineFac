@@ -1,12 +1,15 @@
 //! launcher.exe do Veio.
 //!
 //! Fica na pasta do pacote, ao lado de `content/` e `native/`. Ao abrir:
-//! 1. encontra o Horizon Launcher e a pasta `horizon-mods` da instância (pergunta uma vez e
-//!    guarda em `launcher.ini`);
+//! 1. encontra o Horizon Launcher e a pasta `horizon-mods` da instância (guarda em `launcher.ini`);
 //! 2. compila o código nativo com `horizon-launcher.exe native-build` quando a versão do pacote
 //!    muda (ou com `--rebuild`);
 //! 3. copia `content/` para `horizon-mods/veio`;
-//! 4. abre o Horizon Launcher para jogar.
+//! 4. abre o jogo com `horizon-launcher play --instance` (ou o Horizon Launcher, se falhar).
+//!
+//! Se a instância não existir, ela é criada com `horizon-launcher instance create`. As instâncias
+//! ficam em `%APPDATA%\\horizon\\instances\\<nome>` (ou `HORIZON_HOME`), conforme a documentação
+//! do launcher em github.com/horizon-rust/horizon/blob/main/launcher/README.md.
 //!
 //! Só usa a biblioteca padrão. Não baixa nada e não toca em mundos ou contas.
 use std::collections::BTreeMap;
@@ -41,7 +44,7 @@ fn run(args: &[String]) -> Result<(), String> {
     let mut config = read_config(&config_path);
     let horizon = horizon_launcher(&mut config)?;
     let instance = config.entry("instance".into()).or_insert_with(|| "Veio".into()).clone();
-    let mods = mods_dir(&mut config, &instance)?;
+    let mods = mods_dir(&mut config, &horizon, &instance)?;
     write_config(&config_path, &config)?;
 
     let target = mods.join("veio");
@@ -52,7 +55,7 @@ fn run(args: &[String]) -> Result<(), String> {
         println!("[1/3] Compilação pulada (--skip-build).");
     } else if rebuild {
         println!("[1/3] Compilando o código nativo do Veio {version} na instância {instance}.");
-        println!("      Na primeira vez isso pode levar vários minutos.");
+        println!("      Na primeira vez o Horizon baixa o Rust: leva de 20 a 30 minutos e alguns GB.");
         let status = Command::new(&horizon)
             .arg("native-build").arg(root.join("native"))
             .args(["--instance", &instance, "--trust-native-code", "--profile", "dev"])
@@ -72,9 +75,16 @@ fn run(args: &[String]) -> Result<(), String> {
         fs::write(target.join(STAMP), &version).map_err(|error| format!("não foi possível gravar {STAMP}: {error}"))?;
     }
 
-    println!("[3/3] Abrindo o Horizon Launcher. Selecione a instância {instance} e jogue.");
-    Command::new(&horizon).args(config_args(&config)).spawn()
-        .map_err(|error| format!("não foi possível abrir {}: {error}", horizon.display()))?;
+    println!("[3/3] Abrindo o jogo na instância {instance}.");
+    println!("      Na primeira partida, ative o Veio em Opções > Mods (mods de conteúdo começam desligados)");
+    println!("      e reinicie o jogo. Se o jogo não abrir, use o Horizon Launcher: Prepare, conta e Play.");
+    let started = Command::new(&horizon).args(["play", "--instance", &instance]).args(config_args(&config)).status()
+        .map(|status| status.success()).unwrap_or(false);
+    if !started {
+        println!("      O jogo não abriu pela linha de comando; abrindo o Horizon Launcher.");
+        Command::new(&horizon).spawn()
+            .map_err(|error| format!("não foi possível abrir {}: {error}", horizon.display()))?;
+    }
     Ok(())
 }
 
@@ -146,11 +156,38 @@ fn horizon_launcher(config: &mut BTreeMap<String, String>) -> Result<PathBuf, St
     Ok(path)
 }
 
-fn mods_dir(config: &mut BTreeMap<String, String>, instance: &str) -> Result<PathBuf, String> {
+/// Pasta do jogo do Horizon: `HORIZON_HOME` ou `%APPDATA%\\horizon`.
+fn game_dir() -> Option<PathBuf> {
+    std::env::var_os("HORIZON_HOME").filter(|value| !value.is_empty()).map(PathBuf::from)
+        .or_else(|| std::env::var_os("APPDATA").map(|base| PathBuf::from(base).join("horizon")))
+}
+
+/// Pasta `horizon-mods` da instância. Cria a instância pelo Horizon Launcher se ela não existir.
+fn mods_dir(config: &mut BTreeMap<String, String>, horizon: &Path, instance: &str) -> Result<PathBuf, String> {
     if let Some(path) = config.get("mods_dir").map(PathBuf::from).filter(|path| path.is_dir()) {
         return Ok(path);
     }
-    println!("Abra a pasta da instância {instance} pelo Horizon Launcher e localize a subpasta horizon-mods.");
+    if let Some(game) = game_dir() {
+        let folder = game.join("instances").join(instance);
+        if !folder.is_dir() {
+            println!("A instância {instance} não existe. Criando pelo Horizon Launcher...");
+            let created = Command::new(horizon).args(["instance", "create", instance]).status()
+                .map(|status| status.success()).unwrap_or(false);
+            if !created {
+                println!("Não foi possível criar a instância automaticamente.");
+            }
+        }
+        if folder.is_dir() {
+            let path = folder.join("horizon-mods");
+            fs::create_dir_all(&path).map_err(|error| format!("{}: {error}", path.display()))?;
+            println!("Instância {instance}: {}", folder.display());
+            config.insert("mods_dir".into(), path.display().to_string());
+            return Ok(path);
+        }
+    }
+    println!("Não encontrei a pasta da instância {instance}.");
+    println!("No Horizon Launcher: clique em + ao lado de Instances, crie uma chamada {instance},");
+    println!("depois use Open folder na instância. A pasta horizon-mods fica dentro dela (crie se faltar).");
     let answer = ask("Cole o caminho completo da pasta horizon-mods da instância")?;
     let path = PathBuf::from(answer.trim_matches('"'));
     if path.file_name().is_none_or(|name| !name.eq_ignore_ascii_case("horizon-mods")) {
