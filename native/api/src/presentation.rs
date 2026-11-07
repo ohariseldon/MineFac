@@ -244,14 +244,18 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
     if !matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
         return;
     }
-    let (name, count) = {
-        let stack = logistics::display_stack(entity);
-        (stack.map_or("", |stack| stack.item.as_ref()).to_owned(), stack.map_or(0, |stack| stack.count) as i32)
+    let count = logistics::display_stack(entity).map_or(0, |stack| stack.count) as i32;
+    let same = {
+        let name = logistics::display_stack(entity).map_or("", |stack| stack.item.as_ref());
+        with_nbt_key("DisplayItem", |key| {
+            matches!(entity.nbt.get(key), Some(Tag::String(old)) if java_eq(old, name))
+        }) && number(entity, "DisplayCount") == count
     };
-    let same = matches!(entity.nbt.get(&"DisplayItem".into()), Some(Tag::String(old)) if old.to_string_lossy() == name)
-        && number(entity, "DisplayCount") == count;
     if !same {
-        entity.nbt.insert("DisplayItem".into(), Tag::String(name.as_str().into()));
+        let name = logistics::display_stack(entity).map_or(String::new(), |stack| stack.item.as_ref().to_owned());
+        with_nbt_key("DisplayItem", |key| {
+            entity.nbt.insert(key.clone(), Tag::String(name.as_str().into()));
+        });
         set_number(entity, "DisplayCount", count);
     }
 }

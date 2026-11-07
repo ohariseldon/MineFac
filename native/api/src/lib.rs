@@ -15,7 +15,7 @@ mod workforce;
 
 use horizon_client::mod_api::{
     BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
-    Compound, ContainerAcceptsEvent, Direction, Flow, Hooks, Host, ItemStack, ModBlockEntity, ModContainer, ModEnergyBuffer, Tag,
+    Compound, ContainerAcceptsEvent, Direction, Flow, Hooks, Host, ItemStack, JavaString, ModBlockEntity, ModContainer, ModEnergyBuffer, Tag,
 };
 
 const DRILL: &str = "veio:drill";
@@ -383,21 +383,116 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
     }
 }
 
+/// Chaves NBT lidas todo tick. A primeira vez monta o `JavaString`; as seguintes reaproveitam.
+fn nbt_key(name: &str) -> &'static JavaString {
+    macro_rules! key {
+        ($lit:literal) => {{
+            static KEY: std::sync::OnceLock<JavaString> = std::sync::OnceLock::new();
+            KEY.get_or_init(|| JavaString::from($lit))
+        }};
+    }
+    match name {
+        "Absent" => key!("Absent"),
+        "Action" => key!("Action"),
+        "Admin" => key!("Admin"),
+        "Area" => key!("Area"),
+        "Burn" => key!("Burn"),
+        "BurnTotal" => key!("BurnTotal"),
+        "ContractStage" => key!("ContractStage"),
+        "Cooldown" => key!("Cooldown"),
+        "Damage" => key!("Damage"),
+        "DisplayCount" => key!("DisplayCount"),
+        "DisplayItem" => key!("DisplayItem"),
+        "Duration" => key!("Duration"),
+        "Herd" => key!("Herd"),
+        "Info" => key!("Info"),
+        "Level" => key!("Level"),
+        "Links" => key!("Links"),
+        "LocalSmog" => key!("LocalSmog"),
+        "ManualDirection" => key!("ManualDirection"),
+        "Module" => key!("Module"),
+        "MovedAt" => key!("MovedAt"),
+        "NextInput" => key!("NextInput"),
+        "Organize" => key!("Organize"),
+        "PathReady" => key!("PathReady"),
+        "PathSig" => key!("PathSig"),
+        "Pick" => key!("Pick"),
+        "Port" => key!("Port"),
+        "Produced" => key!("Produced"),
+        "Progress" => key!("Progress"),
+        "Queued" => key!("Queued"),
+        "Rate" => key!("Rate"),
+        "Ration" => key!("Ration"),
+        "Recipe" => key!("Recipe"),
+        "Refresh" => key!("Refresh"),
+        "Scan" => key!("Scan"),
+        "Sense" => key!("Sense"),
+        "SmogTicks" => key!("SmogTicks"),
+        "Status" => key!("Status"),
+        "TargetMob" => key!("TargetMob"),
+        "TaskId" => key!("TaskId"),
+        "Total" => key!("Total"),
+        "Unlocked" => key!("Unlocked"),
+        "Utilization" => key!("Utilization"),
+        "Villagers" => key!("Villagers"),
+        "Walk" => key!("Walk"),
+        "Work" => key!("Work"),
+        "energy" => key!("energy"),
+        _ => {
+            // Chave rara: vive até o fim do processo, para o tick seguinte não alocar de novo.
+            use std::collections::HashMap;
+            use std::sync::Mutex;
+            static EXTRA: Mutex<Option<HashMap<String, &'static JavaString>>> = Mutex::new(None);
+            let mut extra = EXTRA.lock().unwrap_or_else(|err| err.into_inner());
+            let extra = extra.get_or_insert_with(HashMap::new);
+            if let Some(key) = extra.get(name) {
+                return key;
+            }
+            let key: &'static JavaString = Box::leak(Box::new(JavaString::from(name)));
+            extra.insert(name.to_owned(), key);
+            key
+        }
+    }
+}
+
+pub(super) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -> T {
+    read(nbt_key(name))
+}
+
+/// `JavaString` igual a `value`, sem montar uma `String` no meio.
+pub(super) fn java_eq(text: &JavaString, value: &str) -> bool {
+    let mut units = text.0.iter().copied();
+    value.encode_utf16().all(|unit| units.next() == Some(unit)) && units.next().is_none()
+}
+
 fn number(entity: &ModBlockEntity, key: &str) -> i32 {
-    match entity.nbt.get(&key.into()) {
+    with_nbt_key(key, |key| match entity.nbt.get(key) {
         Some(Tag::Int(value)) => (*value).max(0),
         _ => 0,
-    }
+    })
 }
 
 fn set_number(entity: &mut ModBlockEntity, key: &str, value: i32) {
-    if number(entity, key) != value || !entity.nbt.contains_key(&key.into()) {
-        entity.nbt.insert(key.into(), Tag::Int(value));
-    }
+    with_nbt_key(key, |key| {
+        let current = match entity.nbt.get(key) {
+            Some(Tag::Int(stored)) => Some((*stored).max(0)),
+            Some(_) => Some(0),
+            None => None,
+        };
+        if current != Some(value) {
+            entity.nbt.insert(key.clone(), Tag::Int(value));
+        }
+    });
 }
 
 fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, Option<ItemStack>) {
-    (number(entity, "Status"), number(entity, "Module"), number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }), logistics::display_stack(entity).cloned())
+    // A carga desenhada no mundo é só de esteira, divisor e unificador; o braço anima pelo `MovedAt`.
+    let cargo = if matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
+        logistics::display_stack(entity).cloned()
+    } else {
+        None
+    };
+    (number(entity, "Status"), number(entity, "Module"), number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }), cargo)
 }
 
 fn center([x, y, z]: [i32; 3]) -> [f64; 3] {

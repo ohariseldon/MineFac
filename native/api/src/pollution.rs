@@ -14,7 +14,7 @@ use horizon_client::mobs::goals::{self, Cx, Goal};
 use horizon_client::mod_api::{Compound, NativeHeightmap, ParticleOptions, ParticleType, Text};
 use std::collections::HashMap;
 use std::sync::Mutex;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 
 /// Unidades de poluição. Um chunk em equilíbrio guarda cerca de 53 vezes a emissão por segundo.
 pub(super) const NOTICE: f32 = 400.0;
@@ -54,6 +54,20 @@ struct World {
 static WORLDS: Mutex<Vec<World>> = Mutex::new(Vec::new());
 static SABOTAGE: Mutex<Vec<([i32; 3], i32)>> = Mutex::new(Vec::new());
 static SABOTAGE_PENDING: AtomicBool = AtomicBool::new(false);
+/// Um passo de difusão por tempo de jogo, por dimensão. O atalho é por dimensão: Overworld e
+/// Nether não compartilham o mesmo relógio de passo.
+static STEP_OVERWORLD: AtomicI64 = AtomicI64::new(i64::MIN);
+static STEP_NETHER: AtomicI64 = AtomicI64::new(i64::MIN);
+static STEP_END: AtomicI64 = AtomicI64::new(i64::MIN);
+
+fn step_slot(dimension: &str) -> Option<&'static AtomicI64> {
+    match dimension {
+        "minecraft:overworld" => Some(&STEP_OVERWORLD),
+        "minecraft:the_nether" => Some(&STEP_NETHER),
+        "minecraft:the_end" => Some(&STEP_END),
+        _ => None,
+    }
+}
 
 fn with_world<T>(dimension: &str, change: impl FnOnce(&mut World) -> T) -> Option<T> {
     let mut worlds = WORLDS.lock().ok()?;
@@ -139,6 +153,12 @@ pub(super) fn update(host: &mut dyn Host, time: i64) {
         return;
     }
     let dimension = host.dimension();
+    // A primeira máquina (ou o tick do mundo) faz o passo; as outras não disputam o mutex.
+    if let Some(slot) = step_slot(dimension)
+        && slot.swap(time, Ordering::AcqRel) == time
+    {
+        return;
+    }
     let day_time = host.day_time();
     let plan = with_world(dimension, |world| {
         if world.updated == time {
