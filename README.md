@@ -1,5 +1,7 @@
 # Veio 0.8
 
+A divisão de trabalho entre produção na nuvem e logística local está em [COORDENACAO.md](COORDENACAO.md). A base 0.8 foi integrada dos pacotes 0.7 e 0.8, conferida contra os tipos reais da API do Horizon `66f3981` e verificada com os 19 testes offline. A compilação completa pelo launcher e a validação dentro do jogo ainda estão pendentes; a instância local permanece na versão 0.6.
+
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 
 Automação industrial no mundo procedural do Minecraft, executada no Horizon. Abra a instância **Veio** pelo launcher. No criativo, as abas **Veio – Indústria**, **Veio – Energia**, **Veio – Logística** e **Veio – Mundo** reúnem o conteúdo.

@@ -16,6 +16,8 @@ A verificação Rust compila `native/api/src` contra `native/offline-check/horiz
 
 ## Onde alterar
 
+A divisão entre produção na nuvem e logística local está em [COORDENACAO.md](COORDENACAO.md). Consulte esse acordo antes de alterar arquivos compartilhados. O transporte de itens está em `native/api/src/logistics.rs`; postes e fios estão em `native/api/src/power.rs`.
+
 - `native/api/src/lib.rs`: simulação, energia, inventários, transporte, combustíveis, jazidas e regras de interação.
 - `native/api/src/farm.rs`: colheitadeira.
 - `native/api/src/defense.rs`: torre Tesla e registro de monstros hostis.
