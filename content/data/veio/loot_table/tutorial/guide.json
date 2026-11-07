@@ -759,7 +759,7 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.cable",
+                            "translate": "block.veio.inserter",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
@@ -771,7 +771,7 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.pole",
+                            "translate": "block.veio.cable",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
@@ -783,7 +783,7 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.steel_pole",
+                            "translate": "block.veio.pole",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
@@ -795,12 +795,24 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "item.veio.wrench",
+                            "translate": "block.veio.steel_pole",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
                               "page": 67
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "item.veio.wrench",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 68
                             }
                           },
                           {
@@ -834,7 +846,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 68
+                              "page": 69
                             }
                           },
                           {
@@ -846,7 +858,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 69
+                              "page": 70
                             }
                           },
                           {
@@ -880,7 +892,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 70
+                              "page": 71
                             }
                           },
                           {
@@ -892,7 +904,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 72
+                              "page": 73
                             }
                           },
                           {
@@ -904,7 +916,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 73
+                              "page": 74
                             }
                           },
                           {
@@ -916,7 +928,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 74
+                              "page": 75
                             }
                           },
                           {
@@ -928,7 +940,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 75
+                              "page": 76
                             }
                           },
                           {
@@ -940,7 +952,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 77
+                              "page": 78
                             }
                           },
                           {
@@ -952,7 +964,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 78
+                              "page": 79
                             }
                           },
                           {
@@ -964,7 +976,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 79
+                              "page": 80
                             }
                           },
                           {
@@ -976,7 +988,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 85
+                              "page": 86
                             }
                           },
                           {
@@ -988,7 +1000,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 86
+                              "page": 87
                             }
                           },
                           {
@@ -2109,6 +2121,41 @@
                           },
                           {
                             "translate": "veio.guide.craft.merger",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.inserter",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.inserter"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.inserter",
                             "color": "dark_gray"
                           },
                           {

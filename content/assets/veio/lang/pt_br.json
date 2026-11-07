@@ -564,5 +564,12 @@
   "veio.operation.advice.no_task": "Plante e espere amadurecer na área 9x9 do posto.",
   "veio.operation.advice.no_food": "Coloque comida no slot do trabalhador.",
   "veio.operation.advice.path": "Abra caminho entre o posto e as plantas.",
-  "veio.operation.advice.walking": "O trabalhador está indo até a tarefa."
+  "veio.operation.advice.walking": "O trabalhador está indo até a tarefa.",
+  "block.veio.inserter": "Braço de transferência",
+  "veio.hint.inserter": "Traseira > frente: 40 FE/item",
+  "veio.help.inserter": "Puxa de trás, entrega à frente.\nBaús, esteiras e máquinas.\nAté 1 item/s; 40 FE por item.\nLigue um cabo ou poste.\nRedstone pausa; chave gira.",
+  "veio.guide.use.inserter": "Puxa de trás, entrega à frente.\nBaús, esteiras e máquinas.\nAté 1 item/s; 40 FE por item.\nLigue um cabo ou poste.\nRedstone pausa; chave gira.",
+  "veio.guide.make.inserter": "Fabricar Braço de transferência\n\n1 x Pistão\n1 x Engrenagem\n1 x Lingote de ferro\n2 x Fiação de cobre\n\nResultado: 2",
+  "veio.guide.craft.inserter": "Fabricar: 1 Pistão, 1 Engrenagem, 1 Lingote de ferro, 2 Fiação de cobre (2)",
+  "veio.hint.inserter_wait": "Confira origem e destino"
 }

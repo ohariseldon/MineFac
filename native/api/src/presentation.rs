@@ -29,7 +29,7 @@ pub(super) fn screen(block: &str) -> Option<NativeScreen> {
         PRESS | ASSEMBLER | CUTTER | CRUSHER | GEOTHERMAL => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
         MERGER => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
         INTEGRATOR | ALLOY | ELECTRONICS => vec![Some([35.0, 45.0]), Some([71.0, 45.0]), Some([143.0, 45.0])],
-        SOLAR | BATTERY | TESLA => vec![None],
+        SOLAR | BATTERY | TESLA | inserters::ID => vec![None],
         HUB => vec![Some([26.0, 45.0]), Some([62.0, 45.0]), Some([116.0, 45.0]), Some([152.0, 45.0])],
         HARVESTER => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0])],
         _ if workforce::is_post(block) => workforce::screen_slots(block)?,
@@ -150,6 +150,7 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     }
     let lines: Vec<String> = if let Some(lines) = production::panel_lines(event.block, event.data)
         .or_else(|| workforce::panel_lines(event.block, event.data)) { lines } else { match event.block {
+        inserters::ID => vec![Text::tr(if read(0) == 0 { "veio.hint.inserter_wait" } else { "veio.hint.inserter" }, &[]).plain(), Text::tr("veio.metric.rate", &[&read(6)]).plain()],
         MERGER => vec![Text::tr("veio.hint.merger", &[]).plain()],
         GENERATOR => vec![Text::tr("veio.hint.fuel", &[]).plain()],
         GEOTHERMAL => vec![Text::tr("veio.hint.lava", &[]).plain()],
@@ -274,6 +275,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     if power::tier(event.block).is_some() {
         return power::draw(host, event);
     }
+    if event.block == inserters::ID { return inserters::draw(host, event); }
     if production::draw(host, event) {
         return;
     }

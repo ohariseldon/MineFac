@@ -564,5 +564,12 @@
   "veio.operation.advice.no_task": "Plant crops in the post's 9x9 area and let them ripen.",
   "veio.operation.advice.no_food": "Put food in the worker slot.",
   "veio.operation.advice.path": "Clear a walkable path between the post and the crops.",
-  "veio.operation.advice.walking": "The worker is walking to the task."
+  "veio.operation.advice.walking": "The worker is walking to the task.",
+  "block.veio.inserter": "Transfer Arm",
+  "veio.hint.inserter": "Rear > front: 40 FE/item",
+  "veio.help.inserter": "Takes from rear, sends ahead.\nChests, belts and machines.\nUp to 1 item/s; 40 FE/item.\nConnect a cable or pole.\nRedstone pauses; wrench turns.",
+  "veio.guide.use.inserter": "Takes from rear, sends ahead.\nChests, belts and machines.\nUp to 1 item/s; 40 FE/item.\nConnect a cable or pole.\nRedstone pauses; wrench turns.",
+  "veio.guide.make.inserter": "Craft Transfer Arm\n\n1 x Piston\n1 x Gear\n1 x Iron ingot\n2 x Copper Wiring\n\nMakes: 2",
+  "veio.guide.craft.inserter": "Craft: 1 Piston, 1 Gear, 1 Iron ingot, 2 Copper Wiring (2)",
+  "veio.hint.inserter_wait": "Check source and target"
 }

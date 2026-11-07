@@ -37,7 +37,7 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
         MILL | KITCHEN | PANTRY => Sector::Food,
         HUB => Sector::Projects,
         TESLA => Sector::Defense,
-        BELT | FAST_BELT | SPLITTER | MERGER => Sector::Logistics,
+        BELT | FAST_BELT | SPLITTER | MERGER | inserters::ID => Sector::Logistics,
         _ if is_power_block(block) || power::tier(block).is_some() => Sector::Power,
         _ => return None,
     };

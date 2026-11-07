@@ -1,0 +1,7 @@
+{
+  "parent": "veio:distribution",
+  "criteria": {
+    "wiring": {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": "veio:wire"}]}}
+  },
+  "rewards": {"recipes": ["veio:inserter"]}
+}
