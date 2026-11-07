@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/barn"
+    },
+    "facing=west": {
+      "model": "veio:block/barn",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/barn",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/barn",
+      "y": 270
+    }
+  }
+}

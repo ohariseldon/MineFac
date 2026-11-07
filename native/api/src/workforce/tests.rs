@@ -24,6 +24,9 @@ struct Village {
     animals: HashMap<u32, ([f64; 3], Compound)>,
     drops: Vec<NativeItemEntity>,
     looks: Cell<u32>,
+    /// Esmeraldas no inventário do jogador.
+    emeralds: u32,
+    summoned: Vec<[f64; 3]>,
 }
 
 impl Village {
@@ -102,6 +105,35 @@ impl Host for Village {
     }
     fn play_sound(&mut self, _: &str, _: [f64; 3], _: usize, _: f32, _: f32) -> bool {
         true
+    }
+    fn edit_blocks(&mut self, _: &str, edit: &horizon_client::mod_api::NativeBlockEdit) -> Result<u64, String> {
+        for run in &edit.runs {
+            for dy in 0..run.height as i32 {
+                self.crops.insert([run.x, run.y + dy, run.z], (edit.palette[run.block as usize].clone(), 0));
+            }
+        }
+        Ok(edit.runs.len() as u64)
+    }
+    fn take_items(&mut self, item: &str, count: u32) -> u32 {
+        if item != WAGE { return 0; }
+        let taken = count.min(self.emeralds);
+        self.emeralds -= taken;
+        taken
+    }
+    fn give_items(&mut self, item: &str, count: u32) -> u32 {
+        if item == WAGE { self.emeralds += count; }
+        count
+    }
+    fn sneaking(&self) -> bool {
+        false
+    }
+    fn server_players(&self) -> Vec<horizon_client::mod_api::NativeServerPlayer> {
+        Vec::new()
+    }
+    fn block_entity_sync(&mut self, _: [i32; 3]) {}
+    fn summon(&mut self, _: &str, _: &str, at: [f64; 3], _: Compound) -> Option<u32> {
+        self.summoned.push(at);
+        Some(90000 + self.summoned.len() as u32)
     }
 }
 
@@ -742,4 +774,222 @@ fn idle_foreman_scans_one_row_per_cycle() {
     village.looks.set(0);
     cycle_at(&mut village, DESK, &mut desk, 1);
     assert_eq!(village.looks.get(), foreman::SCAN as u32);
+}
+
+// ---------- Zonas, armazéns, centro e vila ----------
+
+/// Marco de zona registrado em `at`, com nível liberado e ativo.
+fn marker(village: &mut Village, id: &str, at: [i32; 3], level: i32, filter: Option<&str>) {
+    let mut entity = block(id);
+    set_number(&mut entity, "Unlocked", level);
+    set_number(&mut entity, "Level", level);
+    entity.items[0] = filter.map(|item| ItemStack::new(item, 1));
+    zones::tick(village, at, &mut entity, 0);
+    village.stations.insert(at, entity);
+}
+
+#[test]
+fn farmhand_in_a_field_zone_plants_tills_and_harvests_beyond_the_old_area() {
+    let mut village = Village::new("veio:test_work_zone");
+    village.crops.clear();
+    // Lavoura nível 2 (13x13) com o marco a 5 blocos do posto.
+    marker(&mut village, FIELD_MARKER, [5, 64, 0], 2, None);
+    let far = [10, 64, 5];
+    village.crops.insert(far, ("minecraft:wheat".into(), 7));
+    village.villager(14001, [1.5, 64.0, 1.5], [40, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 20);
+    assert!(assign(village.dimension, POST, &mut entity, ([40, 0, 0, 1], 14001), 0));
+    let now = cycles_at(&mut village, POST, &mut entity, 1, 40, |post| target(post) == Some(far));
+    assert_eq!(get_pos(&entity, "ZoneAt"), Some([5, 64, 0]));
+    village.walk(14001, far);
+    cycle(&mut village, &mut entity, now + 1);
+    assert_eq!(village.age(far), 0, "colheu a 10 blocos do posto, dentro da lavoura");
+    village.walk(14001, [1, 64, 0]);
+    cycle(&mut village, &mut entity, now + 2);
+    assert!(outputs_of(&entity).contains(&("minecraft:wheat_seeds".into(), 1)));
+
+    // Terra arada vazia: planta a semente que colheu.
+    let soil = [6, 63, 2];
+    village.crops.insert(soil, ("minecraft:farmland".into(), 0));
+    let spot = [6, 64, 2];
+    let now = cycles_at(&mut village, POST, &mut entity, now + 3, 60, |post| target(post) == Some(spot));
+    village.walk(14001, spot);
+    cycle(&mut village, &mut entity, now + 1);
+    assert_eq!(village.crops.get(&spot).map(|(id, _)| id.as_str()), Some("minecraft:wheat"), "plantou trigo");
+    assert!(!outputs_of(&entity).iter().any(|(item, _)| item == "minecraft:wheat_seeds"), "gastou a semente");
+
+    // Grama perto da água vira terra arada.
+    let grass = [3, 64, -3];
+    village.crops.insert(grass, ("minecraft:grass_block".into(), 0));
+    village.crops.insert([3, 64, -1], ("minecraft:water".into(), 0));
+    let now = cycles_at(&mut village, POST, &mut entity, now + 2, 60, |post| target(post) == Some(grass));
+    village.walk(14001, grass);
+    cycle(&mut village, &mut entity, now + 1);
+    assert_eq!(village.crops[&grass].0, "minecraft:farmland");
+    let work = number(&village.stations[&[5, 64, 0]], "Work");
+    assert_eq!(work, 3, "colheita, plantio e aragem contam na zona");
+}
+
+#[test]
+fn field_filter_plants_only_the_chosen_seed() {
+    let mut village = Village::new("veio:test_work_zone_filter");
+    village.crops.clear();
+    marker(&mut village, FIELD_MARKER, [2, 64, 0], 1, Some("minecraft:carrot"));
+    village.crops.insert([3, 63, 1], ("minecraft:farmland".into(), 0));
+    village.villager(14101, [3.5, 64.0, 1.5], [41, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 20);
+    entity.items[1] = Some(ItemStack::new("minecraft:wheat_seeds", 4));
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    let now = cycles_at(&mut village, POST, &mut entity, 1, 40, |post| number(post, "Status") == NO_TASK);
+    assert_eq!(village.crops.get(&[3, 64, 1]), None, "a lavoura é de cenoura: trigo não é plantado");
+    entity.items[2] = Some(ItemStack::new("minecraft:carrot", 4));
+    for later in now + 1..now + 41 {
+        cycle(&mut village, &mut entity, later);
+        if village.crops.contains_key(&[3, 64, 1]) {
+            break;
+        }
+    }
+    assert_eq!(village.crops.get(&[3, 64, 1]).map(|(id, _)| id.as_str()), Some("minecraft:carrots"));
+    assert_eq!(entity.items[1], Some(ItemStack::new("minecraft:wheat_seeds", 4)), "trigo intacto");
+}
+
+#[test]
+fn zone_levels_need_work_villagers_and_emeralds_and_the_wrench_picks_the_size() {
+    let mut village = Village::new("veio:test_work_zone_level");
+    let at = [0, 64, 20];
+    marker(&mut village, FIELD_MARKER, at, 1, None);
+    village.emeralds = 100;
+    assert_eq!(zones::right_click(&mut village, at, WAGE), Some(Flow::Cancel));
+    assert_eq!(zones::unlocked(&village.stations[&at]), 1, "sem trabalho na zona, não sobe");
+    set_number(village.stations.get_mut(&at).unwrap(), "Work", zones::WORK[0]);
+    set_number(village.stations.get_mut(&at).unwrap(), "Villagers", zones::VILLAGERS[0]);
+    zones::right_click(&mut village, at, WAGE);
+    assert_eq!(zones::unlocked(&village.stations[&at]), 2);
+    assert_eq!(zones::side(&village.stations[&at]), 13);
+    assert_eq!(village.emeralds, 100 - zones::COST[0]);
+    zones::right_click(&mut village, at, WRENCH);
+    assert_eq!(zones::side(&village.stations[&at]), 9, "a chave volta ao tamanho menor");
+    zones::right_click(&mut village, at, WRENCH);
+    assert_eq!(zones::side(&village.stations[&at]), 13);
+    // Sem esmeraldas suficientes, nada é gasto.
+    set_number(village.stations.get_mut(&at).unwrap(), "Work", 1000);
+    set_number(village.stations.get_mut(&at).unwrap(), "Villagers", 50);
+    village.emeralds = 3;
+    zones::right_click(&mut village, at, WAGE);
+    assert_eq!((zones::unlocked(&village.stations[&at]), village.emeralds), (2, 3));
+}
+
+#[test]
+fn shepherd_works_the_whole_pen_and_follows_its_feed() {
+    let mut village = Village::new("veio:test_work_pen");
+    village.crops.clear();
+    marker(&mut village, PEN_MARKER, [8, 64, 0], 3, Some("minecraft:carrot"));
+    village.villager(14201, [13.5, 64.0, 2.5], [42, 0, 0, 1]);
+    let mut post = block(SHEPHERD_POST);
+    set_number(&mut post, "Ration", 20);
+    post.items[1] = Some(ItemStack::new("minecraft:wheat", 8));
+    assert!(assign(village.dimension, POST, &mut post, ([42, 0, 0, 1], 14201), 0));
+    // Ovelha a 14 blocos do posto, dentro do cercado 17x17.
+    animal(&mut village, 14250, "minecraft:sheep", [14.5, 64.0, 2.5], &[("Age", Tag::Int(0)), ("Color", Tag::Byte(0))]);
+    animal(&mut village, 14251, "minecraft:cow", [12.5, 64.0, -2.5], &[("Age", Tag::Int(0))]);
+    animal(&mut village, 14252, "minecraft:cow", [12.5, 64.0, -3.5], &[("Age", Tag::Int(0))]);
+    cycle(&mut village, &mut post, 1);
+    assert_eq!(village.animals[&14250].1.get(&"Sheared".into()), Some(&Tag::Byte(1)), "tosquiou dentro do cercado");
+    village.walk(14201, [1, 64, 0]);
+    cycle(&mut village, &mut post, 2);
+    assert_eq!(cycle(&mut village, &mut post, 3), IDLE_WORK, "cercado de cenoura: não dá trigo às vacas");
+    assert_eq!(post.items[1], Some(ItemStack::new("minecraft:wheat", 8)));
+    assert_eq!(number(&village.stations[&[8, 64, 0]], "Work"), 1);
+}
+
+#[test]
+fn queue_stores_leftovers_in_the_barn_and_feeds_machines_from_it() {
+    let mut village = Village::new("veio:test_work_barn");
+    let mut desk = desk_with_foreman(&mut village, 14301, [43, 0, 0, 1]);
+    desk.items[0] = Some(ItemStack::new("minecraft:bread", foreman::DESK_FOOD));
+    let mut farm = block(FARM_POST);
+    farm.items[1] = Some(ItemStack::new("minecraft:white_wool", 10));
+    village.stations.insert(MANAGED, farm);
+    let barn = [8, 64, 12];
+    village.stations.insert(barn, block(storage::BARN));
+    village.stations.insert([4, 64, 8], block(production::MILL));
+    let now = cycles_at(&mut village, DESK, &mut desk, 1, 100, |desk| !foreman::queue(desk).is_empty());
+    let task = foreman::queue(&desk).remove(0);
+    assert_eq!((task.from, task.item.as_str(), task.to), (MANAGED, "minecraft:white_wool", barn), "sobra vai ao celeiro");
+
+    // Celeiro com trigo e um moinho vazio: o estoque abastece a máquina.
+    village.stations.get_mut(&MANAGED).unwrap().items[1] = None;
+    village.stations.get_mut(&barn).unwrap().items[5] = Some(ItemStack::new("minecraft:wheat", 20));
+    set_queue_empty(&mut desk);
+    cycles_at(&mut village, DESK, &mut desk, now + 1, 8, |desk| foreman::queue(desk).iter().any(|task| task.from == barn));
+    let task = foreman::queue(&desk).into_iter().find(|task| task.from == barn).unwrap();
+    assert_eq!((task.item.as_str(), task.to, task.into), ("minecraft:wheat", [4, 64, 8], 0));
+}
+
+fn set_queue_empty(desk: &mut ModBlockEntity) {
+    desk.nbt.remove(&"Queue".into());
+}
+
+#[test]
+fn silo_only_takes_grain_and_food() {
+    assert!(storage::accepts(storage::SILO, 0, &ItemStack::new("minecraft:wheat_seeds", 1)));
+    assert!(storage::accepts(storage::SILO, 17, &ItemStack::new("minecraft:bread", 1)));
+    assert!(!storage::accepts(storage::SILO, 0, &ItemStack::new("minecraft:iron_ingot", 1)));
+    assert!(!storage::accepts(storage::SILO, 18, &ItemStack::new("minecraft:wheat", 1)));
+    assert!(storage::accepts(storage::BARN, 26, &ItemStack::new("minecraft:iron_ingot", 1)));
+    assert!(storage::layout(storage::BARN).is_some_and(|(slots, inputs, outputs)| slots == 27 && inputs.len() == 27 && outputs.len() == 27));
+    assert_eq!(super::super::output_slots(storage::BARN), 0..0, "o bocal não esvazia o celeiro numa esteira");
+}
+
+#[test]
+fn control_center_dashboard_counts_workers_zones_storage_and_goals() {
+    let mut village = Village::new("veio:test_work_center");
+    let dimension = village.dimension;
+    let at = [100, 64, 100];
+    // Postos publicam o estado; armazém e zona se registram.
+    let mut busy = block(FARM_POST);
+    set_number(&mut busy, "Status", 1);
+    busy.nbt.insert("Worker".into(), Tag::IntArray(vec![1, 2, 3, 4]));
+    center::report(dimension, [104, 64, 100], &busy, 5);
+    let mut hungry = block(HAULER_POST);
+    set_number(&mut hungry, "Status", NO_FOOD);
+    hungry.nbt.insert("Worker".into(), Tag::IntArray(vec![1, 2, 3, 5]));
+    center::report(dimension, [96, 64, 100], &hungry, 5);
+    let mut barn = block(storage::BARN);
+    barn.items[0] = Some(ItemStack::new("minecraft:bread", 40));
+    storage::tick(&mut village, [100, 64, 110], &mut barn, 10);
+    marker(&mut village, PEN_MARKER, [110, 64, 100], 1, None);
+    let mut console = block(CONTROL_CENTER);
+    console.items[1] = Some(ItemStack::new("minecraft:bread", 4));
+    center::refresh(dimension, at, &mut console, 5);
+    let data = center::data(&console);
+    assert_eq!(&data[1..9], &[2, 1, 1, 1, 0, 1, 3, 0], "trabalhadores, trabalhando, esperando, sem comida, lavouras, cercados, ocupação, fila");
+    assert_eq!(data[9], 62, "meta de 64 pães com 40 guardados");
+    assert_eq!(data[10], -1, "slot de meta vazio");
+}
+
+#[test]
+fn villages_grow_with_births_until_the_cap() {
+    let mut village = Village::new("veio:test_work_births");
+    for (index, id) in (15001..15004).enumerate() {
+        village.villager(id, [index as f64, 64.0, 0.0], [50, 0, 0, index as i32]);
+    }
+    // Procura um instante em que o primeiro aldeão sorteia um nascimento.
+    let now = (0..village::CHECK * village::CHANCE * 4)
+        .map(|step| step * village::CHECK + (village::CHECK - 15001 % village::CHECK))
+        .find(|now| { village::observe(&mut village, "veio:test_work_births", 15001, *now); village::pending("veio:test_work_births") > 0 })
+        .expect("algum ciclo sorteia um nascimento");
+    assert!(now > 0);
+    village::flush(&mut village);
+    assert_eq!(village.summoned.len(), 1, "nasceu um bebê");
+    assert_eq!(village::pending("veio:test_work_births"), 0);
+    // Vila cheia: ninguém nasce.
+    for id in 0..village::CAP as u32 {
+        village.villager(15100 + id, [0.5, 64.0, id as f64 * 0.5], [51, 0, 0, id as i32]);
+    }
+    village.villagers.get_mut(&15001).unwrap().0 = [0.5, 64.0, 0.5];
+    village::observe(&mut village, "veio:test_work_births", 15001, now);
+    assert_eq!(village::pending("veio:test_work_births"), 0, "acima do teto não há nascimento");
 }

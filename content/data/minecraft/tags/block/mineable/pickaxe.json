@@ -38,6 +38,11 @@
     "veio:hauler_post",
     "veio:foreman_desk",
     "veio:shepherd_post",
+    "veio:field_marker",
+    "veio:pen_marker",
+    "veio:barn",
+    "veio:silo",
+    "veio:control_center",
     "veio:solar",
     "veio:battery"
   ]

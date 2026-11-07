@@ -46,7 +46,7 @@ fn managed(block: &str) -> bool {
 }
 
 fn networked(block: &str) -> bool {
-    managed(block) || hauler::station(block)
+    managed(block) || hauler::station(block) || storage::is_store(block)
 }
 
 /// Situação de um posto atendido.
@@ -214,6 +214,7 @@ fn set_queue(desk: &mut ModBlockEntity, tasks: &[Task]) {
 fn top_up(block: &str) -> u32 {
     match block {
         FOREMAN_DESK | SHEPHERD_POST => 32,
+        _ if storage::is_store(block) => 64,
         _ => hauler::TOP_UP,
     }
 }
@@ -252,10 +253,15 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
     let mut tasks: Vec<Task> = queue(entity).into_iter()
         .filter(|task| task.by.is_some_and(|(_, seen)| now.saturating_sub(seen) <= TASK_STALE))
         .collect();
-    // Produtos disponíveis: (bloco, slot, item, quantidade).
+    // Produtos disponíveis: (bloco, slot, item, quantidade). Armazéns vêm por último: produtos
+    // novos saem das máquinas antes de mexer no estoque.
     let mut sources: Vec<([i32; 3], usize, String, u32)> = Vec::new();
+    let mut stores: Vec<[i32; 3]> = Vec::new();
     for &spot in &network {
         host.change_mod_block_entity(spot, &mut |node| {
+            if storage::is_store(&node.id) {
+                stores.push(spot);
+            }
             for slot in queue_outputs(&node.id) {
                 if let Some(stack) = node.items.get(slot).and_then(Option::as_ref).filter(|stack| plain(stack)) {
                     sources.push((spot, slot, stack.item.to_string(), stack.count));
@@ -264,21 +270,28 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
         });
     }
     sources.retain(|(spot, slot, _, _)| !tasks.iter().any(|task| task.from == *spot && task.slot == *slot));
+    sources.sort_by_key(|(spot, _, _, _)| stores.contains(spot));
     let mut next_id = number(entity, "TaskId");
     let mut plan_for = |sink: &ModBlockEntity, spot: [i32; 3], tasks: &mut Vec<Task>, sources: &mut Vec<([i32; 3], usize, String, u32)>| {
         // A mesa só pede comida quando está acabando; o resto da comida segue para as máquinas.
         let desk_food: u32 = if sink.id == FOREMAN_DESK {
             food_slots(&sink.id).filter_map(|slot| sink.items[slot].as_ref()).map(|stack| stack.count).sum()
         } else { 0 };
+        let store = storage::is_store(&sink.id);
         for into in queue_inputs(&sink.id) {
             if sink.id == FOREMAN_DESK && food_slots(&sink.id).contains(&into) && desk_food >= DESK_FOOD {
                 continue;
+            }
+            // Armazém: uma entrega por rodada, num slot vazio ou com o mesmo item.
+            if store && tasks.iter().any(|task| task.to == spot) {
+                break;
             }
             if tasks.len() >= MAX_QUEUE || tasks.iter().any(|task| task.to == spot && task.into == into) {
                 continue;
             }
             let current = sink.items.get(into).and_then(Option::as_ref);
             let Some(index) = sources.iter().position(|(from, _, item, _)| *from != spot
+                && !(store && stores.contains(from))
                 && current.is_none_or(|present| is_plain(present, item) && present.count < top_up(&sink.id))
                 && operations::accepts_material(sink, into, &ItemStack::new(item, 1))) else { continue };
             let (from, slot, item, available) = sources.remove(index);
@@ -290,7 +303,9 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
     };
     // A própria mesa primeiro: comida e esmeraldas mantêm o resto funcionando.
     plan_for(entity, pos, &mut tasks, &mut sources);
-    for &spot in &network {
+    // Depois as máquinas e os postos; armazéns por último, com o que sobrar.
+    let order = network.iter().filter(|spot| !stores.contains(spot)).chain(network.iter().filter(|spot| stores.contains(spot)));
+    for &spot in order {
         // Destino com entrega a caminho (reservado por um carregador) não recebe outra.
         if tasks.len() >= MAX_QUEUE || reserved_by_other(dimension, spot, pos, now) {
             continue;

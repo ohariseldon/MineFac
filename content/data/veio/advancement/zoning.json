@@ -1,0 +1,31 @@
+{
+  "parent": "veio:workforce",
+  "display": {
+    "icon": {
+      "id": "veio:field_marker"
+    },
+    "title": {
+      "translate": "advancement.veio.zoning.title"
+    },
+    "description": {
+      "translate": "advancement.veio.zoning.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:field_marker"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0"
+    ]
+  ]
+}
