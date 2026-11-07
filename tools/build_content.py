@@ -333,3 +333,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    from build_belts import build
+    build(ROOT, model, box, write)

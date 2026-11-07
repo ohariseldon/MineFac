@@ -1,0 +1,21 @@
+{
+  "parent": "veio:tutorial/start",
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:belt"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "loot": [
+      "veio:tutorial/guide"
+    ],
+    "function": "veio:tutorial/path_welcome"
+  }
+}

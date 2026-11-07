@@ -1,5 +1,6 @@
 """Verificação portátil de conteúdo, sem launcher ou dependências externas."""
 import json
+import math
 import tomllib
 from pathlib import Path
 
@@ -56,6 +57,26 @@ def png_size(path):
     return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
 
 
+def check_shapes(path):
+    """Horizon shape tables use property tuples and at most 16 boxes per state."""
+    block = read_json(path)
+    for name in ("shapes", "collision_shapes"):
+        table = block.get(name)
+        if table is None:
+            continue
+        assert set(table) <= {"property", "properties", "values", "default"}, f"{path.name}: tabela {name} inválida"
+        assert not ("property" in table and "properties" in table), path.name
+        properties = table.get("properties", [table["property"]] if "property" in table else [])
+        assert len(properties) == len(set(properties)), path.name
+        for key in table.get("values", {}):
+            assert len(key.split(",")) == len(properties), f"{path.name}: tupla {key} inválida"
+        for boxes in [table.get("default", []), *table.get("values", {}).values()]:
+            assert len(boxes) <= 16, f"{path.name}: máximo de 16 caixas por forma"
+            for box in boxes:
+                assert len(box) == 6 and all(math.isfinite(v) for v in box), path.name
+                assert all(box[i] <= box[i + 3] for i in range(3)), path.name
+
+
 def check_assets(languages):
     """Cada bloco e item registrado tem nome, modelo, receita e texturas próprias existentes."""
     assets = CONTENT / "assets/veio"
@@ -70,6 +91,7 @@ def check_assets(languages):
                 assert f"{kind}.veio.{name}" in language, f"Falta o nome de {kind}.veio.{name}"
             assert (assets / f"items/{name}.json").exists(), f"Falta assets/veio/items/{name}.json"
             if kind == "block":  # Componentes saem das máquinas, não da bancada.
+                check_shapes(path)
                 assert (data / f"recipe/{name}.json").exists(), f"Falta a receita de {name}"
     for model in (assets / "models").rglob("*.json"):
         textures_used = read_json(model).get("textures", {}).values()

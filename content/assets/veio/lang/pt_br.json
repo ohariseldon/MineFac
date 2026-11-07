@@ -110,8 +110,8 @@
   "veio.help.solar": "Gera energia com luz solar.\nColoque sob céu aberto.\nFunciona no Overworld.\nCombine com acumuladores.",
   "veio.help.battery": "Guarda energia para depois.\nLigue por cabos ao gerador\ne às máquinas.\nA carga aparece no painel.",
   "veio.help.cable": "Leva energia aos vizinhos.\nEncoste nas máquinas.\nConecta pelas seis faces.\nFaça ramais para cada máquina.",
-  "veio.help.belt": "Leva itens pelo bocal.\nOlhe para o destino ao colocar.\nMantenha a mesma altura.\nGire curvas com a chave.",
-  "veio.help.fast_belt": "Use como a esteira comum.\nTransporta o dobro de itens.\nÚtil ao juntar várias linhas.\nTem acionamento mecânico.",
+  "veio.help.belt": "Curvas e rampas automáticas.\nConecte esteiras vizinhas.\nRampas vencem 1 bloco.\nChave fixa a direção.\nAgachar + chave: automático.",
+  "veio.help.fast_belt": "Mesmas curvas e rampas.\nTransporta até 5 itens/s.\nUse na saída do unificador.\nChave fixa a direção.",
   "veio.help.splitter": "Divide entre saídas laterais.\nAlterna se ambas estão livres.\nDesvia se um lado encher.\nUse a chave para orientar.",
   "veio.help.contract_hub": "Entradas 1 e 2 à esquerda.\nRecompensas 1 e 2 à direita.\nEntregue o pedido exibido.\nRetire sobras ao mudar pedido.",
   "veio.help.wrench": "Selecione na barra rápida.\nBotão direito gira máquinas\ne esteiras.\nConserva estoques e progresso.",
@@ -185,7 +185,7 @@
   "veio.guide.make.cable": "Fabricar Cabo de energia\n\n1 x Lingote de cobre\n1 x Graveto\n\nResultado: 16",
   "veio.guide.use.drill": "Coloque sobre um minério.\nCobre, ferro, ouro, carvão,\nredstone, lápis e quartzo.\nBocal: saída para a esteira.",
   "veio.guide.make.drill": "Fabricar Extratora de minério\n\n2 x Lingote de cobre\n1 x Lingote de ferro\n1 x Pistão\n\nResultado: 1",
-  "veio.guide.use.belt": "Leva itens pelo bocal.\nOlhe para o destino ao colocar.\nMantenha a mesma altura.\nGire curvas com a chave.",
+  "veio.guide.use.belt": "Curvas e rampas automáticas.\nConecte esteiras vizinhas.\nRampas vencem 1 bloco.\nChave fixa a direção.\nAgachar + chave: automático.",
   "veio.guide.make.belt": "Fabricar Esteira\n\n1 x Lingote de cobre\n2 x Graveto\n\nResultado: 16",
   "veio.guide.use.press": "Cobre/ferro bruto vira chapa.\nOuro bruto vira lingote.\nEntrada no slot esquerdo.\nSaída no direito. Use energia.",
   "veio.guide.make.press": "Fabricar Prensa\n\n1 x Lingote de cobre\n1 x Lingote de ferro\n1 x Pistão\n1 x Pedra lisa\n\nResultado: 1",
@@ -201,7 +201,7 @@
   "veio.guide.make.contract_hub": "Fabricar Central de contratos\n\n1 x Baú\n1 x Engrenagem\n1 x Lingote de ferro\n1 x Lingote de cobre\n\nResultado: 1",
   "veio.guide.use.splitter": "Divide entre saídas laterais.\nAlterna se ambas estão livres.\nDesvia se um lado encher.\nUse a chave para orientar.",
   "veio.guide.make.splitter": "Fabricar Divisor\n\n1 x Engrenagem\n2 x Esteira\n1 x Redstone\n\nResultado: 2",
-  "veio.guide.use.fast_belt": "Use como a esteira comum.\nTransporta o dobro de itens.\nÚtil ao juntar várias linhas.\nTem acionamento mecânico.",
+  "veio.guide.use.fast_belt": "Mesmas curvas e rampas.\nTransporta até 5 itens/s.\nUse na saída do unificador.\nChave fixa a direção.",
   "veio.guide.make.fast_belt": "Fabricar Esteira rápida\n\n1 x Engrenagem\n2 x Esteira\n\nResultado: 8",
   "veio.guide.use.alloy_furnace": "Entrada 1: 2 chapas de ferro.\nEntrada 2: 1 carvão.\nProduz 1 chapa de aço.\nTambém aceita carvão vegetal.\nPrecisa de energia.",
   "veio.guide.make.alloy_furnace": "Fabricar Forno de ligas\n\n2 x Chapa de ferro\n1 x Engrenagem\n1 x Fornalha\n1 x Carvão\n\nResultado: 1",
@@ -503,5 +503,8 @@
   "veio.guide.make.merger": "Fabricar Unificador de esteiras\n\n2 x Esteira\n1 x Engrenagem\n1 x Lingote de ferro\n\nResultado: 2",
   "veio.tutorial.merger.title": "Duas linhas, uma saída",
   "veio.tutorial.merger.description": "Conecte as entradas A e B pelas laterais. Você recebeu o guia atualizado.",
-  "veio.guide.craft.merger": "Fabricar: 2 Esteira, 1 Engrenagem, 1 Lingote de ferro (2)"
+  "veio.guide.craft.merger": "Fabricar: 2 Esteira, 1 Engrenagem, 1 Lingote de ferro (2)",
+  "veio.guide.page.23": "Curvas de esteira\n\nConecte uma entrada e uma saída vizinhas. A curva se ajusta sozinha.\n\nEm cruzamentos, use a chave para fixar a saída. Agache com a chave para voltar ao automático.",
+  "veio.guide.page.24": "Subir e descer\n\nColoque esteiras sobre blocos em degraus, com diferença de 1 bloco.\n\nA peça mais baixa vira rampa. Deixe espaço acima.\n\nMáquinas, divisores e unificadores conectam na mesma altura.",
+  "veio.guide.path_welcome": "Guia atualizado: esteiras agora fazem curvas e rampas. Consulte as páginas antes das categorias."
 }

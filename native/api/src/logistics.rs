@@ -4,6 +4,9 @@ use super::*;
 
 pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let [x, _, z] = pos;
+    if is_belt(&entity.id) && time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4 {
+        refresh_path(host, pos, entity);
+    }
     let outputs = output_slots(&entity.id);
     if time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4
         && entity.items.get(outputs.clone()).is_some_and(|slots| slots.iter().any(Option::is_some))
@@ -23,7 +26,10 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
             let batch = if entity.id == FAST_BELT { 2 } else { 1 };
             for slot in outputs {
                 if let Some(stack) = entity.items[slot].as_ref() {
-                    let moved = send(host, pos, facing, stack, batch);
+                    let moved = if is_belt(&entity.id) {
+                        let target = belt_target(host, pos, facing);
+                        send_to(host, target, facing, stack, batch)
+                    } else { send(host, pos, facing, stack, batch) };
                     if moved > 0 {
                         consume(&mut entity.items[slot], moved);
                         set_number(entity, "MovedAt", stamp(time));
@@ -125,13 +131,118 @@ pub(super) fn split(
 }
 
 pub(super) fn send(host: &mut dyn Host, pos: [i32; 3], facing: Direction, stack: &ItemStack, batch: u32) -> u32 {
-    let [x, y, z] = pos;
-    let [dx, _, dz] = facing.normal();
+    send_to(host, adjacent(pos, facing, 0), facing, stack, batch)
+}
+
+fn send_to(host: &mut dyn Host, target: [i32; 3], facing: Direction, stack: &ItemStack, batch: u32) -> u32 {
     let mut offered = stack.clone();
     let count = stack.count.min(batch);
     offered.count = count;
-    let returned = host.insert_item([x + dx, y, z + dz], facing.opposite(), offered);
+    let returned = host.insert_item(target, facing.opposite(), offered);
     count - returned.map_or(0, |remainder| remainder.count)
+}
+
+pub(super) fn is_belt(block: &str) -> bool { matches!(block, BELT | FAST_BELT) }
+
+fn adjacent(pos: [i32; 3], direction: Direction, dy: i32) -> [i32; 3] {
+    let [dx, _, dz] = direction.normal();
+    [pos[0] + dx, pos[1] + dy, pos[2] + dz]
+}
+
+fn air(block: &str) -> bool {
+    matches!(block, "minecraft:air" | "minecraft:cave_air" | "minecraft:void_air")
+}
+
+/// Only belt-to-belt links change height. Machines keep their existing ports.
+pub(super) fn belt_target(host: &dyn Host, pos: [i32; 3], output: Direction) -> [i32; 3] {
+    let flat = adjacent(pos, output, 0);
+    let block = host.block(flat);
+    if !air(&block) {
+        if !is_factory_block(&block) && is_belt(&host.block(adjacent(pos, output, 1)))
+            && air(&host.block([pos[0], pos[1] + 1, pos[2]])) {
+            return adjacent(pos, output, 1);
+        }
+        return flat;
+    }
+    let lower = adjacent(pos, output, -1);
+    if is_belt(&host.block(lower)) { lower } else { flat }
+}
+
+fn incoming(host: &dyn Host, pos: [i32; 3], side: Direction) -> Option<i32> {
+    for dy in [0, 1, -1] {
+        let other = adjacent(pos, side, dy);
+        let block = host.block(other);
+        if !is_factory_block(&block) { continue; }
+        let Some(output) = output_direction(host, other) else { continue; };
+        if block == SPLITTER {
+            if dy == 0 && (turn(output, false) == side.opposite() || turn(output, true) == side.opposite()) {
+                return Some(0);
+            }
+            continue;
+        }
+        if output != side.opposite() { continue; }
+        let target = if is_belt(&block) { belt_target(host, other, output) }
+            else { adjacent(other, output, 0) };
+        if target == pos && !output_slots(&block).is_empty() { return Some(dy); }
+    }
+    None
+}
+
+const HORIZONTAL: [Direction; 4] = [Direction::North, Direction::East, Direction::South, Direction::West];
+
+fn refresh_path(host: &mut dyn Host, pos: [i32; 3], entity: &ModBlockEntity) {
+    let Some(mut output) = output_direction(host, pos) else { return; };
+    let inputs: Vec<_> = HORIZONTAL.into_iter().filter_map(|side| incoming(host, pos, side).map(|dy| (side, dy))).collect();
+    // Snap a corner only when one line feeds us and one existing line leaves us.
+    // Empty space never overrides the direction chosen while building a new line.
+    if number(entity, "ManualDirection") == 0 && inputs.len() == 1 {
+        let candidates: Vec<_> = HORIZONTAL.into_iter().filter(|side| *side != inputs[0].0)
+            .filter(|side| {
+                let target = belt_target(host, pos, *side);
+                let block = host.block(target);
+                (is_belt(&block) && output_direction(host, target) != Some(side.opposite()))
+                    || (target[1] == pos[1] && !is_belt(&block) && layout(&block).is_some_and(|(_, ins, _)| !ins.is_empty()))
+            }).collect();
+        if candidates.len() == 1 && candidates[0] != output {
+            output = candidates[0];
+            let facing = match output.opposite() {
+                Direction::North => "north", Direction::South => "south",
+                Direction::East => "east", Direction::West => "west", _ => unreachable!(),
+            };
+            host.set_block_property(pos, "facing", facing);
+        }
+    }
+    let target = belt_target(host, pos, output);
+    let rear = incoming(host, pos, output.opposite());
+    let path = if target[1] > pos[1] { "up" }
+        else if rear == Some(1) { "down" }
+        else if rear.is_some() { "straight" }
+        else if incoming(host, pos, turn(output, false)).is_some() { "left" }
+        else if incoming(host, pos, turn(output, true)).is_some() { "right" }
+        else { "straight" };
+    if host.block_property(pos, "path").as_deref() != Some(path) {
+        host.set_block_property(pos, "path", path);
+    }
+}
+
+/// Coordinates follow the same path used by the generated belt models.
+pub(super) fn path_point(path: &str, t: f32) -> [f32; 3] {
+    let t = t.clamp(0.0, 1.0);
+    let a = t * std::f32::consts::FRAC_PI_2;
+    match path {
+        "left" => [0.5 * a.sin(), 0.1875, 0.5 * a.cos()],
+        "right" => [1.0 - 0.5 * a.sin(), 0.1875, 0.5 * a.cos()],
+        "up" => [0.5, 0.1875 + t, 1.0 - t],
+        "down" => [0.5, 1.1875 - t, 1.0 - t],
+        _ => [0.5, 0.1875, 1.0 - t],
+    }
+}
+
+pub(super) fn orient([x, y, z]: [f32; 3], facing: &str) -> [f32; 3] {
+    match facing {
+        "west" => [1.0 - z, y, x], "north" => [1.0 - x, y, 1.0 - z],
+        "east" => [z, y, 1.0 - x], _ => [x, y, z],
+    }
 }
 
 pub(super) fn turn(facing: Direction, right: bool) -> Direction {

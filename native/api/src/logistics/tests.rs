@@ -1,4 +1,7 @@
 use super::*;
+use std::collections::HashMap;
+const COPPER: &str = "minecraft:raw_copper";
+const IRON: &str = "minecraft:raw_iron";
 
 #[derive(Default)]
 struct Outlet {
@@ -74,4 +77,105 @@ fn each_orientation_has_two_distinct_side_inputs_and_no_rear_input() {
             assert_eq!(input_slot(output, face), None);
         }
     }
+}
+
+#[derive(Default)]
+struct RouteWorld {
+    blocks: HashMap<[i32; 3], String>,
+    properties: HashMap<([i32; 3], String), String>,
+    delivered: Vec<([i32; 3], ItemStack)>,
+    full: bool,
+}
+
+impl RouteWorld {
+    fn put(&mut self, pos: [i32; 3], block: &str, facing: &str) {
+        self.blocks.insert(pos, block.to_owned());
+        self.properties.insert((pos, "facing".into()), facing.to_owned());
+    }
+}
+
+impl Host for RouteWorld {
+    fn block(&self, pos: [i32; 3]) -> String {
+        self.blocks.get(&pos).cloned().unwrap_or_else(|| "minecraft:air".into())
+    }
+    fn block_property(&self, pos: [i32; 3], key: &str) -> Option<String> {
+        self.properties.get(&(pos, key.into())).cloned()
+    }
+    fn set_block_property(&mut self, pos: [i32; 3], key: &str, value: &str) -> bool {
+        self.properties.insert((pos, key.into()), value.into());
+        true
+    }
+    fn insert_item(&mut self, pos: [i32; 3], _face: Direction, stack: ItemStack) -> Option<ItemStack> {
+        if self.full { return Some(stack); }
+        self.delivered.push((pos, stack));
+        None
+    }
+}
+
+fn belt() -> ModBlockEntity {
+    let mut entity = ModBlockEntity::default();
+    entity.id = BELT.into();
+    entity.items = vec![Some(ItemStack::new("minecraft:raw_copper", 4))];
+    entity
+}
+
+#[test]
+fn belt_climbs_one_block_and_keeps_items_when_the_upper_outlet_is_full() {
+    let mut world = RouteWorld::default();
+    world.put([0; 3], BELT, "west");
+    world.put([1, 0, 0], "minecraft:stone", "");
+    world.put([1, 1, 0], FAST_BELT, "west");
+    let mut entity = belt();
+    world.full = true;
+    transfer_outputs(&mut world, [0; 3], &mut entity, 0);
+    assert_eq!(entity.items[0].as_ref().unwrap().count, 4);
+    assert_eq!(world.block_property([0; 3], "path").as_deref(), Some("up"));
+    world.full = false;
+    transfer_outputs(&mut world, [0; 3], &mut entity, 8);
+    assert_eq!(world.delivered[0].0, [1, 1, 0]);
+    assert_eq!(entity.items[0].as_ref().unwrap().count, 3);
+    world.put([0, 1, 0], "minecraft:stone", "");
+    assert_eq!(belt_target(&world, [0; 3], Direction::East), [1, 0, 0]);
+}
+
+#[test]
+fn lower_receiving_belt_builds_the_downhill_ramp() {
+    let mut world = RouteWorld::default();
+    world.put([0; 3], BELT, "south");
+    world.put([0, 1, 1], BELT, "south");
+    world.put([0, 0, -1], BELT, "south");
+    assert_eq!(belt_target(&world, [0, 1, 1], Direction::North), [0; 3]);
+    refresh_path(&mut world, [0; 3], &belt());
+    assert_eq!(world.block_property([0; 3], "path").as_deref(), Some("down"));
+    world.put([0, 1, 0], "minecraft:stone", "");
+    assert_eq!(belt_target(&world, [0, 1, 1], Direction::North), [0, 1, 0]);
+}
+
+#[test]
+fn a_single_incoming_and_outgoing_line_snap_to_a_curve_unless_manually_locked() {
+    let mut world = RouteWorld::default();
+    world.put([0; 3], BELT, "west");
+    world.put([-1, 0, 0], BELT, "west");
+    world.put([0, 0, -1], BELT, "south");
+    let mut entity = belt();
+    refresh_path(&mut world, [0; 3], &entity);
+    assert_eq!(world.block_property([0; 3], "facing").as_deref(), Some("south"));
+    assert_eq!(world.block_property([0; 3], "path").as_deref(), Some("left"));
+    world.put([0; 3], BELT, "west");
+    set_number(&mut entity, "ManualDirection", 1);
+    refresh_path(&mut world, [0; 3], &entity);
+    assert_eq!(world.block_property([0; 3], "facing").as_deref(), Some("west"));
+}
+
+#[test]
+fn item_paths_meet_at_the_same_height_and_preserve_the_output_edge() {
+    for path in ["straight", "left", "right", "up", "down"] {
+        let end = path_point(path, 1.0);
+        assert!((end[0] - 0.5).abs() < 0.0001);
+        assert!(end[2].abs() < 0.0001);
+    }
+    assert!((path_point("up", 1.0)[1] - (1.0 + path_point("straight", 0.0)[1])).abs() < 0.0001);
+    assert!((path_point("down", 0.0)[1] - (1.0 + path_point("straight", 1.0)[1])).abs() < 0.0001);
+    assert_eq!(orient([0.5, 0.0, 0.0], "west"), [1.0, 0.0, 0.5]);
+    assert_eq!(orient([0.5, 0.0, 0.0], "east"), [0.0, 0.0, 0.5]);
 }

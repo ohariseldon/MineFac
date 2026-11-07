@@ -1,6 +1,20 @@
-# Logística 0.8.1 — primeiro lote
+# Logística 0.9.1
 
-Trabalho na branch `logistics/merger`, sobre a base consolidada 0.8. A produção pode continuar em paralelo; esta entrega não altera receitas de processamento, geração de energia nem agricultura.
+Integra a produção 0.9 da nuvem e preserva o unificador da 0.8.1. As receitas de produção, geração de energia e agricultura continuam no módulo de produção.
+
+## Curvas e rampas
+
+Esteiras comuns e rápidas passam a reconhecer conexões vizinhas. Quando existe uma única entrada e uma única saída disponível, uma curva de 90 graus é orientada automaticamente. Em bifurcações ambíguas a direção escolhida ao colocar a peça é preservada. A conexão é recalculada a cada oito ticks, escalonada pela posição.
+
+Para mudar a altura, coloque esteiras sobre blocos em degraus, com diferença de um bloco entre vizinhas. Na subida, a peça mais baixa se inclina até a superior. Na descida, a peça mais baixa recebe uma rampa que começa na altura da peça anterior. As rampas são retas; use uma peça plana para fazer a curva antes ou depois da rampa. É preciso deixar espaço acima da peça inferior.
+
+O transporte acompanha o nível do destino, e os itens e ripas desenhados seguem a curva ou inclinação. A colisão também acompanha o formato e a orientação. Máquinas, divisores e unificadores conservam seus pontos de conexão no mesmo nível. Esteiras não atravessam um bloco sólido para procurar uma saída embaixo.
+
+Botão direito com a chave gira e fixa a direção de uma esteira. Agachar e usar a chave devolve a orientação automática. Estoques são preservados nas duas operações. O campo NBT `ManualDirection` guarda essa escolha; a propriedade de estado `path` guarda `straight`, `left`, `right`, `up` ou `down`. Esteiras existentes usam `straight` como padrão e reconhecem as conexões no tick seguinte.
+
+`tools/build_belts.py`, chamado por `tools/build_content.py`, gera as variantes dos modelos e as caixas de colisão. As formas respeitam o limite de 16 caixas por estado do Horizon. `logistics::path_point` usa os mesmos pontos de entrada e saída para a animação.
+
+O guia inclui duas páginas de construção e controles. Recolher uma esteira entrega uma cópia atualizada uma vez por jogador, inclusive em saves que já receberam versões anteriores do guia.
 
 ## Unificador de esteiras
 
@@ -28,6 +42,10 @@ Para integrar, preserve o ID `veio:merger`, os dois slots de entrada, o campo NB
 
 Braços de transferência, filtros configuráveis e prioridades continuam no planejamento seguinte. Este lote entrega o unificador.
 
-## Verificações desta entrega
+## Verificações do primeiro lote 0.8.1
 
 Conteúdo conferido (257 JSON, 72 páginas e 39 texturas); 23 testes offline aprovados, incluindo quatro cenários do unificador; tipos conferidos contra a API real; compilação completa pelo Horizon Launcher concluída com Horizon `66f3981`, Rust 1.99.1 e perfil `dev`. O jogo não foi aberto para testes automatizados; a validação visual e de interação fica com o usuário.
+
+Na integração 0.9.1: 371 JSON, 85 páginas, 51 texturas e 40 testes offline aprovados. Os cenários novos cobrem subida com saída cheia e teto obstruído, descida sem atravessar parede, curva automática, direção manual e continuidade dos pontos da animação.
+
+Compila??o completa da 0.9.1 conclu?da pelo launcher com Horizon `66f3981`, Rust 1.99.1 e perfil `dev`. O jogo n?o foi aberto para testes.

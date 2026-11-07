@@ -142,6 +142,10 @@ impl Hooks for Factory {
             return Flow::Cancel;
         }
         let facing = host.block_property(pos, "facing");
+        if logistics::is_belt(&block) && host.sneaking() {
+            host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "ManualDirection", 0));
+            return Flow::Cancel;
+        }
         let next = match facing.as_deref() {
             Some("north") => "east",
             Some("east") => "south",
@@ -149,7 +153,12 @@ impl Hooks for Factory {
             Some("west") => "north",
             _ => return Flow::Continue,
         };
-        if host.set_block_property(pos, "facing", next) { Flow::Cancel }
+        if host.set_block_property(pos, "facing", next) {
+            if logistics::is_belt(&block) {
+                host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "ManualDirection", 1));
+            }
+            Flow::Cancel
+        }
         else { Flow::Continue }
     }
 
@@ -215,6 +224,9 @@ impl Hooks for Factory {
             power::bounds(event.entity, event.bounds);
         }
         production::generation::bounds(event.block, event.bounds);
+        if logistics::is_belt(event.block) {
+            event.bounds[4] = event.bounds[4].max(1.6);
+        }
     }
 
     fn screen(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::ScreenEvent<'_>)

@@ -287,26 +287,34 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
         let speed = if event.block == FAST_BELT { 4 } else { 8 };
         let t = ((event.draw.game_time.rem_euclid(speed) as f32
             + event.draw.partial - phase as f32).rem_euclid(speed as f32)) / speed as f32;
-        // Ripas em movimento deixam a direção legível mesmo sem carga.
+        let path = host.block_state_property(event.state, "path").unwrap_or("straight");
+        // Slats and cargo follow the same centerline as the static geometry.
         for index in 0..4 {
-            let offset = ((index as f32 / 4.0 + t).fract() - 0.5) * 12.0;
-            event.draw.push();
-            event.draw.translate([normal[0] * offset / 16.0, 0.0, normal[1] * offset / 16.0]);
-            let (from, to) = if normal[0] == 0.0 {
-                ([2.0, 3.0, 7.5], [14.0, 3.15, 8.5])
+            let u = (index as f32 / 4.0 + t).fract();
+            let point = logistics::orient(logistics::path_point(path, u), facing);
+            let next = logistics::orient(logistics::path_point(path, (u + 0.01).min(1.0)), facing);
+            let across_z = (next[0] - point[0]).abs() > (next[2] - point[2]).abs();
+            let [px, py, pz] = point.map(|n| n * 16.0);
+            let (from, to) = if across_z {
+                ([px - 0.4, py + 0.04, pz - 5.0], [px + 0.4, py + 0.18, pz + 5.0])
             } else {
-                ([7.5, 3.0, 2.0], [8.5, 3.15, 14.0])
+                ([px - 5.0, py + 0.04, pz - 0.4], [px + 5.0, py + 0.18, pz + 0.4])
             };
             host.draw_cube(event.draw, from, to, FLAT, 0x3a3a3a);
-            event.draw.pop();
         }
         if let Some(Tag::String(item)) = event.entity.nbt.get(&"DisplayItem".into()) {
             let name = item.to_string_lossy();
             if !name.is_empty() {
-                let distance = if status == 3 { 0.0 } else { t - 0.5 };
+                let u = if status == 3 { 0.5 } else { t };
                 event.draw.push();
-                let height = if event.block == MERGER { 0.34 } else { 0.25 };
-                event.draw.translate([0.5 + normal[0] * distance, height, 0.5 + normal[1] * distance]);
+                let point = if logistics::is_belt(event.block) {
+                    let mut point = logistics::orient(logistics::path_point(path, u), facing);
+                    point[1] += 0.0625;
+                    point
+                } else {
+                    [0.5 + normal[0] * (u - 0.5), if event.block == MERGER { 0.34 } else { 0.25 }, 0.5 + normal[1] * (u - 0.5)]
+                };
+                event.draw.translate(point);
                 event.draw.rotate_about([1.0, 0.0, 0.0], 90.0, [0.0; 3]);
                 event.draw.scale([0.4; 3]);
                 host.draw_item(event.draw, &ItemStack::new(&name, 1), DisplayContext::Fixed, None, 0);

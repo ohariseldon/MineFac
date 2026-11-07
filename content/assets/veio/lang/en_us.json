@@ -110,8 +110,8 @@
   "veio.help.solar": "Generates power in sunlight.\nNeeds open sky above.\nWorks in the Overworld.\nCombine with accumulators.",
   "veio.help.battery": "Stores energy for later.\nConnect cables to generators\nand machines.\nRead its charge in the panel.",
   "veio.help.cable": "Transfers energy to neighbors.\nTouch the machines with it.\nConnects on all six faces.\nBranch to each machine.",
-  "veio.help.belt": "Moves items toward its port.\nFace the destination to place.\nKeep endpoints at one height.\nTurn corners with the wrench.",
-  "veio.help.fast_belt": "Use like the basic conveyor.\nCarries twice as many items.\nUseful for merging lines.\nUses mechanical drive.",
+  "veio.help.belt": "Automatic turns and ramps.\nConnect neighboring belts.\nRamps span one block up.\nWrench locks the direction.\nSneak + wrench: automatic.",
+  "veio.help.fast_belt": "Same turns and ramps.\nCarries up to 5 items/s.\nUse after a merger.\nWrench locks direction.",
   "veio.help.splitter": "Splits into the side outputs.\nAlternates when both are free.\nDiverts if one side fills.\nOrient it with the wrench.",
   "veio.help.contract_hub": "Inputs 1 and 2 on the left.\nRewards 1 and 2 on the right.\nDeliver the displayed order.\nClear leftovers for the next.",
   "veio.help.wrench": "Select it in the hotbar.\nRight-click to turn machines\nand conveyors.\nKeeps contents and progress.",
@@ -185,7 +185,7 @@
   "veio.guide.make.cable": "Craft Power Cable\n\n1 x Copper ingot\n1 x Stick\n\nMakes: 16",
   "veio.guide.use.drill": "Place directly on an ore.\nCopper, iron, gold, coal,\nredstone, lapis and quartz.\nThe port feeds a conveyor.",
   "veio.guide.make.drill": "Craft Ore Extractor\n\n2 x Copper ingot\n1 x Iron ingot\n1 x Piston\n\nMakes: 1",
-  "veio.guide.use.belt": "Moves items toward its port.\nFace the destination to place.\nKeep endpoints at one height.\nTurn corners with the wrench.",
+  "veio.guide.use.belt": "Automatic turns and ramps.\nConnect neighboring belts.\nRamps span one block up.\nWrench locks the direction.\nSneak + wrench: automatic.",
   "veio.guide.make.belt": "Craft Conveyor Belt\n\n1 x Copper ingot\n2 x Stick\n\nMakes: 16",
   "veio.guide.use.press": "Raw copper/iron makes plates.\nRaw gold makes ingots.\nInput in the left slot.\nOutput on the right. Use power.",
   "veio.guide.make.press": "Craft Press\n\n1 x Copper ingot\n1 x Iron ingot\n1 x Piston\n1 x Smooth stone\n\nMakes: 1",
@@ -201,7 +201,7 @@
   "veio.guide.make.contract_hub": "Craft Contract Hub\n\n1 x Chest\n1 x Gear\n1 x Iron ingot\n1 x Copper ingot\n\nMakes: 1",
   "veio.guide.use.splitter": "Splits into the side outputs.\nAlternates when both are free.\nDiverts if one side fills.\nOrient it with the wrench.",
   "veio.guide.make.splitter": "Craft Splitter\n\n1 x Gear\n2 x Conveyor Belt\n1 x Redstone\n\nMakes: 2",
-  "veio.guide.use.fast_belt": "Use like the basic conveyor.\nCarries twice as many items.\nUseful for merging lines.\nUses mechanical drive.",
+  "veio.guide.use.fast_belt": "Same turns and ramps.\nCarries up to 5 items/s.\nUse after a merger.\nWrench locks direction.",
   "veio.guide.make.fast_belt": "Craft Fast Conveyor Belt\n\n1 x Gear\n2 x Conveyor Belt\n\nMakes: 8",
   "veio.guide.use.alloy_furnace": "Input 1: 2 iron plates.\nInput 2: 1 coal.\nMakes 1 steel plate.\nCharcoal works too.\nRequires electricity.",
   "veio.guide.make.alloy_furnace": "Craft Alloy Furnace\n\n2 x Iron Plate\n1 x Gear\n1 x Furnace\n1 x Coal\n\nMakes: 1",
@@ -503,5 +503,8 @@
   "veio.guide.make.merger": "Craft Conveyor Merger\n\n2 x Conveyor Belt\n1 x Gear\n1 x Iron ingot\n\nMakes: 2",
   "veio.tutorial.merger.title": "Two lines, one outlet",
   "veio.tutorial.merger.description": "Connect inputs A and B from the sides. You received the updated guide.",
-  "veio.guide.craft.merger": "Craft: 2 Conveyor Belt, 1 Gear, 1 Iron ingot (2)"
+  "veio.guide.craft.merger": "Craft: 2 Conveyor Belt, 1 Gear, 1 Iron ingot (2)",
+  "veio.guide.page.23": "Conveyor turns\n\nConnect one incoming and one outgoing belt. The corner adjusts automatically.\n\nAt junctions, use the wrench to lock the outlet. Sneak with it to restore automatic routing.",
+  "veio.guide.page.24": "Up and down\n\nPlace belts on stair-stepped blocks, one block of height per step.\n\nThe lower belt becomes a ramp. Leave headroom.\n\nMachines, splitters and mergers connect at the same height.",
+  "veio.guide.path_welcome": "Updated guide: belts now turn and climb. Read the pages before the categories."
 }

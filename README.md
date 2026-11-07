@@ -1,6 +1,6 @@
-# Veio 0.9
+# Veio 0.9.1
 
-A divisão de trabalho entre produção na nuvem e logística local está em [COORDENACAO.md](COORDENACAO.md). Esta branch acrescenta o [primeiro lote de logística](LOGISTICA.md) à base 0.8 recebida nos ZIPs: unificador com duas entradas laterais, saída frontal e alternância entre linhas. A versão 0.8.1 passou na compilação completa pelo launcher com Horizon `66f3981`, na conferência de conteúdo e em 23 testes offline. O teste dentro do jogo fica com o usuário.
+A versão 0.9.1 integra a produção 0.9 recebida da nuvem, o unificador e [esteiras com curvas e rampas](LOGISTICA.md). A divisão de trabalho está em [COORDENACAO.md](COORDENACAO.md). A integração passou na conferência de conteúdo, nos tipos reais do Horizon `66f3981` e em 40 testes offline. A compilação completa pelo launcher está sendo concluída; o teste dentro do jogo fica com o usuário.
 
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 
