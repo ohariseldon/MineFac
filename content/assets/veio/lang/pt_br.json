@@ -750,8 +750,8 @@
   "veio.village.page.09": "7. Centro de controle\n\nContrate um administrador. O painel mostra trabalhadores, esperas, zonas, armazéns e metas.\n\nItem num slot de meta: x16 guardados. Livro no centro: relatório. O spawn vai para o centro.",
   "veio.village.page.10": "Expandir as zonas\n\nEsmeralda no marco libera o próximo nível:\n13x13: 8 esm., 32 tarefas, 6 aldeões\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nA chave escolhe o tamanho entre os liberados.",
   "veio.village.page.11": "A vila cresce\n\nAldeões têm filhos até o teto da vila: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle. Máximo 150.\n\nVárias fábricas espalhadas: cada uma com sua vila.",
-  "veio.village.page.12": "Quando um aldeão para\n\nSem comida: ponha pão.\nAusente: traga-o ou dispense (agachar + chave).\nCaminho obstruído: abra passagem.\nSaída cheia: esvazie ou use um celeiro.\nPasse o cursor no estado do painel para dicas.",
-  "veio.village.page.13": "Comida\n\nCada tarefa gasta 2 pontos. Trigo vale 1, batata e cenoura 1, pão 6 (3 tarefas), carne assada 8 (4 tarefas), torta 10.\n\nComida pronta rende mais: monte moinho e cozinha cedo.",
+  "veio.village.page.12": "Jogar na mesma rede\n\nQuem hospeda: Esc, Abrir para a LAN, Iniciar mundo LAN. O mundo fica no seu computador.\n\nQuem entra: o mesmo Wi-Fi, Multijogador, o mundo aparece na lista. Instale o Veio na mesma versão.\n\nCada um usa a própria conta. As máquinas são as do anfitrião.",
+  "veio.village.page.13": "Quando um aldeão para\n\nSem comida: ponha pão.\nAusente: traga-o ou dispense (agachar + chave).\nCaminho obstruído: abra passagem.\nSaída cheia: esvazie ou use um celeiro.\nPasse o cursor no estado do painel para dicas.",
   "veio.village.blocks": "Blocos da vila",
   "veio.village.title": "Guia da Vila Operária",
   "veio.village.contents.0": "Começar",
@@ -764,8 +764,8 @@
   "veio.village.contents.7": "7. Centro",
   "veio.village.contents.8": "Expandir zonas",
   "veio.village.contents.9": "A vila cresce",
-  "veio.village.contents.10": "Problemas e comida",
-  "veio.village.contents.11": "Blocos",
+  "veio.village.contents.10": "Na mesma rede",
+  "veio.village.contents.11": "Problemas e comida",
   "veio.village.tab": "Vila operária",
   "veio.village.tab.description": "Abra o Guia da Vila Operária e contrate seu primeiro aldeão.",
   "veio.village.welcome": "Você recebeu o Guia da Vila Operária: aldeões podem trabalhar por você.",
@@ -816,5 +816,7 @@
   "veio.guide.craft.fast_inserter": "Fabricar: 1 Braço de transferência, 1 Placa de circuito, 1 Chapa de aço, 2 Fiação de cobre",
   "veio.guide.use.long_inserter": "Até 1 item/s; 60 FE/item.\nAlcance de 2 blocos por lado.\nIgnora inventário intermediário.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
   "veio.guide.make.long_inserter": "Fabricar Braço longo\n\n1 x Braço de transferência\n2 x Moldura recortada\n1 x Engrenagem\n1 x Fiação de cobre\n\nResultado: 1",
-  "veio.guide.craft.long_inserter": "Fabricar: 1 Braço de transferência, 2 Moldura recortada, 1 Engrenagem, 1 Fiação de cobre"
+  "veio.guide.craft.long_inserter": "Fabricar: 1 Braço de transferência, 2 Moldura recortada, 1 Engrenagem, 1 Fiação de cobre",
+  "veio.village.page.14": "Comida\n\nCada tarefa gasta 2 pontos. Trigo vale 1, batata e cenoura 1, pão 6 (3 tarefas), carne assada 8 (4 tarefas), torta 10.\n\nComida pronta rende mais: monte moinho e cozinha cedo.",
+  "veio.village.contents.12": "Blocos"
 }
