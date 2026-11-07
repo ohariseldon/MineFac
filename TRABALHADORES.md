@@ -1,4 +1,4 @@
-# Trabalhadores — primeira entrega (frente Cloud)
+# Trabalhadores (frente Cloud)
 
 Primeira etapa da ordem em [frentes/CLOUD.md](frentes/CLOUD.md): um aldeão contratado trabalha numa lavoura. Integrada na 0.10.0 com a interface de postos do Codex e o lote 1 do Grok.
 
@@ -32,6 +32,40 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## Segunda entrega: indústria e coordenação
+
+### Posto do carregador (setor indústria)
+
+Receita: baú, funil, esmeralda e chapa de ferro. Liberada pelo avanço **Mão de obra** (obter o posto do lavrador).
+
+- Contrate com uma esmeralda, como no posto do lavrador. Comida no slot da esquerda; cada viagem com entrega gasta 1 ponto.
+- Os três slots de **insumos** são o estoque: o carregador leva até 16 itens por viagem a uma máquina que os aceite, mantendo cada entrada com até 16.
+- Os três slots de **saída** recebem o que ele recolhe das máquinas (até 32 itens por viagem).
+- Atende até 12 máquinas a até 6 blocos (13x13, três camadas). Prioridade: máquina parada por falta de insumo ou combustível; depois produtos prontos; depois completar entradas.
+- Só atende estações de trabalho da [interface de postos](frentes/INTERFACE_POSTOS.md) (`operations::profile` = `Workstation`): máquinas, geradores, central de projetos, armazém. Nunca esteiras, divisores, unificadores, postes, cabos, acumuladores nem outros postos de trabalho. Os filtros de entrada são os de `operations::accepts_material`, incluindo o pedido atual da central.
+- Pega o insumo no posto (precisa estar ao lado dele), anda até a máquina e só insere ao lado dela. Se a máquina não aceitar mais (o jogador trocou o material, a entrada encheu), a sobra volta ao estoque do posto.
+
+### Mesa do capataz (coordenação)
+
+Receita: atril, sino e duas esmeraldas. Liberada pelo avanço **Carregadores** (obter o posto do carregador).
+
+- Contrate o capataz com uma esmeralda na mesa. Os três primeiros slots guardam comida (dele e para os postos); o último guarda esmeraldas.
+- Cuida de até 6 postos (lavrador ou carregador) a até 12 blocos:
+  - quando o trabalhador de um posto tem menos de 4 pontos de comida e o posto guarda menos de 4 itens de comida, o capataz leva até 8 itens da mesa (sempre guardando um para si);
+  - quando um posto fica sem trabalhador (morto, removido, dispensado ou desfeito por ausência), ele leva uma esmeralda até lá e contrata o aldeão adulto livre mais próximo do posto; sem candidato, a esmeralda volta à mesa.
+- O capataz não faz o trabalho dos postos nem escolhe as tarefas deles.
+
+### Coordenação sem disputa
+
+Cada posto reserva o alvo atual (planta, máquina ou posto atendido) num registro em memória (`RESERVED`), renovado a cada ciclo e vencido em 100 ticks. Outro posto não escolhe um alvo reservado. Assim dois carregadores não atendem a mesma máquina, dois lavradores não vão à mesma planta e dois capatazes não atendem o mesmo posto ao mesmo tempo.
+
+### Novos estados
+
+| Estado | Significado |
+| --- | --- |
+| Nada a fazer | Carregador ou capataz sem tarefa nesta volta. O aldeão fica livre (vanilla). |
+| Sem esmeralda para contratar | O capataz achou um posto vazio, mas a mesa não tem esmeralda. |
+
 ## Regras implementadas
 
 - **Presença física.** Colher exige o aldeão a até 1,8 bloco (horizontal) e 2 blocos (vertical) do centro da planta. Entregar exige até 2,5 blocos do posto. Não há teletransporte de itens nem de aldeões; o produto fica "na mão" do trabalhador (`Carried` no NBT do posto) entre a planta e o posto.
@@ -43,11 +77,21 @@ O painel mostra também as colheitas feitas e quantas colheitas a comida guardad
 
 ## Código
 
-- `native/api/src/workforce/mod.rs`: trabalhador, posto, atribuição, ordens de caminhada, objetivo `Work` registrado nos aldeões, ciclo genérico (carga → comida → tarefa) e painel.
-- `native/api/src/workforce/farmhand.rs`: a tarefa agrícola (`next`, `perform`, `skip`). Um novo setor acrescenta um submódulo com essas três funções e um caso no `match` de `work`.
-- `native/api/src/workforce/tests.rs`: 11 testes de atribuição exclusiva, ciclo físico, comida, saída cheia, caminho obstruído, conservação na dispensa, restauração pelo UUID, ausência e reivindicação vencida.
+- `native/api/src/workforce/mod.rs`: trabalhador, posto, atribuição, reservas, ordens de caminhada, objetivo `Work` registrado nos aldeões, varredura incremental de blocos, ciclo genérico (carga → comida → tarefa) e painel.
+- Interface de tarefas: um adaptador devolve um `Plan`. `Visit { spot, reach }` manda o trabalhador ao alvo e chama o `perform` do adaptador ao chegar; o que ele devolver é carregado até o posto. `Bring { from, count, to, into, kind }` faz o trabalhador pegar itens no posto e levá-los ao slot `into` de outro bloco (`Carry::Supply`) ou contratar lá (`Carry::Wage`). Um setor novo é um submódulo com `plan` (e `perform`, se usar `Visit`) e um caso nos dois `match` de `work`.
+- `farmhand.rs` (lavoura), `hauler.rs` (indústria) e `foreman.rs` (coordenação).
+- `native/api/src/workforce/tests.rs`: 17 testes. Além dos 11 da primeira entrega: abastecer e recolher uma prensa, ignorar esteiras e outros postos, reserva entre dois carregadores, capataz alimentando e recontratando, capataz sem esmeralda e esmeralda devolvida, e insumo devolvido ao estoque quando a máquina deixa de aceitar.
 
 ### Contratos tocados (para Codex e Grok)
+
+Segunda entrega:
+
+- `operations.rs`: `Sector::Workforce` (mesa do capataz); posto do carregador no setor indústria; estados 24 (`idle_work`, sem bloqueio) e 25 (`no_wage`, entrada) em `blockage`; dicas em `tools/build_operations.py`.
+- `presentation.rs`: `STATUS_KEYS` com 26 estados. O capataz e o carregador publicam no slot 6 (`Rate`) quantos postos ou máquinas atendem; esse slot só tinha uso em máquinas elétricas.
+- `tutorial.rs`: um rótulo seguido de papéis vazios (`""`) passa a ser centralizado no grupo de três slots, para qualquer bloco. Os grupos existentes (colheitadeira, silvicultora, rancho) ficam iguais.
+- O carregador só move itens com `change_mod_block_entity` estando ao lado da máquina, revalidando `accepts_material` e o espaço no momento da entrega, como pede a interface de postos. Ele insere direto no slot, sem passar pela face.
+
+Primeira entrega:
 
 - `lib.rs`: `is_factory_block`, `layout`, `output_slots`, `accepts` e `tick_factory` consultam `workforce::is_post`; `right_click_block` passa esmeralda e agachar+chave ao posto; `register_goals` registra `workforce::Work` nos aldeões.
 - `production/ranch.rs`: nova função `recent_villagers(dimension)`, sobre o registro existente.
@@ -59,18 +103,28 @@ IDs, saves e campos existentes não mudaram. O posto é um bloco novo, sem migra
 
 ## Números para revisão (Grok)
 
-Contratação: 1 esmeralda. Comida: 1 ponto por colheita, valores de `tools/production.json` (`food`). Área 9x9x3. Tempo de desistência: 200 ticks. Ausência máxima: 6.000 ticks. A colheitadeira gasta 120 FE por colheita e varre a área em 4 s; o trabalhador depende da caminhada.
+Carregador: 16 itens por viagem de abastecimento, 32 por recolhida, entradas mantidas com até 16, raio 6, até 12 máquinas. Capataz: raio 12, até 6 postos, reabastece abaixo de 4 e leva até 8 itens de comida, 1 esmeralda por recontratação. Receitas: carregador (baú, funil, esmeralda, chapa de ferro); capataz (atril, sino, 2 esmeraldas).
+
+Lavrador: contratação: 1 esmeralda. Comida: 1 ponto por colheita, valores de `tools/production.json` (`food`). Área 9x9x3. Tempo de desistência: 200 ticks. Ausência máxima: 6.000 ticks. A colheitadeira gasta 120 FE por colheita e varre a área em 4 s; o trabalhador depende da caminhada.
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes offline na entrega; 61 depois da integração da 0.10.0).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 com a segunda entrega; prévia dos três painéis).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
 - O aldeão não segura o produto visualmente; a carga existe apenas no NBT do posto.
-- Ainda não há outros setores nem coordenador. As etapas 4 e 5 da ordem (interfaces para outros setores e coordenadores) ficam para as próximas entregas, partindo de `work` e `farmhand.rs`.
+- O carregador não respeita o tamanho máximo de pilha de cada item (usa 64, como o resto do Veio); itens de pilha 16 ou 1 podem ficar acima do vanilla nas máquinas.
+- O capataz não tem hierarquia acima dele nem divide trabalhadores entre postos; ele mantém os postos funcionando. Uma fila de tarefas compartilhada fica para uma próxima entrega.
+- O carregador lê até 12 máquinas a cada 10 ticks quando não tem tarefa; Grok pode medir esse custo.
 
-## Teste sugerido ao usuário
+## Teste sugerido ao usuário (segunda entrega)
+
+1. Perto de uma prensa com energia, coloque um posto do carregador, contrate um aldeão e ponha cobre bruto nos insumos. Ele deve levar o minério e trazer as chapas.
+2. Ponha uma esteira com itens perto: ele não deve mexer nela.
+3. Coloque uma mesa do capataz perto de dois postos, contrate o capataz e ponha pão e esmeraldas na mesa. Deixe um posto sem comida e dispense o trabalhador de outro: o capataz deve levar pão e recontratar.
+
+## Teste sugerido ao usuário (primeira entrega)
 
 1. Num mundo de teste com uma vila, plante trigo em volta de um posto do lavrador e acelere com farinha de osso.
 2. Coloque pão no posto, clique com uma esmeralda perto de um aldeão adulto e acompanhe o painel.

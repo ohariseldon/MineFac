@@ -27,5 +27,10 @@
     [
       "get_0"
     ]
-  ]
+  ],
+  "rewards": {
+    "recipes": [
+      "veio:hauler_post"
+    ]
+  }
 }

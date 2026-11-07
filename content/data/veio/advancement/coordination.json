@@ -1,0 +1,31 @@
+{
+  "parent": "veio:hauling",
+  "display": {
+    "icon": {
+      "id": "veio:foreman_desk"
+    },
+    "title": {
+      "translate": "advancement.veio.coordination.title"
+    },
+    "description": {
+      "translate": "advancement.veio.coordination.description"
+    }
+  },
+  "criteria": {
+    "get_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:foreman_desk"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "get_0"
+    ]
+  ]
+}

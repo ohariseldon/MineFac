@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:lectern",
+    "minecraft:emerald",
+    "minecraft:emerald",
+    "minecraft:bell"
+  ],
+  "result": {
+    "id": "veio:foreman_desk",
+    "count": 1
+  }
+}

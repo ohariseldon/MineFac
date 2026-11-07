@@ -35,6 +35,8 @@
     "veio:ranch",
     "veio:steel_pole",
     "veio:farm_post",
+    "veio:hauler_post",
+    "veio:foreman_desk",
     "veio:solar",
     "veio:battery"
   ]

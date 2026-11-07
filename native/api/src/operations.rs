@@ -5,7 +5,7 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Sector { Extraction, Industry, Farming, Food, Power, Logistics, Projects, Defense }
+pub(crate) enum Sector { Extraction, Industry, Farming, Food, Power, Logistics, Projects, Defense, Workforce }
 
 impl Sector {
     pub(crate) fn translation_key(self) -> &'static str {
@@ -14,6 +14,7 @@ impl Sector {
             Self::Farming => "veio.operation.sector.farming", Self::Food => "veio.operation.sector.food",
             Self::Power => "veio.operation.sector.power", Self::Logistics => "veio.operation.sector.logistics",
             Self::Projects => "veio.operation.sector.projects", Self::Defense => "veio.operation.sector.defense",
+            Self::Workforce => "veio.operation.sector.workforce",
         }
     }
 }
@@ -32,7 +33,9 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
     use production::*;
     let sector = match block {
         DRILL | DRILL_MK2 | DRILL_MK3 => Sector::Extraction,
-        PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE => Sector::Industry,
+        PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE
+            | workforce::HAULER_POST => Sector::Industry,
+        workforce::FOREMAN_DESK => Sector::Workforce,
         HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH | workforce::FARM_POST => Sector::Farming,
         MILL | KITCHEN | PANTRY => Sector::Food,
         HUB => Sector::Projects,
@@ -55,8 +58,8 @@ pub(crate) enum Blockage { None, Input, Output, Power, Fuel, Resource, Environme
 
 pub(crate) fn blockage(status: i32) -> Blockage {
     match status {
-        0 | 1 | 8 | 11 | 23 => Blockage::None,
-        2 | 16 | 21 => Blockage::Input,
+        0 | 1 | 8 | 11 | 23 | 24 => Blockage::None,
+        2 | 16 | 21 | 25 => Blockage::Input,
         3 => Blockage::Output,
         4 | 12 => Blockage::Resource,
         5 => Blockage::Power,

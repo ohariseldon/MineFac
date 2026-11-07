@@ -7,8 +7,6 @@ use super::*;
 
 /// Posições examinadas por ciclo do posto: uma camada inteira; a volta leva 3 ciclos (30 ticks).
 const SCANS: i32 = 81;
-/// Plantas recusadas por caminho obstruído, esquecidas a cada volta completa.
-const MAX_SKIPPED: usize = 8;
 const ABSORB_PER_HARVEST: f32 = 3.0;
 
 fn ripe(host: &dyn Host, spot: [i32; 3]) -> Option<farm::Crop> {
@@ -17,49 +15,27 @@ fn ripe(host: &dyn Host, spot: [i32; 3]) -> Option<farm::Crop> {
     (age >= crop.ripe).then_some(crop)
 }
 
-fn skipped(entity: &ModBlockEntity) -> Vec<[i32; 3]> {
-    match entity.nbt.get(&"Skipped".into()) {
-        Some(Tag::IntArray(values)) => values.chunks_exact(3).map(|v| [v[0], v[1], v[2]]).collect(),
-        _ => Vec::new(),
-    }
-}
-
-/// Lembra uma planta inalcançável até a próxima volta da varredura.
-pub(super) fn skip(entity: &mut ModBlockEntity, spot: [i32; 3]) {
-    let mut list = skipped(entity);
-    if list.len() >= MAX_SKIPPED {
-        list.remove(0);
-    }
-    list.push(spot);
-    entity.nbt.insert("Skipped".into(), Tag::IntArray(list.into_iter().flatten().collect()));
-}
-
-/// Posição `index` da varredura: primeiro a camada do posto, depois a de baixo e a de cima.
-fn scan_position(pos: [i32; 3], index: i32) -> [i32; 3] {
-    let index = index.rem_euclid(farm::AREA);
-    let [x, _, z] = farm::scan_position(pos, index % 81);
-    [x, pos[1] + [0, -1, 1][(index / 81) as usize], z]
-}
-
 /// Próxima planta madura a colher. `Err` traz o estado de espera do painel; `KEEP` mantém o
 /// estado atual enquanto a primeira volta da busca não termina.
-pub(super) fn next(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) -> Result<[i32; 3], i32> {
+pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) -> Result<Plan, i32> {
     let room = outputs(&entity.id);
+    let dimension = host.dimension();
+    let visit = |spot| Plan::Visit { spot, reach: REACH };
     if let Some(spot) = target(entity) {
         if let Some(crop) = ripe(host, spot) {
-            return if farm::drops_fit(&entity.items[room], crop.drops) { Ok(spot) } else { Err(3) };
+            return if farm::drops_fit(&entity.items[room], crop.drops) { Ok(visit(spot)) } else { Err(3) };
         }
         set_target(entity, None);
     }
     let avoid = skipped(entity);
     let mut cursor = number(entity, "Scan");
     for _ in 0..SCANS {
-        let spot = scan_position(pos, cursor);
+        let spot = area_position(pos, farm::RADIUS, cursor);
         cursor = (cursor + 1) % farm::AREA;
         if cursor == 0 {
-            entity.nbt.remove(&"Skipped".into());
+            clear_skipped(entity);
         }
-        if avoid.contains(&spot) {
+        if avoid.contains(&spot) || reserved_by_other(dimension, spot, pos, now) {
             continue;
         }
         let Some(crop) = ripe(host, spot) else { continue };
@@ -71,7 +47,7 @@ pub(super) fn next(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         set_number(entity, "Scan", cursor);
         set_number(entity, "Searched", 0);
         set_target(entity, Some(spot));
-        return Ok(spot);
+        return Ok(visit(spot));
     }
     set_number(entity, "Scan", cursor);
     let searched = (number(entity, "Searched") + SCANS).min(farm::AREA);
