@@ -2,12 +2,12 @@
 use super::{Fuel, Input, Node, Recipe};
 
 pub(crate) static RECIPES: &[Recipe] = &[
-    Recipe { machine: "veio:press", inputs: &[Input { items: &["minecraft:raw_copper"], count: 1 }], output: ("veio:copper_plate", 1), ticks: 30, power: 8, alt: false },
-    Recipe { machine: "veio:press", inputs: &[Input { items: &["minecraft:raw_iron"], count: 1 }], output: ("veio:iron_plate", 1), ticks: 30, power: 8, alt: false },
-    Recipe { machine: "veio:press", inputs: &[Input { items: &["minecraft:raw_gold"], count: 1 }], output: ("minecraft:gold_ingot", 1), ticks: 40, power: 10, alt: false },
-    Recipe { machine: "veio:press", inputs: &[Input { items: &["minecraft:copper_ingot"], count: 1 }], output: ("veio:copper_plate", 1), ticks: 15, power: 8, alt: true },
-    Recipe { machine: "veio:press", inputs: &[Input { items: &["minecraft:iron_ingot"], count: 1 }], output: ("veio:iron_plate", 1), ticks: 15, power: 8, alt: true },
-    Recipe { machine: "veio:assembler", inputs: &[Input { items: &["veio:copper_plate"], count: 2 }], output: ("veio:gear", 1), ticks: 40, power: 12, alt: false },
+    Recipe { machine: "veio:press", inputs: &[Input { items: &["minecraft:raw_copper"], count: 1 }], output: ("veio:copper_plate", 1), ticks: 80, power: 8, alt: false },
+    Recipe { machine: "veio:press", inputs: &[Input { items: &["minecraft:raw_iron"], count: 1 }], output: ("veio:iron_plate", 1), ticks: 80, power: 8, alt: false },
+    Recipe { machine: "veio:press", inputs: &[Input { items: &["minecraft:raw_gold"], count: 1 }], output: ("minecraft:gold_ingot", 1), ticks: 120, power: 10, alt: false },
+    Recipe { machine: "veio:press", inputs: &[Input { items: &["minecraft:copper_ingot"], count: 1 }], output: ("veio:copper_plate", 1), ticks: 40, power: 8, alt: true },
+    Recipe { machine: "veio:press", inputs: &[Input { items: &["minecraft:iron_ingot"], count: 1 }], output: ("veio:iron_plate", 1), ticks: 40, power: 8, alt: true },
+    Recipe { machine: "veio:assembler", inputs: &[Input { items: &["veio:copper_plate"], count: 2 }], output: ("veio:gear", 1), ticks: 80, power: 12, alt: false },
     Recipe { machine: "veio:cutter", inputs: &[Input { items: &["veio:copper_plate"], count: 1 }], output: ("veio:wire", 1), ticks: 20, power: 6, alt: false },
     Recipe { machine: "veio:cutter", inputs: &[Input { items: &["veio:iron_plate"], count: 1 }], output: ("veio:frame", 1), ticks: 30, power: 8, alt: false },
     Recipe { machine: "veio:integrator", inputs: &[Input { items: &["veio:frame"], count: 1 }, Input { items: &["veio:gear"], count: 1 }], output: ("veio:module", 1), ticks: 60, power: 16, alt: false },
