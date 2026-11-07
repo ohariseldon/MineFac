@@ -20,6 +20,8 @@ O hub de trabalho e o papel exato de um coordenador precisam ser definidos na im
 
 ## Regras de integração
 
+A base comum de consulta de postos e validação de entregas está em [INTERFACE_POSTOS.md](INTERFACE_POSTOS.md) e `native/api/src/operations.rs`. Ela separa postos, transporte e infraestrutura e preserva os filtros reais de entrada. Use-a no adaptador de tarefas sem transformar os serviços sugeridos em ações automáticas indiscriminadas.
+
 - Estender aldeões usando os ganchos existentes do Horizon. Preserve comércio e comportamentos vanilla fora das atribuições do Veio. Não faça uma reescrita geral da IA vanilla nem da produção inteira.
 - A atribuição deve ser explícita, permitir remoção e impedir dupla atribuição do mesmo aldeão. Um coordenador não deve fazer a mesma tarefa concorrer entre dois trabalhadores.
 - Decida e documente quais ações exigem presença física e caminho acessível. Não finja trabalho físico com teletransporte de itens, aldeões ou resultados fora do alcance definido.

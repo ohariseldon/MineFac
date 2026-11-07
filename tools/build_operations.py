@@ -1,0 +1,38 @@
+"""Common operation advice; does not change recipes, worker AI or simulation."""
+
+def add_labels(langs):
+    sectors = {
+        "extraction": ("Setor: extração", "Sector: extraction"),
+        "industry": ("Setor: indústria", "Sector: industry"),
+        "farming": ("Setor: agricultura", "Sector: farming"),
+        "food": ("Setor: alimentos", "Sector: food"),
+        "power": ("Setor: energia", "Sector: power"),
+        "logistics": ("Setor: logística", "Sector: logistics"),
+        "projects": ("Setor: projetos", "Sector: projects"),
+        "defense": ("Setor: defesa", "Sector: defense"),
+    }
+    advice = {
+        "idle": ("Confira os insumos e a configuração da estação.", "Check station inputs and setup."),
+        "working": ("Operando. A saída precisa continuar com espaço.", "Operating. Keep room available at the outlet."),
+        "input": ("Confira os materiais e as quantidades exigidas na receita.", "Check the materials and amounts required by the recipe."),
+        "blocked": ("Retire produtos ou libere espaço na próxima etapa da linha.", "Collect products or clear room in the next stage of the line."),
+        "ore": ("Coloque a extratora diretamente sobre uma jazida compatível.", "Place the extractor directly on a compatible ore vein."),
+        "power": ("Confira geração, carga e conexões dos postes ou cabos.", "Check generation, charge and pole or cable connections."),
+        "fuel": ("Abasteça a entrada com um combustível aceito pelo gerador.", "Supply the input with a fuel accepted by this generator."),
+        "sun": ("Confira o horário e deixe o painel sob céu aberto.", "Check the time of day and expose the panel to open sky."),
+        "charged": ("O ciclo ou a carga está completo; confira as saídas.", "The cycle or charge is complete; check the outputs."),
+        "redstone": ("A redstone pausou a operação. Confira o controle da fábrica.", "Redstone paused operation. Check the factory control circuit."),
+        "crops": ("Confira a área da fazenda e aguarde plantas maduras.", "Check the farm area and wait for mature crops."),
+        "watch": ("A torre aguarda um alvo hostil no alcance.", "The tower is waiting for a hostile target in range."),
+        "tier": ("A jazida exige uma extratora de nível superior.", "This vein requires a higher-tier extractor."),
+        "damaged": ("Repare a máquina com um kit antes de retomar.", "Repair the machine with a kit before resuming."),
+        "water": ("Confira a água exigida pela máquina e sua posição.", "Check the water required by the machine and its placement."),
+        "wind": ("Confira céu aberto, altitude e condições do vento.", "Check open sky, altitude and wind conditions."),
+        "seeds": ("Abasteça as sementes ou mudas aceitas e confira o solo.", "Supply accepted seeds or saplings and check the soil."),
+        "animals": ("Confira os animais compatíveis na área do rancho.", "Check compatible animals in the ranch area."),
+        "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
+    }
+    for prefix, entries in (("sector", sectors), ("advice", advice)):
+        for name, (pt, en) in entries.items():
+            langs["pt_br"][f"veio.operation.{prefix}.{name}"] = pt
+            langs["en_us"][f"veio.operation.{prefix}.{name}"] = en
