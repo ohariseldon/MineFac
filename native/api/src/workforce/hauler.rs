@@ -13,7 +13,8 @@ use operations::{Blockage, StationKind};
 
 /// Área atendida: 13x13 em volta do posto, em três camadas.
 pub(super) const RADIUS: i32 = 6;
-const PER_CYCLE: i32 = 64;
+/// Uma fileira do 13×13 por ciclo; a volta (507 blocos) leva 32 ciclos.
+pub(super) const SCAN: i32 = 16;
 const MAX_STATIONS: usize = 12;
 /// Itens levados ou recolhidos por viagem.
 pub(super) const BATCH: u32 = 16;
@@ -69,7 +70,7 @@ fn look(host: &mut dyn Host, spot: [i32; 3], stock: &[(usize, ItemStack)], room:
 /// Próxima viagem. `Err` traz o estado de espera do painel.
 pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) -> Result<Plan, i32> {
     let dimension = host.dimension();
-    let Some(stations) = scan_blocks(host, pos, entity, RADIUS, PER_CYCLE, MAX_STATIONS, &station) else {
+    let Some(stations) = scan_blocks(host, pos, entity, RADIUS, SCAN, MAX_STATIONS, &station) else {
         return Err(KEEP);
     };
     set_number(entity, "Rate", stations.len() as i32);

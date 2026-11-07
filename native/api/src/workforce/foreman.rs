@@ -10,7 +10,8 @@
 use super::*;
 
 pub(super) const RADIUS: i32 = 12;
-const PER_CYCLE: i32 = 150;
+/// Uma fileira do 25×25 por ciclo; a volta (1875 blocos) leva 75 ciclos.
+pub(super) const SCAN: i32 = 25;
 pub(super) const MAX_POSTS: usize = 6;
 /// Abaixo disto (comida guardada no posto e pontos do trabalhador), o capataz reabastece.
 pub(super) const LOW_FOOD: u32 = 4;
@@ -46,7 +47,7 @@ fn look(host: &mut dyn Host, spot: [i32; 3]) -> Option<Look> {
 /// Próxima tarefa do capataz. `Err` traz o estado de espera do painel.
 pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) -> Result<Plan, i32> {
     let dimension = host.dimension();
-    let Some(posts) = scan_blocks(host, pos, entity, RADIUS, PER_CYCLE, MAX_POSTS, &managed) else {
+    let Some(posts) = scan_blocks(host, pos, entity, RADIUS, SCAN, MAX_POSTS, &managed) else {
         return Err(KEEP);
     };
     set_number(entity, "Rate", posts.len() as i32);

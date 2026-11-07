@@ -6,7 +6,7 @@ Primeira etapa da ordem em [frentes/CLOUD.md](frentes/CLOUD.md): um aldeão cont
 
 1. Obtenha a colheitadeira. O avanço **Lavoura mecanizada** passa a liberar a receita do **Posto do lavrador** (composteira, enxada de ferro, esmeralda e barril, em qualquer posição).
 2. Coloque o posto no meio de uma lavoura de até 9x9, como a colheitadeira. A camada do posto, a de baixo e a de cima são lidas.
-3. Ponha comida no slot da esquerda. O valor é o do armazém: trigo, cenoura ou batata pagam 1 colheita, pão 6, carne assada 8, torta de abóbora 10.
+3. Ponha comida no slot da esquerda. O valor é o do armazém, e cada tarefa gasta **2 pontos**: um trigo não paga a colheita; duas cenouras ou batatas pagam uma; pão (6) paga 3; carne assada (8) paga 4.
 4. Com uma **esmeralda** na mão, clique com o botão direito no posto. O aldeão adulto livre mais próximo, a até 8 blocos, é contratado e a esmeralda é gasta. Sem candidato, a esmeralda fica com o jogador.
 5. O trabalhador anda até uma planta madura, colhe (a planta fica replantada no estágio inicial, como na colheitadeira) e leva o produto de volta ao posto. Retire pelos três slots da direita ou ligue uma esteira no bocal.
 6. **Agachar + chave** no posto dispensa o trabalhador. Ele volta ao comportamento normal de aldeão.
@@ -38,7 +38,7 @@ O painel mostra também as colheitas feitas e quantas colheitas a comida guardad
 
 Receita: baú, funil, esmeralda e chapa de ferro. Liberada pelo avanço **Mão de obra** (obter o posto do lavrador).
 
-- Contrate com uma esmeralda, como no posto do lavrador. Comida no slot da esquerda; cada viagem com entrega gasta 1 ponto.
+- Contrate com uma esmeralda, como no posto do lavrador. Comida no slot da esquerda; cada viagem com entrega gasta 2 pontos (pão paga 3 viagens).
 - Os três slots de **insumos** são o estoque: o carregador leva até 16 itens por viagem a uma máquina que os aceite, mantendo cada entrada com até 16.
 - Os três slots de **saída** recebem o que ele recolhe das máquinas (até 32 itens por viagem).
 - Atende até 12 máquinas a até 6 blocos (13x13, três camadas). Prioridade: máquina parada por falta de insumo ou combustível; depois produtos prontos; depois completar entradas.
@@ -70,10 +70,10 @@ Cada posto reserva o alvo atual (planta, máquina ou posto atendido) num registr
 
 - **Presença física.** Colher exige o aldeão a até 1,8 bloco (horizontal) e 2 blocos (vertical) do centro da planta. Entregar exige até 2,5 blocos do posto. Não há teletransporte de itens nem de aldeões; o produto fica "na mão" do trabalhador (`Carried` no NBT do posto) entre a planta e o posto.
 - **Atribuição exclusiva.** Um aldeão pertence a no máximo um posto, e um posto tem no máximo um trabalhador. Bebês não são contratados.
-- **Conservação.** O espaço no posto é conferido antes da colheita. A carga só entra no posto quando cabe inteira. Dispensar com carga a mantém no posto até haver espaço; nada é destruído nem duplicado. A comida é consumida item a item, e cada colheita gasta um ponto.
+- **Conservação.** O espaço no posto é conferido antes da colheita. A carga só entra no posto quando cabe inteira. Dispensar com carga a mantém no posto até haver espaço; nada é destruído nem duplicado. A comida é consumida item a item até cobrir 2 pontos; cada tarefa concluída desconta esses 2 pontos.
 - **Saves.** O posto guarda o UUID do aldeão (`Worker`), a comida (`Ration`), o alvo (`Target`), a carga (`Carried`) e os contadores. Ao reabrir o mundo, o posto reencontra o aldeão pelo UUID entre os aldeões próximos, lendo no máximo 4 NBT a cada 10 ticks.
 - **Comportamento vanilla.** O aldeão só obedece enquanto o posto renova a ordem (a cada 10 ticks; ela vence em 60). Sem ordem — sem tarefa, sem comida, posto descarregado ou removido, ou dispensado — o objetivo de trabalho fica inativo e o cérebro vanilla continua no comando, incluindo comércio e profissão. Nenhum dado do aldeão é alterado.
-- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Com alvo conhecido, lê um bloco; procurando, lê uma camada de 81 posições por ciclo. Aldeões vêm do registro já mantido pelo rancho (`entity_tick_pre`); não há varredura de entidades.
+- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Lavrador: 9 blocos/ciclo; carregador: 16; capataz: 25. Aldeões vêm do registro já mantido pelo rancho (`entity_tick_pre`); não há varredura de entidades. Sem ordem ou reserva viva, os objetivos não disputam os mapas.
 
 ## Código
 
@@ -105,7 +105,7 @@ IDs, saves e campos existentes não mudaram. O posto é um bloco novo, sem migra
 
 Carregador: 16 itens por viagem de abastecimento, 32 por recolhida, entradas mantidas com até 16, raio 6, até 12 máquinas. Capataz: raio 12, até 6 postos, reabastece abaixo de 4 e leva até 8 itens de comida, 1 esmeralda por recontratação. Receitas: carregador (baú, funil, esmeralda, chapa de ferro); capataz (atril, sino, 2 esmeraldas).
 
-Lavrador: contratação: 1 esmeralda. Comida: 1 ponto por colheita, valores de `tools/production.json` (`food`). Área 9x9x3. Tempo de desistência: 200 ticks. Ausência máxima: 6.000 ticks. A colheitadeira gasta 120 FE por colheita e varre a área em 4 s; o trabalhador depende da caminhada.
+Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `tools/production.json` (`food`). Área 9x9x3. Tempo de desistência: 200 ticks. Ausência máxima: 6.000 ticks. A colheitadeira gasta 120 FE por colheita e varre a área em 4 s; o trabalhador depende da caminhada. Calibração do Grok: [GROK-LOTE3.md](frentes/GROK-LOTE3.md).
 
 ## Verificações e limitações
 
@@ -116,7 +116,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 1 ponto por colheita, valores de `
 - O aldeão não segura o produto visualmente; a carga existe apenas no NBT do posto.
 - O carregador não respeita o tamanho máximo de pilha de cada item (usa 64, como o resto do Veio); itens de pilha 16 ou 1 podem ficar acima do vanilla nas máquinas.
 - O capataz não tem hierarquia acima dele nem divide trabalhadores entre postos; ele mantém os postos funcionando. Uma fila de tarefas compartilhada fica para uma próxima entrega.
-- O carregador lê até 12 máquinas a cada 10 ticks quando não tem tarefa; Grok pode medir esse custo.
+- O carregador, depois da primeira volta, ainda inspeciona até 12 máquinas a cada 10 ticks quando escolhe a próxima viagem; um teto de inspeções por ciclo fica para um lote seguinte.
 
 ## Teste sugerido ao usuário (segunda entrega)
 

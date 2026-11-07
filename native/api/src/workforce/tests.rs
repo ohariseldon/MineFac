@@ -4,10 +4,15 @@
 //! Cada teste usa sua própria dimensão, UUIDs e ids, porque os registros são globais.
 use super::*;
 use horizon_client::mod_api::{BlockStateId, EntityRef};
+use std::cell::Cell;
 
 const POST: [i32; 3] = [0, 64, 0];
 /// Fora do alcance de entrega do posto: colher exige ir até lá.
 const WHEAT: [i32; 3] = [3, 64, 3];
+/// Primeira volta do carregador (507 / 16) com folga.
+const HAULER_SWEEP: u64 = 48;
+/// Primeira volta do capataz (1875 / 25) com folga.
+const FOREMAN_SWEEP: u64 = 90;
 
 #[derive(Default)]
 struct Village {
@@ -16,6 +21,7 @@ struct Village {
     villagers: HashMap<u32, ([f64; 3], Uuid, i32)>,
     /// Outros blocos com entidade: máquinas e postos atendidos.
     stations: HashMap<[i32; 3], ModBlockEntity>,
+    looks: Cell<u32>,
 }
 
 impl Village {
@@ -41,6 +47,7 @@ impl Host for Village {
         self.dimension
     }
     fn block(&self, pos: [i32; 3]) -> String {
+        self.looks.set(self.looks.get() + 1);
         if let Some(station) = self.stations.get(&pos) {
             return station.id.clone();
         }
@@ -164,30 +171,32 @@ fn farmhand_walks_harvests_and_carries_the_crop_home() {
     entity.items[0] = Some(ItemStack::new("minecraft:bread", 1));
     assert!(hire_at(&mut village, &mut entity, POST, 0));
 
-    assert_eq!(cycle(&mut village, &mut entity, 1), WALKING);
+    let now = cycles_at(&mut village, POST, &mut entity, 1, 40, |entity| target(entity) == Some(WHEAT));
+    assert_eq!(number(&entity, "Status"), WALKING);
     assert_eq!(entity.items[0], None, "comeu o pão");
     assert_eq!(number(&entity, "Ration"), 6);
-    assert_eq!(order_for(9301, 1), Some(goal(WHEAT)), "o aldeão recebeu a ordem de ir até o trigo");
+    assert_eq!(number(&entity, "Info"), 3, "pão vale 3 colheitas");
+    assert_eq!(order_for(9301, now), Some(goal(WHEAT)), "o aldeão recebeu a ordem de ir até o trigo");
     assert_eq!(village.age(WHEAT), 7, "longe da planta, nada é colhido");
 
     village.walk(9301, WHEAT);
-    assert_eq!(cycle(&mut village, &mut entity, 2), 1);
+    let now = cycles_at(&mut village, POST, &mut entity, now + 1, 5, |entity| !carried(entity).is_empty());
     assert_eq!(village.age(WHEAT), 0, "colhido e replantado");
-    assert_eq!(number(&entity, "Ration"), 5);
+    assert_eq!(number(&entity, "Ration"), 4);
+    assert_eq!(number(&entity, "Info"), 2);
     assert!(outputs_of(&entity).is_empty(), "o produto ainda está com o trabalhador");
     assert_eq!(carried(&entity).len(), 2);
-    assert_eq!(order_for(9301, 2), Some(goal(POST)), "volta ao posto");
+    assert_eq!(order_for(9301, now), Some(goal(POST)), "volta ao posto");
 
-    assert_eq!(cycle(&mut village, &mut entity, 3), WALKING, "precisa chegar ao posto para entregar");
+    assert_eq!(cycle(&mut village, &mut entity, now + 1), WALKING, "precisa chegar ao posto para entregar");
     village.walk(9301, [1, 64, 0]);
-    assert_eq!(cycle(&mut village, &mut entity, 4), 1);
+    assert_eq!(cycle(&mut village, &mut entity, now + 2), 1);
     assert!(carried(&entity).is_empty());
     assert_eq!(outputs_of(&entity), vec![("minecraft:wheat".into(), 1), ("minecraft:wheat_seeds".into(), 1)]);
     assert_eq!(number(&entity, "Total"), 1);
 
-    let statuses: Vec<i32> = (5..8).map(|now| cycle(&mut village, &mut entity, now)).collect();
-    assert_eq!(statuses.last(), Some(&NO_TASK), "uma volta sem nada maduro");
-    assert_eq!(order_for(9301, 7), None, "sem tarefa, o aldeão volta ao comportamento vanilla");
+    let idle = cycles_at(&mut village, POST, &mut entity, now + 3, 40, |entity| number(entity, "Status") == NO_TASK);
+    assert_eq!(order_for(9301, idle), None, "sem tarefa, o aldeão volta ao comportamento vanilla");
 }
 
 #[test]
@@ -214,13 +223,13 @@ fn full_post_stops_before_harvesting() {
         entity.items[slot] = Some(ItemStack::new("minecraft:cobblestone", 64));
     }
     assert!(hire_at(&mut village, &mut entity, POST, 0));
-    assert_eq!(cycle(&mut village, &mut entity, 1), 3, "destino cheio");
+    let now = cycles_at(&mut village, POST, &mut entity, 1, 40, |entity| number(entity, "Status") == 3);
     assert_eq!(village.age(WHEAT), 7, "a planta continua no campo");
     assert_eq!(number(&entity, "Ration"), 10, "sem trabalho, sem consumo");
     entity.items[3] = None;
-    assert_eq!(cycle(&mut village, &mut entity, 2), 3, "trigo e semente precisam de dois espaços");
+    assert_eq!(cycle(&mut village, &mut entity, now + 1), 3, "trigo e semente precisam de dois espaços");
     entity.items[2] = None;
-    assert_eq!(cycle(&mut village, &mut entity, 3), 1);
+    cycles_at(&mut village, POST, &mut entity, now + 2, 5, |entity| number(entity, "Total") >= 1 || !carried(entity).is_empty());
     assert_eq!(village.age(WHEAT), 0);
 }
 
@@ -231,16 +240,22 @@ fn blocked_path_gives_up_on_that_crop() {
     let mut entity = post();
     set_number(&mut entity, "Ration", 10);
     assert!(hire_at(&mut village, &mut entity, POST, 0));
+    let found = cycles_at(&mut village, POST, &mut entity, 1, 40, |entity| target(entity) == Some(WHEAT));
     let mut status = WALKING;
-    for now in 1..=(WALK_LIMIT as u64 / EVERY as u64) {
+    let mut now = found;
+    for _ in 0..(WALK_LIMIT as u64 / EVERY as u64) {
+        now += 1;
         status = cycle(&mut village, &mut entity, now);
     }
     assert_eq!(status, PATH);
     assert_eq!(target(&entity), None);
     assert_eq!(village.age(WHEAT), 7, "sem chegar, nada é colhido");
     assert_eq!(number(&entity, "Ration"), 10);
-    for now in 100..103 {
-        assert_ne!(cycle(&mut village, &mut entity, now), WALKING, "a planta inalcançável fica de lado nesta volta");
+    assert_eq!(entity.nbt.get(&"Skipped".into()), Some(&Tag::IntArray(WHEAT.to_vec())));
+    for step in 1..=8 {
+        assert_ne!(target(&entity), Some(WHEAT));
+        assert_ne!(cycle(&mut village, &mut entity, now + step), WALKING, "a planta inalcançável fica de lado nesta volta");
+        assert_eq!(entity.nbt.get(&"Skipped".into()), Some(&Tag::IntArray(WHEAT.to_vec())));
     }
 }
 
@@ -251,7 +266,7 @@ fn carried_crop_survives_dismissal_until_there_is_room() {
     let mut entity = post();
     set_number(&mut entity, "Ration", 10);
     assert!(hire_at(&mut village, &mut entity, POST, 0));
-    assert_eq!(cycle(&mut village, &mut entity, 1), 1);
+    let now = cycles_at(&mut village, POST, &mut entity, 1, 40, |entity| carried(entity).len() == 2);
     assert_eq!(carried(&entity).len(), 2);
     // O jogador enche o posto e dispensa o trabalhador antes da entrega.
     for slot in 1..4 {
@@ -259,10 +274,10 @@ fn carried_crop_survives_dismissal_until_there_is_room() {
     }
     assert!(dismiss(village.dimension, POST, &mut entity));
     assert_eq!(carried(&entity).len(), 2, "nada some");
-    assert_eq!(cycle(&mut village, &mut entity, 2), NO_WORKER);
+    assert_eq!(cycle(&mut village, &mut entity, now + 1), NO_WORKER);
     entity.items[1] = None;
     entity.items[2] = None;
-    cycle(&mut village, &mut entity, 3);
+    cycle(&mut village, &mut entity, now + 2);
     assert!(carried(&entity).is_empty());
     assert_eq!(outputs_of(&entity)[1..], [("minecraft:wheat".into(), 1), ("minecraft:wheat_seeds".into(), 1)]);
 }
@@ -280,8 +295,9 @@ fn reopened_world_finds_the_worker_by_uuid() {
     village.villager(9802, [5.5, 64.0, 5.5], [8, 0, 0, 1]);
     let mut reopened = post();
     reopened.nbt = saved;
-    assert_eq!(cycle(&mut village, &mut reopened, 1), WALKING);
-    assert_eq!(order_for(9802, 1), Some(goal(WHEAT)), "reconhecido pelo UUID");
+    let now = cycles_at(&mut village, POST, &mut reopened, 1, 40, |entity| target(entity) == Some(WHEAT));
+    assert_eq!(number(&reopened, "Status"), WALKING);
+    assert_eq!(order_for(9802, now), Some(goal(WHEAT)), "reconhecido pelo UUID");
     assert_eq!(number(&reopened, "Absent"), 0);
 }
 
@@ -347,7 +363,7 @@ fn hauler_feeds_a_hungry_press_and_brings_the_plates_back() {
     assert!(hire_at(&mut village, &mut hauler, POST, 0));
 
     // Varre a área; depois vai buscar o minério no posto.
-    let now = cycles_at(&mut village, POST, &mut hauler, 1, 20, |post| target(post) == Some(PRESS_AT));
+    let now = cycles_at(&mut village, POST, &mut hauler, 1, HAULER_SWEEP, |post| target(post) == Some(PRESS_AT));
     assert_eq!(order_for(11001, now), Some(goal(POST)), "primeiro pega o insumo no posto");
     assert!(carried(&hauler).is_empty());
     village.walk(11001, [1, 64, 0]);
@@ -360,7 +376,7 @@ fn hauler_feeds_a_hungry_press_and_brings_the_plates_back() {
     assert_eq!(village.stations[&PRESS_AT].items[0], Some(ItemStack::new("minecraft:raw_copper", 10)));
     assert!(carried(&hauler).is_empty());
     assert_eq!(number(&hauler, "Total"), 1);
-    assert_eq!(number(&hauler, "Ration"), 9);
+    assert_eq!(number(&hauler, "Ration"), 8);
     assert_eq!(hauler.items[2], Some(ItemStack::new("minecraft:dirt", 5)), "terra não serve à prensa");
 
     // A prensa trabalhou: o carregador recolhe as chapas e leva ao posto.
@@ -389,7 +405,7 @@ fn hauler_leaves_belts_and_other_posts_alone() {
     let mut hauler = block(HAULER_POST);
     set_number(&mut hauler, "Ration", 10);
     assert!(hire_at(&mut village, &mut hauler, POST, 0));
-    let now = cycles_at(&mut village, POST, &mut hauler, 1, 20, |post| number(post, "Status") == IDLE_WORK);
+    let now = cycles_at(&mut village, POST, &mut hauler, 1, HAULER_SWEEP, |post| number(post, "Status") == IDLE_WORK);
     assert_eq!(order_for(11101, now), None, "sem tarefa, comportamento vanilla");
     assert_eq!(village.stations[&[2, 64, 0]].items[0], Some(ItemStack::new(PLATE, 3)));
     assert_eq!(village.stations[&[0, 64, 3]].items[1], Some(ItemStack::new("minecraft:wheat", 3)));
@@ -411,8 +427,8 @@ fn two_haulers_never_serve_the_same_machine_at_once() {
     set_number(&mut second, "Ration", 10);
     assert!(assign(village.dimension, POST, &mut first, ([12, 0, 0, 1], 11201), 0));
     assert!(assign(village.dimension, other, &mut second, ([12, 0, 0, 2], 11202), 0));
-    let now = cycles_at(&mut village, POST, &mut first, 1, 20, |post| target(post) == Some(PRESS_AT));
-    cycles_at(&mut village, other, &mut second, now, 20, |post| number(post, "Status") == IDLE_WORK);
+    let now = cycles_at(&mut village, POST, &mut first, 1, HAULER_SWEEP, |post| target(post) == Some(PRESS_AT));
+    cycles_at(&mut village, other, &mut second, now, HAULER_SWEEP, |post| number(post, "Status") == IDLE_WORK);
     assert_eq!(target(&second), None, "a prensa já está reservada para o primeiro");
     assert_eq!(order_for(11202, now + 1), None);
 }
@@ -436,7 +452,7 @@ fn foreman_feeds_a_hungry_post_and_rehires_when_it_is_empty() {
     assert!(assign(village.dimension, DESK, &mut desk, ([13, 0, 0, 1], 11301), 0));
 
     // Comida: o capataz come um pão, pega oito e leva ao posto.
-    let now = cycles_at(&mut village, DESK, &mut desk, 1, 30, |desk| !carried(desk).is_empty());
+    let now = cycles_at(&mut village, DESK, &mut desk, 1, FOREMAN_SWEEP, |desk| !carried(desk).is_empty());
     assert_eq!(number(&desk, "Ration"), 6, "comeu um pão; a comida só é gasta ao concluir a tarefa");
     assert_eq!(carried(&desk), vec![("minecraft:bread".to_owned(), 8)]);
     assert_eq!(desk.items[0], Some(ItemStack::new("minecraft:bread", 1)));
@@ -468,7 +484,7 @@ fn foreman_without_emeralds_says_so_and_keeps_the_emerald_if_nobody_is_free() {
     let mut desk = block(FOREMAN_DESK);
     desk.items[0] = Some(ItemStack::new("minecraft:bread", 4));
     assert!(assign(village.dimension, DESK, &mut desk, ([14, 0, 0, 1], 11401), 0));
-    let now = cycles_at(&mut village, DESK, &mut desk, 1, 30, |desk| number(desk, "Status") == NO_WAGE);
+    let now = cycles_at(&mut village, DESK, &mut desk, 1, FOREMAN_SWEEP, |desk| number(desk, "Status") == NO_WAGE);
     // Com esmeralda, mas sem aldeão livre perto do posto: a esmeralda volta à mesa.
     desk.items[3] = Some(ItemStack::new(WAGE, 1));
     village.walk(11401, [9, 64, 8]);
@@ -500,7 +516,7 @@ fn supply_returns_to_the_stock_when_the_machine_no_longer_takes_it() {
     set_number(&mut hauler, "Ration", 10);
     hauler.items[1] = Some(ItemStack::new("minecraft:raw_copper", 10));
     assert!(hire_at(&mut village, &mut hauler, POST, 0));
-    let now = cycles_at(&mut village, POST, &mut hauler, 1, 20, |post| !carried(post).is_empty());
+    let now = cycles_at(&mut village, POST, &mut hauler, 1, HAULER_SWEEP, |post| !carried(post).is_empty());
     // Enquanto ele anda, o jogador põe ferro bruto na prensa.
     village.stations.get_mut(&PRESS_AT).unwrap().items[0] = Some(ItemStack::new("minecraft:raw_iron", 64));
     cycle(&mut village, &mut hauler, now + 1);
@@ -510,4 +526,60 @@ fn supply_returns_to_the_stock_when_the_machine_no_longer_takes_it() {
     cycle(&mut village, &mut hauler, now + 2);
     assert_eq!(hauler.items[1], Some(ItemStack::new("minecraft:raw_copper", 10)), "de volta ao estoque");
     assert!(hauler.items[4..].iter().all(Option::is_none), "insumo não vira produto");
+}
+
+#[test]
+fn idle_farmhand_scans_one_row_per_cycle() {
+    let mut village = Village::new("veio:test_work_scan");
+    village.crops.clear();
+    village.villager(11601, [1.5, 64.0, 1.5], [16, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 10);
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    village.looks.set(0);
+    cycle(&mut village, &mut entity, 1);
+    assert_eq!(village.looks.get(), farmhand::SCANS as u32, "uma fileira, não a camada inteira");
+}
+
+#[test]
+fn raw_wheat_does_not_pay_a_full_harvest() {
+    let mut village = Village::new("veio:test_work_wheat");
+    village.villager(11701, [3.5, 64.0, 3.5], [17, 0, 0, 1]);
+    let mut entity = post();
+    entity.items[0] = Some(ItemStack::new("minecraft:wheat", 1));
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    assert_eq!(cycle(&mut village, &mut entity, 1), NO_FOOD);
+    assert_eq!(number(&entity, "Ration"), 1, "comeu o trigo e ainda não cobre a colheita");
+    assert_eq!(number(&entity, "Info"), 0);
+    assert_eq!(village.age(WHEAT), 7, "sem pontos suficientes, a planta fica");
+    entity.items[0] = Some(ItemStack::new("minecraft:wheat", 1));
+    cycles_at(&mut village, POST, &mut entity, 2, 40, |entity| !carried(entity).is_empty());
+    assert_eq!(village.age(WHEAT), 0);
+    assert_eq!(number(&entity, "Ration"), 0);
+}
+
+#[test]
+fn idle_hauler_scans_one_row_per_cycle() {
+    let mut village = Village::new("veio:test_work_hauler_scan");
+    village.crops.clear();
+    village.villager(11801, [1.5, 64.0, 1.5], [18, 0, 0, 1]);
+    let mut hauler = block(HAULER_POST);
+    set_number(&mut hauler, "Ration", 10);
+    assert!(hire_at(&mut village, &mut hauler, POST, 0));
+    village.looks.set(0);
+    cycle(&mut village, &mut hauler, 1);
+    assert_eq!(village.looks.get(), hauler::SCAN as u32);
+}
+
+#[test]
+fn idle_foreman_scans_one_row_per_cycle() {
+    let mut village = Village::new("veio:test_work_foreman_scan");
+    village.crops.clear();
+    village.villager(11901, [9.5, 64.0, 9.5], [19, 0, 0, 1]);
+    let mut desk = block(FOREMAN_DESK);
+    set_number(&mut desk, "Ration", 10);
+    assert!(assign(village.dimension, DESK, &mut desk, ([19, 0, 0, 1], 11901), 0));
+    village.looks.set(0);
+    cycle_at(&mut village, DESK, &mut desk, 1);
+    assert_eq!(village.looks.get(), foreman::SCAN as u32);
 }
