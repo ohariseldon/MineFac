@@ -30,7 +30,8 @@
   ],
   "rewards": {
     "recipes": [
-      "veio:hauler_post"
+      "veio:hauler_post",
+      "veio:shepherd_post"
     ]
   }
 }

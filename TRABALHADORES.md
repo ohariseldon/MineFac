@@ -6,7 +6,7 @@ Primeira etapa da ordem em [frentes/CLOUD.md](frentes/CLOUD.md): um aldeão cont
 
 1. Obtenha a colheitadeira. O avanço **Lavoura mecanizada** passa a liberar a receita do **Posto do lavrador** (composteira, enxada de ferro, esmeralda e barril, em qualquer posição).
 2. Coloque o posto no meio de uma lavoura de até 9x9, como a colheitadeira. A camada do posto, a de baixo e a de cima são lidas.
-3. Ponha comida no slot da esquerda. O valor é o do armazém: trigo, cenoura ou batata pagam 1 colheita, pão 6, carne assada 8, torta de abóbora 10.
+3. Ponha comida no slot da esquerda. O valor é o do armazém, e cada tarefa gasta **2 pontos**: um trigo não paga a colheita; duas cenouras ou batatas pagam uma; pão (6) paga 3; carne assada (8) paga 4.
 4. Com uma **esmeralda** na mão, clique com o botão direito no posto. O aldeão adulto livre mais próximo, a até 8 blocos, é contratado e a esmeralda é gasta. Sem candidato, a esmeralda fica com o jogador.
 5. O trabalhador anda até uma planta madura, colhe (a planta fica replantada no estágio inicial, como na colheitadeira) e leva o produto de volta ao posto. Retire pelos três slots da direita ou ligue uma esteira no bocal.
 6. **Agachar + chave** no posto dispensa o trabalhador. Ele volta ao comportamento normal de aldeão.
@@ -32,13 +32,38 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## Terceira entrega: fila de tarefas e pastor
+
+### Fila de tarefas do capataz
+
+Com o capataz contratado e presente, a mesa mantém uma **fila de transferências** (a primeira volta da varredura da rede leva cerca de 7,5 s, conforme o [lote 3 do Grok](frentes/GROK-LOTE3.md)) entre os blocos da sua rede: até 6 postos e as máquinas (estações de trabalho da interface de postos) a até 12 blocos, no máximo 24 blocos. A cada 40 ticks ela refaz a fila, com até 8 tarefas:
+
+- **Origem:** saídas das máquinas e dos postos (colheita do lavrador, produtos do carregador e do pastor, esmeraldas do armazém).
+- **Destino:** entradas das máquinas que aceitam o item (`operations::accepts_material`), até 16 itens por entrada; a própria mesa (comida quando guarda menos de 16, e esmeraldas); a ração do posto do pastor (até 32). A comida dos trabalhadores continua sendo levada pelo capataz, e o estoque do carregador continua sendo do jogador.
+- Um destino com entrega a caminho (reservado) não recebe outra tarefa.
+
+Os **carregadores** a até 16 blocos da mesa pegam tarefas da fila antes das suas, se origem e destino estiverem a até 12 blocos do posto deles. A tarefa fica marcada com a posição do carregador; se a marca não for renovada em 200 ticks (carregador sumiu, posto descarregado), ela volta a ficar livre. O carregador anda até a origem, pega os itens (só o item combinado, só o que ainda estiver lá), tira a tarefa da fila, leva ao destino e insere ao lado dele. A sobra volta ao estoque do posto do carregador.
+
+Exemplos: trigo do lavrador → moinho; farinha → cozinha; pão → armazém ou mesa; esmeraldas do armazém → mesa, que paga as recontratações; sementes do lavrador → ração do pastor.
+
+O painel da mesa mostra quantos postos atende e o tamanho da fila.
+
+### Posto do pastor (setor rancho)
+
+Receita: tesoura, laço, fardo de feno e esmeralda. Liberada pelo avanço **Mão de obra**, junto do carregador.
+
+- Contrate com uma esmeralda. Comida no slot 0; ração (trigo, cenoura, batata, beterraba, sementes, dente-de-leão) no slot 1.
+- A até 6 blocos, em ordem: recolhe do chão os produtos de animais (os mesmos do rancho: ovos, penas, couro, lã, carnes cruas); tosquia ovelhas adultas; dá ração a um animal adulto por vez, só quando há dois prontos da mesma espécie (ou o par de um que já comeu) e a espécie tem menos de 10 animais.
+- Tudo exige o aldeão ao lado do animal ou do item; o produto vai na mão até o posto.
+- Não ordenha nem abate: isso continua com o rancho.
+
 ## Segunda entrega: indústria e coordenação
 
 ### Posto do carregador (setor indústria)
 
 Receita: baú, funil, esmeralda e chapa de ferro. Liberada pelo avanço **Mão de obra** (obter o posto do lavrador).
 
-- Contrate com uma esmeralda, como no posto do lavrador. Comida no slot da esquerda; cada viagem com entrega gasta 1 ponto.
+- Contrate com uma esmeralda, como no posto do lavrador. Comida no slot da esquerda; cada viagem com entrega gasta 2 pontos (pão paga 3 viagens).
 - Os três slots de **insumos** são o estoque: o carregador leva até 16 itens por viagem a uma máquina que os aceite, mantendo cada entrada com até 16.
 - Os três slots de **saída** recebem o que ele recolhe das máquinas (até 32 itens por viagem).
 - Atende até 12 máquinas a até 6 blocos (13x13, três camadas). Prioridade: máquina parada por falta de insumo ou combustível; depois produtos prontos; depois completar entradas.
@@ -70,19 +95,27 @@ Cada posto reserva o alvo atual (planta, máquina ou posto atendido) num registr
 
 - **Presença física.** Colher exige o aldeão a até 1,8 bloco (horizontal) e 2 blocos (vertical) do centro da planta. Entregar exige até 2,5 blocos do posto. Não há teletransporte de itens nem de aldeões; o produto fica "na mão" do trabalhador (`Carried` no NBT do posto) entre a planta e o posto.
 - **Atribuição exclusiva.** Um aldeão pertence a no máximo um posto, e um posto tem no máximo um trabalhador. Bebês não são contratados.
-- **Conservação.** O espaço no posto é conferido antes da colheita. A carga só entra no posto quando cabe inteira. Dispensar com carga a mantém no posto até haver espaço; nada é destruído nem duplicado. A comida é consumida item a item, e cada colheita gasta um ponto.
+- **Conservação.** O espaço no posto é conferido antes da colheita. A carga só entra no posto quando cabe inteira. Dispensar com carga a mantém no posto até haver espaço; nada é destruído nem duplicado. A comida é consumida item a item até cobrir 2 pontos; cada tarefa concluída desconta esses 2 pontos.
 - **Saves.** O posto guarda o UUID do aldeão (`Worker`), a comida (`Ration`), o alvo (`Target`), a carga (`Carried`) e os contadores. Ao reabrir o mundo, o posto reencontra o aldeão pelo UUID entre os aldeões próximos, lendo no máximo 4 NBT a cada 10 ticks.
 - **Comportamento vanilla.** O aldeão só obedece enquanto o posto renova a ordem (a cada 10 ticks; ela vence em 60). Sem ordem — sem tarefa, sem comida, posto descarregado ou removido, ou dispensado — o objetivo de trabalho fica inativo e o cérebro vanilla continua no comando, incluindo comércio e profissão. Nenhum dado do aldeão é alterado.
-- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Com alvo conhecido, lê um bloco; procurando, lê uma camada de 81 posições por ciclo. Aldeões vêm do registro já mantido pelo rancho (`entity_tick_pre`); não há varredura de entidades.
+- **Desempenho.** O posto age a cada 10 ticks, com fase espalhada pela posição. Lavrador: 9 blocos/ciclo; carregador: 16; capataz: 25. Aldeões vêm do registro já mantido pelo rancho (`entity_tick_pre`); não há varredura de entidades. Sem ordem ou reserva viva, os objetivos não disputam os mapas.
 
 ## Código
 
 - `native/api/src/workforce/mod.rs`: trabalhador, posto, atribuição, reservas, ordens de caminhada, objetivo `Work` registrado nos aldeões, varredura incremental de blocos, ciclo genérico (carga → comida → tarefa) e painel.
 - Interface de tarefas: um adaptador devolve um `Plan`. `Visit { spot, reach }` manda o trabalhador ao alvo e chama o `perform` do adaptador ao chegar; o que ele devolver é carregado até o posto. `Bring { from, count, to, into, kind }` faz o trabalhador pegar itens no posto e levá-los ao slot `into` de outro bloco (`Carry::Supply`) ou contratar lá (`Carry::Wage`). Um setor novo é um submódulo com `plan` (e `perform`, se usar `Visit`) e um caso nos dois `match` de `work`.
-- `farmhand.rs` (lavoura), `hauler.rs` (indústria) e `foreman.rs` (coordenação).
+- `farmhand.rs` (lavoura), `hauler.rs` (indústria), `shepherd.rs` (rancho) e `foreman.rs` (coordenação e fila).
+- `Plan::Fetch` (terceira entrega): tarefa da fila; buscar itens num bloco e levar a outro.
 - `native/api/src/workforce/tests.rs`: 17 testes. Além dos 11 da primeira entrega: abastecer e recolher uma prensa, ignorar esteiras e outros postos, reserva entre dois carregadores, capataz alimentando e recontratando, capataz sem esmeralda e esmeralda devolvida, e insumo devolvido ao estoque quando a máquina deixa de aceitar.
 
 ### Contratos tocados (para Codex e Grok)
+
+Terceira entrega:
+
+- `production/ranch.rs`: `VILLAGER`, `WOOL`, `collectable` e `tag_int` passam a `pub(crate)` para o pastor.
+- `operations.rs`: posto do pastor no setor agricultura.
+- A mesa publica o tamanho da fila no slot 7 (`Utilization`), que só tinha uso em máquinas elétricas.
+- A fila move itens entre máquinas com `change_mod_block_entity` (retirada na origem e entrega no destino, com o carregador ao lado de cada um). Ela não usa esteiras nem a inserção por face.
 
 Segunda entrega:
 
@@ -103,20 +136,30 @@ IDs, saves e campos existentes não mudaram. O posto é um bloco novo, sem migra
 
 ## Números para revisão (Grok)
 
+Fila: rede de até 24 blocos a 12 da mesa, 8 tarefas, refeita a cada 40 ticks, marca vence em 200 ticks; carregadores a 16 da mesa, origem e destino a 12 do carregador; mesa pede comida abaixo de 16. Pastor: raio 6, lê até 12 animais por ciclo, lã 1 a 3 por ovelha. Receita do pastor: tesoura, laço, fardo de feno, esmeralda.
+
 Carregador: 16 itens por viagem de abastecimento, 32 por recolhida, entradas mantidas com até 16, raio 6, até 12 máquinas. Capataz: raio 12, até 6 postos, reabastece abaixo de 4 e leva até 8 itens de comida, 1 esmeralda por recontratação. Receitas: carregador (baú, funil, esmeralda, chapa de ferro); capataz (atril, sino, 2 esmeraldas).
 
-Lavrador: contratação: 1 esmeralda. Comida: 1 ponto por colheita, valores de `tools/production.json` (`food`). Área 9x9x3. Tempo de desistência: 200 ticks. Ausência máxima: 6.000 ticks. A colheitadeira gasta 120 FE por colheita e varre a área em 4 s; o trabalhador depende da caminhada.
+Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `tools/production.json` (`food`). Área 9x9x3. Tempo de desistência: 200 ticks. Ausência máxima: 6.000 ticks. A colheitadeira gasta 120 FE por colheita e varre a área em 4 s; o trabalhador depende da caminhada. Calibração do Grok: [GROK-LOTE3.md](frentes/GROK-LOTE3.md).
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 com a segunda entrega; prévia dos três painéis).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0 e 78 na 0.12.0, já com o lote 3 do Grok; prévia dos quatro painéis).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
 - O aldeão não segura o produto visualmente; a carga existe apenas no NBT do posto.
 - O carregador não respeita o tamanho máximo de pilha de cada item (usa 64, como o resto do Veio); itens de pilha 16 ou 1 podem ficar acima do vanilla nas máquinas.
-- O capataz não tem hierarquia acima dele nem divide trabalhadores entre postos; ele mantém os postos funcionando. Uma fila de tarefas compartilhada fica para uma próxima entrega.
-- O carregador lê até 12 máquinas a cada 10 ticks quando não tem tarefa; Grok pode medir esse custo.
+- O capataz não tem hierarquia acima dele. A fila só é executada por carregadores; lavradores e pastores seguem com as próprias tarefas.
+- Dois pastores podem perseguir o mesmo animal (a reserva é por bloco, e o animal anda); o segundo só encontra o animal já atendido e procura outro.
+- A rede da mesa guarda os primeiros 24 blocos encontrados; numa base muito densa, postos podem ficar de fora.
+- O carregador, depois da primeira volta, ainda inspeciona até 12 máquinas a cada 10 ticks quando escolhe a próxima viagem; um teto de inspeções por ciclo fica para um lote seguinte.
+
+## Teste sugerido ao usuário (terceira entrega)
+
+1. Mesa do capataz com capataz contratado, um posto do lavrador com trigo nas saídas, um moinho e um posto do carregador perto. O carregador deve levar o trigo ao moinho sem nada no estoque dele.
+2. Um armazém vendendo comida perto da mesa: as esmeraldas devem ir para a mesa.
+3. Posto do pastor com trigo perto de duas vacas e de ovelhas: ele deve tosquiar, recolher a lã e alimentar o par uma vez.
 
 ## Teste sugerido ao usuário (segunda entrega)
 

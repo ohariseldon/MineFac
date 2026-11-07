@@ -160,6 +160,16 @@ fn lower_receiving_belt_builds_the_downhill_ramp() {
 }
 
 #[test]
+fn belt_curves_into_a_farm_post() {
+    let mut world = RouteWorld::default();
+    world.put([0; 3], BELT, "west");
+    world.put([-1, 0, 0], BELT, "west");
+    world.put([0, 0, -1], "veio:farm_post", "");
+    refresh_path(&mut world, [0; 3], &mut belt());
+    assert_eq!(world.block_property([0; 3], "facing").as_deref(), Some("south"));
+}
+
+#[test]
 fn a_single_incoming_and_outgoing_line_snap_to_a_curve_unless_manually_locked() {
     let mut world = RouteWorld::default();
     world.put([0; 3], BELT, "west");

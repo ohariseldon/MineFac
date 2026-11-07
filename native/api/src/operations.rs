@@ -36,7 +36,7 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
         PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE
             | workforce::HAULER_POST => Sector::Industry,
         workforce::FOREMAN_DESK => Sector::Workforce,
-        HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH | workforce::FARM_POST => Sector::Farming,
+        HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH | workforce::FARM_POST | workforce::SHEPHERD_POST => Sector::Farming,
         MILL | KITCHEN | PANTRY => Sector::Food,
         HUB => Sector::Projects,
         TESLA => Sector::Defense,

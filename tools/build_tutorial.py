@@ -23,7 +23,7 @@ vanilla={
  "dispenser":("Ejetor","Dispenser"),"white_wool":("Lã branca","White wool"),"iron_axe":("Machado de ferro","Iron axe"),
  "shears":("Tesoura","Shears"),"hay_block":("Fardo de feno","Hay bale"),"glowstone":("Pedra luminosa","Glowstone"),
  "diamond":("Diamante","Diamond"),"emerald":("Esmeralda","Emerald"),
- "hopper":("Funil","Hopper"),"lectern":("Atril","Lectern"),"bell":("Sino","Bell"),
+ "hopper":("Funil","Hopper"),"lectern":("Atril","Lectern"),"bell":("Sino","Bell"),"lead":("Laço","Lead"),
 }
 def item_name(item,code):
  ns,name=item.split(":")
@@ -190,12 +190,15 @@ label("block.veio.farm_post", "Posto do lavrador", "Farmhand Post")
 help["hauler_post"] = (
  "Esmeralda: contrata aldeão.\nAbastece máquinas a até 6\nblocos com os insumos e\nrecolhe os produtos delas.\nNão mexe em esteiras.",
  "Emerald: hires a villager.\nFeeds machines within 6\nblocks from the supplies\nand collects their products.\nLeaves belts alone.")
+help["shepherd_post"] = (
+ "Esmeralda: contrata aldeão.\nRecolhe ovos, penas e lã,\ntosquia ovelhas e dá ração\naos pares, a até 6 blocos.\nNão ordenha nem abate.",
+ "Emerald: hires a villager.\nPicks up eggs, feathers and\nwool, shears sheep and feeds\npairs within 6 blocks.\nNo milking or culling.")
 help["foreman_desk"] = (
- "Esmeralda: contrata o capataz.\nCuida de até 6 postos a\naté 12 blocos: leva comida\ne recontrata com esmeraldas\nda mesa.",
- "Emerald: hires the foreman.\nManages up to 6 posts within\n12 blocks: brings food and\nrehires with the desk's\nemeralds.")
+ "Esmeralda: contrata o capataz.\nCuida de até 6 postos a\naté 12 blocos: leva comida\ne recontrata com esmeraldas\nda mesa. Monta a fila.",
+ "Emerald: hires the foreman.\nManages up to 6 posts within\n12 blocks: brings food and\nrehires with the desk's\nemeralds. Queues transfers.")
 help["farm_post"] = (
- "Esmeralda: contrata o aldeão\nadulto livre mais próximo.\nEle colhe o 9x9 e traz ao posto.\nCome 1 ponto por colheita.\nAgachar + chave: dispensa.",
- "Emerald: hires the nearest\nfree adult villager.\nHarvests the 9x9, brings it back.\nEats 1 point per harvest.\nSneak + wrench: dismiss.")
+ "Esmeralda: contrata o aldeão\nadulto livre mais próximo.\nEle colhe o 9x9 e traz ao posto.\nCome 2 pontos por colheita.\nAgachar + chave: dispensa.",
+ "Emerald: hires the nearest\nfree adult villager.\nHarvests the 9x9, brings it back.\nEats 2 points per harvest.\nSneak + wrench: dismiss.")
 for key, pt, en in [
  ("veio.status.no_worker", "Sem trabalhador", "No worker"),
  ("veio.status.absent", "Trabalhador ausente", "Worker missing"),
@@ -218,7 +221,13 @@ for key, pt, en in [
  ("veio.status.idle_work", "Nada a fazer", "Nothing to do"),
  ("veio.status.no_wage", "Sem esmeralda para contratar", "No emerald to hire"),
  ("veio.metric.trips", "Viagens feitas: %s", "Trips done: %s"),
- ("veio.metric.posts", "Postos: %s · tarefas: %s", "Posts: %s · tasks: %s"),
+ ("veio.metric.posts", "Postos: %s · fila: %s", "Posts: %s · queue: %s"),
+ # Terceira entrega: fila de tarefas e pastor.
+ ("block.veio.shepherd_post", "Posto do pastor", "Shepherd Post"),
+ ("veio.hint.shepherd_post", "Ração, tosquia e coleta", "Feed, shearing and pickup"),
+ ("veio.metric.chores", "Tarefas feitas: %s", "Chores done: %s"),
+ ("advancement.veio.herding.title", "Pastoreio", "Herding"),
+ ("advancement.veio.herding.description", "Um aldeão alimenta, tosquia e recolhe os produtos dos animais.", "A villager feeds and shears animals and picks up their products."),
  ("veio.hint.hauler_post", "Abastece e recolhe máquinas", "Feeds and empties machines"),
  ("veio.hint.foreman_desk", "Comida e contratos dos postos", "Food and hiring for posts"),
  ("veio.guide.role.supply", "Insumos", "Supplies"),
@@ -231,7 +240,7 @@ for key, pt, en in [
  label(key, pt, en)
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics","hauler_post"]),
- ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","farm_post","mill","electric_furnace","kitchen","pantry"]),
+ ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","farm_post","shepherd_post","mill","electric_furnace","kitchen","pantry"]),
  ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
  ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","wrench"]),
  ("Projetos e defesa","Projects and defense",["contract_hub","tesla","foreman_desk"]),
@@ -267,8 +276,9 @@ slothelp={
  "planter":["Sementes, cenouras, batatas ou fungo do Nether."],
  "tree_farm":["Mudas de carvalho, bétula, pinheiro, selva, acácia ou cerejeira.","Produto.","Produto.","Produto."],
  "ranch":["Trigo, cenoura, batata, beterraba ou sementes.","Baldes vazios para ordenhar.","Produto.","Produto.","Produto."],
- "farm_post":["Comida do trabalhador: pão vale 6 colheitas.","Colheita entregue.","Colheita entregue.","Colheita entregue."],
- "hauler_post":["Comida do trabalhador: 1 ponto por viagem.","Insumo para as máquinas.","Insumo para as máquinas.","Insumo para as máquinas.","Produto recolhido.","Produto recolhido.","Produto recolhido."],
+ "farm_post":["Comida do trabalhador: pão vale 3 colheitas.","Colheita entregue.","Colheita entregue.","Colheita entregue."],
+ "hauler_post":["Comida do trabalhador: pão vale 3 viagens.","Insumo para as máquinas.","Insumo para as máquinas.","Insumo para as máquinas.","Produto recolhido.","Produto recolhido.","Produto recolhido."],
+ "shepherd_post":["Comida do trabalhador.","Ração: trigo, cenoura, sementes...","Produto.","Produto.","Produto."],
  "foreman_desk":["Comida do capataz e dos postos.","Comida do capataz e dos postos.","Comida do capataz e dos postos.","Esmeraldas para recontratar."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
 }
@@ -298,8 +308,9 @@ slot_en={
  "planter":["Seeds, carrots, potatoes or nether wart."],
  "tree_farm":["Oak, birch, spruce, jungle, acacia or cherry saplings.","Product.","Product.","Product."],
  "ranch":["Wheat, carrots, potatoes, beetroot or seeds.","Empty buckets for milking.","Product.","Product.","Product."],
- "farm_post":["Worker food: bread pays for 6 harvests.","Delivered harvest.","Delivered harvest.","Delivered harvest."],
- "hauler_post":["Worker food: 1 point per trip.","Supplies for the machines.","Supplies for the machines.","Supplies for the machines.","Collected product.","Collected product.","Collected product."],
+ "farm_post":["Worker food: bread pays for 3 harvests.","Delivered harvest.","Delivered harvest.","Delivered harvest."],
+ "hauler_post":["Worker food: bread pays for 3 trips.","Supplies for the machines.","Supplies for the machines.","Supplies for the machines.","Collected product.","Collected product.","Collected product."],
+ "shepherd_post":["Worker food.","Feed: wheat, carrots, seeds...","Product.","Product.","Product."],
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
@@ -420,6 +431,9 @@ page(
 page(
  "Carregador e capataz\n\nPosto do carregador: insumos à esquerda; o aldeão abastece as máquinas perto e traz os produtos.\n\nMesa do capataz: comida e esmeraldas; ele alimenta e recontrata os postos a até 12 blocos.",
  "Hauler and foreman\n\nHauler post: supplies on the left; the villager feeds nearby machines and brings products back.\n\nForeman desk: food and emeralds; it feeds and rehires posts within 12 blocks.")
+page(
+ "Fila e pastor\n\nCom o capataz presente, a mesa monta uma fila: produtos de um posto ou máquina para outra que os aceite. Carregadores perto pegam a fila primeiro.\n\nPosto do pastor: ração, tosquia e coleta de ovos e lã.",
+ "Queue and shepherd\n\nWith the foreman present, the desk queues transfers: products from a post or machine to another that accepts them. Nearby haulers take the queue first.\n\nShepherd post: feed, shearing, eggs and wool.")
 help["belt"] = (
  "Curvas e rampas automáticas.\nConecte esteiras vizinhas.\nRampas vencem 1 bloco.\nChave fixa a direção.\nAgachar + chave: automático.",
  "Automatic turns and ramps.\nConnect neighboring belts.\nRamps span one block up.\nWrench locks the direction.\nSneak + wrench: automatic.")
@@ -554,7 +568,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.11.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.12.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",

@@ -21,15 +21,18 @@ use horizon_client::mobs::Mob;
 use horizon_client::mobs::goals::{self, Cx, Goal};
 use horizon_client::mod_api::{ParticleOptions, ParticleType, Text};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 pub(super) mod farmhand;
 pub(super) mod foreman;
 pub(super) mod hauler;
+pub(super) mod shepherd;
 
 pub(super) const FARM_POST: &str = "veio:farm_post";
 pub(super) const HAULER_POST: &str = "veio:hauler_post";
 pub(super) const FOREMAN_DESK: &str = "veio:foreman_desk";
+pub(super) const SHEPHERD_POST: &str = "veio:shepherd_post";
 pub(super) const VILLAGER: &str = "minecraft:villager";
 /// Contratar custa uma esmeralda, paga só quando a contratação dá certo.
 pub(super) const WAGE: &str = "minecraft:emerald";
@@ -48,6 +51,9 @@ pub(super) const NO_WAGE: i32 = 25;
 /// Resposta de uma tarefa que ainda está procurando: o painel mantém o estado anterior.
 pub(super) const KEEP: i32 = -1;
 
+/// Pontos de comida gastos em cada tarefa concluída (colheita, viagem, recontratação).
+/// Trigo cru vale 1 e não paga o ciclo; pão vale 6 e paga três tarefas.
+pub(super) const TASK_COST: i32 = 2;
 /// O posto age a cada 10 ticks, com a fase espalhada pela posição.
 const EVERY: i64 = 10;
 /// Aldeões a até esta distância do posto podem ser contratados por ele.
@@ -77,7 +83,7 @@ const MAX_SKIPPED: usize = 8;
 pub(super) type Uuid = [i32; 4];
 
 pub(super) fn is_post(block: &str) -> bool {
-    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK)
+    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST)
 }
 
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
@@ -88,6 +94,8 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         HAULER_POST => (7, vec![0, 1, 2, 3], vec![4, 5, 6]),
         // Comida (do capataz e dos postos); esmeraldas para contratar.
         FOREMAN_DESK => (4, vec![0, 1, 2, 3], vec![]),
+        // Comida; ração para os animais; produtos (lã, ovos, penas).
+        SHEPHERD_POST => (5, vec![0, 1], vec![2, 3, 4]),
         _ => return None,
     })
 }
@@ -96,6 +104,7 @@ pub(super) fn outputs(block: &str) -> std::ops::Range<usize> {
     match block {
         FARM_POST => 1..4,
         HAULER_POST => 4..7,
+        SHEPHERD_POST => 2..5,
         _ => 0..0,
     }
 }
@@ -110,6 +119,7 @@ pub(super) fn stock_slots(block: &str) -> std::ops::Range<usize> {
     match block {
         HAULER_POST => 1..4,
         FOREMAN_DESK => 0..4,
+        SHEPHERD_POST => 1..2,
         _ => 0..0,
     }
 }
@@ -124,7 +134,8 @@ pub(super) fn is_food(item: &str) -> bool {
 
 pub(super) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
     plain(stack) && match (block, slot) {
-        (FARM_POST | HAULER_POST, 0) | (FOREMAN_DESK, 0..=2) => is_food(&stack.item),
+        (FARM_POST | HAULER_POST | SHEPHERD_POST, 0) | (FOREMAN_DESK, 0..=2) => is_food(&stack.item),
+        (SHEPHERD_POST, 1) => production::ranch::is_feed(&stack.item),
         (HAULER_POST, 1..=3) => true,
         (FOREMAN_DESK, 3) => stack.item.as_ref() == WAGE,
         _ => false,
@@ -192,6 +203,9 @@ fn remember_entity(uuid: Uuid, entity: Option<u32>) {
 // ---------- Ordens de caminhada ----------
 
 static ORDERS: Mutex<Option<HashMap<u32, ([f64; 3], u64)>>> = Mutex::new(None);
+/// Atalho para o objetivo `Work`: aldeões ociosos não disputam o mutex quando nenhum
+/// posto tem ordem viva.
+static ORDERS_PENDING: AtomicBool = AtomicBool::new(false);
 
 /// Manda o aldeão `entity` andar até `target`.
 pub(super) fn order(entity: u32, target: [f64; 3], now: u64) {
@@ -201,6 +215,7 @@ pub(super) fn order(entity: u32, target: [f64; 3], now: u64) {
             orders.retain(|_, (_, issued)| now.saturating_sub(*issued) <= ORDER_FRESH);
         }
         orders.insert(entity, (target, now));
+        ORDERS_PENDING.store(true, Ordering::Release);
     }
 }
 
@@ -210,11 +225,17 @@ pub(super) fn cancel(entity: u32) {
         && let Some(orders) = orders.as_mut()
     {
         orders.remove(&entity);
+        if orders.is_empty() {
+            ORDERS_PENDING.store(false, Ordering::Release);
+        }
     }
 }
 
 /// Destino atual do aldeão, se o posto renovou a ordem há pouco.
 pub(super) fn order_for(entity: u32, now: u64) -> Option<[f64; 3]> {
+    if !ORDERS_PENDING.load(Ordering::Acquire) {
+        return None;
+    }
     let orders = ORDERS.lock().ok()?;
     let (target, issued) = orders.as_ref()?.get(&entity)?;
     (now.saturating_sub(*issued) <= ORDER_FRESH).then_some(*target)
@@ -265,9 +286,13 @@ pub(super) fn register_goals(mob: &mut Mob) {
 // ---------- Reservas de alvos ----------
 
 static RESERVED: Mutex<Vec<(String, [i32; 3], [i32; 3], u64)>> = Mutex::new(Vec::new());
+static RESERVED_PENDING: AtomicBool = AtomicBool::new(false);
 
 /// Outro posto vivo está atendendo este alvo?
 pub(super) fn reserved_by_other(dimension: &str, spot: [i32; 3], owner: [i32; 3], now: u64) -> bool {
+    if !RESERVED_PENDING.load(Ordering::Acquire) {
+        return false;
+    }
     RESERVED.lock().is_ok_and(|list| list.iter().any(|(dim, at, by, seen)|
         dim == dimension && *at == spot && *by != owner && now.saturating_sub(*seen) <= RESERVE_STALE))
 }
@@ -277,11 +302,13 @@ pub(super) fn reserve(dimension: &str, spot: [i32; 3], owner: [i32; 3], now: u64
     let Ok(mut list) = RESERVED.lock() else { return false };
     list.retain(|(_, _, _, seen)| now.saturating_sub(*seen) <= RESERVE_STALE);
     if list.iter().any(|(dim, at, by, _)| dim == dimension && *at == spot && *by != owner) {
+        RESERVED_PENDING.store(true, Ordering::Release);
         return false;
     }
     // Um posto reserva um alvo por vez.
     list.retain(|(dim, _, by, _)| !(dim == dimension && *by == owner));
     list.push((dimension.to_owned(), spot, owner, now));
+    RESERVED_PENDING.store(true, Ordering::Release);
     true
 }
 
@@ -289,6 +316,9 @@ pub(super) fn reserve(dimension: &str, spot: [i32; 3], owner: [i32; 3], now: u64
 pub(super) fn unreserve(dimension: &str, owner: [i32; 3]) {
     if let Ok(mut list) = RESERVED.lock() {
         list.retain(|(dim, _, by, _)| !(dim == dimension && *by == owner));
+        if list.is_empty() {
+            RESERVED_PENDING.store(false, Ordering::Release);
+        }
     }
 }
 
@@ -379,6 +409,11 @@ pub(super) fn carry_kind(entity: &ModBlockEntity) -> Carry {
 /// Destino da carga; `None` é o próprio posto.
 pub(super) fn carry_to(entity: &ModBlockEntity) -> Option<[i32; 3]> {
     get_pos(entity, "CarryTo")
+}
+
+/// Há carga a entregar? Evita montar o `Vec` de `Carried` em todo ciclo ocioso.
+fn has_load(entity: &ModBlockEntity) -> bool {
+    matches!(entity.nbt.get(&"Carried".into()), Some(Tag::List(list)) if !list.is_empty())
 }
 
 /// Itens que o trabalhador carrega. Ficam no NBT do posto: salvar, descarregar o chunk ou
@@ -488,10 +523,20 @@ fn set_list(entity: &mut ModBlockEntity, key: &str, list: &[[i32; 3]]) {
 pub(super) fn scan_blocks(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, radius: i32,
     per_cycle: i32, max: usize, wanted: &dyn Fn(&str) -> bool) -> Option<Vec<[i32; 3]>>
 {
+    scan_named(host, pos, entity, "Area", radius, per_cycle, max, wanted, true)
+}
+
+/// Como `scan_blocks`, com as chaves NBT começando por `key` (um posto pode ter mais de uma
+/// varredura). `forget` esquece os alvos pulados ao fim de cada volta.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn scan_named(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, key: &str, radius: i32,
+    per_cycle: i32, max: usize, wanted: &dyn Fn(&str) -> bool, forget: bool) -> Option<Vec<[i32; 3]>>
+{
+    let (scan, partial) = (format!("{key}Scan"), format!("{key}Found"));
     let side = radius * 2 + 1;
     let area = side * side * 3;
-    let mut cursor = number(entity, "AreaScan") % area;
-    let mut found = get_list(entity, "AreaFound").unwrap_or_default();
+    let mut cursor = number(entity, &scan) % area;
+    let mut found = get_list(entity, &partial).unwrap_or_default();
     for _ in 0..per_cycle {
         let spot = area_position(pos, radius, cursor);
         if spot != pos && found.len() < max && wanted(&host.block(spot)) {
@@ -500,14 +545,16 @@ pub(super) fn scan_blocks(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockE
         cursor += 1;
         if cursor >= area {
             cursor = 0;
-            set_list(entity, "Area", &found);
+            set_list(entity, key, &found);
             found.clear();
-            clear_skipped(entity);
+            if forget {
+                clear_skipped(entity);
+            }
         }
     }
-    set_number(entity, "AreaScan", cursor);
-    set_list(entity, "AreaFound", &found);
-    get_list(entity, "Area")
+    set_number(entity, &scan, cursor);
+    set_list(entity, &partial, &found);
+    get_list(entity, key)
 }
 
 /// Ordem de atendimento: o alvo atual primeiro, depois um rodízio que começa em `Pick`.
@@ -674,8 +721,12 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     step(host, pos, entity, time, now);
 }
 
+fn publish_ration(entity: &mut ModBlockEntity) {
+    set_number(entity, "Info", number(entity, "Ration") / TASK_COST);
+}
+
 pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64, now: u64) {
-    set_number(entity, "Info", number(entity, "Ration"));
+    publish_ration(entity);
     if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) != 0 {
         return;
     }
@@ -708,18 +759,24 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return;
     };
     set_number(entity, "Absent", 0);
+    if entity.id == FOREMAN_DESK {
+        foreman::organize(host, pos, entity, now);
+    }
     let status = work(host, pos, entity, id, at, now);
     set_number(entity, "Status", status);
-    set_number(entity, "Info", number(entity, "Ration"));
+    publish_ration(entity);
 }
 
 /// Tarefa escolhida por um adaptador de setor.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub(super) enum Plan {
     /// Ir até `spot`, a até `reach` blocos, e executar a ação do setor ao chegar.
     Visit { spot: [i32; 3], reach: f64 },
     /// Pegar `count` itens do slot `from` do posto e levá-los ao bloco `to` (slot `into`).
     Bring { from: usize, count: u32, to: [i32; 3], into: usize, kind: Carry },
+    /// Tarefa da fila do capataz (`desk`, número `task`): buscar `count` de `item` no slot
+    /// `slot` do bloco `from` e levar ao slot `into` do bloco `to`.
+    Fetch { desk: [i32; 3], task: i32, from: [i32; 3], slot: usize, item: String, count: u32, to: [i32; 3], into: usize },
 }
 
 fn block_goal(spot: [i32; 3]) -> [f64; 3] {
@@ -731,7 +788,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
     let home = post_center(pos);
     let dimension = host.dimension();
     // 1. Carregando: termina a entrega antes de qualquer outra tarefa.
-    if !carried(entity).is_empty() {
+    if has_load(entity) {
         let destination = carry_to(entity);
         let goal = destination.map_or(home, block_goal);
         if let Some(spot) = destination {
@@ -754,8 +811,8 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         order(id, home, now);
         return 1;
     }
-    // 2. Comida: cada tarefa gasta um ponto; o trabalhador come dos slots de comida.
-    if number(entity, "Ration") <= 0 && !eat(entity) {
+    // 2. Comida: cada tarefa gasta `TASK_COST` pontos; o trabalhador come até cobrir.
+    if !feed(entity, TASK_COST) {
         cancel(id);
         set_target(entity, None);
         unreserve(dimension, pos);
@@ -766,6 +823,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         FARM_POST => farmhand::plan(host, pos, entity, now),
         HAULER_POST => hauler::plan(host, pos, entity, now),
         FOREMAN_DESK => foreman::plan(host, pos, entity, now),
+        SHEPHERD_POST => shepherd::plan(host, pos, entity, now),
         _ => Err(NO_TASK),
     };
     let plan = match plan {
@@ -791,6 +849,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             let result = match entity.id.as_str() {
                 FARM_POST => farmhand::perform(host, spot, entity),
                 HAULER_POST => hauler::perform(host, spot, entity),
+                SHEPHERD_POST => shepherd::perform(host, spot, entity, now),
                 _ => None,
             };
             set_target(entity, None);
@@ -827,12 +886,44 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             order(id, block_goal(to), now);
             WALKING
         }
+        Plan::Fetch { desk, task, from, slot, item, count, to, into } => {
+            if !reserve(dimension, from, pos, now) {
+                skip(entity, from);
+                set_target(entity, None);
+                return number(entity, "Status");
+            }
+            let goal = block_goal(from);
+            order(id, goal, now);
+            if !near(at, goal, POST_REACH) {
+                return walk(entity, Some(from));
+            }
+            // Ao lado da origem: pega o que ainda estiver lá, e só do item combinado.
+            let mut taken = 0;
+            host.change_mod_block_entity(from, &mut |source| {
+                if let Some(stack) = source.items.get(slot).and_then(Option::as_ref)
+                    && is_plain(stack, &item)
+                {
+                    taken = count.min(stack.count);
+                    consume(&mut source.items[slot], taken);
+                }
+            });
+            foreman::complete(host, desk, task);
+            set_target(entity, None);
+            unreserve(dimension, pos);
+            if taken == 0 {
+                return 1;
+            }
+            set_carried(entity, &[(item, taken)], Some(to), Carry::Supply, into);
+            set_number(entity, "Walk", 0);
+            order(id, block_goal(to), now);
+            WALKING
+        }
     }
 }
 
 /// Uma tarefa concluída: gasta comida e conta no painel.
 fn finish_task(entity: &mut ModBlockEntity) {
-    set_number(entity, "Ration", number(entity, "Ration") - 1);
+    set_number(entity, "Ration", number(entity, "Ration").saturating_sub(TASK_COST));
     set_number(entity, "Total", number(entity, "Total").saturating_add(1));
 }
 
@@ -921,7 +1012,17 @@ fn walk(entity: &mut ModBlockEntity, spot: Option<[i32; 3]>) -> i32 {
     PATH
 }
 
-/// O trabalhador come um item dos slots de comida. Valor = tarefas pagas.
+/// Come dos slots de comida até `Ration` cobrir `need` pontos, ou falha se a comida acabar.
+fn feed(entity: &mut ModBlockEntity, need: i32) -> bool {
+    while number(entity, "Ration") < need {
+        if !eat(entity) {
+            return false;
+        }
+    }
+    true
+}
+
+/// O trabalhador come um item dos slots de comida. Valor = pontos de `production.json`.
 pub(super) fn eat(entity: &mut ModBlockEntity) -> bool {
     for slot in food_slots(&entity.id) {
         let Some(stack) = entity.items[slot].as_ref().filter(|stack| plain(stack)) else { continue };
@@ -942,7 +1043,8 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         FARM_POST => (tr("veio.metric.tasks", &[&read(9)]), "veio.hint.farm_post"),
         HAULER_POST => (tr("veio.metric.trips", &[&read(9)]), "veio.hint.hauler_post"),
         // O capataz publica os postos atendidos em `Rate` (slot 6), livre fora das máquinas elétricas.
-        FOREMAN_DESK => (tr("veio.metric.posts", &[&read(6), &read(9)]), "veio.hint.foreman_desk"),
+        FOREMAN_DESK => (tr("veio.metric.posts", &[&read(6), &read(7)]), "veio.hint.foreman_desk"),
+        SHEPHERD_POST => (tr("veio.metric.chores", &[&read(9)]), "veio.hint.shepherd_post"),
         _ => return None,
     };
     Some(vec![first, tr("veio.metric.ration", &[&read(12)]), tr(hint, &[])])
@@ -954,6 +1056,7 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         HAULER_POST => vec![Some([17.0, 45.0]), Some([44.0, 45.0]), Some([62.0, 45.0]), Some([80.0, 45.0]),
             Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
         FOREMAN_DESK => vec![Some([44.0, 45.0]), Some([62.0, 45.0]), Some([80.0, 45.0]), Some([134.0, 45.0])],
+        SHEPHERD_POST => vec![Some([17.0, 45.0]), Some([39.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
         _ => return None,
     })
 }
@@ -963,6 +1066,7 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         FARM_POST => &["food", "output", "", ""],
         HAULER_POST => &["food", "supply", "", "", "output", "", ""],
         FOREMAN_DESK => &["food", "", "", "wage"],
+        SHEPHERD_POST => &["food", "feed", "output", "", ""],
         _ => return None,
     })
 }

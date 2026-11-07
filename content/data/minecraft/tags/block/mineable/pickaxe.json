@@ -40,6 +40,7 @@
     "veio:farm_post",
     "veio:hauler_post",
     "veio:foreman_desk",
+    "veio:shepherd_post",
     "veio:solar",
     "veio:battery"
   ]

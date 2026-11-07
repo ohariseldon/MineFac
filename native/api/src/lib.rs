@@ -337,6 +337,7 @@ fn has_item_inputs(block: &str) -> bool {
         BELT | FAST_BELT | SPLITTER | MERGER | PRESS | ASSEMBLER | CUTTER | CRUSHER |
         INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER => true,
         DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => false,
+        _ if workforce::is_post(block) => true,
         _ => production::has_inputs(block),
     }
 }
