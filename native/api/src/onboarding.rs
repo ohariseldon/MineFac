@@ -105,21 +105,28 @@ impl Progress {
         }
     }
 
+    #[cfg(test)]
     fn observe(&mut self, pos: Pos, entity: &ModBlockEntity, before: i32, contract_before: i32) {
-        let cycles = number(entity, "Produced").saturating_sub(before).clamp(0, 64) as u32;
+        self.observe_counts(pos, entity, before, contract_before, None);
+    }
+
+    fn observe_counts(&mut self, pos: Pos, entity: &ModBlockEntity, before: i32, contract_before: i32, previous_cycles: Option<i32>) {
+        let products = number(entity, "Produced").saturating_sub(before).clamp(0, 64) as u32;
         let slot = match self.step { 3 => ASSEMBLER_SLOT, 4 => DRILL_SLOT, _ => PRESS_SLOT };
         if self.blocks[slot] == Some(pos) { self.status = number(entity, "Status"); }
         if self.blocks[PRESS_SLOT] == Some(pos) && entity.id == PRESS {
             if self.step == 1 {
                 self.powered = number(entity, "energy") > 0 || (number(entity, "Status") == 1
-                    && (number(entity, "Progress") > 0 || cycles > 0));
+                    && (number(entity, "Progress") > 0 || products > 0));
             }
             let copper_plate = entity.items.get(1).and_then(Option::as_ref).is_some_and(|s| is_plain(s, PLATE));
-            if copper_plate && cycles > 0 {
-                if self.step == 2 { self.plates = (self.plates + cycles).min(4); self.dirty = true; }
+            if copper_plate && products > 0 {
+                if self.step == 2 { self.plates = (self.plates + products).min(4); self.dirty = true; }
                 if matches!(self.step, 5 | 6) {
-                    let certified = cycles.min(self.input_credit);
-                    self.input_credit -= certified;
+                    let cycles = previous_cycles.map_or(products, |old| number(entity, "Total").saturating_sub(old).clamp(0, 64) as u32);
+                    let inputs = cycles.min(self.input_credit);
+                    self.input_credit -= inputs;
+                    let certified = if cycles == 0 { 0 } else { products * inputs / cycles };
                     self.output_credit = (self.output_credit + certified).min(64);
                     self.made = (self.made + certified).min(64);
                     self.dirty |= certified > 0;
@@ -127,12 +134,12 @@ impl Progress {
             }
         }
         if self.step == 3 && self.blocks[ASSEMBLER_SLOT] == Some(pos) && entity.id == ASSEMBLER
-            && entity.items.get(1).and_then(Option::as_ref).is_some_and(|s| is_plain(s, GEAR)) && cycles > 0 {
+            && entity.items.get(1).and_then(Option::as_ref).is_some_and(|s| is_plain(s, GEAR)) && products > 0 {
             self.gears = 1; self.dirty = true;
         }
         if self.step == 4 && self.blocks[DRILL_SLOT] == Some(pos)
             && matches!(entity.id.as_str(), DRILL | DRILL_MK2 | production::DRILL_MK3)
-            && entity.items.first().and_then(Option::as_ref).is_some_and(|s| is_plain(s, "minecraft:raw_copper")) && cycles > 0 {
+            && entity.items.first().and_then(Option::as_ref).is_some_and(|s| is_plain(s, "minecraft:raw_copper")) && products > 0 {
             self.copper = 1; self.dirty = true;
         }
         if self.step == 7 && self.blocks[HUB_SLOT] == Some(pos) && entity.id == HUB
@@ -298,7 +305,16 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     ACTIVE.store(true, Ordering::Relaxed);
 }
 
+#[cfg(test)]
 pub(super) fn observe(dimension: &str, pos: Pos, entity: &ModBlockEntity, before: i32, contract_before: i32, time: i64) {
+    observe_inner(dimension, pos, entity, before, contract_before, time, None);
+}
+
+pub(super) fn observe_production(dimension: &str, pos: Pos, entity: &ModBlockEntity, before: i32, previous_cycles: i32, contract_before: i32, time: i64) {
+    observe_inner(dimension, pos, entity, before, contract_before, time, Some(previous_cycles));
+}
+
+fn observe_inner(dimension: &str, pos: Pos, entity: &ModBlockEntity, before: i32, contract_before: i32, time: i64, previous_cycles: Option<i32>) {
     if !ACTIVE.load(Ordering::Relaxed) { return; }
     if !matches!(entity.id.as_str(), PRESS | ASSEMBLER | DRILL | DRILL_MK2 | production::DRILL_MK3 | HUB) { return; }
     if entity.id == HUB {
@@ -306,7 +322,7 @@ pub(super) fn observe(dimension: &str, pos: Pos, entity: &ModBlockEntity, before
     } else if number(entity, "Produced") == before && time.rem_euclid(20) != 0 { return; }
     if let Ok(mut session) = SESSION.lock() && let Some(s) = session.as_mut() {
         for p in s.players.values_mut().filter(|p| p.dimension == dimension && p.step < DONE) {
-            p.observe(pos, entity, before, contract_before);
+            p.observe_counts(pos, entity, before, contract_before, previous_cycles);
         }
     }
 }

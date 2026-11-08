@@ -225,9 +225,10 @@ impl Hooks for Factory {
         onboarding::before_machine(host, event.pos, event.entity);
         let previous = visual_signature(event.entity);
         let produced = number(event.entity, "Produced");
+        let tutorial_cycles = number(event.entity, "Total");
         let tutorial_contract = if event.entity.id == HUB { number(event.entity, "ContractStage") } else { 0 };
         tick_factory(host, event.pos, event.entity, time);
-        onboarding::observe(host.dimension(), event.pos, event.entity, produced, tutorial_contract, time);
+        onboarding::observe_production(host.dimension(), event.pos, event.entity, produced, tutorial_cycles, tutorial_contract, time);
         pollution::emit(host, event.pos, event.entity, time);
         record_performance(event.entity, produced);
         presentation::publish(event.entity);

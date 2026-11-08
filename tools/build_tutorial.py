@@ -354,7 +354,7 @@ help["freight_station"] = (
  "Corante igual liga a rota.\nAgachar + item: envio.\nItem sem agachar: recebimento.\nFunis ligam os vagões.",
  "Match terminal dye colors.\nSneak + item: outgoing filter.\nItem without sneak: receive.\nHoppers connect minecarts.")
 help["drone_port"] = (
- "Corante igual liga portos.\nAté 64 blocos, 16 itens/voo.\nPrecisa energia e caminho livre.\nAgachar + chave: chama de volta.",
+ "Ligue com corantes iguais.\n64 blocos; 16 itens/voo.\nEnergia e trajeto livre.",
  "Match port dye colors.\n64-block range, 16 items/flight.\nNeeds power and a clear path.\nSneak + wrench: recall.")
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
@@ -590,8 +590,13 @@ page(
  "Transportes\n\nUse o mesmo corante em dois terminais para ligar as zonas. Agachar + produto define o que sai.\n\nConsulte o Guia de Transportes: terminais entregam uma cópia ao serem obtidos. Livro + trilho fabricam outro.",
  "Freight transport\n\nUse the same dye on two terminals to link zones. Sneak + product sets outgoing cargo.\n\nRead the Freight Guide: obtaining a terminal grants a copy. Book + rail crafts another.")
 category_pages=[]
-for _ in categories:
- category_pages.append(len(pages)+1);pages.append(None)
+category_parts=[]
+for _,_,members in categories:
+ parts=[]
+ for start in range(0,len(members),10):
+  parts.append((len(pages)+1,members[start:start+10]));pages.append(None)
+ category_parts.append(parts);category_pages.append(parts[0][0])
+label("veio.guide.more","Mais >","More >")
 recipe_index=len(pages)+1;pages.append(None)
 references={}
 def reference_labels(name):
@@ -634,14 +639,17 @@ for name in order:
 for g,(pt,en,members) in enumerate(categories):
  key=f"veio.guide.category.{g}"
  label(key,pt,en)
- extra=[{"translate":key,"bold":True},back_mark(),{"text":"\n"}]
- for name in members:
-  kind="item" if name=="wrench" else "block"
-  short_key=f"veio.guide.short.{name}"
-  title_key=short_key if short_key in langs["pt_br"] else f"{kind}.veio.{name}"
-  extra.extend([{"translate":title_key,"color":"dark_blue","underlined":True,
-                 "click_event":{"action":"change_page","page":references[name]}},{"text":"\n"}])
- pages[category_pages[g]-1]={"text":"","extra":extra}
+ for part,(target,chunk) in enumerate(category_parts[g]):
+  extra=[{"translate":key,"bold":True},back_mark(),{"text":"\n"}]
+  for name in chunk:
+   kind="item" if name=="wrench" else "block"
+   short_key=f"veio.guide.short.{name}"
+   title_key=short_key if short_key in langs["pt_br"] else f"{kind}.veio.{name}"
+   extra.extend([{"translate":title_key,"color":"dark_blue","underlined":True,
+                  "click_event":{"action":"change_page","page":references[name]}},{"text":"\n"}])
+  if part+1<len(category_parts[g]):
+   extra.append({"translate":"veio.guide.more","color":"dark_blue","click_event":{"action":"change_page","page":category_parts[g][part+1][0]}})
+  pages[target-1]={"text":"","extra":extra}
 
 # Receitas das máquinas, geradas de tools/production.json. Os nomes vanilla usam as chaves do
 # próprio jogo, então aparecem no idioma do jogador.

@@ -322,3 +322,19 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
     std::fs::remove_dir(root).unwrap();
     assert!(!other_world.exists());
 }
+
+#[test]
+fn productivity_certifies_bonus_items_without_spending_two_input_credits() {
+    let mut p = line(5);
+    p.transfer(BELT_AT, PRESS_AT, "minecraft:raw_copper", 1, false, 1);
+    let mut press = machine(PRESS, Some((PLATE, 2)), 2);
+    set_number(&mut press, "Total", 1);
+    p.observe_counts(PRESS_AT, &press, 0, 0, Some(0));
+    assert_eq!((p.input_credit, p.output_credit, p.made), (0, 2, 2));
+    p.transfer(BELT_AT, PRESS_AT, "minecraft:raw_copper", 1, false, 2);
+    press.items[1] = Some(ItemStack::new(PLATE, 3));
+    set_number(&mut press, "Produced", 3); set_number(&mut press, "Total", 2);
+    p.observe_counts(PRESS_AT, &press, 2, 0, Some(1));
+    assert_eq!((p.input_credit, p.output_credit, p.made), (0, 3, 3));
+    assert!(p.ready());
+}

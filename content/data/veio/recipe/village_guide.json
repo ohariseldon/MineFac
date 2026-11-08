@@ -184,7 +184,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 14
+                    "page": 12
                   }
                 },
                 {
@@ -340,7 +340,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 22
+                    "page": 20
                   }
                 },
                 {
@@ -352,7 +352,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 23
+                    "page": 21
                   }
                 },
                 {
@@ -364,7 +364,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 24
+                    "page": 22
                   }
                 },
                 {
@@ -376,7 +376,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 25
+                    "page": 23
                   }
                 },
                 {
