@@ -235,6 +235,7 @@ impl Hooks for Factory {
         defense::advance_clock();
         budget::begin_tick(defense::clock());
         power::maintenance(defense::clock());
+        workforce::maintenance(defense::clock());
         workforce::spawn::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
@@ -430,6 +431,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "RoutingPriority" => key!("RoutingPriority"),
         "AreaScan" => key!("AreaScan"),
         "TopologyPending" => key!("TopologyPending"),
+        "PlanningPending" => key!("PlanningPending"),
         "TerrainPending" => key!("TerrainPending"),
         "AreaFound" => key!("AreaFound"),
         "Posts" => key!("Posts"),

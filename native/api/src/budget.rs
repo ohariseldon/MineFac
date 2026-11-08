@@ -5,9 +5,9 @@ use std::collections::{HashMap, VecDeque};
 #[derive(Clone, Copy)]
 pub(super) enum Lane { Area, Terrain, Topology, Planning, Workforce }
 // Independent reservations prevent cheap scans from starving network maintenance.
-const LIMITS: [u32; 5] = [512, 384, 4096, 4, 512];
-// Area/terrain/topology retry every tick; foremen are called less frequently.
-const STALE: [u64; 5] = [2, 2, 2, 20, 20];
+const LIMITS: [u32; 5] = [512, 384, 4096, 2048, 512];
+// Background jobs retry every tick; workforce discovery runs less frequently.
+const STALE: [u64; 5] = [2, 2, 2, 2, 20];
 type Key = (&'static str, [i32; 3]);
 
 #[derive(Default)]

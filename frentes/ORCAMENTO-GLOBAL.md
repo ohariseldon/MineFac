@@ -15,9 +15,10 @@ simulação. Nenhuma mudança de arte, receita, custo de energia ou geração.
 - Reconstrução das conexões de postes: 4.096 etapas por tick, em lotes de até 64
   por atendimento. Coleta, ranking e preparação dos fios agora são retomáveis;
   detalhes em [REDES-INCREMENTAIS.md](REDES-INCREMENTAIS.md).
-- Coordenação: quatro admissões de atualização da rede/fila de capatazes por tick.
-  A cadência interna de reconstrução da fila permanece; nem toda admissão produz
-  uma fila nova.
+- Coordenação: 2.048 etapas por tick, em lotes de até 64 por capataz. Coleta,
+  descoberta de fontes e busca entre fontes e destinos são retomáveis. A fila
+  anterior fica disponível até a publicação da próxima; detalhes em
+  [CAPATAZES-INCREMENTAIS.md](CAPATAZES-INCREMENTAIS.md).
 - Descoberta de alvos dos trabalhadores: 512 células por tick no conjunto dos
   postos. `scan_named` reserva o tamanho da sua etapa; se adiada, devolve a última
   lista completa e mantém o cursor.
@@ -104,8 +105,9 @@ o executável completo nem abrir o jogo nesta entrega.
 
 É um orçamento global **das tarefas conectadas**, por quantidade de trabalho,
 não um temporizador capaz de interromper qualquer código Rust. A reconstrução
-individual de fios agora avança por etapas; uma admissão de fila dos capatazes
-ainda depende do tamanho do recorte e não foi dividida internamente.
+individual de fios e a preparação das filas dos capatazes agora avançam por
+etapas. A publicação de até oito tarefas usa uma etapa final limitada, com
+validação dos inventários e preservação das reservas atuais.
 
 Callbacks básicos por bloco, renderização, IA/pathfinding do Minecraft, difusão
 da poluição e geração de terreno não estão sujeitos a estas cotas. Não há garantia
