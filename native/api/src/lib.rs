@@ -408,6 +408,9 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
 }
 
 /// Chaves NBT lidas todo tick. A primeira vez monta o `JavaString`; as seguintes reaproveitam.
+/// Sempre embutida: com o nome literal, o compilador resolve o `match` na compilação e a
+/// leitura vira um acesso direto à chave pronta, sem comparar textos a cada tick.
+#[inline(always)]
 fn nbt_key(name: &str) -> &'static JavaString {
     #[cfg(test)] perf::key_read();
     macro_rules! key {
@@ -491,24 +494,29 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Walk" => key!("Walk"),
         "Work" => key!("Work"),
         "energy" => key!("energy"),
-        _ => {
-            // Chave rara: vive até o fim do processo, para o tick seguinte não alocar de novo.
-            #[cfg(test)] perf::fallback_lock();
-            use std::collections::HashMap;
-            use std::sync::Mutex;
-            static EXTRA: Mutex<Option<HashMap<String, &'static JavaString>>> = Mutex::new(None);
-            let mut extra = EXTRA.lock().unwrap_or_else(|err| err.into_inner());
-            let extra = extra.get_or_insert_with(HashMap::new);
-            if let Some(key) = extra.get(name) {
-                return key;
-            }
-            let key: &'static JavaString = Box::leak(Box::new(JavaString::from(name)));
-            extra.insert(name.to_owned(), key);
-            key
-        }
+        _ => rare_nbt_key(name),
     }
 }
 
+/// Chave rara: vive até o fim do processo, para o tick seguinte não alocar de novo.
+#[cold]
+#[inline(never)]
+fn rare_nbt_key(name: &str) -> &'static JavaString {
+    #[cfg(test)] perf::fallback_lock();
+    use std::collections::HashMap;
+    use std::sync::Mutex;
+    static EXTRA: Mutex<Option<HashMap<String, &'static JavaString>>> = Mutex::new(None);
+    let mut extra = EXTRA.lock().unwrap_or_else(|err| err.into_inner());
+    let extra = extra.get_or_insert_with(HashMap::new);
+    if let Some(key) = extra.get(name) {
+        return key;
+    }
+    let key: &'static JavaString = Box::leak(Box::new(JavaString::from(name)));
+    extra.insert(name.to_owned(), key);
+    key
+}
+
+#[inline(always)]
 pub(super) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -> T {
     read(nbt_key(name))
 }
@@ -519,22 +527,32 @@ pub(super) fn java_eq(text: &JavaString, value: &str) -> bool {
     value.encode_utf16().all(|unit| units.next() == Some(unit)) && units.next().is_none()
 }
 
+// `number`/`set_number` resolvem a chave no local da chamada; a busca no NBT fica numa
+// função só, para não copiar o código do mapa em cada chamada.
+#[inline(always)]
 fn number(entity: &ModBlockEntity, key: &str) -> i32 {
-    with_nbt_key(key, |key| match entity.nbt.get(key) {
-        Some(Tag::Int(value)) => (*value).max(0),
-        _ => 0,
-    })
+    number_at(entity, nbt_key(key))
 }
 
+fn number_at(entity: &ModBlockEntity, key: &JavaString) -> i32 {
+    match entity.nbt.get(key) {
+        Some(Tag::Int(value)) => (*value).max(0),
+        _ => 0,
+    }
+}
+
+#[inline(always)]
 fn set_number(entity: &mut ModBlockEntity, key: &str, value: i32) {
-    with_nbt_key(key, |key| {
-        if let Some(tag) = entity.nbt.get_mut(key) {
-            let current = match tag { Tag::Int(stored) => (*stored).max(0), _ => 0 };
-            if current != value { *tag = Tag::Int(value); }
-        } else {
-            entity.nbt.insert(key.clone(), Tag::Int(value));
-        }
-    });
+    set_number_at(entity, nbt_key(key), value);
+}
+
+fn set_number_at(entity: &mut ModBlockEntity, key: &JavaString, value: i32) {
+    if let Some(tag) = entity.nbt.get_mut(key) {
+        let current = match tag { Tag::Int(stored) => (*stored).max(0), _ => 0 };
+        if current != value { *tag = Tag::Int(value); }
+    } else {
+        entity.nbt.insert(key.clone(), Tag::Int(value));
+    }
 }
 
 /// O que o desenho no mundo lê do NBT, além da carga (que `presentation::publish` acusa).
