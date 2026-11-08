@@ -24,7 +24,7 @@ use std::collections::HashMap;
 
 #[cfg(test)]
 pub(super) fn profile_organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
-    foreman::organize(host, pos, entity, now);
+    foreman::reference_organize(host, pos, entity, now);
 }
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
@@ -765,6 +765,11 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     }
     let now = defense::clock();
     step(host, pos, entity, time, now);
+    if entity.id == FOREMAN_DESK && number(entity, "PlanningPending") != 0
+        && worker(entity).is_some() && number(entity, "Absent") == 0
+        && (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) != 0 {
+        foreman::continue_planning(host, pos, entity, now);
+    }
     if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) == 0 {
         if entity.id == CONTROL_CENTER && number(entity, "Status") != 1 {
             set_number(entity, "Admin", 0);
@@ -1133,3 +1138,5 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
 
 #[cfg(test)]
 mod tests;
+
+pub(super) fn maintenance(now: u64) { foreman::maintenance(now); }
