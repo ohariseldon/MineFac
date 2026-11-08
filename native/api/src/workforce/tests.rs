@@ -40,6 +40,27 @@ const HAULER_SWEEP: u64 = 48;
 /// Primeira volta do capataz (1875 / 25) com folga.
 const FOREMAN_SWEEP: u64 = 90;
 
+#[test]
+fn background_hauler_search_waits_during_rest_hunger_and_delivery() {
+    let mut world = Village::new("veio:search-background-guards");
+    let mut post = block(HAULER_POST);
+    set_worker(&mut post, Some([91,0,0,1]));
+    set_number(&mut post, "HaulSearchPending", 1);
+    for (time,status) in [(1,RESTING),(2,NO_FOOD)] {
+        set_number(&mut post,"Status",status);
+        tick(&mut world, POST, &mut post,time);
+        assert_eq!(number(&post,"HaulSearchPending"),1);
+    }
+    set_number(&mut post,"Status",WALKING);
+    set_carried(&mut post,&[(PLATE.into(),3)],Some(WHEAT),Carry::Supply,0);
+    tick(&mut world,POST,&mut post,3);
+    assert_eq!(number(&post,"HaulSearchPending"),1);
+    assert_eq!(carried(&post),[(PLATE.into(),3)]);
+    set_carried(&mut post,&[],None,Carry::Supply,0);
+    tick(&mut world,POST,&mut post,4);
+    assert_eq!(number(&post,"HaulSearchPending"),0);
+}
+
 #[derive(Default)]
 struct Village {
     dimension: &'static str,
@@ -54,6 +75,13 @@ struct Village {
     emeralds: u32,
     summoned: Vec<[f64; 3]>,
     commands: Vec<String>,
+    /// Hora do dia (0 = manhã).
+    day: i64,
+    /// Item na mão de cada aldeão e NBT mesclado neles.
+    hands: HashMap<u32, Option<String>>,
+    villager_nbt: HashMap<u32, Compound>,
+    /// Vida dos aldeões que têm uma (`set_mob_health`).
+    lives: HashMap<u32, f32>,
     players: Vec<horizon_client::mod_api::NativeServerPlayer>,
     edits: Cell<u32>,
     reads: Cell<u32>,
@@ -112,8 +140,22 @@ impl Host for Village {
             .or_else(|| self.animals.get(&entity.id()).map(|(at, _)| *at))
     }
     fn entity_merge_nbt(&mut self, entity: EntityRef, nbt: Compound) -> bool {
+        if self.villagers.contains_key(&entity.id()) {
+            self.villager_nbt.entry(entity.id()).or_default().extend(nbt);
+            return true;
+        }
         let Some((_, data)) = self.animals.get_mut(&entity.id()) else { return false };
         data.extend(nbt);
+        true
+    }
+    fn living(&self, entity: EntityRef) -> Option<horizon_client::mod_api::LivingRef> {
+        self.villagers.contains_key(&entity.id()).then(|| horizon_client::mod_api::LivingRef::new(entity))
+    }
+    fn living_set_equipment(&mut self, living: horizon_client::mod_api::LivingRef,
+        slot: horizon_client::mod_api::EquipmentSlot, stack: Option<ItemStack>) -> bool
+    {
+        assert_eq!(slot, horizon_client::mod_api::EquipmentSlot::MainHand);
+        self.hands.insert(living.id(), stack.map(|stack| stack.item.to_string()));
         true
     }
     fn item_entities(&self, _: &str, min: [f64; 3], max: [f64; 3]) -> Vec<NativeItemEntity> {
@@ -130,12 +172,36 @@ impl Host for Village {
             return Some(data.clone());
         }
         let (_, uuid, age) = self.villagers.get(&entity.id())?;
-        Some(Compound::from([("UUID".into(), Tag::IntArray(uuid.to_vec())), ("Age".into(), Tag::Int(*age))]))
+        let mut nbt = Compound::from([("UUID".into(), Tag::IntArray(uuid.to_vec())), ("Age".into(), Tag::Int(*age))]);
+        if let Some(life) = self.lives.get(&entity.id()) {
+            nbt.insert("Health".into(), Tag::Float(life.to_bits()));
+        }
+        Some(nbt)
+    }
+    fn set_mob_health(&mut self, _: &str, id: u32, health: f32) -> bool {
+        if health <= 0.0 {
+            return false;
+        }
+        if let Some((_, data)) = self.animals.get_mut(&id) {
+            data.insert("Health".into(), Tag::Float(health.to_bits()));
+            return true;
+        }
+        if self.villagers.contains_key(&id) {
+            self.lives.insert(id, health);
+            return true;
+        }
+        false
     }
     fn send_particles(&mut self, _: &ParticleOptions, _: Option<BlockStateId>, _: [f64; 3], _: [f64; 3], _: f64, _: i32) -> bool {
         true
     }
     fn play_sound(&mut self, _: &str, _: [f64; 3], _: usize, _: f32, _: f32) -> bool {
+        true
+    }
+    fn kill_mob(&mut self, _: &str, id: u32) -> bool {
+        self.animals.remove(&id).is_some()
+    }
+    fn action_bar(&mut self, _: u128, _: horizon_client::mod_api::Text) -> bool {
         true
     }
     fn edit_blocks(&mut self, _: &str, edit: &horizon_client::mod_api::NativeBlockEdit) -> Result<u64, String> {
@@ -170,6 +236,12 @@ impl Host for Village {
         Ok(columns.iter().map(|_| Some(70)).collect())
     }
     fn block_entity_sync(&mut self, _: [i32; 3]) {}
+    fn level(&self, _: &str) -> Option<horizon_client::mod_api::LevelRef> {
+        None
+    }
+    fn day_time(&self) -> i64 {
+        self.day
+    }
     fn summon(&mut self, _: &str, _: &str, at: [f64; 3], _: Compound) -> Option<u32> {
         self.summoned.push(at);
         Some(90000 + self.summoned.len() as u32)
@@ -1166,11 +1238,13 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
         village.villager(16001 + index as u32, [*x, 64.0, *z], [70, 0, 0, index as i32]);
     }
     village.villager(16010, [180.5, 64.0, 100.5], [70, 0, 0, 10]);
-    village.players = vec![player(7, "Steve", [90.0, 64.0, 90.0]), player(9, "Alex", [5000.0, 64.0, 5000.0])];
-
     spawn::logged_in(7, "Steve", 0);
     spawn::logged_in(8, "bad name;kill", 0);
+    // A janela também roda o tick e não vê os jogadores do servidor: nada se perde.
     spawn::tick(&mut village, 20);
+    assert!(village.commands.is_empty());
+    village.players = vec![player(7, "Steve", [90.0, 64.0, 90.0]), player(9, "Alex", [5000.0, 64.0, 5000.0])];
+    spawn::tick(&mut village, 40);
     let joined = village.commands.join("\n");
     assert!(joined.contains("setworldspawn 100 70 100"), "centro da vila: média do grupo, altura do terreno\n{joined}");
     assert!(joined.contains("unless entity @s[tag=veio_village] run tp @s 100 70 100"), "só quem chega pela primeira vez");
@@ -1257,11 +1331,12 @@ fn worker_orders_reset_navigation_on_cancel_and_refresh_changed_destinations() {
     use horizon_client::mobs::{Ai, Extra, Mob, MobType, MobWorld, Vec3, goals::{Cx, Goal}};
     let mut mob = Mob { id: 98001, rider: None, extra: Extra::default(),
         kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(), ai: Ai::default() };
-    let world = MobWorld::fixture(); let mut cx = Cx { w: &world };
+    let world = MobWorld::preview(); let mut cx = Cx { w: &world };
     let mut goal = Work::default();
     order(mob.id, [1.0, 64.0, 1.0], defense::clock());
     assert!(goal.can_use(&mut mob, &mut cx));
     goal.cooldown = 15;
+    goal.wait = 0;
     order(mob.id, [10.0, 64.0, 10.0], defense::clock());
     assert!(goal.can_use(&mut mob, &mut cx));
     assert_eq!(goal.cooldown, 0);
@@ -1283,4 +1358,645 @@ fn shepherd_keeps_riding_pigs_out_of_the_breeding_queue() {
     assert_eq!(cycle(&mut village, &mut post, 1), IDLE_WORK);
     assert_eq!(post.items[1], Some(ItemStack::new("minecraft:carrot", 5)));
     assert!(village.animals.values().all(|(_, nbt)| !nbt.contains_key(&"InLove".into())));
+}
+
+// ---------- Medição: vila grande ----------
+
+/// Custo do Veio numa vila grande, por tick do jogo: `entity_tick_pre` de cada aldeão e animal e
+/// o objetivo `Work` de cada aldeão (com ordens vivas no mapa). Mede só o código do Veio, no
+/// substituto. `cargo test --release -p veio-check bench_large_village -- --ignored --nocapture`
+#[test]
+#[ignore]
+fn bench_large_village() {
+    use horizon_client::mobs::{Ai, Mob, MobType, MobWorld, Vec3};
+    use horizon_client::mod_api::{EntityTickPreEvent, TickEvent};
+    use std::sync::Arc;
+    const VILLAGERS: u32 = 150;
+    const ANIMALS: u32 = 300;
+    const TICKS: u32 = 20000;
+    let dimension = "veio:bench_village";
+    let mut village = Village::new(dimension);
+    village.crops.clear();
+    for id in 0..VILLAGERS {
+        village.villagers.insert(200_000 + id, ([f64::from(id % 20), 64.0, f64::from(id / 20)], [99, 0, 0, id as i32], 0));
+    }
+    for id in 0..ANIMALS {
+        village.animals.insert(300_000 + id, ([f64::from(id % 30), 64.0, 30.0 + f64::from(id / 30)], Compound::new()));
+    }
+    let hooks = super::super::hooks();
+    let world = MobWorld::preview();
+    let kind = Arc::new(MobType { id: VILLAGER.to_owned() });
+    let mut mobs: Vec<(Mob, Work)> = (0..VILLAGERS).map(|id| (Mob { rider: None,
+        id: 200_000 + id, kind: kind.clone(), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 }, ai: Ai::default(), extra: Default::default(),
+    }, Work::default())).collect();
+    // Um posto em cada sete aldeões tem ordem viva.
+    for id in (0..VILLAGERS).step_by(7) {
+        order(200_000 + id, [5.0, 64.0, 5.0], defense::clock());
+    }
+    let animal_kinds = ["minecraft:cow", "minecraft:sheep", "minecraft:pig", "minecraft:chicken"];
+    let started = std::time::Instant::now();
+    for _ in 0..TICKS {
+        hooks.tick(&mut village, &mut TickEvent::preview());
+        for id in 0..VILLAGERS {
+            hooks.entity_tick_pre(&mut village, &mut EntityTickPreEvent::preview(dimension, 200_000 + id, VILLAGER));
+        }
+        for id in 0..ANIMALS {
+            hooks.entity_tick_pre(&mut village, &mut EntityTickPreEvent::preview(dimension, 300_000 + id, animal_kinds[(id % 4) as usize]));
+        }
+        let now = defense::clock();
+        for (mob, goal) in &mut mobs {
+            let mut cx = Cx { w: &world };
+            if goal.can_use(mob, &mut cx) {
+                goal.tick(mob, &mut cx);
+            }
+            // Mantém as ordens vivas, como os postos fazem a cada ciclo.
+            if mob.id % 7 == 200_000 % 7 && now % 10 == 0 {
+                order(mob.id, [5.0, 64.0, 5.0], now);
+            }
+        }
+    }
+    let per_tick = started.elapsed().as_secs_f64() * 1e6 / f64::from(TICKS);
+    eprintln!("vila grande: {VILLAGERS} aldeões + {ANIMALS} animais: {per_tick:.1} µs por tick do jogo (Veio)");
+}
+
+// ---------- Aldeões guiados pelo cérebro e descanso ----------
+
+#[test]
+fn work_goal_hands_the_order_to_the_villager_brain_and_respects_danger() {
+    use horizon_client::mobs::{Ai, Mob, MobType, MobWorld, Vec3, villager};
+    use horizon_client::mobs::villager_brain::{Act, Brain, Tracker};
+    use std::sync::Arc;
+    let world = MobWorld::preview();
+    let mut mob = Mob { rider: None, id: 17001, kind: Arc::new(MobType { id: VILLAGER.to_owned() }), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 },
+        ai: Ai::default(), extra: Default::default() };
+    villager::ext_mut(&mut mob).brain = Some(Box::new(Brain::preview(Act::Idle)));
+    let mut goal = Work::default();
+    order(17001, [5.5, 64.0, 7.5], defense::clock());
+    let mut cx = Cx { w: &world };
+    assert!(goal.can_use(&mut mob, &mut cx));
+    goal.tick(&mut mob, &mut cx);
+    let walk = |mob: &Mob| villager::ext(mob).and_then(|ext| ext.brain.as_ref()).and_then(|brain| brain.mem.walk_target.get().copied());
+    assert_eq!(walk(&mob).map(|walk| walk.target), Some(Tracker::Block([5, 64, 7])), "o cérebro recebe a ordem como alvo");
+    // Em pânico, o objetivo não mexe no cérebro.
+    villager::ext_mut(&mut mob).brain.as_mut().unwrap().mem.walk_target.clear();
+    villager::ext_mut(&mut mob).brain.as_mut().unwrap().activity = Act::Panic;
+    goal.tick(&mut mob, &mut cx);
+    assert_eq!(walk(&mob), None, "fugindo de um zumbi, ele foge");
+    // Ao parar, o alvo da ordem sai do cérebro.
+    villager::ext_mut(&mut mob).brain.as_mut().unwrap().activity = Act::Work;
+    goal.tick(&mut mob, &mut cx);
+    assert!(walk(&mob).is_some());
+    goal.stop(&mut mob, &mut cx);
+    assert_eq!(walk(&mob), None);
+    cancel(17001);
+}
+
+#[test]
+fn workers_rest_at_night_and_resume_in_the_morning() {
+    let mut village = Village::new("veio:test_work_night");
+    village.villager(17101, [5.5, 64.0, 5.5], [80, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 10);
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    village.day = 13000;
+    assert_eq!(cycle(&mut village, &mut entity, 1), RESTING);
+    assert_eq!(order_for(17101, 1), None, "sem ordem: o aldeão vai dormir");
+    assert_eq!(worker(&entity), Some([80, 0, 0, 1]), "continua contratado");
+    village.day = 24000 + 1000;
+    assert_ne!(cycle(&mut village, &mut entity, 2), RESTING, "de manhã volta a trabalhar");
+    let now = cycles_at(&mut village, POST, &mut entity, 3, 40, |post| target(post) == Some(WHEAT));
+    assert_eq!(order_for(17101, now), Some(goal(WHEAT)), "e vai até o trigo");
+}
+
+#[test]
+fn worker_holds_what_it_carries_and_empties_the_hand_after_delivery() {
+    let mut village = Village::new("veio:test_work_hand");
+    village.villager(17201, [5.5, 64.0, 5.5], [81, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 10);
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    let hand = |village: &Village| village.hands.get(&17201).cloned().flatten();
+    cycle(&mut village, &mut entity, 1);
+    assert_eq!(village.hands.get(&17201), Some(&None), "primeira vez: a mão é acertada (vazia)");
+    village.walk(17201, WHEAT);
+    let now = cycles_at(&mut village, POST, &mut entity, 2, 60, |post| !carried(post).is_empty());
+    assert_eq!(hand(&village).as_deref(), Some("minecraft:wheat"), "colheu: segura o trigo");
+    let chances = village.villager_nbt.get(&17201).and_then(|nbt| nbt.get(&"HandDropChances".into()).cloned());
+    assert_eq!(chances, Some(Tag::List(vec![Tag::Float(0), Tag::Float(0)])), "o item da mão não cai na morte");
+    village.walk(17201, [1, 64, 0]);
+    cycle(&mut village, &mut entity, now + 1);
+    assert_eq!(hand(&village), None, "entregou: mão vazia");
+    assert!(outputs_of(&entity).contains(&("minecraft:wheat".into(), 1)), "a colheita está no posto, não na mão");
+}
+
+#[test]
+fn barracks_trains_a_class_and_the_militia_kills_in_three_blows() {
+    assert!(barracks::class(3).reach > barracks::class(1).reach, "arqueiro alcança mais que a milícia");
+    assert!(barracks::class(2).heal > 0.0 && barracks::class(1).heal == 0.0, "só o guarda se cura");
+    assert!(barracks::class(4).damage > barracks::class(1).damage, "o mago bate mais forte");
+
+    let mut village = Village::new("veio:test_barracks");
+    village.villager(77022, [2.5, 64.0, 0.5], [77, 0, 0, 1]);
+    let mut entity = block(BARRACKS);
+    entity.items[0] = Some(ItemStack::new("minecraft:bread", 1));
+    entity.items[1] = Some(ItemStack::new("minecraft:emerald", 2));
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    village.stations.insert(POST, entity.clone());
+    assert_eq!(barracks::cycle(&mut village, POST), Some(Flow::Cancel));
+    assert_eq!(barracks::cycle(&mut village, POST), Some(Flow::Cancel));
+    let station = village.stations.get(&POST).unwrap();
+    assert_eq!(number(station, "Role"), 2, "milícia e depois guarda");
+    assert!(station.items[1].is_none(), "cada troca gasta uma esmeralda");
+    assert_eq!(barracks::cycle(&mut village, POST), Some(Flow::Cancel));
+    assert_eq!(number(village.stations.get(&POST).unwrap(), "Role"), 2, "sem esmeralda a classe fica");
+
+    // Milícia contra um zumbi de 20 de vida: 7 + 7 + 7.
+    set_number(&mut entity, "Role", 1);
+    let zombie = Compound::from([("Health".into(), Tag::Float(20f32.to_bits()))]);
+    village.animals.insert(77021, ([4.5, 64.0, 0.5], zombie));
+    defense::observe(village.dimension, 77021, "minecraft:zombie");
+    let life = |village: &Village| match village.animals.get(&77021).and_then(|(_, nbt)| nbt.get(&"Health".into())) {
+        Some(Tag::Float(bits)) => Some(f32::from_bits(*bits)),
+        _ => None,
+    };
+    let mut blows = Vec::new();
+    for now in 0..7 {
+        step(&mut village, POST, &mut entity, now as i64 * EVERY, now);
+        if let Some(left) = life(&village)
+            && blows.last() != Some(&left)
+        {
+            blows.push(left);
+        }
+    }
+    assert_eq!(blows, vec![13.0, 6.0], "cada golpe tira 7 de vida de verdade");
+    assert!(village.animals.get(&77021).is_none(), "o terceiro golpe mata");
+    assert_eq!(number(&entity, "Produced"), 1);
+    assert_eq!(entity.items[0], None, "o pão pagou os três golpes");
+    assert!(on_duty(77022, 6), "o soldado está de plantão");
+}
+
+#[test]
+fn barracks_guard_heals_and_stays_on_duty_at_night() {
+    let mut village = Village::new("veio:test_barracks_night");
+    village.villager(77032, [2.5, 64.0, 0.5], [78, 0, 0, 1]);
+    village.lives.insert(77032, 10.0);
+    let mut entity = block(BARRACKS);
+    entity.items[0] = Some(ItemStack::new("minecraft:bread", 4));
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    set_number(&mut entity, "Role", 2);
+    village.day = 13000;
+    // Sem NBT de vida, o golpe conta pelo contador: 5 de 20.
+    village.animals.insert(77031, ([4.5, 64.0, 0.5], Compound::default()));
+    defense::observe(village.dimension, 77031, "minecraft:zombie");
+    step(&mut village, POST, &mut entity, 0, 0);
+    assert_ne!(number(&entity, "Status"), RESTING, "o quartel não dorme");
+    assert_eq!(village.lives.get(&77032), Some(&(10.0 + barracks::GUARD_HEAL)), "o guarda se cura no golpe");
+    assert!(village.animals.contains_key(&77031), "um golpe de guarda não mata");
+    assert_eq!(barracks::after_blow(None, 77031, 5.0), 10.0, "o contador lembra os golpes");
+}
+
+// ---------- Sociedade ----------
+
+fn society_town(dimension: &'static str, seed: i32) -> (Village, ModBlockEntity, ModBlockEntity) {
+    const SHOP_POS: [i32; 3] = [20, 64, 0];
+    const HALL_POS: [i32; 3] = [60, 64, 0];
+    const OFFICE_POS: [i32; 3] = [30, 64, 30];
+    let mut village = Village::new(dimension);
+    village.day = 1000;
+    // Três moradores perto da casa (um deles vira o comerciante) e o prefeito longe dela.
+    village.villager(18001, [16.5, 64.0, 1.5], [180, seed, 0, 1]);
+    village.villager(18002, [17.5, 64.0, 0.5], [180, seed, 0, 2]);
+    village.villager(18003, [15.5, 64.0, -1.5], [180, seed, 0, 3]);
+    village.villager(18004, [60.5, 64.0, 1.5], [180, seed, 0, 4]);
+    let mut shop = block(SHOP);
+    assert!(hire_at(&mut village, &mut shop, SHOP_POS, 0));
+    let mut hall = block(TOWN_HALL);
+    assert!(hire_at(&mut village, &mut hall, HALL_POS, 0));
+    society::hall_cycle(&mut village, HALL_POS, &mut hall, 0);
+    // A companhia: duas esmeraldas no cofre do centro de controle.
+    let mut office = block(CONTROL_CENTER);
+    office.items[society::ledger::COMPANY_VAULT] = Some(ItemStack::new(WAGE, 2));
+    society::company_cycle(&mut village, OFFICE_POS, &mut office, 0);
+    village.stations.insert(OFFICE_POS, office);
+    // A indústria entrega 10 pães na loja: atacado a 70% (4 moedas cada), fiado.
+    shop.items[1] = Some(ItemStack::new("minecraft:bread", 10));
+    set_number(&mut shop, "Status", 1);
+    set_number(&mut shop, "Present", 1);
+    society::shop_cycle(&mut village, SHOP_POS, &mut shop, 0);
+    village.stations.insert(SHOP_POS, shop.clone());
+    (village, shop, hall)
+}
+
+fn balance(book: society::ledger::Book, village: &Village, pos: [i32; 3]) -> i32 {
+    society::ledger::balance(book, village.dimension, pos).unwrap_or(-1)
+}
+
+const COMPANY: society::ledger::Book = society::ledger::Book::Company;
+const PUBLIC: society::ledger::Book = society::ledger::Book::Public;
+const SHOPS: society::ledger::Book = society::ledger::Book::Shop;
+
+#[test]
+fn money_circulates_without_appearing_or_vanishing() {
+    const HOUSE_POS: [i32; 3] = [16, 64, 0];
+    let (mut village, _, _) = society_town("veio:test_society_family", 1);
+    let dimension = village.dimension;
+    assert_eq!(balance(COMPANY, &village, [30, 64, 30]), 2 * society::COINS_PER_EMERALD, "duas esmeraldas na companhia");
+    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 0, "a prefeitura só vive de imposto");
+    assert_eq!(society::ledger::borders(dimension), (120, 0), "as esmeraldas do cofre entraram na economia");
+    let mut house = block(society::HOUSE);
+    set_number(&mut house, "Wallet", 100);
+    let before = 120 + 100;
+    society::house_turn(&mut village, HOUSE_POS, &mut house, 1000);
+    assert_eq!(number(&house, "Rate"), 3, "três moradores");
+    let pantry: u32 = house.items.iter().flatten().filter(|stack| stack.item.as_ref() == "minecraft:bread").map(|stack| stack.count).sum();
+    assert_eq!(pantry, 10, "a família comprou todo o pão");
+    // Pão a 9 (valor de referência da bolsa: 6 x 1,5); o comerciante não tinha caixa para o salário.
+    assert_eq!(number(&house, "Wallet"), 10, "90 moedas de pão");
+    // Varejo: 90, com 4% de imposto retido na fonte.
+    assert_eq!(balance(SHOPS, &village, [20, 64, 0]), 87);
+    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 3);
+    // No ciclo seguinte a loja paga o atacado (75%: 6 por pão, 60) à companhia, com 4% retido.
+    let mut shop = village.stations.get(&[20, 64, 0]).unwrap().clone();
+    society::shop_cycle(&mut village, [20, 64, 0], &mut shop, 10);
+    assert_eq!(balance(SHOPS, &village, [20, 64, 0]), 27, "o comerciante fica com a margem");
+    assert_eq!(balance(COMPANY, &village, [30, 64, 30]), 120 + 58, "a indústria recebe o atacado líquido");
+    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 5);
+    let after = balance(COMPANY, &village, [30, 64, 30]) + balance(PUBLIC, &village, [60, 64, 0])
+        + balance(SHOPS, &village, [20, 64, 0]) + number(&house, "Wallet");
+    assert_eq!(after, before, "identidade contábil: nada some, nada aparece");
+}
+
+#[test]
+fn the_mayor_is_paid_from_public_funds_and_poor_families_get_assistance() {
+    let (mut village, _, mut hall) = society_town("veio:test_society_public", 4);
+    // Aporte voluntário: 4 esmeraldas na conta pública.
+    hall.items[1] = Some(ItemStack::new(WAGE, 4));
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 10);
+    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 240);
+    let mut house = block(society::HOUSE);
+    society::house_turn(&mut village, [57, 64, 0], &mut house, 1000);
+    assert_eq!(number(&house, "Rate"), 1, "o prefeito mora perto da prefeitura");
+    // Salário do prefeito e assistência (1 por morador): ambos da conta pública.
+    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 240 - society::WAGE_PER_TURN - 1);
+    assert_eq!(balance(COMPANY, &village, [30, 64, 30]), 120, "a companhia não paga funcionário público");
+    assert_eq!(number(&house, "Wallet"), society::WAGE_PER_TURN + 1);
+}
+
+#[test]
+fn company_workers_are_paid_by_the_company_and_the_cost_lands_on_their_business() {
+    let (mut village, _, _) = society_town("veio:test_society_payroll", 5);
+    let dimension = village.dimension;
+    // Um lavrador contratado que mora numa casa.
+    village.villager(18105, [80.5, 64.0, 80.5], [180, 5, 0, 5]);
+    let mut farm = block(FARM_POST);
+    assert!(hire_at(&mut village, &mut farm, [80, 64, 78], 0));
+    // A holding amostra cada bloco uma vez a cada 100 ticks (na fase dele).
+    for time in 0..100 {
+        super::super::holding::observe(dimension, [80, 64, 78], &farm, time);
+    }
+    let mut house = block(society::HOUSE);
+    society::house_turn(&mut village, [80, 64, 80], &mut house, 1000);
+    assert_eq!(number(&house, "Wallet"), society::WAGE_PER_TURN, "salário da companhia");
+    assert_eq!(balance(COMPANY, &village, [30, 64, 30]), 120 - society::WAGE_PER_TURN);
+    super::super::holding::roll(dimension, 1200);
+    let agro = super::super::holding::summary(dimension, super::super::holding::AGRO);
+    assert_eq!(agro[7], society::WAGE_PER_TURN, "o salário do lavrador é gasto do agro");
+}
+
+#[test]
+fn a_player_purchase_brings_emeralds_into_the_economy_with_tax_at_source() {
+    let (mut village, shop, _) = society_town("veio:test_society_player", 7);
+    let merchant = worker(&shop).and_then(cached_entity).unwrap();
+    let offer = horizon_client::mod_api::MerchantOffer {
+        base_cost_a: horizon_client::merchant::ItemCost { stack: ItemStack::new(WAGE, 1) },
+        cost_b: None, result: ItemStack::new("minecraft:bread", 10), uses: 1, max_uses: 1, reward_exp: false,
+        special_price_diff: 0, demand: 0, price_multiplier: 0.0, xp: 0,
+    };
+    society::traded(&mut village, merchant, &offer);
+    assert_eq!(society::ledger::borders(village.dimension), (180, 0), "a esmeralda do jogador entrou na economia");
+    assert_eq!(balance(SHOPS, &village, [20, 64, 0]), 58, "60 menos 4% de imposto");
+    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 2);
+}
+
+#[test]
+fn prices_follow_local_supply_and_demand() {
+    use society::market::target;
+    assert_eq!(target(100, 20, 20, false), 100, "um dia de estoque: preço base");
+    assert_eq!(target(100, 0, 20, false), 200, "sem estoque e com procura: teto");
+    assert_eq!(target(100, 80, 20, false), 50, "quatro dias de estoque: metade");
+    assert_eq!(target(100, 50, 0, false), 95, "ninguém compra: barateia devagar");
+    assert!(target(100, 20, 20, true) > 100, "famílias sem comida empurram o preço");
+    let (mut village, _, _) = society_town("veio:test_society_prices", 6);
+    // Uma família leva todo o pão; no turno seguinte a loja reabastecida cobra mais.
+    let mut house = block(society::HOUSE);
+    set_number(&mut house, "Wallet", 100);
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    let mut shop = village.stations.get(&[20, 64, 0]).unwrap().clone();
+    shop.items[1] = Some(ItemStack::new("minecraft:bread", 4));
+    society::shop_cycle(&mut village, [20, 64, 0], &mut shop, 1180);
+    assert!(society::market::factor(&shop, "minecraft:bread") > 100, "procura alta e estoque baixo: o pão subiu");
+}
+
+#[test]
+fn the_merchant_offers_the_stock_at_the_local_price() {
+    let (village, shop, _) = society_town("veio:test_society_trade", 2);
+    let merchant = worker(&shop).and_then(cached_entity).unwrap();
+    let offers = village.villager_nbt.get(&merchant).and_then(|nbt| nbt.get(&"Offers".into()).cloned());
+    let Some(Tag::Compound(offers)) = offers else { panic!("o comerciante não recebeu ofertas") };
+    let Some(Tag::List(recipes)) = offers.get(&"Recipes".into()) else { panic!("sem receitas") };
+    assert_eq!(recipes.len(), 1, "uma oferta por item");
+    assert_eq!(society::bundle("minecraft:bread"), Some((6, 1)), "6 pães (54 moedas) por esmeralda");
+}
+
+#[test]
+fn indicators_measure_families_inequality_and_districts() {
+    let home = |x: i32, residents: i32, income: i32| society::Home {
+        dimension: "d".into(), pos: [x, 64, 0], built: 0, licensed: true, residents, adults: residents, kids: 0,
+        employed: residents / 2, income, hungry: false, owed: false, wallet: 0, sanitation: true, power: true, commerce: true, crowded: false,
+        smog: false, food: 100, housing: 100, services: 100, wealth: 100, seen: 0,
+    };
+    assert_eq!(home(0, 4, 0).idh(), 100);
+    let equal = [home(0, 4, 120), home(10, 4, 120)];
+    assert_eq!(society::measure(&equal, 0).gini, 0, "renda igual: Gini zero");
+    let unequal = [home(0, 4, 400), home(100, 4, 0)];
+    let numbers = society::measure(&unequal, 2);
+    assert!(numbers.gini > 40, "renda concentrada: Gini alto ({})", numbers.gini);
+    assert_eq!(numbers.districts, 2, "casas a 100 blocos: dois bairros");
+    assert_eq!(numbers.population, 10, "oito moradores e dois sem-teto");
+    assert!(numbers.idh < 100, "os sem-teto puxam o IDH para baixo");
+    assert_eq!(society::request(&numbers, false, 1), (3, 2), "o prefeito pede casa para os sem-teto");
+    assert_eq!(society::request(&numbers, true, 1).0, 11, "cofre público vazio vem antes");
+    let town: Vec<society::Home> = (0..3).map(|index| home(index * 5, 4, 120)).collect();
+    let numbers = society::measure(&town, 0);
+    assert_eq!(society::next_phase(1, &numbers, 0), 2, "12 moradores, 3 famílias e IDH alto: vira vila");
+    assert_eq!(society::next_phase(2, &numbers, 0), 2, "cidade pede mais gente");
+}
+
+#[test]
+fn without_a_mayor_zones_stop_at_level_two_and_the_village_at_thirty() {
+    let dimension = "veio:test_society_gates";
+    assert_eq!(society::zone_cap(dimension, [0, 64, 0], 0), (2, false));
+    assert!(society::birth_allowed(dimension, [0, 64, 0], 29, 0));
+    assert!(!society::birth_allowed(dimension, [0, 64, 0], 30, 0), "o povoado para em 30");
+    assert_eq!(society::zone_limit(4), 4);
+    assert_eq!(society::population_limit(4), 150);
+}
+
+#[test]
+fn the_mayor_phase_sets_the_zone_limit_and_house_permits_need_a_well() {
+    let (mut village, _, mut hall) = society_town("veio:test_society_phase", 3);
+    let dimension = village.dimension;
+    assert_eq!(society::zone_cap(dimension, [30, 64, 0], 1), (2, false), "fase 1 com prefeito");
+    set_number(&mut hall, "Phase", 3);
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 0);
+    assert_eq!(society::zone_cap(dimension, [30, 64, 0], 1).0, 4, "a cidade libera o nível 4");
+    // Na fase 3, casa sem poço e sem poste não ganha alvará.
+    let mut house = block(society::HOUSE);
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    assert_eq!(number(&house, "Status"), society::NO_PERMIT);
+    assert_eq!(number(&house, "Rate"), 0, "sem alvará, ninguém se muda");
+}
+
+/// Mar em volta de `pos` (7x7, no nível e abaixo).
+fn sea(village: &mut Village, pos: [i32; 3]) {
+    for dx in -3..=3 {
+        for dz in -3..=3 {
+            for dy in [-1, 0] {
+                let at = [pos[0] + dx, pos[1] + dy, pos[2] + dz];
+                if at != pos {
+                    village.crops.insert(at, ("minecraft:water".into(), 0));
+                }
+            }
+        }
+    }
+}
+
+fn economy_total(village: &Village) -> i32 {
+    balance(COMPANY, village, [30, 64, 30]) + balance(PUBLIC, village, [60, 64, 0]) + balance(SHOPS, village, [20, 64, 0])
+}
+
+#[test]
+fn the_world_market_pays_for_complexity_and_reputation_opens_markets() {
+    use society::trade::*;
+    let dimension = "veio:test_trade_market";
+    for day in 0..20 {
+        assert!((80..=120).contains(&index(3, day)), "a bolsa oscila entre 80% e 120%");
+    }
+    assert!(quote(dimension, "veio:gear", 0).is_none(), "sem reputação o mundo não compra componentes");
+    assert!(quote(dimension, "veio:iron_plate", 0).is_some(), "processados sempre");
+    set_reputation(dimension, 1);
+    let gear = quote(dimension, "veio:gear", 0).unwrap();
+    let ore = quote(dimension, "minecraft:raw_iron", 0).unwrap();
+    assert!(gear >= 5 * ore, "engrenagem vale muito mais que minério ({gear} x {ore})");
+    assert!(import_price("minecraft:bread", 0).unwrap() > quote(dimension, "minecraft:bread", 0).unwrap(),
+        "importar custa mais que exportar: o preço local fica entre os dois");
+    assert_eq!(quote(dimension, WAGE, 0), None, "a esmeralda é a moeda");
+    let contract = issue(unlocked_tier(1), 0, 10, &[]);
+    assert_eq!(PRODUCTS[contract.product].3, 2, "contratos pedem a camada mais alta liberada");
+    assert!(contract.need >= 16 && contract.due >= 13);
+}
+
+#[test]
+fn a_cargo_port_needs_the_sea_and_ships_on_schedule_with_freight() {
+    let (mut village, _, _) = society_town("veio:test_trade_port", 8);
+    let dimension = village.dimension;
+    let port_pos = [40, 64, 40];
+    let mut port = block(society::trade::PORT);
+    port.items[0] = Some(ItemStack::new("veio:iron_plate", 16));
+    society::tick_block(&mut village, port_pos, &mut port, 0);
+    assert_eq!(number(&port, "Status"), society::trade::NO_WATER, "porto em terra não opera");
+    sea(&mut village, port_pos);
+    port.nbt.remove(&"Water".into());
+    let before = economy_total(&village);
+    let (entered, left) = society::ledger::borders(dimension);
+    // Fase 0 em [40, 64, 40]; o porto parte a cada 2 turnos.
+    society::tick_block(&mut village, port_pos, &mut port, 1200);
+    assert!(port.items[0].is_some(), "turno ímpar: o navio ainda não saiu");
+    society::tick_block(&mut village, port_pos, &mut port, 2400);
+    assert!(port.items[0].is_none(), "o navio levou a carga");
+    let (entered_after, left_after) = society::ledger::borders(dimension);
+    assert!(left_after - left >= 5, "o frete paga o navio, para fora");
+    assert_eq!(i64::from(economy_total(&village) - before), (entered_after - entered) - (left_after - left),
+        "identidade contábil com o comércio exterior");
+    assert!(society::trade::connected(dimension, 1), "o porto é uma conexão externa");
+}
+
+#[test]
+fn a_freight_station_only_runs_at_the_frontier() {
+    let (mut village, _, _) = society_town("veio:test_trade_station", 9);
+    let mut near = block(society::trade::STATION);
+    society::tick_block(&mut village, [100, 64, 100], &mut near, 0);
+    assert_eq!(number(&near, "Status"), society::trade::NOT_FRONTIER, "a 70 blocos da sede não é fronteira");
+    let mut far = block(society::trade::STATION);
+    society::tick_block(&mut village, [200, 64, 200], &mut far, 0);
+    assert_ne!(number(&far, "Status"), society::trade::NOT_FRONTIER, "a 170 blocos, sim");
+}
+
+#[test]
+fn contracts_pay_a_premium_and_raise_reputation() {
+    use society::trade::*;
+    let (mut village, _, _) = society_town("veio:test_trade_contracts", 10);
+    let dimension = village.dimension;
+    roll(dimension, 0);
+    let (reputation, contracts) = state(dimension);
+    assert_eq!((reputation, contracts.len()), (0, 3), "três contratos no primeiro dia");
+    let contract = contracts[0].clone();
+    let item = PRODUCTS[contract.product].0;
+    let plain = quote(dimension, item, 0).unwrap();
+    let paid = export(dimension, [40, 64, 40], item, contract.need as u32, 0, 1);
+    assert!(paid > plain * contract.need * 9 / 10, "o contrato paga prêmio");
+    assert_eq!(state(dimension).0, 1, "contrato cumprido: reputação +1");
+    let _ = &mut village;
+}
+
+#[test]
+fn shops_import_food_when_short_and_money_leaves_the_economy() {
+    let (mut village, _, _) = society_town("veio:test_trade_import", 11);
+    let dimension = village.dimension;
+    sea(&mut village, [40, 64, 40]);
+    let mut port = block(society::trade::PORT);
+    society::tick_block(&mut village, [40, 64, 40], &mut port, 0);
+    // A família leva o pão; na volta, a loja está vazia e a falta fica anotada.
+    let mut house = block(society::HOUSE);
+    set_number(&mut house, "Wallet", 100);
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    for slot in 0..3 {
+        house.items[slot] = None;
+    }
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    let mut shop = village.stations.get(&[20, 64, 0]).unwrap().clone();
+    assert!(number(&shop, "Short") > 0, "faltou comida");
+    let before = economy_total(&village) + number(&house, "Wallet");
+    let (_, left) = society::ledger::borders(dimension);
+    // Turno da loja em [20, 64, 0]: (time + 20) % 1200 < 10.
+    society::shop_cycle(&mut village, [20, 64, 0], &mut shop, 1180);
+    let bread: u32 = shop.items[1..7].iter().flatten().filter(|stack| stack.item.as_ref() == "minecraft:bread").map(|stack| stack.count).sum();
+    assert!(bread > 0, "o comerciante importou pão");
+    let (_, left_after) = society::ledger::borders(dimension);
+    assert!(left_after > left, "a importação tira moeda da economia");
+    assert_eq!(i64::from(economy_total(&village) + number(&house, "Wallet") - before), -(left_after - left),
+        "identidade contábil com a importação");
+    assert_eq!(number(&shop, "Duration"), 0, "importado não vira dívida com a indústria");
+}
+
+#[test]
+fn contracts_never_repeat_a_product_and_news_reach_the_chat() {
+    use society::trade::*;
+    let dimension = "veio:test_trade_news";
+    roll(dimension, 0);
+    let (_, contracts) = state(dimension);
+    let mut products: Vec<usize> = contracts.iter().map(|contract| contract.product).collect();
+    products.sort_unstable();
+    products.dedup();
+    assert_eq!(products.len(), 3, "três contratos, três produtos diferentes");
+    let news = drain(dimension);
+    assert_eq!(news.iter().filter(|item| matches!(item, News::Offered(..))).count(), 3, "o chat anuncia os contratos");
+    assert!(drain(dimension).is_empty(), "cada aviso sai uma vez");
+    assert_eq!(unlocked_tier(0), 1);
+    assert_eq!(unlocked_tier(TIER_AT[0]), 2, "a primeira reputação abre os componentes");
+    assert_eq!(next_unlock(0), Some(TIER_AT[0]));
+    assert_eq!(next_unlock(99), None);
+    let board = board(dimension, 0, 5);
+    assert!(board.windows(2).all(|pair| pair[0].1 >= pair[1].1), "a bolsa vem da maior cotação para a menor");
+}
+
+#[test]
+fn a_fulfilled_contract_announces_the_premium_and_opens_a_market() {
+    use society::trade::*;
+    let (mut village, _, _) = society_town("veio:test_trade_open", 12);
+    let dimension = village.dimension;
+    roll(dimension, 0);
+    drain(dimension);
+    let (_, contracts) = state(dimension);
+    let contract = contracts.iter().find(|contract| PRODUCTS[contract.product].3 <= 1).cloned().unwrap();
+    export(dimension, [40, 64, 40], PRODUCTS[contract.product].0, contract.need as u32, 0, 1);
+    let news = drain(dimension);
+    assert!(news.iter().any(|item| matches!(item, News::Fulfilled(product, premium) if *product == contract.product && *premium > 0)));
+    assert!(news.contains(&News::Opened(2)), "reputação 1: o mundo passa a comprar componentes");
+    let _ = &mut village;
+}
+
+#[test]
+fn locked_cargo_waits_at_the_port_and_reputation_survives_a_reload() {
+    use society::trade::*;
+    let (mut village, _, _) = society_town("veio:test_trade_locked", 13);
+    let dimension = village.dimension;
+    sea(&mut village, [40, 64, 40]);
+    let mut port = block(PORT);
+    port.items[0] = Some(ItemStack::new("veio:speed_module", 2));
+    society::tick_block(&mut village, [40, 64, 40], &mut port, 2400);
+    assert_eq!(number(&port, "Status"), LOCKED_MARKET, "módulos ainda não têm mercado: a carga espera");
+    assert!(port.items[0].is_some());
+    // Reputação e contratos ficam no centro de controle e voltam ao reabrir o mundo.
+    set_reputation(dimension, 4);
+    let mut office = block(CONTROL_CENTER);
+    persist(dimension, &mut office, 0);
+    persist("veio:test_trade_reloaded", &mut office, 0);
+    assert_eq!(state("veio:test_trade_reloaded").0, 4);
+    assert_eq!(state("veio:test_trade_reloaded").1.len(), state(dimension).1.len());
+}
+
+// ---------- Equilíbrio (as regras de `tools/sim_economy.py`, com o código do jogo) ----------
+
+#[test]
+fn balance_a_wage_feeds_two_people_at_reference_prices() {
+    let bread = society::market::base_price("minecraft:bread").unwrap();
+    let food_day = 20 * bread / 6;
+    assert_eq!(bread, 9, "pão: valor de referência 6 x 1,5, igual dentro e fora da vila");
+    assert!(society::WAGE_PER_TURN * society::TURNS_PER_DAY as i32 >= 2 * (food_day + 10),
+        "um salário paga comida e conforto de duas pessoas");
+    assert!(society::LIVING_COST >= food_day + 10, "o custo de vida cobre o pão e os bens");
+    // Processar compensa: pão (2 trigos) vale muito mais que os 2 trigos.
+    assert!(bread >= 4 * 2 * society::market::base_price("minecraft:wheat").unwrap());
+}
+
+#[test]
+fn balance_importing_never_loses_money_and_the_ceiling_keeps_food_at_home() {
+    use society::{market, trade};
+    for day in 0..10 {
+        for phase in 1..=4 {
+            let tax = society::mayor::tax_rate(phase);
+            let base = market::base_price("minecraft:bread").unwrap();
+            let ceiling = base * market::import_ceiling("minecraft:bread", day, tax).unwrap() / 100;
+            let landed = trade::import_price("minecraft:bread", day).unwrap();
+            assert!(ceiling * (100 - tax) / 100 >= landed, "fase {phase}, dia {day}: o comerciante cobre a importação");
+            // No teto, o atacado local rende tanto quanto exportar sem saturação: a vila não fica sem comida.
+            let product = trade::product("minecraft:bread").unwrap();
+            let export = trade::world_cents(product, day) * (100 - tax) / 10_000;
+            assert!(ceiling * market::WHOLESALE / 100 >= export * 95 / 100, "fase {phase}, dia {day}: atacado no teto x exportação");
+        }
+    }
+}
+
+#[test]
+fn balance_freight_weighs_on_raw_goods_and_saturation_has_a_floor() {
+    use society::trade::*;
+    let (base, stack, stacks, _) = (schedule(STATION).2, schedule(STATION).3, schedule(STATION).0, ());
+    let per_unit = (base + stack * stacks as i32) * 100 / (64 * stacks as i32);
+    let ore = reference_cents(product("minecraft:raw_iron").unwrap());
+    let gear = reference_cents(product("veio:gear").unwrap());
+    assert!(per_unit * 100 / ore > 5 * (per_unit * 100 / gear), "o frete pesa mais no minério que na engrenagem");
+    let plate = product("veio:iron_plate").unwrap();
+    assert!(spot_cents(plate, 0, 1_000_000) >= world_cents(plate, 0) * SCRAP / 100, "piso de sucata");
+    assert!(spot_cents(plate, 0, absorb(1)) * 2 <= world_cents(plate, 0) + 1, "no volume de absorção, metade do preço");
+}
+
+#[test]
+fn balance_contracts_are_a_separate_buyer_and_open_markets_stay_open() {
+    use society::trade::*;
+    let (mut village, _, _) = society_town("veio:test_balance_contracts", 14);
+    let dimension = village.dimension;
+    roll(dimension, 0);
+    let (_, contracts) = state(dimension);
+    let contract = contracts.iter().find(|contract| PRODUCTS[contract.product].3 <= 1).cloned().unwrap();
+    let item = PRODUCTS[contract.product].0;
+    let before = quote(dimension, item, 0).unwrap();
+    export(dimension, [40, 64, 40], item, contract.need as u32, 0, 1);
+    assert_eq!(quote(dimension, item, 0).unwrap(), before, "entregar contrato não derruba a cotação à vista");
+    assert_eq!(tier_open(dimension), 2, "contrato cumprido abre componentes");
+    // Os outros contratos vencem: a reputação cai, mas o mercado aberto continua aberto.
+    roll(dimension, 24_000 * 10);
+    assert_eq!(state(dimension).0, 0, "contratos perdidos tiram reputação");
+    assert_eq!(tier_open(dimension), 2, "mercado conquistado não fecha");
+    let _ = &mut village;
 }

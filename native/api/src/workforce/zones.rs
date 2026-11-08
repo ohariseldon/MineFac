@@ -156,14 +156,14 @@ pub(crate) fn requirement(unlocked: i32) -> Option<(u32, i32, i32)> {
 
 pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let phase = (time + i64::from((pos[0] ^ pos[2]) & 15)).rem_euclid(20);
-    if phase != 0 && entity.nbt.contains_key(&"Villagers".into()) {
+    if phase != 0 && entity.nbt.contains_key(nbt_key("Villagers")) {
         return;
     }
-    if (time + i64::from(pos[0] & 15)).rem_euclid(200) == 0 || !entity.nbt.contains_key(&"Villagers".into()) {
+    if (time + i64::from(pos[0] & 15)).rem_euclid(200) == 0 || !entity.nbt.contains_key(nbt_key("Villagers")) {
         let center = [f64::from(pos[0]) + 0.5, f64::from(pos[1]), f64::from(pos[2]) + 0.5];
         set_number(entity, "Villagers", production::ranch::villagers_near(host, center, VILLAGE_RADIUS));
     }
-    if !entity.nbt.contains_key(&"Unlocked".into()) {
+    if !entity.nbt.contains_key(nbt_key("Unlocked")) {
         set_number(entity, "Unlocked", 1);
         set_number(entity, "Level", 1);
     }
@@ -228,6 +228,16 @@ pub(crate) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
         notify(host, pos, "veio.zone.max");
         return Some(Flow::Cancel);
     };
+    // O plano diretor do prefeito limita o nível das zonas (fase 1, sem prefeitura: nível 2).
+    let (limit, suspended) = society::zone_cap(host.dimension(), pos, defense::clock());
+    if suspended {
+        notify(host, pos, "veio.zone.suspended");
+        return Some(Flow::Cancel);
+    }
+    if unlocked + 1 > limit {
+        notify(host, pos, "veio.zone.need_mayor");
+        return Some(Flow::Cancel);
+    }
     if work < need_work {
         notify(host, pos, "veio.zone.need_work");
         return Some(Flow::Cancel);

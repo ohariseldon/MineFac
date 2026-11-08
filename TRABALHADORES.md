@@ -32,6 +32,124 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## 0.25.0: balanceamento da economia
+
+Números, princípios e resultados em [frentes/ECONOMIA.md](frentes/ECONOMIA.md).
+
+- **Preço-âncora único:** o preço base local de um produto da bolsa é o valor de referência mundial (base x complexidade); comida fora da bolsa vale pontos x 1,5 (preparada) ou x 1 (crua). Antes, pão valia 6 na loja e 9 lá fora: a indústria exportava tudo e a vila passava fome.
+- **Salário = 2 x custo de vida / 20** (4 por turno), custo de vida 40/dia.
+- **Teto do preço local** = custo de importar + 10% de margem, contando o imposto da fase (`market::import_ceiling`); atacado a 75%; lote ao jogador = o maior que cabe em 1 esmeralda (6 pães).
+- **Dinheiro circula:** lucro do comerciante acima da reserva de giro (600) vai para a família dele; poupança acima de 2 dias de custo de vida vira compra de bens.
+- **Comércio exterior:** absorção maior (256/512/512/256/128) com pressão = metade da média recente + hoje, piso de sucata de 25%, frete por pilha (porto 6, estação 12), contrato pago a preço cheio + 50% sem saturar o mercado à vista, camada aberta que nunca fecha (formato de salvamento v3). Preços em centésimos.
+- **Defeitos corrigidos:** a camada conquistada podia fechar com a queda de reputação.
+- **Simulador** `tools/sim_economy.py` com 4 cenários e regras de equilíbrio, que também rodam em `check_project.py`; 4 testes `balance_*` com o código do jogo.
+
+## 0.24.0: acabamento do comércio exterior
+
+- Avisos no chat (contrato novo, cumprido com prêmio, perdido, mercado aberto) e partidas com buzina ou trilho, fumaça e aviso na barra para quem está perto.
+- Estado *Mercado fechado* para carga de camada ainda não liberada; a aba mostra a reputação que abre a próxima camada.
+- Contratos sem produto repetido; prêmio em centésimos (antes sumia em itens de 1 moeda: defeito corrigido); bolsa (saturação) e reputação salvas no centro de controle, com versão do formato.
+- Estação também longe do centro da vila; importação da comida mais vendida; as 5 melhores cotações com tendência no relatório; uma trava por pilha exportada.
+- Testes novos: contratos sem repetição e avisos, prêmio e mercado aberto, carga que espera e reputação que volta ao reabrir.
+
+## 0.23.0: comércio exterior refeito
+
+Desenho, problema e porquê em [frentes/SOCIEDADE.md](frentes/SOCIEDADE.md#comércio-exterior-023-no-estilo-das-conexões-externas-de-cities-skylines).
+
+- `society/trade.rs` substitui o porto da 0.22: conexões externas físicas (porto de carga exige água; estação de carga, fronteira), capacidade, frete e horário; bolsa com índice diário determinístico e saturação pelas exportações recentes; contratos com prazo, prêmio e reputação (salvos no centro de controle); importação automática de pão pelas lojas com falta, com tarifa para a prefeitura e teto do preço local na paridade de importação.
+- Nova aba *Comércio exterior* no centro de controle (11 abas).
+- Testes: bolsa e camadas, porto que exige mar e parte no horário com frete, estação na fronteira, contrato com prêmio e reputação, importação com a identidade contábil fechando.
+
+## 0.22.0: comércio exterior
+
+- **Porto de exportação** (`society/export.rs`, empresa de logística): 9 espaços, um navio por turno. Preço mundial por complexidade (1x a 4x) e saturação diária por item; sem centro de controle (cofre da companhia), o navio não sai.
+- A venda é moeda de fora: entra como borda (contada à parte como exportação), com imposto na fonte, e a receita vai para a empresa que faz o item. O PIB da prefeitura passa a ser consumo + exportação.
+- O relatório do centro de controle sugere os 3 itens guardados que mais rendem lá fora hoje; a visão geral da holding mostra a exportação do dia.
+- Testes: preços por camada e saturação; o navio sai na hora certa, leva tudo e a identidade contábil fecha com a moeda de fora.
+
+## 0.21.0: economia fechada
+
+- **Imposto na fonte:** cada venda (varejo e atacado) já manda a parte da prefeitura (4%, 8%, 12%, 16%). Saíram a dívida de imposto, a verba inicial da prefeitura e a manutenção dos poços: nada cria nem destrói moeda.
+- **Comerciantes independentes:** o estoque entregue pela indústria vira atacado (70% do preço local) devido à companhia, por empresa; a loja paga com o caixa (fiado quando falta) e paga o próprio comerciante. O antigo caixa em esmeraldas virou só retirada.
+- **Três livros + famílias** em `society/ledger.rs`, com as bordas (esmeraldas que entram e saem) contadas. Teste `money_circulates_without_appearing_or_vanishing`: a soma de todos os saldos não muda dentro da economia.
+- **Saque:** clique na linha da companhia no painel do centro de controle (botão de menu); a esmeralda sai no novo 6º espaço.
+- **Holding:** cada aba mostra receita (atacado dos itens da empresa), gastos (salários dos postos da empresa e imposto) e lucro do dia; o relatório também.
+
+## 0.20.0: holding no centro de controle
+
+- O centro de controle virou a sede da companhia como **holding**. Setas `<` `>` no cabeçalho do painel trocam a aba (clique na tela → botão de menu no servidor): visão geral e nove empresas — mineração, manufatura, energia, logística (inclui armazéns e capatazes), agro (fazendas, cercados, comida), extrativismo (fazendas de árvores: madeira e folhas), urbanização (casas e poços), comércio (lojas) e gestão e segurança (centro, quartel, Tesla). A prefeitura é pública e fica fora.
+- Cada aba mostra unidades, ativas, trabalhadores, folha estimada, produção do dia e o estado parado mais comum, mais números próprios (zonas no agro; casas, moradores e alvarás na urbanização; lojas e preços no comércio). O livro no centro dá uma linha por empresa.
+- **Leve:** `holding.rs` registra cada bloco uma vez a cada 100 ticks (fase pela posição) num mapa por dimensão; a produção é o aumento do contador do bloco, somado por turno e virando média do dia. A aba aberta é recalculada a cada 4 ciclos do centro, nunca por tick. O teste de alocação zero continua passando.
+
+## 0.19.0: contas separadas, impostos e preços locais
+
+- **Companhia x prefeitura:** o centro de controle ganhou um 5º espaço, o cofre da companhia. Ele paga os salários dos trabalhadores do jogador e os impostos. A prefeitura tem conta própria (verba inicial de 300 moedas, impostos, aportes) e paga o prefeito, a manutenção dos poços (1 moeda a cada 2 turnos por poço) e a assistência às famílias pobres.
+- **Impostos:** 0%, 8%, 12% e 16% (por fase) da produção e das vendas do turno na área. Falta de saldo vira dívida; dívida acima de um dia de imposto suspende as licenças.
+- **Preços locais:** fator por item em cada loja (50% a 200%), guiado pela cobertura do estoque frente à procura média do dia e pela falta que as famílias sentiram. Detalhes em [frentes/SOCIEDADE.md](frentes/SOCIEDADE.md).
+- **Mais leve e organizado:** `society/` em quatro arquivos; o PIB virou soma por turno na conta da prefeitura (sem lista de eventos); a idade dos moradores só é relida quando a família muda (ou uma vez por dia); vizinhança e alvarás numa passada só; sem-teto com `HashSet`; Gini em O(n log n); todas as chaves NBT novas na tabela rápida (o teste de alocação zero continua passando). Morador agora é identificado por mundo e aldeão.
+
+## 0.18.0: sociedade da vila
+
+Casas e famílias, salário, consumo, lojas, prefeito, fases e indicadores. Regras e números no
+[README](README.md#sociedade-da-vila) e o desenho em [frentes/SOCIEDADE.md](frentes/SOCIEDADE.md).
+
+- **Código:** `native/api/src/workforce/society.rs`. Casa e poço são blocos sem trabalhador (como armazéns); loja e prefeitura são postos (comerciante e prefeito ficam no posto, como o administrador do centro de controle).
+- **Leveza:** a casa trabalha uma vez por turno (1200 ticks), lê o censo de posições e no máximo 4 NBT (idade dos moradores). A prefeitura soma registros em memória uma vez por turno. A loja só reescreve as ofertas do comerciante quando o estoque muda. Nada roda por aldeão a cada tick.
+- **Troca com o jogador:** as ofertas vão para o comerciante com `entity_merge_nbt` (`Offers`), e o evento `trade_with_villager` tira o item do estoque e põe as esmeraldas no caixa. Um aldeão que já tinha profissão perde as trocas vanilla enquanto for comerciante.
+- **Limites indiretos:** `zones::right_click` consulta `society::zone_cap`; `village::observe` consulta `society::birth_allowed`.
+- **Integração pendente:** a frente de obras da vila (outro agente: prestígio, prefeitura como obra, escola, mercado, refeitório) deve se juntar a esta prefeitura e somar serviços ao IDH.
+
+## 0.17.0: o inimigo e o quartel
+
+Partindo do que o Grok fez (ondas e quartel), o inimigo ficou mais justo e mais leve:
+
+- **Ondas com frente:** chegam num arco de 90° a 26 blocos da máquina mais poluída, de um lado diferente a cada noite. Da 3ª noite de ataque vêm esqueletos arqueiros (um quarto da onda); da 5ª, pelo menos um **Bruto** (`veio:raider_brute`: 40 de vida, velocidade 0,2, dano 6, resistência a empurrão 0,6).
+- **Combate vanilla:** saqueadores e brutos são zumbis com visão de 40 blocos; esqueletos, aranhas e parentes ganham o alvo vanilla "aldeão mais próximo" (`NearestTarget`). O dano é o do jogo, sem contadores falsos e sem varrer aldeões por mob em todo tick. A sabotagem só procura máquina a cada 20 chamadas.
+- **Quartel:** os golpes do soldado tiram vida de verdade (`set_mob_health`; no último, `kill_mob`, com saque). Milícia 7 de dano, guarda 5 e se cura 3 a cada golpe, arqueiro 5 a 16 blocos, mago 10 e metade num segundo monstro. Trocar de classe: **agachar com uma esmeralda na mão** (a mão vazia nunca chegava ao quartel). O soldado fica de plantão à noite e, enquanto tem ordem, esquece o medo (as memórias de susto do cérebro são limpas antes dele pensar), então não foge do monstro.
+
+## 0.16.1: o trabalhador segura o que carrega
+
+- Enquanto leva algo (trigo, lã, minério, insumos, a esmeralda do capataz), o aldeão segura na mão o primeiro item da carga; ao entregar, à noite e ao ser dispensado, a mão fica vazia.
+- É só visual: a carga continua no NBT do posto (`Carried`), então salvar, descarregar o chunk ou trocar de trabalhador não perde nem duplica nada. A chance de o item da mão cair na morte é zerada (`HandDropChances`), para a morte do aldeão não duplicar o que já está no posto.
+- O posto só chama o jogo quando o item muda (`Held` no NBT do posto). Um aldeão vindo de outro posto ou de um save antigo tem a mão acertada na primeira vez.
+- API: `Host::living` e `Host::living_set_equipment(living, EquipmentSlot::MainHand, stack)`, com `LivingRef` e `EquipmentSlot` (`horizon_world::player_inventory`), conferidos no Horizon `66f3981` (`game/native_living_refs.rs`) e acrescentados ao substituto offline.
+- Teste: `worker_holds_what_it_carries_and_empties_the_hand_after_delivery`.
+
+## Sexta entrega: aldeões guiados pelo cérebro, noite, spawn conferido e vilas grandes
+
+Feita sem teste no jogo, a partir do código do Horizon `66f3981` (`mobs/ai.rs`, `mobs/villager.rs`, `mobs/villager_brain.rs`, `game/integrated.rs`, `game/commands*`).
+
+### Aldeões andando até a tarefa
+
+- **O que o Horizon faz:** os objetivos registrados por mods (`register_goals`) rodam também nos aldeões, antes do cérebro, então o `Work` roda. O cérebro do aldeão roda depois e, sempre que tem um alvo de caminhada, refaz o caminho (`MoveToTargetSink`). Se o `Work` só usasse a navegação, os dois disputariam o caminho e o aldeão ficaria indo e voltando.
+- **Agora:** o `Work` grava a ordem como alvo de caminhada no cérebro (`villager::ext_mut(m).brain.mem.walk_target`) e o próprio cérebro leva o aldeão. Passear, ir ao sino e procurar emprego só escolhem alvo quando não há um, então não atrapalham. Quando a ordem acaba, o objetivo apaga só o alvo que ele mesmo deu.
+- **Segurança:** em pânico (zumbi), ataque, preparo de ataque, esconderijo ou sono, o objetivo não mexe no cérebro: o aldeão se protege e o posto espera.
+- **Noite:** a partir de 12000 (a hora em que o aldeão vanilla vai dormir), o posto mostra **Descansando (noite)**, retira a ordem e guarda carga e alvo; de manhã o trabalho continua. O centro de controle mantém o painel e o relatório durante a noite.
+
+### Spawn na vila, conferido no Horizon
+
+- `run_command` só roda onde há servidor (`lan`). No singleplayer, o servidor integrado roda numa thread própria com `lan` ativo, e os ganchos de login e renascimento disparam nele: o spawn funciona.
+- Os comandos usados existem: `execute ... as ... unless entity @s[tag=...] run`, `tp`, `setworldspawn`, `spawnpoint`, `tag`, `tellraw` e `place structure` (este ignora o bioma, como o vanilla, e exige os chunks carregados, o que vale em volta do jogador).
+- **Corrigido:** o tick também roda na janela, onde a lista de jogadores do servidor pode vir vazia; antes a chegada era descartada. Agora ela espera o servidor.
+
+### Desempenho com vilas grandes (medido)
+
+`bench_large_village` (teste ignorado; `cargo test --release -p veio-check bench_large_village -- --ignored --nocapture`): 150 aldeões, 300 animais, 20.000 ticks, ordens vivas para 1 a cada 7 aldeões. Mede só o código do Veio no substituto.
+
+| | Antes | Depois |
+| --- | --- | --- |
+| µs por tick do jogo (mediana de 5) | ~14,7 | ~3,5 |
+
+- **Registros de mobs por amostragem:** cada mob entra nos registros de defesa e rancho em 1 de cada 7 ticks do relógio do mod (as consultas aceitam marcas de até 40-60 ticks). Antes eram duas travas e várias comparações de texto por mob, por tick.
+- **`Work` consulta as ordens a cada 10 chamadas**, não em todo tick.
+- **Correção:** o relógio do mod pode avançar de 2 em 2 (janela e servidor). Com o intervalo par de 6000, metade dos aldeões nunca caía na fase de natalidade; agora são 5999 ticks. A amostragem usa 7 pelo mesmo motivo.
+
+### Contratos tocados
+
+- `lib.rs`: `entity_tick_pre` amostra os registros (`OBSERVE_EVERY = 7`).
+- Substituto: `mobs::villager::{Ext, ext, ext_mut}`, `mobs::villager_brain::{Brain, Memories, Slot, WalkTarget, Tracker, Act}` (só os campos usados) e `Mob::extra`, conferidos no Horizon `66f3981`; construtores de medição `EntityTickPreEvent::preview`, `TickEvent::preview` e `MobWorld::preview` (só no substituto).
+- `presentation.rs`: estado 28 (`rest`); `operations.rs`: sem bloqueio.
+
 ## Quinta entrega: vilas até 150, spawn na vila e Guia da Vila Operária
 
 ### População que cresce com a vila
@@ -225,7 +343,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0 e 93 na 0.14.0, já com os lotes 3 a 6 do Grok; prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0, 149 na 0.18.0, 160 na 0.19.0, 162 na 0.20.0, 164 na 0.21.0, 166 na 0.22.0, 169 na 0.23.0, 172 na 0.24.0 e 176 na 0.25.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
@@ -235,6 +353,29 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 - Dois pastores podem perseguir o mesmo animal (a reserva é por bloco, e o animal anda); o segundo só encontra o animal já atendido e procura outro.
 - A rede da mesa guarda os primeiros 24 blocos encontrados; numa base muito densa, postos podem ficar de fora.
 - O carregador, depois da primeira volta, ainda inspeciona até 12 máquinas a cada 10 ticks quando escolhe a próxima viagem; um teto de inspeções por ciclo fica para um lote seguinte.
+
+## Teste sugerido ao usuário (0.18.0, sociedade)
+
+1. Faça um posto do lavrador (libera as receitas) e depois casa, poço, loja e prefeitura.
+2. Contrate o prefeito e o comerciante com esmeraldas; ponha esmeraldas no cofre da companhia (5º espaço do centro de controle) e pão na loja.
+3. Ponha uma casa perto de 2 a 4 aldeões. Em até 1 minuto o painel mostra os moradores, a carteira e a despensa; de dia a família compra pão, e o caixa da loja enche.
+4. Clique no comerciante: a tela de troca mostra o pão à venda. Compre e veja o estoque baixar.
+5. Livro na prefeitura: relatório com IDH, Gini, PIB, bairros e o que falta para a próxima fase.
+
+## Teste sugerido ao usuário (0.17.0, inimigo)
+
+1. Polua bastante (geradores) e espere o aviso no chat; na noite seguinte, veja a onda chegar por um lado.
+2. Monte um quartel, contrate com esmeralda e ponha pão. Agache com uma esmeralda para trocar a classe.
+3. À noite, confira que o soldado não vai dormir nem foge, e que o monstro morre depois de alguns golpes (e solta saque).
+4. Sobreviva até a 3ª e a 5ª noites de ataque: esqueletos e o Bruto aparecem.
+
+## Teste sugerido ao usuário (sexta entrega)
+
+1. Contrate um lavrador e acompanhe: ele deve ir direto às plantas maduras, sem ficar indo e voltando para o sino ou passeando.
+2. Solte um zumbi perto: o trabalhador deve fugir, e voltar ao trabalho depois.
+3. Espere a noite: o painel mostra "Descansando (noite)" e o aldeão vai para a cama; de manhã ele volta.
+4. Mundo novo no singleplayer: confira se você aparece no centro da vila.
+5. Vila com 100+ aldeões: compare o desempenho com a 0.15.0.
 
 ## Teste sugerido ao usuário (quinta entrega)
 

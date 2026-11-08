@@ -88,7 +88,7 @@ pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
     let senses = matches!(id, STEAM_ENGINE | WATER_WHEEL | WIND_TURBINE | SOLAR);
     let sense = if senses {
         let countdown = number(entity, "Sense");
-        let due = countdown == 0 || !entity.nbt.contains_key(&"Info".into());
+        let due = countdown == 0 || !entity.nbt.contains_key(nbt_key("Info"));
         set_number(entity, "Sense", if due { SENSE_EVERY - 1 + ((pos[0] ^ pos[2]) & 7) } else { countdown - 1 });
         due
     } else {
@@ -185,11 +185,13 @@ fn sideways(facing: &str) -> [f32; 3] {
 }
 
 pub(crate) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) -> bool {
-    let facing = host.block_state_property(event.state, "facing").unwrap_or("south").to_owned();
+    // Só a roda e o cata-vento: as outras máquinas passam por aqui a cada quadro.
+    if !matches!(event.block, WATER_WHEEL | WIND_TURBINE) { return false; }
+    let facing = host.block_state_property(event.state, "facing").unwrap_or("south");
     let working = number(event.entity, "Info") > 0;
     match event.block {
         WATER_WHEEL => {
-            let axis = sideways(&facing);
+            let axis = sideways(facing);
             event.draw.spin(axis, [0.5, 0.5, 0.5], if working { 4.0 } else { 0.0 }, 0.0);
             for paddle in 0..8 {
                 event.draw.push();
@@ -206,7 +208,7 @@ pub(crate) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) -> b
         }
         WIND_TURBINE => {
             // O cubo das pás fica na frente da nacele, a 1,75 bloco de altura.
-            let (axis, pivot) = match facing.as_str() {
+            let (axis, pivot) = match facing {
                 "north" => ([0.0, 0.0, 1.0], [0.5, 1.75, 0.3125]),
                 "east" => ([1.0, 0.0, 0.0], [0.6875, 1.75, 0.5]),
                 "west" => ([1.0, 0.0, 0.0], [0.3125, 1.75, 0.5]),

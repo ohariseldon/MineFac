@@ -106,7 +106,7 @@ pub(super) fn assign(host: &mut dyn Host, pos: [i32; 3], release: bool) {
                 if let Ok(mut claims) = CLAIMS.lock() { claims.retain(|c| !(c.epoch == epoch && c.uuid == old && c.station == pos)); }
             }
             station.nbt.remove(nbt_key("CaravanAnimal"));
-            set_number(station, "Status", 29);
+            set_number(station, "Status", super::NO_ANIMAL);
         });
         if let Some((id, wanted)) = cancel {
             if let Ok(id) = u32::try_from(id) {
@@ -153,11 +153,11 @@ fn locate(host: &mut dyn Host, pos: [i32; 3], entity: &ModBlockEntity, epoch: u6
 pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, partner: Option<&Endpoint>, epoch: u64) {
     let Some((animal, available)) = locate(host, pos, entity, epoch) else {
         set_number(entity, "CaravanProbe", number(entity, "CaravanProbe").wrapping_add(4).max(0));
-        set_number(entity, "Status", 29); return;
+        set_number(entity, "Status", super::NO_ANIMAL); return;
     };
     set_number(entity, "CaravanEntity", animal.id as i32);
     set_number(entity, "Rate", animal.kind.capacity() as i32);
-    if !available { workforce::cancel(animal.id); set_number(entity, "Status", 31); return; }
+    if !available { workforce::cancel(animal.id); set_number(entity, "Status", super::ANIMAL_BUSY); return; }
     let phase = number(entity, "FlightPhase");
     let to = if phase == 1 { target(entity).unwrap_or(pos) } else { pos };
     if host.neighbor_signal(host.dimension(), pos) > 0 {
@@ -193,22 +193,22 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
                 && text(destination, "FreightImport").as_deref() == Some(&cargo.item);
         });
         if valid { entity.items[CARGO] = host.insert_item(to, Direction::Up, cargo); }
-        else { entity.items[CARGO] = Some(cargo); set_number(entity, "Status", 28); return; }
+        else { entity.items[CARGO] = Some(cargo); set_number(entity, "Status", super::NO_ROUTE); return; }
         let moved = count - entity.items[CARGO].as_ref().map_or(0, |s| s.count);
         set_number(entity, "Produced", number(entity, "Produced").saturating_add(moved as i32));
         if entity.items[CARGO].is_some() { set_number(entity, "Status", 3); }
         else { set_number(entity, "FlightPhase", 2); set_number(entity, "Total", number(entity, "Total").saturating_add(1)); }
         return;
     }
-    let Some(partner) = partner.filter(|p| distance(pos, p.pos) <= RANGE) else { set_number(entity, "Status", 28); return; };
+    let Some(partner) = partner.filter(|p| distance(pos, p.pos) <= RANGE) else { set_number(entity, "Status", super::NO_ROUTE); return; };
     let Some(item) = export(entity) else { set_number(entity, "Status", 2); return; };
-    if partner.export.as_deref() == Some(&item) { set_number(entity, "Status", 28); return; }
+    if partner.export.as_deref() == Some(&item) { set_number(entity, "Status", super::NO_ROUTE); return; }
     let Some(slot) = (0..3).find(|&i| entity.items[i].as_ref().is_some_and(|s| is_plain(s, &item))) else {
         set_number(entity, "Status", 2); return;
     };
     if entity.items[CARGO].is_some() { set_number(entity, "FlightPhase", 2); return; }
     let food = entity.items[FEED].as_ref().is_some_and(|s| animal.kind.food(&s.item) && s.extra.is_none() && s.damage == 0);
-    if !food { set_number(entity, "Status", 30); return; }
+    if !food { set_number(entity, "Status", super::NO_FEED); return; }
     let count = entity.items[slot].as_ref().unwrap().count.min(animal.kind.capacity());
     entity.items[CARGO] = Some(ItemStack::new(&item, count)); consume(&mut entity.items[slot], count);
     consume(&mut entity.items[FEED], 1);

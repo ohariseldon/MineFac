@@ -24,7 +24,12 @@ const STALE: u64 = 200;
 const REPORT_LINES: usize = 8;
 
 pub(crate) fn accepts(slot: usize, stack: &ItemStack) -> bool {
-    plain(stack) && if slot == 0 { is_food(&stack.item) } else { GOAL_SLOTS.contains(&slot) }
+    plain(stack) && match slot {
+        0 => is_food(&stack.item),
+        society::ledger::COMPANY_VAULT => stack.item.as_ref() == WAGE,
+        society::ledger::COMPANY_CASHOUT => false,
+        _ => GOAL_SLOTS.contains(&slot),
+    }
 }
 
 /// Um posto como o centro o vê.
@@ -93,7 +98,7 @@ pub(crate) fn perform(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
     set_number(entity, "Admin", 1);
     let round = number(entity, "Refresh") + 1;
     set_number(entity, "Refresh", round % (REFRESH_EVERY * CHARGE_EVERY));
-    if round % REFRESH_EVERY == 1 || !entity.nbt.contains_key(&"DWorkers".into()) {
+    if round % REFRESH_EVERY == 1 || !entity.nbt.contains_key(nbt_key("DWorkers")) {
         refresh(host.dimension(), pos, entity, now);
         // Com administrador, o centro de controle é o centro da vila: spawn e renascimento aqui.
         spawn::control_center(host, pos);
@@ -136,33 +141,81 @@ fn signed(entity: &ModBlockEntity, key: &str) -> i32 {
     match entity.nbt.get(nbt_key(key)) { Some(Tag::Int(value)) => *value, _ => 0 }
 }
 
-/// Os 13 valores do painel do centro.
+/// Os 13 valores do painel do centro. O estado leva a aba nos milhares; nas abas de divisão, os
+/// valores 1 a 9 são os da holding.
 pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
-    let keys = ["DWorkers", "DWorking", "DWaiting", "DHungry", "DFields", "DPens", "DStore", "DQueue",
+    let tab = number(entity, "Tab").clamp(0, super::super::holding::TABS - 1);
+    let status = number(entity, "Status") + tab * 1000;
+    if tab > 0 {
+        let holding = super::super::holding::data(entity);
+        return std::array::from_fn(|index| match index {
+            0 => status, 1..=11 => holding[index - 1], 12 => number(entity, "Company"), _ => 0,
+        });
+    }
+    let keys = ["DWorkers", "DWorking", "DWaiting", "DHungry", "DFields", "DPens", "DStore", "DExport",
         "DGoal1", "DGoal2", "DGoal3"];
     std::array::from_fn(|index| match index {
-        0 => number(entity, "Status"), 12 => number(entity, "Info"), _ => signed(entity, keys[index - 1]),
+        0 => status, 12 => number(entity, "Company"), _ => signed(entity, keys[index - 1]),
     })
 }
 
 const BAR: u32 = 0xff2b2b2b;
 
-/// Tela do centro: números da vila e barras das metas.
+/// Tela do centro: cabeçalho com as abas (setas) e os números da aba.
 pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>) {
     let [x, y] = event.origin;
     let read = |index: usize| event.data.get(index).copied().unwrap_or(0);
     let tr = |key: &str, args: &[&dyn std::fmt::Display]| Text::tr(key, args).plain();
-    let status = read(0).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
-    let lines = [
-        (tr(&format!("veio.status.{}", presentation::STATUS_KEYS[status]), &[]), presentation::text_color(status)),
-        (tr("veio.center.workers", &[&read(1), &read(2)]), presentation::INK),
-        (tr("veio.center.waiting", &[&read(3), &read(4)]), if read(3) > 0 { 0x9a5a00 } else { presentation::INK }),
-        (tr("veio.center.zones", &[&read(5), &read(6)]), presentation::INK),
-        (if read(7) < 0 { tr("veio.center.no_storage", &[&read(8)]) } else { tr("veio.center.storage", &[&read(7), &read(8)]) },
-            presentation::INK),
-    ];
+    let tab = (read(0) / 1000).clamp(0, super::super::holding::TABS - 1);
+    let status = (read(0) % 1000).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
+    // Cabeçalho: < nome da aba > (clique nas setas).
+    host.text(event.batch, "<", [x + 8.0, y + 22.0], 0x1f4fa8, false);
+    host.text(event.batch, ">", [x + 166.0, y + 22.0], 0x1f4fa8, false);
+    let title = format!("{} ({}/{})", tr(&format!("veio.holding.tab{tab}"), &[]), tab + 1, super::super::holding::TABS);
+    host.text(event.batch, &title, [x + 22.0, y + 22.0], 0x1f4fa8, false);
+    let lines: Vec<(String, u32)> = if tab == 0 {
+        vec![
+            (tr(&format!("veio.status.{}", presentation::STATUS_KEYS[status]), &[]), presentation::text_color(status)),
+            (tr("veio.center.workers", &[&read(1), &read(2)]), presentation::INK),
+            (tr("veio.center.waiting", &[&read(3), &read(4)]), if read(3) > 0 { 0x9a5a00 } else { presentation::INK }),
+            (tr("veio.center.company", &[&read(12), &read(8)]), 0x1f4fa8),
+            (if read(7) < 0 { tr("veio.center.no_storage", &[&read(5), &read(6)]) } else { tr("veio.center.storage", &[&read(5), &read(6), &read(7)]) },
+                presentation::INK),
+        ]
+    } else if tab == super::super::holding::FOREIGN {
+        let mut lines = vec![
+            (if read(5) > 0 { tr("veio.trade.reputation", &[&read(1), &read(2), &read(5)]) } else { tr("veio.trade.reputation_max", &[&read(1)]) },
+                0x1f4fa8),
+            (tr("veio.trade.flows", &[&read(3), &read(4), &(read(3) - read(4))]), if read(3) >= read(4) { 0x1e7a1e } else { 0xaa1f1f }),
+        ];
+        for slot in 0..3 {
+            let (product, need) = (read(6 + slot * 2), read(7 + slot * 2));
+            if product < 0 {
+                continue;
+            }
+            let Some(&(_, key, _, _)) = society::trade::PRODUCTS.get((product / 1000) as usize) else { continue };
+            lines.push((tr("veio.trade.contract", &[&tr(key, &[]), &(need % 10000), &(need / 10000), &(product % 1000)]),
+                presentation::INK));
+        }
+        lines
+    } else {
+        let stopped = read(5).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
+        vec![
+            (tr("veio.holding.units", &[&read(1), &read(2), &read(3)]), presentation::INK),
+            (tr(&format!("veio.holding.made{tab}"), &[&read(4)]), presentation::INK),
+            (tr("veio.holding.profit", &[&read(10), &read(11), &(read(10) - read(11))]),
+                if read(10) >= read(11) { 0x1e7a1e } else { 0xaa1f1f }),
+            (if read(6) > 0 {
+                tr("veio.holding.stopped", &[&tr(&format!("veio.status.{}", presentation::STATUS_KEYS[stopped]), &[]), &read(6)])
+            } else { tr("veio.holding.all_good", &[]) }, if read(6) > 0 { 0x9a5a00 } else { 0x1e7a1e }),
+            (tr(&format!("veio.holding.extra{tab}"), &[&read(7), &read(8), &read(9)]), presentation::SOFT_INK),
+        ]
+    };
     for (index, (line, color)) in lines.iter().enumerate() {
-        host.text(event.batch, line, [x + 8.0, y + 22.0 + index as f32 * 11.0], *color, false);
+        host.text(event.batch, line, [x + 8.0, y + 33.0 + index as f32 * 11.0], *color, false);
+    }
+    if tab != 0 {
+        return;
     }
     for goal in 0..3 {
         let top = y + 82.0 + goal as f32 * 18.0;
@@ -179,17 +232,19 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
 }
 
 pub(crate) fn screen_slots() -> Vec<Option<[f32; 2]>> {
-    vec![Some([170.0, 82.0]), Some([17.0, 82.0]), Some([17.0, 100.0]), Some([17.0, 118.0])]
+    vec![Some([170.0, 82.0]), Some([17.0, 82.0]), Some([17.0, 100.0]), Some([17.0, 118.0]), Some([152.0, 118.0]), Some([170.0, 118.0])]
 }
 
 /// Relatório no chat para o jogador mais próximo.
 pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow> {
     let mut admin = None;
     let mut targets = Vec::new();
+    let mut company = None;
     host.change_mod_block_entity(pos, &mut |entity| {
         if entity.id == CONTROL_CENTER {
             admin = Some(worker(entity).is_some() && number(entity, "Admin") == 1);
             targets = goals(entity);
+            company = Some(society::ledger::company_report(entity));
         }
     });
     let admin = admin?;
@@ -208,6 +263,34 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     let posts: Vec<PostInfo> = posts_near(dimension, pos, RADIUS, now).into_iter().filter(|post| post.pos != pos).collect();
     let working = posts.iter().filter(|post| post.staffed && matches!(post.status, 1 | WALKING)).count();
     host.tell(player, Text::tr("veio.report.title", &[&posts.len(), &working]));
+    if let Some(company) = company {
+        host.tell(player, company);
+    }
+    for line in super::super::holding::report_lines(dimension) {
+        host.tell(player, line);
+    }
+    // Exportação: os itens guardados que hoje rendem mais no mercado externo (por unidade).
+    let day = host.level(dimension).and_then(|level| level.game_time(host)).unwrap_or(0).div_euclid(society::DAY);
+    let mut best: Vec<(i32, String)> = Vec::new();
+    for store in storage::stores_near(dimension, pos, RADIUS, now) {
+        for (item, _) in store.items {
+            if !best.iter().any(|(_, known)| *known == item)
+                && let Some(price) = society::trade::quote(dimension, &item, day)
+            {
+                best.push((price, item));
+            }
+        }
+    }
+    best.sort_by(|a, b| b.0.cmp(&a.0));
+    for (price, item) in best.into_iter().take(3) {
+        host.tell(player, Text::tr("veio.export.best", &[&item, &price]));
+    }
+    // Bolsa do dia: as cinco melhores cotações abertas, com a tendência.
+    for (product, price, trend) in society::trade::board(dimension, day, 5) {
+        let arrow = if trend > 0 { "+" } else if trend < 0 { "-" } else { "=" };
+        host.tell(player, Text::tr("veio.trade.board", &[&Text::tr(society::trade::PRODUCTS[product].1, &[]).plain(),
+            &price, &format!("{arrow}{}", trend.abs())]));
+    }
     for post in posts.iter().filter(|post| waiting(post.status)).take(REPORT_LINES) {
         let key = format!("veio.report.issue.{}", presentation::STATUS_KEYS.get(post.status as usize).copied().unwrap_or("idle"));
         host.tell(player, Text::tr(&key, &[&format_pos(post.pos)]));

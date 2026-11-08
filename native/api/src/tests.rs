@@ -346,7 +346,7 @@ fn raids_need_a_notice_a_day_of_grace_and_the_night() {
     assert_eq!(pollution::plan_for_test(&hot(5000.0), anchor, Some(1000), 20000, 15000), None);
     // Depois da carência: alerta ao anoitecer e onda à noite.
     assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 12000), Some(Plan::Warning(anchor)));
-    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 15000), Some(Plan::Wave(anchor, 2)));
+    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 15000), Some(Plan::Wave(anchor, 4)));
     // De dia ou abaixo do limite, não há ataque.
     assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 3000), None);
     assert_eq!(pollution::plan_for_test(&hot(900.0), anchor, Some(0), 30000, 24000 + 15000), None);
@@ -354,9 +354,24 @@ fn raids_need_a_notice_a_day_of_grace_and_the_night() {
 
 #[test]
 fn waves_grow_but_stay_capped() {
-    assert_eq!(pollution::wave_size(pollution::RAID, 1), 2);
-    assert_eq!(pollution::wave_size(pollution::RAID + 1200.0, 3), 5);
-    assert_eq!(pollution::wave_size(1.0e6, 50), 8);
+    assert_eq!(pollution::wave_size(pollution::RAID, 1), 4);
+    assert_eq!(pollution::wave_size(pollution::RAID + 1200.0, 3), 9);
+    assert_eq!(pollution::wave_size(1.0e6, 50), 12);
+    assert_eq!(100 / pollution::BLOW, 4, "quatro golpes param a máquina");
+    assert_eq!(100 / pollution::BRUTE_BLOW, 2, "o Bruto para a máquina em dois golpes");
+}
+
+#[test]
+fn waves_bring_archers_and_brutes_later() {
+    let (raiders, archers, brutes) = pollution::wave_mix(4, 1);
+    assert_eq!((raiders, archers, brutes), (4, 0, 0), "a primeira onda é só de saqueadores");
+    let (raiders, archers, brutes) = pollution::wave_mix(8, pollution::ARCHERS_FROM);
+    assert_eq!((raiders + archers + brutes, archers, brutes), (8, 2, 0), "da 3ª onda vêm arqueiros");
+    let (raiders, archers, brutes) = pollution::wave_mix(12, pollution::BRUTES_FROM);
+    assert_eq!(raiders + archers + brutes, 12, "o tamanho da onda não muda");
+    assert!(brutes >= 1 && archers >= 1 && raiders > brutes, "da 5ª vem o Bruto, ainda com maioria de saqueadores");
+    assert!(pollution::villager_hunter("minecraft:skeleton") && pollution::villager_hunter("minecraft:spider"));
+    assert!(!pollution::villager_hunter("minecraft:creeper"), "creeper continua atrás do jogador");
 }
 
 #[test]
@@ -382,10 +397,124 @@ fn panels_publish_as_many_values_as_the_menus_declare() {
 }
 
 #[test]
+fn one_pass_numbers_read_like_number() {
+    let mut n = entity(PRESS, 2);
+    n.nbt.insert("Burn".into(), Tag::Int(-3));
+    n.nbt.insert("Info".into(), Tag::String("x".into()));
+    n.nbt.insert("Aaa".into(), Tag::Int(9));
+    n.nbt.insert("Zzz".into(), Tag::Int(9));
+    set_number(&mut n, "Module", 2);
+    set_number(&mut n, "energy", 77);
+    let names = ["Burn", "Damage", "Info", "Module", "Status", "energy"];
+    let keys = names.map(nbt_key);
+    assert_eq!(numbers_sorted(&n, &keys), names.map(|name| number(&n, name)));
+    assert_eq!(numbers_sorted(&n, &keys), [0, 0, 0, 2, 0, 77]);
+}
+
+#[test]
+fn published_signature_matches_the_nbt_for_every_block() {
+    let blocks = [DRILL, DRILL_MK2, PRESS, ASSEMBLER, BELT, FAST_BELT, SPLITTER, MERGER, CUTTER, INTEGRATOR,
+        GENERATOR, CABLE, SOLAR, BATTERY, GEOTHERMAL, CRUSHER, ALLOY, ELECTRONICS, HUB, HARVESTER, TESLA,
+        POLE, STEEL_POLE, inserters::ID, inserters::FAST, inserters::LONG, "veio:drill_mk3", "veio:electric_furnace",
+        "veio:mill", "veio:kitchen", "veio:biomass_generator", "veio:water_wheel", "veio:wind_turbine",
+        "veio:steam_engine", "veio:planter", "veio:grow_lamp", "veio:tree_farm", "veio:ranch", "veio:pantry",
+        "veio:farm_post", "veio:hauler_post", "veio:foreman_desk", "veio:shepherd_post", "veio:barn", "veio:silo",
+        "veio:control_center", "veio:field_marker", "veio:pen_marker"];
+    for block in blocks {
+        assert!(is_factory_block(block), "{block}");
+        for seed in 0..4 {
+            let mut n = entity(block, layout(block).map_or(0, |(slots, _, _)| slots));
+            for (key, value) in [("Status", 1 + seed), ("Module", seed % 3), ("Info", 7 * seed), ("MovedAt", 11 + seed),
+                ("LocalSmog", 40 + seed), ("RoutingPriority", seed % 3)] {
+                set_number(&mut n, key, value);
+            }
+            presentation::publish(&mut n);
+            assert_eq!(published_signature(&n), visual_signature(&n), "{block}");
+        }
+    }
+}
+
+#[test]
+fn belt_cargo_syncs_only_when_the_drawn_item_changes() {
+    let mut belt = entity(BELT, 1);
+    assert!(!presentation::publish(&mut belt), "vazia antes e depois: nada a redesenhar");
+    belt.items[0] = Some(ItemStack::new(PLATE, 3));
+    assert!(presentation::publish(&mut belt), "item novo aparece no desenho");
+    belt.items[0] = Some(ItemStack::new(PLATE, 2));
+    assert!(!presentation::publish(&mut belt), "só a quantidade mudou: o desenho é o mesmo");
+    assert_eq!(number(&belt, "DisplayCount"), 2, "o NBT continua com a quantidade");
+    belt.items[0] = Some(ItemStack::new(GEAR, 2));
+    assert!(presentation::publish(&mut belt));
+    belt.items[0] = None;
+    assert!(presentation::publish(&mut belt), "a carga some do desenho");
+    assert!(matches!(belt.nbt.get(nbt_key("DisplayItem")), Some(Tag::String(name)) if name.0.is_empty()));
+}
+
+#[test]
 fn workforce_posts_count_as_item_input_for_belt_curves() {
     assert!(has_item_inputs(workforce::FARM_POST));
     assert!(has_item_inputs(workforce::HAULER_POST));
     assert!(has_item_inputs(workforce::FOREMAN_DESK));
     assert!(has_item_inputs(workforce::SHEPHERD_POST));
     assert!(!has_item_inputs(SOLAR));
+}
+
+#[test]
+fn every_company_block_belongs_to_a_holding_division() {
+    use holding::*;
+    assert_eq!(division(DRILL), Some(MINING));
+    assert_eq!(division(PRESS), Some(MANUFACTURING));
+    assert_eq!(division(GENERATOR), Some(ENERGY));
+    assert_eq!(division(BELT), Some(LOGISTICS));
+    assert_eq!(division(workforce::FARM_POST), Some(AGRO));
+    assert_eq!(division(production::TREE_FARM), Some(FORESTRY), "madeira e folhas: extrativismo");
+    assert_eq!(division(workforce::society::HOUSE), Some(URBAN));
+    assert_eq!(division(workforce::SHOP), Some(COMMERCE));
+    assert_eq!(division(workforce::CONTROL_CENTER), Some(MANAGEMENT));
+    assert_eq!(division(workforce::TOWN_HALL), None, "a prefeitura é pública, fora da holding");
+}
+
+#[test]
+fn the_holding_counts_units_workers_and_daily_production_per_division() {
+    use holding::*;
+    let dimension = "veio:test_holding";
+    let mut drill = ModBlockEntity::default();
+    drill.id = DRILL.to_owned();
+    set_number(&mut drill, "Status", 1);
+    set_number(&mut drill, "Produced", 10);
+    // Posição com fase 0: (x*7 ^ z*13) & 127 = 0.
+    let pos = [0, 64, 0];
+    observe(dimension, pos, &drill, 0);
+    set_number(&mut drill, "Produced", 25);
+    observe(dimension, pos, &drill, 100);
+    observe(dimension, pos, &drill, 150);
+    roll(dimension, 1200);
+    let [units, active, workers, made, _, _, _, _] = summary(dimension, MINING);
+    assert_eq!((units, active, workers), (1, 1, 0));
+    assert_eq!(made, 15, "15 minérios no turno viram a produção do dia");
+    roll(dimension, 1300);
+    assert_eq!(summary(dimension, MINING)[3], 15, "um turno só fecha uma vez");
+    // As abas do centro de controle: setas no cabeçalho.
+    assert_eq!(click([10.0, 25.0], 1), Some(PREVIOUS));
+    assert_eq!(click([170.0, 25.0], 1), Some(NEXT));
+    assert_eq!(click([90.0, 60.0], 1), None);
+    assert_eq!(click([90.0, 70.0], 0), Some(workforce::society::ledger::CASH_OUT), "linha da companhia: saque");
+    let mut center = ModBlockEntity::default();
+    center.id = workforce::CONTROL_CENTER.to_owned();
+    press(dimension, [0, 64, 0], &mut center, NEXT, 0);
+    assert_eq!(number(&center, "Tab"), 1, "aba Mineração");
+    assert_eq!(data(&center)[0], 1, "uma extratora na aba");
+    press(dimension, [0, 64, 0], &mut center, PREVIOUS, 0);
+    press(dimension, [0, 64, 0], &mut center, PREVIOUS, 0);
+    assert_eq!(number(&center, "Tab"), TABS - 1, "volta pela última aba");
+}
+
+#[test]
+fn each_good_pays_the_business_that_makes_it() {
+    use holding::*;
+    assert_eq!(item_division("minecraft:bread"), AGRO);
+    assert_eq!(item_division("minecraft:white_wool"), AGRO);
+    assert_eq!(item_division("minecraft:oak_log"), FORESTRY);
+    assert_eq!(item_division("minecraft:raw_iron"), MINING);
+    assert_eq!(item_division("veio:gear"), MANUFACTURING);
 }

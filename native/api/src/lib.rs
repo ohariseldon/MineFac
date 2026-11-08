@@ -16,6 +16,7 @@ mod production;
 mod power;
 mod tutorial;
 mod upgrades;
+mod holding;
 mod workforce;
 
 use horizon_client::mod_api::{
@@ -63,6 +64,8 @@ const STEEL_POLE: &str = "veio:steel_pole";
 const REPAIR_KIT: &str = "veio:repair_kit";
 /// Cada kit de reparo recupera metade da integridade.
 const REPAIR: i32 = 50;
+/// Amostragem dos registros de mobs em `entity_tick_pre`.
+const OBSERVE_EVERY: u64 = 7;
 
 
 pub fn hooks() -> Box<dyn Hooks> {
@@ -202,38 +205,23 @@ impl Hooks for Factory {
     }
 
     fn block_entity_tick(&self, host: &mut dyn Host, event: &mut BlockEntityTickEvent<'_>) {
-        if !is_factory_block(&event.entity.id) {
-            return;
-        }
-        let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) else {
-            return;
-        };
-        pollution::update(host, time);
-        if power::tick(host, event.pos, event.entity, time) {
-            host.block_entity_sync(event.pos);
-        }
-        let previous = visual_signature(event.entity);
-        let produced = number(event.entity, "Produced");
-        let previous_status = number(event.entity, "Status");
-        tick_factory(host, event.pos, event.entity, time);
-        if event.entity.id == freight::DRONE {
-            set_number(event.entity, "FlightVisualAt", stamp(time));
-        }
-        pollution::emit(host, event.pos, event.entity, time);
-        soundscape::after(host, event.pos, event.entity, produced, previous_status, time);
-        record_performance(event.entity, produced);
-        presentation::publish(event.entity);
-        if visual_signature(event.entity) != previous {
-            host.block_entity_sync(event.pos);
-        }
+        block_entity_tick(host, event.pos, event.entity);
     }
 
     fn entity_tick_pre(&self, host: &mut dyn Host,
         event: &mut horizon_client::mod_api::EntityTickPreEvent<'_>) -> Flow
     {
+        // Registro por amostragem: cada mob entra nos registros (defesa e rancho) em 1 de cada
+        // `OBSERVE_EVERY` ticks do relógio do mod, não em todos. As consultas aceitam marcas de até
+        // 40-60 ticks, então nada se perde; o número é ímpar para cobrir todos os ids mesmo que o
+        // relógio avance de 2 em 2 (janela e servidor no mesmo processo).
+        let now = defense::clock();
+        // As caravanas acompanham seus animais em todo tick (`freight::caravan`).
         freight::caravan::observe(host, event.dimension, event.entity, event.kind);
-        defense::observe(event.dimension, event.entity, event.kind);
-        production::ranch::observe(event.dimension, event.entity, event.kind);
+        if (now + u64::from(event.entity)) % OBSERVE_EVERY == 0 {
+            defense::observe(event.dimension, event.entity, event.kind);
+            production::ranch::observe(event.dimension, event.entity, event.kind);
+        }
         if event.kind == "minecraft:villager" {
             workforce::village::observe(host, event.dimension, event.entity, defense::clock());
         }
@@ -242,6 +230,12 @@ impl Hooks for Factory {
 
     fn player_logged_in(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
         workforce::spawn::logged_in(event.player, event.name, defense::clock());
+    }
+
+    fn trade_with_villager(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::TradeWithVillagerEvent<'_>) {
+        if event.kind == "minecraft:villager" {
+            workforce::society::traded(host, event.merchant, event.offer);
+        }
     }
 
     fn player_respawned(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
@@ -253,6 +247,7 @@ impl Hooks for Factory {
         soundscape::refresh(host, defense::clock());
         budget::begin_tick(defense::clock());
         power::maintenance(defense::clock());
+        workforce::maintenance(defense::clock());
         workforce::spawn::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
@@ -292,6 +287,18 @@ impl Hooks for Factory {
         presentation::screen_draw(host, event);
     }
 
+    fn screen_click(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::ScreenClickEvent<'_>) -> Option<i32> {
+        let tab = event.data.first().copied().unwrap_or(0) / 1000;
+        (event.block == workforce::CONTROL_CENTER && !event.right).then(|| holding::click(event.at, tab)).flatten()
+    }
+
+    fn menu_button(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::MenuButtonEvent<'_>) {
+        if event.entity.id == workforce::CONTROL_CENTER {
+            let time = host.level(host.dimension()).and_then(|level| level.game_time(host)).unwrap_or(0);
+            holding::press(host.dimension(), event.pos, event.entity, event.id, time);
+        }
+    }
+
     fn screen_tooltip(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::ScreenTooltipEvent<'_>) {
         tutorial::screen_tooltip(event);
     }
@@ -322,6 +329,35 @@ impl Hooks for Factory {
         presentation::draw(host, event);
     }
 
+}
+
+/// Tick de um bloco do Veio. Fora do gancho para as medições chamarem o mesmo caminho.
+fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
+    if !is_factory_block(&entity.id) {
+        return;
+    }
+    let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) else {
+        return;
+    };
+    pollution::update(host, time);
+    if power::tick(host, pos, entity, time) {
+        host.block_entity_sync(pos);
+    }
+    let previous = visual_signature(entity);
+    let produced = number(entity, "Produced");
+    let previous_status = number(entity, "Status");
+    tick_factory(host, pos, entity, time);
+    if entity.id == freight::DRONE {
+        set_number(entity, "FlightVisualAt", stamp(time));
+    }
+    holding::observe(host.dimension(), pos, entity, time);
+    pollution::emit(host, pos, entity, time);
+    soundscape::after(host, pos, entity, produced, previous_status, time);
+    record_performance(entity, produced);
+    let cargo = presentation::publish(entity);
+    if cargo || published_signature(entity) != previous {
+        host.block_entity_sync(pos);
+    }
 }
 
 fn is_factory_block(block: &str) -> bool {
@@ -418,6 +454,9 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
 }
 
 /// Chaves NBT lidas todo tick. A primeira vez monta o `JavaString`; as seguintes reaproveitam.
+/// Sempre embutida: com o nome literal, o compilador resolve o `match` na compilação e a
+/// leitura vira um acesso direto à chave pronta, sem comparar textos a cada tick.
+#[inline(always)]
 fn nbt_key(name: &str) -> &'static JavaString {
     #[cfg(test)] perf::key_read();
     macro_rules! key {
@@ -428,6 +467,18 @@ fn nbt_key(name: &str) -> &'static JavaString {
     }
     match name {
         "Absent" => key!("Absent"),
+        "Age" => key!("Age"),
+        "BusyAt" => key!("BusyAt"),
+        "Carried" => key!("Carried"),
+        "CustomName" => key!("CustomName"),
+        "Edits" => key!("Edits"),
+        "Held" => key!("Held"),
+        "ScanArea" => key!("ScanArea"),
+        "Skipped" => key!("Skipped"),
+        "UUID" => key!("UUID"),
+        "Worker" => key!("Worker"),
+        "count" => key!("count"),
+        "id" => key!("id"),
         "Action" => key!("Action"),
         "Admin" => key!("Admin"),
         "Area" => key!("Area"),
@@ -469,6 +520,18 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "RoutingPriority" => key!("RoutingPriority"),
         "AreaScan" => key!("AreaScan"),
         "TopologyPending" => key!("TopologyPending"),
+        "PlanningPending" => key!("PlanningPending"),
+        "HaulSearchPending" => key!("HaulSearchPending"),
+        "HaulTaskDesk" => key!("HaulTaskDesk"),
+        "HaulTaskId" => key!("HaulTaskId"),
+        "from" => key!("from"),
+        "slot" => key!("slot"),
+        "item" => key!("item"),
+        "to" => key!("to"),
+        "into" => key!("into"),
+        "by" => key!("by"),
+        "seen" => key!("seen"),
+
         "TerrainPending" => key!("TerrainPending"),
         "AreaFound" => key!("AreaFound"),
         "Posts" => key!("Posts"),
@@ -487,6 +550,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Side" => key!("Side"),
         "Module" => key!("Module"),
         "MovedAt" => key!("MovedAt"),
+        "HeldSince" => key!("HeldSince"),
         "NextInput" => key!("NextInput"),
         "Organize" => key!("Organize"),
         "PathReady" => key!("PathReady"),
@@ -498,6 +562,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Progress" => key!("Progress"),
         "Queued" => key!("Queued"),
         "Rate" => key!("Rate"),
+        "Role" => key!("Role"),
         "Ration" => key!("Ration"),
         "Recipe" => key!("Recipe"),
         "Refresh" => key!("Refresh"),
@@ -514,24 +579,85 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Walk" => key!("Walk"),
         "Work" => key!("Work"),
         "energy" => key!("energy"),
-        _ => {
-            // Chave rara: vive até o fim do processo, para o tick seguinte não alocar de novo.
-            #[cfg(test)] perf::fallback_lock();
-            use std::collections::HashMap;
-            use std::sync::Mutex;
-            static EXTRA: Mutex<Option<HashMap<String, &'static JavaString>>> = Mutex::new(None);
-            let mut extra = EXTRA.lock().unwrap_or_else(|err| err.into_inner());
-            let extra = extra.get_or_insert_with(HashMap::new);
-            if let Some(key) = extra.get(name) {
-                return key;
-            }
-            let key: &'static JavaString = Box::leak(Box::new(JavaString::from(name)));
-            extra.insert(name.to_owned(), key);
-            key
-        }
+        "Built" => key!("Built"),
+        "Comfort" => key!("Comfort"),
+        "Company" => key!("Company"),
+        "DAssist" => key!("DAssist"),
+        "DEmploy" => key!("DEmploy"),
+        "DFamilies" => key!("DFamilies"),
+        "DGini" => key!("DGini"),
+        "DIdh" => key!("DIdh"),
+        "DMade" => key!("DMade"),
+        "DPop" => key!("DPop"),
+        "DRequest" => key!("DRequest"),
+        "DRequestN" => key!("DRequestN"),
+        "DSold" => key!("DSold"),
+        "DSuspended" => key!("DSuspended"),
+        "DTax" => key!("DTax"),
+        "DUpkeep" => key!("DUpkeep"),
+        "DWages" => key!("DWages"),
+        "Day" => key!("Day"),
+        "Debt" => key!("Debt"),
+        "Demand" => key!("Demand"),
+        "Employed" => key!("Employed"),
+        "Family" => key!("Family"),
+        "Fed" => key!("Fed"),
+        "Hungry" => key!("Hungry"),
+        "Income" => key!("Income"),
+        "Kids" => key!("Kids"),
+        "Maintained" => key!("Maintained"),
+        "OfferFor" => key!("OfferFor"),
+        "OfferSig" => key!("OfferSig"),
+        "Owed" => key!("Owed"),
+        "OwedPublic" => key!("OwedPublic"),
+        "Payroll" => key!("Payroll"),
+        "Phase" => key!("Phase"),
+        "Present" => key!("Present"),
+        "Prices" => key!("Prices"),
+        "Public" => key!("Public"),
+        "Round" => key!("Round"),
+        "Short" => key!("Short"),
+        "Sold" => key!("Sold"),
+        "SoldToday" => key!("SoldToday"),
+        "Taxes" => key!("Taxes"),
+        "Till" => key!("Till"),
+        "Turned" => key!("Turned"),
+        "UpkeepHalf" => key!("UpkeepHalf"),
+        "Wallet" => key!("Wallet"),
+        "Wealth" => key!("Wealth"),
+        "Tab" => key!("Tab"),
+        "HData" => key!("HData"),
+        "Cash" => key!("Cash"),
+        "Known" => key!("Known"),
+        "Payable" => key!("Payable"),
+        "Revenue" => key!("Revenue"),
+        "DExport" => key!("DExport"),
+        "Trade" => key!("Trade"),
+        "TradeRecent" => key!("TradeRecent"),
+        "Water" => key!("Water"),
+        _ => rare_nbt_key(name),
     }
 }
 
+/// Chave rara: vive até o fim do processo, para o tick seguinte não alocar de novo.
+#[cold]
+#[inline(never)]
+fn rare_nbt_key(name: &str) -> &'static JavaString {
+    #[cfg(test)] perf::fallback_lock();
+    use std::collections::HashMap;
+    use std::sync::Mutex;
+    static EXTRA: Mutex<Option<HashMap<String, &'static JavaString>>> = Mutex::new(None);
+    let mut extra = EXTRA.lock().unwrap_or_else(|err| err.into_inner());
+    let extra = extra.get_or_insert_with(HashMap::new);
+    if let Some(key) = extra.get(name) {
+        return key;
+    }
+    let key: &'static JavaString = Box::leak(Box::new(JavaString::from(name)));
+    extra.insert(name.to_owned(), key);
+    key
+}
+
+#[inline(always)]
 pub(super) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -> T {
     read(nbt_key(name))
 }
@@ -542,33 +668,110 @@ pub(super) fn java_eq(text: &JavaString, value: &str) -> bool {
     value.encode_utf16().all(|unit| units.next() == Some(unit)) && units.next().is_none()
 }
 
+// `number`/`set_number` resolvem a chave no local da chamada; a busca no NBT fica numa
+// função só, para não copiar o código do mapa em cada chamada.
+#[inline(always)]
 fn number(entity: &ModBlockEntity, key: &str) -> i32 {
-    with_nbt_key(key, |key| match entity.nbt.get(key) {
+    number_at(entity, nbt_key(key))
+}
+
+fn number_at(entity: &ModBlockEntity, key: &JavaString) -> i32 {
+    match entity.nbt.get(key) {
         Some(Tag::Int(value)) => (*value).max(0),
         _ => 0,
-    })
+    }
 }
 
+#[inline(always)]
 fn set_number(entity: &mut ModBlockEntity, key: &str, value: i32) {
-    with_nbt_key(key, |key| {
-        if let Some(tag) = entity.nbt.get_mut(key) {
-            let current = match tag { Tag::Int(stored) => (*stored).max(0), _ => 0 };
-            if current != value { *tag = Tag::Int(value); }
-        } else {
-            entity.nbt.insert(key.clone(), Tag::Int(value));
-        }
-    });
+    set_number_at(entity, nbt_key(key), value);
 }
 
-fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, bool, Option<ItemStack>) {
-    // A carga desenhada no mundo é só de esteira, divisor e unificador; o braço anima pelo `MovedAt`.
-    let cargo = if matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
-        logistics::display_stack(entity).cloned()
+fn set_number_at(entity: &mut ModBlockEntity, key: &JavaString, value: i32) {
+    if let Some(tag) = entity.nbt.get_mut(key) {
+        let current = match tag { Tag::Int(stored) => (*stored).max(0), _ => 0 };
+        if current != value { *tag = Tag::Int(value); }
     } else {
-        None
+        entity.nbt.insert(key.clone(), Tag::Int(value));
+    }
+}
+
+/// Vários inteiros do NBT numa passada só pelo mapa, cada um como em `number`. `keys` vem em
+/// ordem crescente, a mesma do `BTreeMap`: a passada compara cada chave no máximo uma vez.
+fn numbers_sorted<const N: usize>(entity: &ModBlockEntity, keys: &[&JavaString; N]) -> [i32; N] {
+    debug_assert!(keys.is_sorted());
+    let mut values = [0; N];
+    let mut wanted = 0;
+    'entries: for (key, tag) in &entity.nbt {
+        while wanted < N {
+            match keys[wanted].cmp(key) {
+                std::cmp::Ordering::Less => wanted += 1,
+                std::cmp::Ordering::Equal => {
+                    values[wanted] = match tag { Tag::Int(value) => (*value).max(0), _ => 0 };
+                    wanted += 1;
+                    continue 'entries;
+                }
+                std::cmp::Ordering::Greater => continue 'entries,
+            }
+        }
+        break;
+    }
+    values
+}
+
+/// O que o desenho no mundo lê do NBT, além da carga (que `presentation::publish` acusa).
+/// O braço anima pelo `MovedAt`.
+/// Drones e caravanas animam pela fase do voo; máquinas que queimam mostram a chama.
+fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, bool) {
+    let motion = if matches!(entity.id.as_str(), freight::DRONE | freight::caravan::ID) {
+        number(entity, "FlightPhase") * 1_000_000 + number(entity, "Progress") / 4
+    } else {
+        number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" })
     };
-    (number(entity, "Status"), number(entity, "Module"), if matches!(entity.id.as_str(), freight::DRONE | freight::caravan::ID) { number(entity, "FlightPhase") * 1_000_000 + number(entity, "Progress") / 4 }
-        else { number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }) }, production::burns(&entity.id) && number(entity, "Burn") > 0, cargo)
+    (number(entity, "Status"), number(entity, "Module"), motion, burning(entity))
+}
+
+fn burning(entity: &ModBlockEntity) -> bool {
+    production::burns(&entity.id) && number(entity, "Burn") > 0
+}
+
+/// A mesma assinatura logo depois de `presentation::publish`: o painel acabou de copiar
+/// `Status`, `Module` e `Info` para `data[0]`, `data[11]` e `data[12]`, sem novas buscas no NBT.
+/// Quem publica outra coisa nessas posições (ou não publica) relê o NBT.
+fn published_signature(entity: &ModBlockEntity) -> (i32, i32, i32, bool) {
+    let standard = !matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE | TESLA | workforce::CONTROL_CENTER | workforce::TOWN_HALL)
+        && !inserters::is_arm(&entity.id) && !workforce::zones::is_marker(&entity.id) && !freight::owns(&entity.id);
+    match entity.data.as_slice() {
+        [status, .., module, info] if standard && entity.data.len() == presentation::DATA_SLOTS => (*status, *module, *info, burning(entity)),
+        _ => visual_signature(entity),
+    }
+}
+
+/// Hash multiplicativo (o do rustc) para chaves pequenas consultadas todo tick: chunks e
+/// posições. Os mapas que o usam só são consultados por chave, nunca percorridos em ordem.
+#[derive(Default, Clone, Copy)]
+pub(super) struct FastHasher(u64);
+pub(super) type FastHash = std::hash::BuildHasherDefault<FastHasher>;
+
+impl FastHasher {
+    #[inline]
+    fn add(&mut self, word: u64) {
+        self.0 = (self.0.rotate_left(5) ^ word).wrapping_mul(0x51_7c_c1_b7_27_22_0a_95);
+    }
+}
+
+impl std::hash::Hasher for FastHasher {
+    fn finish(&self) -> u64 { self.0 }
+    fn write(&mut self, bytes: &[u8]) {
+        let mut chunks = bytes.chunks_exact(8);
+        for chunk in &mut chunks { self.add(u64::from_le_bytes(chunk.try_into().expect("8 bytes"))); }
+        for byte in chunks.remainder() { self.add(u64::from(*byte)); }
+    }
+    fn write_u8(&mut self, value: u8) { self.add(u64::from(value)); }
+    fn write_u32(&mut self, value: u32) { self.add(u64::from(value)); }
+    fn write_i32(&mut self, value: i32) { self.add(u64::from(value as u32)); }
+    fn write_u64(&mut self, value: u64) { self.add(value); }
+    fn write_usize(&mut self, value: usize) { self.add(value as u64); }
 }
 
 fn center([x, y, z]: [i32; 3]) -> [f64; 3] {

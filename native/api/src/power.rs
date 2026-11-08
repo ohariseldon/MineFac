@@ -43,7 +43,7 @@ pub(super) fn tier(block: &str) -> Option<&'static Tier> {
 
 #[derive(Default)]
 struct PoleChunk { nodes: BTreeMap<[i32; 3], bool>, revision: u64 }
-type Chunks = HashMap<(i32, i32), PoleChunk>;
+type Chunks = HashMap<(i32, i32), PoleChunk, FastHash>;
 /// Postes conhecidos por dimensão e chunk. `true` marca o poste de aço.
 static POLES: Mutex<Vec<(String, Chunks)>> = Mutex::new(Vec::new());
 
@@ -56,7 +56,7 @@ fn register(dimension: &str, pos: [i32; 3], steel: bool) {
     let index = match all.iter().position(|(name, _)| name == dimension) {
         Some(index) => index,
         None => {
-            all.push((dimension.to_owned(), HashMap::new()));
+            all.push((dimension.to_owned(), HashMap::default()));
             all.len() - 1
         }
     };
@@ -74,6 +74,16 @@ fn forget(dimension: &str, pos: [i32; 3]) {
     {
         cell.revision = cell.revision.wrapping_add(1);
     }
+}
+
+/// Há um poste (de madeira ou aço) a até `radius` blocos de `pos`? Lê só os chunks em volta.
+pub(super) fn pole_near(dimension: &str, pos: [i32; 3], radius: i32) -> bool {
+    let Ok(all) = POLES.lock() else { return false };
+    let Some((_, chunks)) = all.iter().find(|(name, _)| name == dimension) else { return false };
+    let (cx, cz) = chunk(pos);
+    let span = (radius >> 4) + 1;
+    (cx - span..=cx + span).any(|x| (cz - span..=cz + span).any(|z| chunks.get(&(x, z))
+        .is_some_and(|cell| cell.nodes.keys().any(|at| distance2(*at, pos) <= radius * radius))))
 }
 
 fn distance2(a: [i32; 3], b: [i32; 3]) -> i32 {

@@ -10,6 +10,12 @@ pub(super) mod caravan;
 
 pub(super) const CARD: &str = "veio:route_card";
 pub(super) const RANGE: i32 = 64;
+/// Estados dos terminais (`presentation::STATUS_KEYS`): rota incompleta, caravana sem animal,
+/// sem ração e animal ocupado.
+pub(crate) const NO_ROUTE: i32 = 40;
+pub(crate) const NO_ANIMAL: i32 = 41;
+pub(crate) const NO_FEED: i32 = 42;
+pub(crate) const ANIMAL_BUSY: i32 = 43;
 const CARGO: usize = 6;
 const STALE: u64 = 100;
 
@@ -152,7 +158,7 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return;
     }
     if entity.id == RAIL {
-        set_number(entity, "Status", if partner.is_some() || text(entity, "FreightImport").is_some() { 27 } else { 28 });
+        set_number(entity, "Status", if partner.is_some() || text(entity, "FreightImport").is_some() { 27 } else { NO_ROUTE });
         return;
     }
     if host.neighbor_signal(host.dimension(), pos) > 0 {
@@ -197,7 +203,7 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             valid = destination.id == DRONE && channel(destination) == channel(entity)
                 && text(destination, "FreightImport") == entity.items[CARGO].as_ref().map(|s| s.item.to_string());
         });
-        if !valid { set_number(entity, "Status", 28); return; }
+        if !valid { set_number(entity, "Status", NO_ROUTE); return; }
         let cargo = entity.items[CARGO].take().unwrap();
         let count = cargo.count;
         entity.items[CARGO] = host.insert_item(to, Direction::Up, cargo);
@@ -218,11 +224,11 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return;
     }
     let Some(partner) = partner.filter(|other| distance(pos, other.pos) <= f64::from(RANGE)) else {
-        set_number(entity, "Status", 28); return;
+        set_number(entity, "Status", NO_ROUTE); return;
     };
     let Some(item) = export(entity) else { set_number(entity, "Status", 2); return; };
     // Distinct goods per direction prevent an automatic A -> B -> A feedback loop.
-    if partner.export.as_deref() == Some(&item) { set_number(entity, "Status", 28); return; }
+    if partner.export.as_deref() == Some(&item) { set_number(entity, "Status", NO_ROUTE); return; }
     let Some(slot) = (0..3).find(|&i| entity.items[i].as_ref().is_some_and(|s| is_plain(s, &item))) else {
         set_number(entity, "Status", 2); return;
     };

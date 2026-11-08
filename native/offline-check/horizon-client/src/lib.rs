@@ -193,6 +193,8 @@ pub mod mod_api {
     }
     impl BlockEntityDraw {
         pub fn keep(&mut self) { self.kept = true; }
+        /// Só no substituto: o desenho pediu `keep` (o jogo o reaproveitaria).
+        pub fn preview_kept(&self) -> bool { self.kept }
         pub fn spin(&mut self, axis: [f32;3], pivot: [f32;3], rate: f32, phase: f32) { self.trace.push(DrawOp::Spin(axis,pivot,rate,phase)); }
         pub fn still(&mut self) { self.trace.push(DrawOp::Still); }
         pub fn push(&mut self) { self.trace.push(DrawOp::Push); }
@@ -257,6 +259,23 @@ pub mod mod_api {
             host.entity_position(self)
         }
     }
+    /// `mod_api::LivingRef` (Horizon 66f3981): uma entidade viva, de `Host::living`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct LivingRef(EntityRef);
+    impl LivingRef {
+        pub fn new(entity: EntityRef) -> Self {
+            Self(entity)
+        }
+        pub fn entity(self) -> EntityRef {
+            self.0
+        }
+        pub fn id(self) -> u32 {
+            self.0.id()
+        }
+    }
+    /// `horizon_world::player_inventory::EquipmentSlot`, reexportado por `mod_api`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum EquipmentSlot { MainHand, OffHand, Feet, Legs, Chest, Head, Body, Saddle }
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct LevelRef {
         dimension: &'static str,
@@ -346,6 +365,9 @@ pub mod mod_api {
         }
         fn kill_mob(&mut self, dimension: &str, id: u32) -> bool {
             unimplemented!("kill_mob")
+        }
+        fn set_mob_health(&mut self, dimension: &str, id: u32, health: f32) -> bool {
+            unimplemented!("set_mob_health")
         }
         fn play_sound(&mut self, sound: &str, at: [f64; 3], source: usize, volume: f32, pitch: f32) -> bool {
             unimplemented!("play_sound")
@@ -452,6 +474,15 @@ pub mod mod_api {
         fn run_command(&mut self, line: &str) -> bool {
             unimplemented!("run_command")
         }
+        /// `native_living_refs::Game::native_living`: a entidade como ser vivo.
+        fn living(&self, entity: EntityRef) -> Option<LivingRef> {
+            unimplemented!("living")
+        }
+        /// `native_living_refs::Game::native_living_set_equipment`: põe `stack` (None esvazia) no
+        /// slot de equipamento, como `/item replace entity`.
+        fn living_set_equipment(&mut self, living: LivingRef, slot: EquipmentSlot, stack: Option<ItemStack>) -> bool {
+            unimplemented!("living_set_equipment")
+        }
     }
 
     #[derive(Clone, Copy, Debug, PartialEq)]
@@ -549,6 +580,21 @@ pub mod mod_api {
             Self { block, data, batch, origin: [0.0, 0.0] }
         }
     }
+    /// `screen_click` (API 20): `replace`, o retorno é o botão.
+    #[non_exhaustive]
+    pub struct ScreenClickEvent<'a> {
+        pub block: &'a str,
+        pub data: &'a [i32],
+        pub at: [f32; 2],
+        pub right: bool,
+    }
+    /// `menu_button` (API 20), no servidor.
+    #[non_exhaustive]
+    pub struct MenuButtonEvent<'a> {
+        pub pos: [i32; 3],
+        pub entity: &'a mut ModBlockEntity,
+        pub id: i32,
+    }
     #[non_exhaustive]
     pub struct ScreenTooltipEvent<'a> {
         pub block: &'a str,
@@ -586,6 +632,11 @@ pub mod mod_api {
         pub fn new(pos: [i32;3], block: &'a str, entity: &'a ModBlockEntity, draw: &'a mut BlockEntityDraw) -> Self {
             Self {pos,block,state:BlockStateId(0),entity,draw}
         }
+        /// Só no substituto: monta o evento para medições do quadro.
+        pub fn preview(pos: [i32; 3], block: &'a str, state: BlockStateId, entity: &'a ModBlockEntity,
+            draw: &'a mut BlockEntityDraw) -> Self {
+            Self { pos, block, state, entity, draw }
+        }
     }
     #[non_exhaustive]
     pub struct EntityTickPreEvent<'a> {
@@ -593,12 +644,50 @@ pub mod mod_api {
         pub entity: u32,
         pub kind: &'a str,
     }
+    impl<'a> EntityTickPreEvent<'a> {
+        /// Só no substituto: monta o evento para medições.
+        pub fn preview(dimension: &'a str, entity: u32, kind: &'a str) -> Self {
+            Self { dimension, entity, kind }
+        }
+    }
     #[non_exhaustive]
     pub struct TickEvent {}
+    impl TickEvent {
+        /// Só no substituto: monta o evento para medições.
+        pub fn preview() -> Self {
+            Self {}
+        }
+    }
     #[non_exhaustive]
     pub struct PlayerLoggedInEvent<'a> {
         pub player: u128,
         pub name: &'a str,
+    }
+    /// `merchant::ItemCost` (Horizon 66f3981): o Veio só lê `stack`.
+    #[derive(Clone, Debug)]
+    pub struct ItemCost {
+        pub stack: ItemStack,
+    }
+    /// `merchant::MerchantOffer` (Horizon 66f3981), reexportado em `mod_api`.
+    #[derive(Clone, Debug)]
+    pub struct MerchantOffer {
+        pub base_cost_a: ItemCost,
+        pub cost_b: Option<ItemCost>,
+        pub result: ItemStack,
+        pub uses: i32,
+        pub max_uses: i32,
+        pub reward_exp: bool,
+        pub special_price_diff: i32,
+        pub demand: i32,
+        pub price_multiplier: f32,
+        pub xp: i32,
+    }
+    /// `trade_with_villager` (API 310): só escuta; a troca já foi feita.
+    #[non_exhaustive]
+    pub struct TradeWithVillagerEvent<'a> {
+        pub merchant: u32,
+        pub kind: &'a str,
+        pub offer: &'a MerchantOffer,
     }
     #[non_exhaustive]
     pub struct PlayerRespawnedEvent<'a> {
@@ -650,6 +739,10 @@ pub mod mod_api {
         }
         fn screen_draw(&self, host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {}
         fn screen_tooltip(&self, host: &dyn Host, event: &mut ScreenTooltipEvent<'_>) {}
+        fn screen_click(&self, host: &dyn Host, event: &mut ScreenClickEvent<'_>) -> Option<i32> {
+            None
+        }
+        fn menu_button(&self, host: &mut dyn Host, event: &mut MenuButtonEvent<'_>) {}
         fn tooltip(&self, host: &dyn Host, event: &mut TooltipEvent<'_>) {}
         fn menu_slot_rules(&self, event: &mut MenuSlotRulesEvent<'_>) {}
         fn block_entity_update_tag(&self, event: &mut BlockEntityUpdateTagEvent<'_>) -> Option<Compound> {
@@ -662,6 +755,7 @@ pub mod mod_api {
         fn tick(&self, host: &mut dyn Host, event: &mut TickEvent) {}
         fn player_logged_in(&self, host: &mut dyn Host, event: &mut PlayerLoggedInEvent<'_>) {}
         fn player_respawned(&self, host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {}
+        fn trade_with_villager(&self, host: &mut dyn Host, event: &mut TradeWithVillagerEvent<'_>) {}
         fn register_goals(&self, event: &mut RegisterGoalsEvent<'_>) {}
         fn block_entity_render_bounding_box(
             &self,
@@ -693,6 +787,12 @@ pub mod mobs {
         /// Offline fixture, not a Horizon API method.
         pub fn fixture() -> Self { Self { _world: std::marker::PhantomData } }
     }
+    impl MobWorld<'static> {
+        /// Só no substituto: um mundo vazio para rodar objetivos em testes e medições.
+        pub fn preview() -> Self {
+            Self { _world: std::marker::PhantomData }
+        }
+    }
     #[derive(Default)]
     pub struct Navigation {
         pub done: bool,
@@ -709,15 +809,95 @@ pub mod mobs {
         pub targets: goals::GoalSelector,
         pub nav: Navigation,
     }
-    #[derive(Default)]
-    pub struct Extra { pub rider: Option<u32>, pub leash: Option<()>, pub leash_pending: Option<()> }
+    /// Nome antigo usado nos testes de caravana.
+    pub type Extra = MobExtra;
     pub struct Mob {
         pub rider: Option<()>,
-        pub extra: Extra,
         pub id: u32,
         pub kind: Arc<MobType>,
         pub position: Vec3,
         pub ai: Ai,
+        /// No jogo, `MobExtra` tem muito mais; o Veio só chega ao aldeão por `villager::ext`.
+        pub extra: MobExtra,
+    }
+    #[derive(Default)]
+    pub struct MobExtra {
+        pub villager: Option<Box<villager::Ext>>,
+        pub rider: Option<u32>,
+        pub leash: Option<()>,
+        pub leash_pending: Option<()>,
+    }
+
+    /// `mobs::villager` (Horizon 66f3981): só o acesso ao cérebro que o Veio usa.
+    pub mod villager {
+        use super::Mob;
+        #[derive(Default)]
+        pub struct Ext {
+            /// O cérebro do aldeão, criado no primeiro tick.
+            pub brain: Option<Box<super::villager_brain::Brain>>,
+        }
+        pub fn ext(m: &Mob) -> Option<&Ext> {
+            m.extra.villager.as_deref()
+        }
+        pub fn ext_mut(m: &mut Mob) -> &mut Ext {
+            m.extra.villager.get_or_insert_with(Box::default)
+        }
+    }
+
+    /// `mobs::villager_brain` (Horizon 66f3981): memórias e atividade que o Veio lê e escreve.
+    pub mod villager_brain {
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        pub enum Act { Core, Idle, Work, Play, Rest, Meet, Panic, Raid, PreRaid, Hide }
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        pub enum Tracker {
+            Block([i32; 3]),
+            Point([f64; 3]),
+        }
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        pub struct WalkTarget {
+            pub target: Tracker,
+            pub speed: f32,
+            pub close: i32,
+        }
+        #[derive(Debug)]
+        pub struct Slot<T> {
+            v: Option<T>,
+        }
+        impl<T> Default for Slot<T> {
+            fn default() -> Self {
+                Self { v: None }
+            }
+        }
+        impl<T> Slot<T> {
+            pub fn set(&mut self, v: T) {
+                self.v = Some(v);
+            }
+            pub fn clear(&mut self) {
+                self.v = None;
+            }
+            pub fn get(&self) -> Option<&T> {
+                self.v.as_ref()
+            }
+        }
+        #[derive(Debug, Default)]
+        pub struct Memories {
+            pub walk_target: Slot<WalkTarget>,
+            pub hurt_by: Slot<i64>,
+            /// No Horizon é `Slot<Who>`; o Veio só chama `clear`.
+            pub hurt_by_entity: Slot<u32>,
+            pub nearest_hostile: Slot<u32>,
+        }
+        #[derive(Debug)]
+        pub struct Brain {
+            pub mem: Memories,
+            pub activity: Act,
+        }
+        impl Brain {
+            /// Só no substituto.
+            pub fn preview(activity: Act) -> Self {
+                Self { mem: Memories::default(), activity }
+            }
+        }
     }
     impl Mob {
         pub fn nav_move_to(&mut self, w: &MobWorld, at: [f64; 3], speed: f64) -> bool {
@@ -726,8 +906,43 @@ pub mod mobs {
         }
     }
 
+    /// `mobs::Species` (Horizon 66f3981): só as espécies que o Veio cita.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Species {
+        Villager,
+        IronGolem,
+    }
+
     pub mod goals {
-        use super::{Mob, MobWorld};
+        use super::{Mob, MobWorld, Species};
+        /// `goals::Prey` (Horizon 66f3981): o que um objetivo de alvo caça.
+        #[derive(Clone, Debug)]
+        pub enum Prey {
+            Player,
+            Species(Vec<Species>),
+        }
+        /// `goals::NearestTarget` (`NearestAttackableTargetGoal`, Horizon 66f3981).
+        #[derive(Clone, Debug)]
+        pub struct NearestTarget {
+            pub prey: Prey,
+            pub must_see: bool,
+        }
+        impl NearestTarget {
+            pub fn new(prey: Prey, must_see: bool) -> Self {
+                Self { prey, must_see }
+            }
+        }
+        impl Goal for NearestTarget {
+            fn flags(&self) -> u8 {
+                TARGET
+            }
+            fn can_use(&mut self, _m: &mut Mob, _cx: &mut Cx) -> bool {
+                false
+            }
+            fn box_clone(&self) -> Box<dyn Goal> {
+                Box::new(self.clone())
+            }
+        }
         pub const MOVE: u8 = 1;
         pub const LOOK: u8 = 2;
         pub const JUMP: u8 = 4;
@@ -763,4 +978,9 @@ pub mod mobs {
             }
         }
     }
+}
+
+/// `horizon_client::merchant` (Horizon 66f3981): o tipo do custo de uma oferta.
+pub mod merchant {
+    pub use crate::mod_api::{ItemCost, MerchantOffer};
 }

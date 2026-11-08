@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "minecraft:oak_planks",
+    "minecraft:oak_planks",
+    "minecraft:oak_planks",
+    "minecraft:oak_planks",
+    "minecraft:oak_door",
+    "minecraft:glass_pane"
+  ],
+  "result": {
+    "id": "veio:house",
+    "count": 1
+  }
+}

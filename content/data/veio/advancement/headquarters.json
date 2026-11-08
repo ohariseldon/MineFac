@@ -27,5 +27,11 @@
     [
       "get_0"
     ]
-  ]
+  ],
+  "rewards": {
+    "recipes": [
+      "veio:export_dock",
+      "veio:freight_station"
+    ]
+  }
 }

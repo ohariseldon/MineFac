@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/market",
+  "display": {
+    "icon": {
+      "id": "veio:town_hall"
+    },
+    "title": {
+      "translate": "veio.village.stage.mayor.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.mayor.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:town_hall"
+          }
+        ]
+      }
+    }
+  }
+}

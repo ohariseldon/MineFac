@@ -16,7 +16,8 @@
 //! não renovada vence e a tarefa volta a ficar livre. Ao pegar os itens na origem, o carregador
 //! tira a tarefa da fila (`complete`).
 use super::*;
-use std::sync::atomic::{AtomicBool, Ordering};
+mod planning;
+mod search;
 use std::sync::Mutex;
 
 pub(super) const RADIUS: i32 = 12;
@@ -33,7 +34,7 @@ const EMERALD_SLOT: usize = 3;
 const MAX_NETWORK: usize = 24;
 /// Tarefas na fila.
 pub(super) const MAX_QUEUE: usize = 8;
-/// A fila é refeita a cada 4 ciclos do capataz (40 ticks).
+/// Solicita uma fila a cada 4 ciclos; sua preparação pode avançar por vários ticks.
 const ORGANIZE_EVERY: i32 = 4;
 /// Uma tarefa marcada por um carregador volta a ficar livre se a marca não for renovada.
 const TASK_STALE: u64 = 200;
@@ -142,25 +143,8 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
 
 // ---------- Fila de tarefas ----------
 
-static DESKS: Mutex<Vec<(String, [i32; 3], u64)>> = Mutex::new(Vec::new());
-static DESKS_PENDING: AtomicBool = AtomicBool::new(false);
-
-fn register_desk(dimension: &str, pos: [i32; 3], now: u64) {
-    if let Ok(mut desks) = DESKS.lock() {
-        desks.retain(|(dim, at, seen)| !(dim == dimension && *at == pos) && now.saturating_sub(*seen) <= TASK_STALE);
-        desks.push((dimension.to_owned(), pos, now));
-        DESKS_PENDING.store(true, Ordering::Release);
-    }
-}
-
-fn desks_near(dimension: &str, at: [i32; 3], now: u64) -> Vec<[i32; 3]> {
-    if !DESKS_PENDING.load(Ordering::Acquire) {
-        return Vec::new();
-    }
-    DESKS.lock().map(|desks| desks.iter()
-        .filter(|(dim, desk, seen)| dim == dimension && now.saturating_sub(*seen) <= TASK_STALE
-            && distance(*desk, at) <= DESK_RANGE)
-        .map(|(_, desk, _)| *desk).collect()).unwrap_or_default()
+fn register_desk(dimension: &'static str, pos: [i32; 3], now: u64) {
+    search::register(dimension, pos, now);
 }
 
 fn distance(a: [i32; 3], b: [i32; 3]) -> f64 {
@@ -192,23 +176,21 @@ fn int(tag: Option<&Tag>) -> i32 {
     match tag { Some(Tag::Int(value)) => *value, _ => 0 }
 }
 
+fn decode_task(tag: &Tag) -> Option<Task> {
+    let Tag::Compound(task) = tag else { return None };
+    let get = |key: &str| task.get(nbt_key(key));
+    let Some(Tag::String(item)) = get("item") else { return None };
+    Some(Task {
+        id: int(get("id")), from: int_array(get("from"))?, slot: int(get("slot")).max(0) as usize,
+        item: item.to_string_lossy(), count: int(get("count")).max(0) as u32,
+        to: int_array(get("to"))?, into: int(get("into")).max(0) as usize,
+        by: int_array(get("by")).map(|by| (by, match get("seen") { Some(Tag::Long(seen)) => *seen as u64, _ => 0 })),
+    })
+}
+
 pub(super) fn queue(desk: &ModBlockEntity) -> Vec<Task> {
-    let Some(Tag::List(list)) = desk.nbt.get(&"Queue".into()) else { return Vec::new() };
-    list.iter().filter_map(|tag| {
-        let Tag::Compound(task) = tag else { return None };
-        let get = |key: &str| task.get(&key.into());
-        let Some(Tag::String(item)) = get("item") else { return None };
-        Some(Task {
-            id: int(get("id")),
-            from: int_array(get("from"))?,
-            slot: int(get("slot")).max(0) as usize,
-            item: item.to_string_lossy(),
-            count: int(get("count")).max(0) as u32,
-            to: int_array(get("to"))?,
-            into: int(get("into")).max(0) as usize,
-            by: int_array(get("by")).map(|by| (by, match get("seen") { Some(Tag::Long(seen)) => *seen as u64, _ => 0 })),
-        })
-    }).collect()
+    let Some(Tag::List(list)) = desk.nbt.get(nbt_key("Queue")) else { return Vec::new() };
+    list.iter().filter_map(decode_task).collect()
 }
 
 fn set_queue(desk: &mut ModBlockEntity, tasks: &[Task]) {
@@ -260,9 +242,31 @@ fn queue_outputs(block: &str) -> Vec<usize> {
     }
 }
 
-/// Varre a rede e, a cada `ORGANIZE_EVERY` ciclos, refaz a fila. Tarefas já pegas por um
-/// carregador (e renovadas) são mantidas; as demais são recalculadas do estado atual.
+/// Descobre a rede e solicita a fila incremental a cada `ORGANIZE_EVERY` ciclos.
+/// A fila anterior permanece disponível até a publicação de um plano completo.
 pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
+    register_desk(host.dimension(), pos, now);
+    if number(entity, "PlanningPending") != 0 {
+        planning::advance(host, pos, entity, now);
+        return;
+    }
+    let Some(network) = scan_named(host, pos, entity, "Area", RADIUS, SCAN, MAX_NETWORK, &networked, true) else { return };
+    let round = (number(entity, "Organize") + 1) % ORGANIZE_EVERY;
+    set_number(entity, "Organize", round);
+    if round != 0 { return; }
+    planning::start(host.dimension(), pos, entity, network, now);
+    planning::advance(host, pos, entity, now);
+}
+
+pub(super) fn continue_planning(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
+    planning::advance(host, pos, entity, now);
+}
+
+pub(super) fn maintenance(now: u64) { planning::maintenance(now); search::maintenance(now); }
+
+// Original whole-job planner: offline equivalence oracle and historical benchmark.
+#[cfg(test)]
+pub(super) fn reference_organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
     let dimension = host.dimension();
     register_desk(dimension, pos, now);
     if !budget::request(budget::Lane::Planning, dimension, pos, 1) { return; }
@@ -352,32 +356,30 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
 
 /// Tarefa da fila para o carregador em `hauler`: a que ele já pegou, ou a primeira livre cuja
 /// origem e destino estejam ao alcance dele.
+pub(super) enum TaskSearch { Found(Plan), Pending, Empty }
+
+#[cfg(test)]
 pub(super) fn claim_task(host: &mut dyn Host, hauler: [i32; 3], now: u64) -> Option<Plan> {
-    if !DESKS_PENDING.load(Ordering::Acquire) {
-        return None;
-    }
-    let dimension = host.dimension();
-    for desk in desks_near(dimension, hauler, now) {
-        let mut claimed = None;
-        host.change_mod_block_entity(desk, &mut |table| {
-            if table.id != FOREMAN_DESK {
-                return;
-            }
-            let mut tasks = queue(table);
-            let mine = tasks.iter().position(|task| task.by.is_some_and(|(by, seen)| by == hauler && now.saturating_sub(seen) <= TASK_STALE));
-            let free = || tasks.iter().position(|task| task.by.is_none_or(|(_, seen)| now.saturating_sub(seen) > TASK_STALE)
-                && distance(task.from, hauler) <= HAUL_RANGE && distance(task.to, hauler) <= HAUL_RANGE);
-            let Some(index) = mine.or_else(free) else { return };
-            tasks[index].by = Some((hauler, now));
-            claimed = Some(tasks[index].clone());
-            set_queue(table, &tasks);
-        });
-        if let Some(task) = claimed {
-            return Some(Plan::Fetch { desk, task: task.id, from: task.from, slot: task.slot, item: task.item,
-                count: task.count, to: task.to, into: task.into });
+    match search::poll(host, hauler, now, None) { TaskSearch::Found(plan) => Some(plan), _ => None }
+}
+
+pub(super) fn search_task(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) -> TaskSearch {
+    let result = search::poll(host, pos, now, Some(entity));
+    set_number(entity, "HaulSearchPending", i32::from(matches!(result, TaskSearch::Pending)));
+    if let TaskSearch::Found(Plan::Fetch { desk, task, .. }) = &result {
+        if int_array(entity.nbt.get(nbt_key("HaulTaskDesk"))) != Some(*desk) {
+            entity.nbt.insert(nbt_key("HaulTaskDesk").clone(), Tag::IntArray(desk.to_vec()));
         }
+        set_number(entity, "HaulTaskId", *task);
+    } else {
+        entity.nbt.remove(nbt_key("HaulTaskDesk"));
+        entity.nbt.remove(nbt_key("HaulTaskId"));
     }
-    None
+    result
+}
+
+pub(super) fn continue_search(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
+    let _ = search_task(host, pos, entity, now);
 }
 
 /// Tira a tarefa da fila: o carregador já pegou os itens (ou não havia mais nada na origem).

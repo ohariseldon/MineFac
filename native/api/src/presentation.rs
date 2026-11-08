@@ -16,13 +16,21 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 32] = [
+pub(super) const STATUS_KEYS: [&str; 44] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
     "no_worker", "absent", "no_task", "no_food", "path", "walking", "idle_work", "no_wage",
     // Zonas e armazéns.
-    "zone", "storing", "freight_route", "caravan_animal", "caravan_feed", "caravan_busy",
+    "zone", "storing", "rest",
+    // Casas (`workforce::society`).
+    "housed", "no_permit", "empty_home",
+    // Conexões externas: sem companhia, porto sem água, estação fora da fronteira.
+    "no_company", "no_water", "not_frontier", "locked_market",
+    // Reservado ao canteiro de obras (36-39, PR das obras).
+    "idle", "idle", "idle", "idle",
+    // Terminais de transporte (`freight`): rota, caravana sem animal, sem ração, animal ocupado.
+    "freight_route", "caravan_animal", "caravan_feed", "caravan_busy",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
@@ -134,6 +142,10 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         workforce::center::draw_screen(host, event);
         return;
     }
+    if event.block == workforce::TOWN_HALL {
+        workforce::society::draw_screen(host, event);
+        return;
+    }
     let status = read(0).clamp(0, STATUS_KEYS.len() as i32 - 1) as usize;
     let status_text = Text::tr(&format!("veio.status.{}", STATUS_KEYS[status]), &[]).plain();
     lamp_icon(host, event, [9.0, 24.0], status);
@@ -219,24 +231,36 @@ fn lamp_icon(host: &dyn Host, event: &mut ScreenDrawEvent<'_>, [lx, ly]: [f32; 2
 /// (`tools/check_project.py` confere).
 pub(super) const DATA_SLOTS: usize = 13;
 
-pub(super) fn publish(entity: &mut ModBlockEntity) {
+/// Copia o NBT para o painel. Devolve `true` quando o item desenhado sobre a esteira mudou:
+/// o desenho só lê o nome (`DisplayItem`), então mudar só a quantidade não pede sincronia.
+pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
     // These blocks have no menu; rendering and electricity read their NBT directly.
-    if matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE) { return; }
+    if matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE) { return false; }
     logistics_controls::publish(entity);
     let values = if entity.id == workforce::CONTROL_CENTER {
         workforce::center::data(entity)
+    } else if entity.id == workforce::TOWN_HALL {
+        workforce::society::hall_data(entity)
     } else if workforce::zones::is_marker(&entity.id) {
         workforce::zones::data(entity)
     } else {
+        // Os 14 números numa passada só pelo NBT, em vez de 12 buscas por tick.
+        static KEYS: std::sync::OnceLock<[&'static JavaString; 14]> = std::sync::OnceLock::new();
+        let keys = KEYS.get_or_init(|| {
+            let keys = [nbt_key("Burn"), nbt_key("BurnTotal"), nbt_key("ContractStage"), nbt_key("Damage"),
+                nbt_key("Duration"), nbt_key("Info"), nbt_key("LocalSmog"), nbt_key("Module"), nbt_key("Progress"),
+                nbt_key("Rate"), nbt_key("Status"), nbt_key("Total"), nbt_key("Utilization"), nbt_key("energy")];
+            assert!(keys.is_sorted(), "na ordem do mapa");
+            keys
+        });
+        let [burn, burn_total, stage, damage, duration, info, smog, module, progress, rate, status, total,
+            utilization, energy] = numbers_sorted(entity, keys);
         let (progress, duration) = match entity.id.as_str() {
-            GENERATOR | GEOTHERMAL => (number(entity, "Burn"), number(entity, "BurnTotal").max(1)),
-            _ => (number(entity, "Progress"), number(entity, "Duration").max(1)),
+            GENERATOR | GEOTHERMAL => (burn, burn_total.max(1)),
+            _ => (progress, duration.max(1)),
         };
-        [number(entity, "Status"), progress, duration,
-            number(entity, "energy"), number(entity, "Burn"), capacity(&entity.id), number(entity, "Rate"),
-            number(entity, "Utilization"), if freight::owns(&entity.id) { number(entity, "FlightPhase") } else { number(entity, "ContractStage") }, number(entity, "Total"),
-            number(entity, "Damage"), number(entity, "Module"),
-            if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") }]
+        [status, progress, duration, energy, burn, capacity(&entity.id), rate, utilization, if freight::owns(&entity.id) { number(entity, "FlightPhase") } else { stage }, total,
+            damage, module, if entity.id == TESLA { smog } else { info }]
     };
     debug_assert_eq!(values.len(), DATA_SLOTS);
     if entity.data.len() != DATA_SLOTS {
@@ -244,22 +268,26 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
     }
     entity.data.copy_from_slice(&values);
     if !matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
-        return;
+        return false;
     }
     let count = logistics::display_stack(entity).map_or(0, |stack| stack.count) as i32;
-    let same = {
+    let (same, was_empty) = {
         let name = logistics::display_stack(entity).map_or("", |stack| stack.item.as_ref());
-        with_nbt_key("DisplayItem", |key| {
-            matches!(entity.nbt.get(key), Some(Tag::String(old)) if java_eq(old, name))
-        }) && number(entity, "DisplayCount") == count
+        with_nbt_key("DisplayItem", |key| match entity.nbt.get(key) {
+            Some(Tag::String(old)) => (java_eq(old, name), old.0.is_empty()),
+            _ => (false, true),
+        })
     };
-    if !same {
-        let name = logistics::display_stack(entity).map_or(String::new(), |stack| stack.item.as_ref().to_owned());
-        with_nbt_key("DisplayItem", |key| {
-            entity.nbt.insert(key.clone(), Tag::String(name.as_str().into()));
-        });
-        set_number(entity, "DisplayCount", count);
+    set_number(entity, "DisplayCount", count);
+    if same {
+        return false;
     }
+    let name = logistics::display_stack(entity).map_or(String::new(), |stack| stack.item.as_ref().to_owned());
+    with_nbt_key("DisplayItem", |key| {
+        entity.nbt.insert(key.clone(), Tag::String(name.as_str().into()));
+    });
+    // Sem carga antes e depois (só faltava a chave): o desenho não muda.
+    !(was_empty && name.is_empty())
 }
 
 /// Cor das luzes no mundo: fortes, para ler de longe.
@@ -279,8 +307,8 @@ pub(super) fn lamp_color(status: usize) -> u32 {
 /// Cor do texto de estado sobre o painel cinza.
 pub(super) fn text_color(status: usize) -> u32 {
     match status {
-        1 | 23 => 0x1e7a1e,
-        3 | 22 => 0x9a5a00,
+        1 | 23 | 29 => 0x1e7a1e,
+        3 | 22 | 30 => 0x9a5a00,
         2 | 10 | 11 | 16 | 17 | 18 | 20 | 21 | 24 | 25 => 0x6b5a00,
         4..=6 | 12..=15 | 19 => 0xaa1f1f,
         7 => 0x7a6420,
@@ -288,6 +316,28 @@ pub(super) fn text_color(status: usize) -> u32 {
         9 => 0x7a2fa0,
         _ => INK,
     }
+}
+
+/// Item desenhado a partir do nome no NBT. Os últimos nomes ficam prontos, para o quadro não
+/// montar `String` e `ItemStack` de novo em cada esteira.
+pub(super) fn with_drawn_item(name: &JavaString, draw: impl FnOnce(&ItemStack)) {
+    use std::cell::RefCell;
+    const KEPT: usize = 64;
+    thread_local! {
+        static ITEMS: RefCell<Vec<(JavaString, ItemStack)>> = const { RefCell::new(Vec::new()) };
+    }
+    ITEMS.with(|items| {
+        let mut items = items.borrow_mut();
+        let index = match items.iter().position(|(kept, _)| kept == name) {
+            Some(index) => index,
+            None => {
+                if items.len() == KEPT { items.remove(0); }
+                items.push((name.clone(), ItemStack::new(&name.to_string_lossy(), 1)));
+                items.len() - 1
+            }
+        };
+        draw(&items[index].1);
+    });
 }
 
 const FLAT: [Option<CubeFace<'static>>; 6] = [Some(CubeFace { sprite: "veio:gui/material", uv: None }); 6];
@@ -353,10 +403,9 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
             };
             host.draw_cube(event.draw, from, to, FLAT, 0x3a3a3a);
         }
-        if let Some(Tag::String(item)) = event.entity.nbt.get(&"DisplayItem".into()) {
-            let name = item.to_string_lossy();
-            if !name.is_empty() {
-                let u = if !matches!(status, 0 | 1) { 0.5 } else { t };
+        if let Some(Tag::String(item)) = event.entity.nbt.get(nbt_key("DisplayItem")) {
+            if !item.0.is_empty() {
+                let u = if matches!(status, 3 | 9) { 0.5 } else { t };
                 event.draw.push();
                 let point = if logistics::is_belt(event.block) {
                     let mut point = logistics::orient(logistics::path_point(path, u), facing);
@@ -368,9 +417,14 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
                 event.draw.translate(point);
                 event.draw.rotate_about([1.0, 0.0, 0.0], 90.0, [0.0; 3]);
                 event.draw.scale([0.4; 3]);
-                host.draw_item(event.draw, &ItemStack::new(&name, 1), DisplayContext::Fixed, None, 0);
+                with_drawn_item(item, |stack| { host.draw_item(event.draw, stack, DisplayContext::Fixed, None, 0); });
                 event.draw.pop();
             }
+        }
+        // Parada (bloqueada ou desligada), a esteira não anda: nada no desenho lê o tempo, e o
+        // jogo o reaproveita até o estado ou a carga mudarem (sincronia).
+        if matches!(status, 3 | 9) {
+            event.draw.keep();
         }
     } else {
         if event.block == TESLA {

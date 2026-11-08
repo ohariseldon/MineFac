@@ -39,6 +39,11 @@ o resolvedor anterior como referência de equivalência. Ele não mede o agendad
 incremental. Os limites e testes do novo caminho estão em
 [frentes/REDES-INCREMENTAIS.md](frentes/REDES-INCREMENTAIS.md).
 
+O mesmo vale para `foreman_95_node_queue`: ele mantém o planejador anterior
+somente como referência histórica sob `cfg(test)`. O caminho de execução foi
+substituído pelas etapas descritas em
+[frentes/CAPATAZES-INCREMENTAIS.md](frentes/CAPATAZES-INCREMENTAIS.md).
+
 Referência instrumentada: `b4c09cf`, sem as otimizações de execução deste lote.
 Código otimizado medido: `e4166a6`. Os relatórios guardam os SHAs completos em
 [performance/before.json](performance/before.json) e
