@@ -32,6 +32,14 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## 0.17.0: o inimigo e o quartel
+
+Partindo do que o Grok fez (ondas e quartel), o inimigo ficou mais justo e mais leve:
+
+- **Ondas com frente:** chegam num arco de 90° a 26 blocos da máquina mais poluída, de um lado diferente a cada noite. Da 3ª noite de ataque vêm esqueletos arqueiros (um quarto da onda); da 5ª, pelo menos um **Bruto** (`veio:raider_brute`: 40 de vida, velocidade 0,2, dano 6, resistência a empurrão 0,6).
+- **Combate vanilla:** saqueadores e brutos são zumbis com visão de 40 blocos; esqueletos, aranhas e parentes ganham o alvo vanilla "aldeão mais próximo" (`NearestTarget`). O dano é o do jogo, sem contadores falsos e sem varrer aldeões por mob em todo tick. A sabotagem só procura máquina a cada 20 chamadas.
+- **Quartel:** os golpes do soldado tiram vida de verdade (`set_mob_health`; no último, `kill_mob`, com saque). Milícia 7 de dano, guarda 5 e se cura 3 a cada golpe, arqueiro 5 a 16 blocos, mago 10 e metade num segundo monstro. Trocar de classe: **agachar com uma esmeralda na mão** (a mão vazia nunca chegava ao quartel). O soldado fica de plantão à noite e, enquanto tem ordem, esquece o medo (as memórias de susto do cérebro são limpas antes dele pensar), então não foge do monstro.
+
 ## 0.16.1: o trabalhador segura o que carrega
 
 - Enquanto leva algo (trigo, lã, minério, insumos, a esmeralda do capataz), o aldeão segura na mão o primeiro item da carga; ao entregar, à noite e ao ser dispensado, a mão fica vazia.
@@ -268,7 +276,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0 e 135 na 0.16.1 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1 e 138 na 0.17.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
@@ -278,6 +286,13 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 - Dois pastores podem perseguir o mesmo animal (a reserva é por bloco, e o animal anda); o segundo só encontra o animal já atendido e procura outro.
 - A rede da mesa guarda os primeiros 24 blocos encontrados; numa base muito densa, postos podem ficar de fora.
 - O carregador, depois da primeira volta, ainda inspeciona até 12 máquinas a cada 10 ticks quando escolhe a próxima viagem; um teto de inspeções por ciclo fica para um lote seguinte.
+
+## Teste sugerido ao usuário (0.17.0, inimigo)
+
+1. Polua bastante (geradores) e espere o aviso no chat; na noite seguinte, veja a onda chegar por um lado.
+2. Monte um quartel, contrate com esmeralda e ponha pão. Agache com uma esmeralda para trocar a classe.
+3. À noite, confira que o soldado não vai dormir nem foge, e que o monstro morre depois de alguns golpes (e solta saque).
+4. Sobreviva até a 3ª e a 5ª noites de ataque: esqueletos e o Bruto aparecem.
 
 ## Teste sugerido ao usuário (sexta entrega)
 

@@ -33,6 +33,7 @@ pub(super) mod farmhand;
 pub(super) mod foreman;
 pub(super) mod hauler;
 pub(super) mod shepherd;
+pub(super) mod barracks;
 pub(super) mod center;
 pub(super) mod storage;
 pub(super) mod spawn;
@@ -44,6 +45,7 @@ pub(super) const HAULER_POST: &str = "veio:hauler_post";
 pub(super) const FOREMAN_DESK: &str = "veio:foreman_desk";
 pub(super) const SHEPHERD_POST: &str = "veio:shepherd_post";
 pub(super) const CONTROL_CENTER: &str = center::CONTROL_CENTER;
+pub(super) const BARRACKS: &str = barracks::BARRACKS;
 pub(super) use zones::{FIELD_MARKER, PEN_MARKER};
 pub(super) const VILLAGER: &str = "minecraft:villager";
 /// Contratar custa uma esmeralda, paga só quando a contratação dá certo.
@@ -79,7 +81,7 @@ pub(super) const KEEP: i32 = -1;
 /// Trigo cru vale 1 e não paga o ciclo; pão vale 6 e paga três tarefas.
 pub(super) const TASK_COST: i32 = 2;
 /// O posto age a cada 10 ticks, com a fase espalhada pela posição.
-const EVERY: i64 = 10;
+pub(super) const EVERY: i64 = 10;
 /// Aldeões a até esta distância do posto podem ser contratados por ele.
 pub(super) const HIRE_RADIUS: f64 = 8.0;
 /// Procura o trabalhador nesta distância quando o id da sessão não é conhecido.
@@ -108,7 +110,7 @@ pub(super) type Uuid = [i32; 4];
 
 /// Blocos com trabalhador contratado.
 pub(super) fn is_post(block: &str) -> bool {
-    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST | CONTROL_CENTER)
+    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST | CONTROL_CENTER | BARRACKS)
 }
 
 /// Todos os blocos deste módulo: postos, marcos de zona e armazéns.
@@ -128,6 +130,7 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         SHEPHERD_POST => (5, vec![0, 1], vec![2, 3, 4]),
         // Comida do administrador; três metas (sem automação).
         CONTROL_CENTER => (4, vec![0], vec![]),
+        BARRACKS => (2, vec![0, 1], vec![]),
         _ => return zones::layout(block).or_else(|| storage::layout(block)),
     })
 }
@@ -171,6 +174,8 @@ pub(super) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (HAULER_POST, 1..=3) => true,
         (FOREMAN_DESK, 3) => stack.item.as_ref() == WAGE,
         (CONTROL_CENTER, _) => center::accepts(slot, stack),
+        (BARRACKS, 0) => is_food(&stack.item),
+        (BARRACKS, 1) => stack.item.as_ref() == WAGE,
         _ if zones::is_marker(block) => zones::accepts(block, slot, stack),
         _ if storage::is_store(block) => storage::accepts(block, slot, stack),
         _ => false,
@@ -266,6 +271,28 @@ pub(super) fn cancel(entity: u32) {
     }
 }
 
+/// Soldados de plantão (quartel): o objetivo os mantém na luta mesmo com medo ou à noite.
+static DUTY: Mutex<Vec<(u32, u64)>> = Mutex::new(Vec::new());
+static ON_DUTY: AtomicBool = AtomicBool::new(false);
+
+/// O quartel renova o plantão do seu soldado a cada tarefa.
+pub(super) fn duty(entity: u32, now: u64) {
+    let Ok(mut duty) = DUTY.lock() else { return };
+    duty.retain(|(id, seen)| *id != entity && now.saturating_sub(*seen) <= ORDER_FRESH);
+    if duty.len() < 256 {
+        duty.push((entity, now));
+    }
+    ON_DUTY.store(true, Ordering::Release);
+}
+
+/// Este aldeão está de plantão agora?
+pub(super) fn on_duty(entity: u32, now: u64) -> bool {
+    ON_DUTY.load(Ordering::Acquire)
+        && DUTY.lock().is_ok_and(|duty| {
+            duty.iter().any(|(id, seen)| *id == entity && now.saturating_sub(*seen) <= ORDER_FRESH)
+        })
+}
+
 /// Destino atual do aldeão, se o posto renovou a ordem há pouco.
 pub(super) fn order_for(entity: u32, now: u64) -> Option<[f64; 3]> {
     if !ORDERS_PENDING.load(Ordering::Acquire) {
@@ -284,6 +311,8 @@ pub(super) struct Work {
     cooldown: i32,
     /// Chamadas até a próxima consulta ao mapa de ordens.
     wait: u8,
+    /// Soldado de plantão: não foge nem dorme.
+    duty: bool,
 }
 
 /// O objetivo consulta o mapa de ordens a cada `ORDER_POLL` chamadas (meio segundo).
@@ -300,7 +329,9 @@ impl Goal for Work {
             return self.target.is_some();
         }
         self.wait = ORDER_POLL - 1;
-        self.target = order_for(m.id, defense::clock());
+        let now = defense::clock();
+        self.target = order_for(m.id, now);
+        self.duty = self.target.is_some() && on_duty(m.id, now);
         self.target.is_some()
     }
     fn start(&mut self, m: &mut Mob, cx: &mut Cx) {
@@ -309,7 +340,7 @@ impl Goal for Work {
     }
     fn tick(&mut self, m: &mut Mob, cx: &mut Cx) {
         let Some(goal) = self.target else { return };
-        match steer(m, goal) {
+        match steer(m, goal, self.duty) {
             // O cérebro anda até o alvo: nada a fazer aqui.
             Steer::Brain => {}
             // Pânico, ataque, esconderijo ou sono: o aldeão cuida de si e o posto espera.
@@ -355,14 +386,26 @@ fn walk_block(goal: [f64; 3]) -> [i32; 3] {
 /// sempre que tem um alvo de caminhada (`MoveToTargetSink`). Em vez de disputar a navegação, a
 /// ordem vira esse alvo: os outros comportamentos (passear, sino, emprego) só escolhem alvo
 /// quando não há um, então o próprio cérebro leva o trabalhador à tarefa.
-fn steer(m: &mut Mob, goal: [f64; 3]) -> Steer {
+///
+/// Um soldado de plantão (`duty`) esquece o medo e a hora de dormir: o objetivo roda antes do
+/// cérebro, então limpar as memórias de susto e voltar a atividade para `Idle` evita que o
+/// pânico o faça fugir do monstro que ele devia enfrentar.
+fn steer(m: &mut Mob, goal: [f64; 3], duty: bool) -> Steer {
     use horizon_client::mobs::villager;
     use horizon_client::mobs::villager_brain::{Act, Tracker, WalkTarget};
     if villager::ext(m).and_then(|ext| ext.brain.as_ref()).is_none() {
         return Steer::Navigation;
     }
     let Some(brain) = villager::ext_mut(m).brain.as_mut() else { return Steer::Navigation };
-    if matches!(brain.activity, Act::Panic | Act::Raid | Act::PreRaid | Act::Hide | Act::Rest) {
+    let busy = matches!(brain.activity, Act::Panic | Act::Raid | Act::PreRaid | Act::Hide | Act::Rest);
+    if duty {
+        brain.mem.hurt_by.clear();
+        brain.mem.hurt_by_entity.clear();
+        brain.mem.nearest_hostile.clear();
+        if busy {
+            brain.activity = Act::Idle;
+        }
+    } else if busy {
         return Steer::Busy;
     }
     let target = WalkTarget { target: Tracker::Block(walk_block(goal)), speed: 0.6, close: 1 };
@@ -737,6 +780,9 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
     if block == CONTROL_CENTER && held == "minecraft:book" {
         return center::report_to_chat(host, pos);
     }
+    if block == BARRACKS && host.sneaking() && held == WAGE {
+        return barracks::cycle(host, pos);
+    }
     if !is_post(&block) {
         return None;
     }
@@ -806,7 +852,7 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
 }
 
 /// Mensagem na barra de ação do jogador mais próximo do posto.
-fn notify(host: &mut dyn Host, pos: [i32; 3], key: &str) {
+pub(super) fn notify(host: &mut dyn Host, pos: [i32; 3], key: &str) {
     let at = center(pos);
     let dimension = host.dimension();
     let nearest = host.server_players().into_iter()
@@ -916,7 +962,8 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return;
     };
     set_number(entity, "Absent", 0);
-    if night(host) {
+    // O quartel fica de plantão à noite: é quando os monstros aparecem.
+    if night(host) && entity.id != BARRACKS {
         // A carga e o alvo ficam guardados: o trabalho continua de manhã.
         show_load(host, entity, id, false);
         cancel(id);
@@ -1006,6 +1053,14 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         unreserve(dimension, pos);
         order(id, home, now);
         return 1;
+    }
+    if entity.id == BARRACKS {
+        if !feed(entity, TASK_COST) {
+            cancel(id);
+            set_target(entity, None);
+            return NO_FOOD;
+        }
+        return barracks::fight(host, pos, entity, id, at, now);
     }
     // 2. Comida: cada tarefa gasta `TASK_COST` pontos; o trabalhador come até cobrir.
     if !feed(entity, TASK_COST) {
@@ -1124,7 +1179,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
 }
 
 /// Uma tarefa concluída: gasta comida e conta no painel.
-fn finish_task(entity: &mut ModBlockEntity) {
+pub(super) fn finish_task(entity: &mut ModBlockEntity) {
     set_number(entity, "Ration", number(entity, "Ration").saturating_sub(TASK_COST));
     set_number(entity, "Total", number(entity, "Total").saturating_add(1));
 }
@@ -1198,7 +1253,7 @@ fn hire_for(host: &mut dyn Host, spot: [i32; 3], now: u64) -> bool {
 }
 
 /// Conta o tempo de caminhada; acima do limite, desiste do alvo (caminho obstruído).
-fn walk(entity: &mut ModBlockEntity, spot: Option<[i32; 3]>) -> i32 {
+pub(super) fn walk(entity: &mut ModBlockEntity, spot: Option<[i32; 3]>) -> i32 {
     let walked = number(entity, "Walk") + EVERY as i32;
     if walked < WALK_LIMIT {
         set_number(entity, "Walk", walked);
@@ -1247,6 +1302,7 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         // O capataz publica os postos atendidos em `Rate` (slot 6), livre fora das máquinas elétricas.
         FOREMAN_DESK => (tr("veio.metric.posts", &[&read(6), &read(7)]), "veio.hint.foreman_desk"),
         SHEPHERD_POST => (tr("veio.metric.chores", &[&read(9)]), "veio.hint.shepherd_post"),
+        BARRACKS => (tr("veio.metric.kills", &[&read(9)]), barracks::hint(read(6))),
         _ => return zones::panel_lines(block, data).or_else(|| storage::panel_lines(block, data)),
     };
     Some(vec![first, tr("veio.metric.ration", &[&read(12)]), tr(hint, &[])])
@@ -1260,6 +1316,7 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         FOREMAN_DESK => vec![Some([44.0, 45.0]), Some([62.0, 45.0]), Some([80.0, 45.0]), Some([134.0, 45.0])],
         SHEPHERD_POST => vec![Some([17.0, 45.0]), Some([39.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
         CONTROL_CENTER => center::screen_slots(),
+        BARRACKS => vec![Some([44.0, 45.0]), Some([134.0, 45.0])],
         FIELD_MARKER | PEN_MARKER => vec![Some([89.0, 45.0])],
         _ => return storage::screen_slots(block),
     })
@@ -1272,6 +1329,7 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         FOREMAN_DESK => &["food", "", "", "wage"],
         SHEPHERD_POST => &["food", "feed", "output", "", ""],
         CONTROL_CENTER => &[],
+        BARRACKS => &["food", "wage"],
         FIELD_MARKER => &["seeds"],
         PEN_MARKER => &["feed"],
         _ if storage::is_store(block) => &[],
