@@ -362,6 +362,11 @@ pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
     if !matches!(entity.id.as_str(), BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER) {
         return false;
     }
+    publish_cargo(entity)
+}
+
+/// Só a carga desenhada da esteira (`DisplayItem`, `DisplayCount`). Devolve se o desenho mudou.
+pub(super) fn publish_cargo(entity: &mut ModBlockEntity) -> bool {
     let count = logistics::display_stack(entity).map_or(0, |stack| stack.count) as i32;
     let (same, was_empty) = {
         let name = logistics::display_stack(entity).map_or("", |stack| stack.item.as_ref());

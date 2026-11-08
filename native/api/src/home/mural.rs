@@ -2,7 +2,8 @@
 //! painel, um bloco por pixel.
 //!
 //! O painel da casa lê uma linha de 256 colunas a cada `SCAN_EVERY` ticks (uma consulta de altura
-//! e 256 leituras de bloco), então o mural inteiro se refaz em cerca de 25 segundos. Só entra o que
+//! e 256 leituras de bloco), então o mural inteiro se refaz em cerca de 25 segundos. Sem jogador
+//! perto da casa, a leitura cai para uma linha por segundo (`IDLE_SCAN_EVERY`). Só entra o que
 //! está carregado, ou seja, o que alguém já viu: colunas fora dos chunks carregados guardam o último
 //! pixel conhecido, e o que nunca foi visto fica com o papel do mapa. Blocos do Veio aparecem em
 //! laranja e a casa em vermelho.
@@ -17,6 +18,9 @@ pub(crate) const MAPS: usize = 4;
 const SIDE: i32 = 256;
 const MAP: usize = 128 * 128;
 const SCAN_EVERY: i64 = 2;
+/// Sem ninguém perto para ver o mural, ele continua se refazendo, dez vezes mais devagar
+/// (uma linha a cada segundo): 13 leituras por tick em vez de 128 numa base parada.
+const IDLE_SCAN_EVERY: i64 = 20;
 const RESEND: i64 = 200;
 /// Distância do painel em que o jogador recebe o mural.
 const VIEW: f64 = 24.0;
@@ -105,7 +109,8 @@ pub(crate) fn step(host: &mut dyn Host, pos: [i32; 3], time: i64) {
     if mural.center != pos {
         *mural = Mural { center: pos, pixels: vec![NONE; MAPS * MAP], row: 0, north: vec![None; SIDE as usize], viewers: Vec::new() };
     }
-    if time.rem_euclid(SCAN_EVERY) == 0 {
+    let every = if mural.viewers.is_empty() { IDLE_SCAN_EVERY } else { SCAN_EVERY };
+    if time.rem_euclid(every) == 0 {
         scan(host, mural);
     }
     if time.rem_euclid(super::CHECK_EVERY) == 0 {

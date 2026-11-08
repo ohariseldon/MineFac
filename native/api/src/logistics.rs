@@ -110,6 +110,25 @@ pub(super) fn update_status(entity: &mut ModBlockEntity, time: i64) -> bool {
     false
 }
 
+/// Esteira comum que, neste tick, não faria nada além de redesenhar a carga (como uma
+/// esteira inativa do Factorio): fora da fase de transferência e num estado que
+/// `update_status` manteria igual. Vazia e parada (0), travada com carga (3) ou desligada por
+/// redstone (9, que só muda na fase). O painel já foi publicado num tick completo antes.
+/// Divisores, unificadores e túneis têm configuração ou destino próprio: sempre completos.
+pub(super) fn quiet_belt(entity: &ModBlockEntity, pos: [i32; 3], time: i64) -> bool {
+    if !matches!(entity.id.as_str(), BELT | FAST_BELT | EXPRESS_BELT) { return false; }
+    if time.rem_euclid(8) == i64::from((pos[0] ^ pos[2]) & 1) * 4 { return false; }
+    if entity.data.len() != super::presentation::DATA_SLOTS { return false; }
+    let empty = entity.items.iter().all(Option::is_none);
+    let paused = number(entity, "LogisticsPaused") != 0;
+    match number(entity, "Status") {
+        0 => empty && !paused,
+        3 => !empty && !paused,
+        9 => paused,
+        _ => false,
+    }
+}
+
 pub(super) fn display_stack(entity: &ModBlockEntity) -> Option<&ItemStack> {
     if entity.id == MERGER {
         entity.items.iter().find_map(Option::as_ref)
