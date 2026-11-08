@@ -758,8 +758,8 @@ v_expand=vpage(
  "Expandir as zonas\n\nEsmeralda no marco libera o próximo nível:\n13x13: 8 esm., 32 tarefas, 6 aldeões\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nA chave escolhe o tamanho entre os liberados.",
  "Grow the zones\n\nEmerald on the marker unlocks the next level:\n13x13: 8 emer., 32 tasks, 6 villagers\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nThe wrench picks the size among unlocked ones.")
 v_grow=vpage(
- "A vila cresce\n\nAldeões têm filhos até o teto da vila: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle. Máximo 150.\n\nVárias fábricas espalhadas: cada uma com sua vila.",
- "The village grows\n\nVillagers have children up to the village cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center. Max 150.\n\nSeveral spread factories: each has its own village.")
+ "A vila cresce\n\nTeto: 30 aldeões, +3 por posto com trabalhador, +5 por nível de zona, +2 por armazém, +20 pelo centro de controle. Máximo 150.\n\nCada um precisa de uma cama: sem cama livre, ninguém nasce.",
+ "The village grows\n\nCap: 30 villagers, +3 per staffed post, +5 per zone level, +2 per storage, +20 for the control center. Max 150.\n\nEach one needs a bed: with no free bed, nobody is born.")
 v_lan=vpage(
  "Jogar na mesma rede\n\nQuem hospeda: Esc, Abrir para a LAN, Iniciar mundo LAN. O mundo fica no seu computador.\n\nQuem entra: o mesmo Wi-Fi, Multijogador, o mundo aparece na lista. Instale o Veio na mesma versão.\n\nCada um usa a própria conta. As máquinas são as do anfitrião.",
  "Play on your network\n\nHost: Esc, Open to LAN, Start LAN World. The world stays on your computer.\n\nJoin: the same Wi-Fi, Multiplayer, the world shows in the list. Install the same Veio version.\n\nEach player uses their own account. The machines are the host's.")
@@ -827,6 +827,7 @@ write(f"{D}/recipe/village_guide.json",{"type":"minecraft:crafting_shapeless","c
 label("veio.village.tab","Vila operária","Worker Village")
 label("veio.village.tab.description","Abra o Guia da Vila Operária e contrate seu primeiro aldeão.","Open the Worker Village Guide and hire your first villager.")
 label("veio.village.welcome","Você recebeu o Guia da Vila Operária: aldeões podem trabalhar por você.","You received the Worker Village Guide: villagers can work for you.")
+label("veio.village.need_houses","%s aldeões e %s camas. Construa mais casas.","%s villagers and %s beds. Build more houses.")
 label("veio.spawn.village","Você está no centro da vila. Ela vai crescer com a sua fábrica.","You are at the village center. It will grow with your factory.")
 label("veio.spawn.none","Nenhuma vila encontrada por perto. Construa um centro de controle para fixar o centro da sua vila.","No village found nearby. Build a control center to set your village center.")
 label("veio.home.built","Sua casa está pronta, com o painel em %s: lareira, sofá, cama e o mural com o mapa. Durma lá primeiro.","Your house is ready, with the panel at %s: fireplace, sofa, bed and the map mural. Sleep there first.")

@@ -177,7 +177,7 @@ O guia principal estava com 99 de 100 páginas. Os sistemas da vila foram para u
 
 ### Vilas maiores
 
-- A cada 5 minutos (fase espalhada pelo id), cada aldeão adulto tem 1 chance em 6 de ter um filho, se houver pelo menos 2 aldeões perto e menos que o teto da vila. O vanilla limita a vila pelas camas; o teto começa em 30 (o triplo de uma vila grande) e, a partir da quinta entrega, cresce com o desenvolvimento até 150. O bebê nasce no tick seguinte de um bloco do Veio na mesma dimensão.
+- A cada 5 minutos (fase espalhada pelo id), cada aldeão adulto tem 1 chance em 6 de ter um filho, se houver pelo menos 2 aldeões perto, menos que o teto da vila e uma cama livre. O teto começa em 30 e cresce com o desenvolvimento até 150. A casa é a cama do Minecraft: conta a cabeceira, não o pé. Sem cama livre, ninguém nasce e o jogador ouve “construa mais casas”. A vila gerada no começo já traz camas para quem está lá. O bebê nasce no tick seguinte de um bloco do Veio na mesma dimensão.
 
 ## Terceira entrega: fila de tarefas e pastor
 
