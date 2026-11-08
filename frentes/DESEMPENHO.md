@@ -149,3 +149,41 @@ por isso precisam de decisão antes:
   alvo junto da área para pular consumidores quando o poste está sem energia, corta isso.
 - **Máquinas paradas** (esteira cheia, montadora cheia) refazem todo o tick. Uma máquina que
   não mudou em vários ticks poderia dormir até um vizinho mudar (`neighbor_changed`).
+
+## Segunda rodada: métodos do Factorio (8 de novembro de 2026)
+
+A pedido do Luiz: inspirar-se em como Factorio e Satisfactory deixam fábricas grandes leves.
+A produção nunca para por estar longe do jogador; o que muda é não gastar CPU onde o tick
+não faria nada, e entregar energia em lotes.
+
+1. **Esteira inativa (como as entidades inativas do Factorio).** Uma esteira comum fora da
+   sua fase de transferência, vazia (0), travada com carga (3) ou desligada por redstone (9),
+   não muda nada no tick: `update_status` manteria o estado e a transferência só roda na fase.
+   Esse tick agora só redesenha a carga (se um vizinho colocou item) e mantém os observadores
+   (censo, holding, indústria, som). Resultado **idêntico bit a bit**:
+   16,83 → 14,59 bi de instruções (−13%). Divisores, unificadores e túneis seguem completos.
+   O painel de uma esteira parada pode atualizar até 7 ticks depois de uma mudança de
+   configuração feita por fora; a carga e a luz atualizam na hora.
+2. **Rede elétrica em lotes (como a rede do Factorio).** Cada poste atende área e fios a cada
+   4 ticks, com fase pela posição, movendo até 4× a vazão. O buffer do poste sobe na mesma
+   proporção (madeira 1.000 → 4.000 FE, aço 4.000 → 16.000 FE) para a vazão por tick não cair.
+   As máquinas guardam 2.000 FE e recebem o mesmo total. Chamadas ao mundo por tick:
+   393 → 170. Instruções: 14,59 → **13,18 bi** (−22% sobre a medição fiel de 16,83 bi).
+   Muda o resumo da fábrica (energia guardada e fase de produção de poucos ticks); a
+   produção é a mesma: 1.024 engrenagens nos dois casos, prensas 150 contra 148 itens,
+   extratoras 228 contra 229. Os geradores queimam 3 carvões a mais para encher os buffers
+   maiores, energia que fica guardada nos postes.
+
+Escala depois das duas mudanças:
+
+| Blocos | µs por tick | µs por bloco | % de um tick de 50 ms | Memória |
+|---|---|---|---|---|
+| 480 | 291 | 0,61 | 0,6% | 0,8 MB |
+| 4.080 | 3.118 | 0,76 | 6,2% | 6,9 MB |
+| 16.080 | 13.653 | 0,85 | 27,3% | 27,4 MB |
+
+`check_performance.py` voltou aos controles históricos (`power_energy=129500
+callbacks=33792`) com os cenários de poste rodando num tick de entrega do lote.
+`prices_follow_local_supply_and_demand` falhou uma vez numa execução completa e passou em
+todas as outras, isolado ou junto; parece depender da ordem dos testes que dividem estado
+global da vila, e não toca no código desta mudança.
