@@ -116,3 +116,8 @@ Para continuar na nuvem, use o pacote consolidado mais recente entregue pelo age
 Ao devolver trabalho, envie o código completo ou um patch, a referência usada, uma lista dos arquivos alterados/removidos e as verificações realizadas. Diferencie verificação com o substituto offline, verificação contra a API real, compilação pelo launcher e teste dentro do jogo. Não inclua contas, mundos, compiladores ou caches.
 
 Faça as verificações necessárias ao concluir uma entrega. O usuário prefere testar os lotes no jogo e pediu para evitar testes repetidos a cada ajuste.
+
+
+## Consolidação 0.16.1
+
+Integração local em `codex/consolidated-016`, com 0.16.0, `13758bd`, `fd2a446`, tutorial, realismo, caravanas e progressão por fases. Consulte [CONSOLIDACAO.md](CONSOLIDACAO.md) e a lista de branches em `frentes/branches-consolidadas.json`. O mapa finito segue como checkpoint desativado.

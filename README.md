@@ -1,9 +1,12 @@
-# Veio 0.16.0
+# Veio 0.16.1 consolidada
 
 
-**0.15.2 — tutorial com transporte livre:** agora aceita braços (todos os níveis), funis, carregadores e combinações com esteiras. Estoques abastecidos pelo jogador podem fornecer a entrada; a alimentação e o armazenamento precisam acontecer automaticamente. O progresso da 0.15.1 é preservado.
+Esta versão reúne a 0.16.0 fornecida, todas as branches remotas conferidas, os commits `13758bd` e `fd2a446`, o tutorial interativo, o realismo opcional e o pacote `MineFac-progressao-fases.zip`. Registro da integração: [CONSOLIDACAO.md](CONSOLIDACAO.md).
 
-**0.15.1 — tutorial na tela:** um objetivo por vez acima da barra de itens, com avanço por energia recebida, ciclos produzidos, fluxo automático e entrega real. Usa a consolidada da 0.15.0 com a otimização integrada em `65cab50`.
+- **Aprender fazendo:** um objetivo na tela por vez, cumprido por máquinas funcionando e entregas reais. Braços, funis e carregadores também comprovam automação.
+- **Progressão por fases:** 32 engrenagens abrem a oficina; 16 chapas de aço e 16 circuitos abrem as fases seguintes. Jazidas de minério são medidas por conexão em 3D, com classe industrial a partir de 16 blocos. As linhas básicas usam razões inteiras de máquinas.
+- **Realismo:** opção de iluminação industrial leve antes de jogar, alternativa sem shaders e silhuetas próprias para as máquinas.
+- **Desempenho e continuidade:** planejamento incremental dos capatazes e limpeza dos estados temporários ao trocar de mundo; casa do fundador e correções de respawn preservadas.
 
 **Build consolidada** (rodada de integração e revisão feita pelo Claude, com o trabalho pendente das três frentes):
 
@@ -21,11 +24,11 @@ Histórico: a 0.14.0 fez as vilas crescerem com a fábrica até 150 aldeões (co
 - **Codex — interface de postos:** [consulta comum de estações](frentes/INTERFACE_POSTOS.md), com setor, inventários, motivo de espera e dica ao passar o cursor sobre o estado da máquina. O posto do lavrador já está registrado nela.
 - **Grok — lote 1:** [ticks mais leves e energia renovável utilizável](frentes/GROK-LOTE.md): roda d'água, cata-vento e biomassa reforçados; menos trabalho repetido em cabos, esteiras e sensores. **Lote 3:** [postos da 0.11.0](frentes/GROK-LOTE3.md): varredura por fileira, pão paga 3 tarefas, trigo cru não fecha o ciclo. **Lote 4:** [inspeções do carregador e NBT do pastor](frentes/GROK-LOTE4.md): 3 máquinas por ciclo; o pastor relê só o alvo. **Lote 5:** [fila do capataz](frentes/GROK-LOTE5.md): uma leitura por bloco da rede; 3 postos por ciclo. **Lote 6:** [zonas da 0.13.0](frentes/GROK-LOTE6.md): 9 blocos/ciclo na lavoura grande; um teste de água por ciclo. **Lote 7:** [tick sem alocação repetida](frentes/GROK-LOTE7.md): chaves NBT reaproveitadas; a difusão da poluição corre uma vez por dimensão.
 
-**Para jogar no Windows:** depois de clonar, abra `launcher.exe` na raiz do repositório (ou extraia `release/Veio-0.16.0.zip` em qualquer pasta e abra o `launcher.exe` de dentro). Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Se a instância não existir, ele a cria (`horizon-launcher instance create Veio`) e depois abre o jogo direto. Antes, instale o Horizon Launcher, entre com a conta e faça o Prepare uma vez. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo. Para gerar de novo: `python tools/package.py`.
+**Para jogar no Windows:** depois de clonar, abra `launcher.exe` na raiz do repositório (ou extraia `release/Veio-0.16.1.zip` em qualquer pasta e abra o `launcher.exe` de dentro). Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Se a instância não existir, ele a cria (`horizon-launcher instance create Veio`) e depois abre o jogo direto. Antes, instale o Horizon Launcher, entre com a conta e faça o Prepare uma vez. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo. Para gerar de novo: `python tools/package.py`.
 
 **Na mesma rede:** quem hospeda abre o mundo, aperta Esc, escolhe **Abrir para a LAN** e **Iniciar mundo LAN**. O mundo continua no computador dele. Quem entra, no mesmo Wi-Fi, abre **Multijogador**: o mundo aparece na lista. Cada pessoa usa a própria conta do Minecraft e a mesma versão do Veio. As máquinas, a vila e os itens são os do anfitrião. Quem chega pela primeira vez vai para a vila que já existe, em vez de ganhar outra.
 
-A integração passou na conferência de conteúdo e nos testes offline (161 regras do mod e 2 do launcher). A compilação nativa pelo Horizon Launcher e o teste dentro do jogo ainda precisam ser feitos na máquina do usuário; o `launcher.exe` executa essa compilação. Ordens das frentes: [Cloud](frentes/CLOUD.md), [Grok](frentes/GROK.md) e [Codex](frentes/CODEX.md); acordo em [COORDENACAO.md](COORDENACAO.md).
+As verificações de conteúdo, regras, transportes, retomada do tutorial e tipos da API real estão registradas em [CONSOLIDACAO.md](CONSOLIDACAO.md). A experiência em partida ainda requer teste manual.
 
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 
@@ -72,9 +75,7 @@ O progresso é individual e fica em `<pasta do mundo>/veio/tutorial/<UUID>.txt`,
 
 **Consulta opcional:** Sua primeira oficina usa **livro + pedregulho**; o Guia do Veio completo usa **livro + papel**; o Guia da Vila Operária usa **livro + trigo**. Livros antigos não se reescrevem. O guia da vila continua sendo apresentado quando seus postos e zonas entram em uso. Os marcos em Avanços > Primeiros pedidos são uma consulta de materiais, silenciosa e independente do objetivo real da tela.
 
-A **0.15.2 muda código nativo**, portanto o launcher recompila na primeira abertura desta versão. O pacote de tutorial `release/Veio-0.15.2.zip` parte da base consolidada mais recente e inclui os visuais já integrados. A geração de mapa que está em edição na frente paralela permanece no workspace e fica fora deste pacote; seu manifesto é montado sobre o da base consolidada, sem os módulos ainda não integrados.
-
-A conferência de conteúdo passou com 480 JSON e traduções válidas. Passaram 131 testes offline, mais dois cenários isolados: retomada de sessão e transporte misto sem esteiras. Quatro rotinas ficam fora da execução comum; os dois cenários de tutorial foram executados separadamente, e a prévia visual e o benchmark permaneceram opcionais. Os testes verificam tentativas recusadas, transporte misto sem nenhuma esteira, carga em trânsito, entregas parciais, retorno de sobras, retomada de sessão e preservação de mundos. Os cenários que ativam o registro global do tutorial são executados separadamente, sem interferir nos testes paralelos de logística. Essas verificações não substituem a compilação pelo Horizon Launcher e o teste dentro do jogo.
+A **0.16.1 muda código nativo**, portanto o launcher recompila na primeira abertura desta versão. O pacote único é `release/Veio-0.16.1.zip`. O rascunho de mapa finito permanece preservado em `work-in-progress/finite-world`, desativado: esta versão usa a geração atual do Minecraft e não promete um mapa finito com recursos garantidos.
 
 ## Energia
 

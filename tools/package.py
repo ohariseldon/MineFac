@@ -79,6 +79,9 @@ def main():
         for name in ("Jogar-Leve.cmd", "Escolher-Visual.cmd"):
             archive.writestr(f"{top}/{name}", (ROOT / name).read_text(encoding="utf-8").replace("\n", "\r\n"))
         archive.writestr(f"{top}/LEIA-ME.txt", README.format(version=current).replace("\n", "\r\n"))
+        notes = ROOT / "CONSOLIDACAO.md"
+        if notes.exists():
+            archive.write(notes, f"{top}/CONSOLIDACAO.md")
         count = 0
         for path, relative in [*files("content"), *files("native", skip={"offline-check", "target"}), *files("visuals")]:
             archive.write(path, f"{top}/{relative.as_posix()}")
