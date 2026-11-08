@@ -7,8 +7,9 @@ thread_local! {static STARTING:Cell<bool>=const{Cell::new(false)};}
 
 pub(super) fn start(game:&mut Game<'_>,host:&mut LanHost,conn:u32,target:Dim,plan:Option<Plan>)->ControlFlow<()> {
     if STARTING.get() || horizon_world::veio_map::for_world(&game.world_root,target.id()).is_none(){return ControlFlow::Continue(());}
-    let Some(plan)=plan else{return ControlFlow::Continue(());};
+    let Some(mut plan)=plan else{return ControlFlow::Continue(());};
     let Some(guest)=host.hub.guests.iter().find(|g|g.conn==conn)else{return ControlFlow::Break(());};
+    if guest.vehicle.is_some(){plan=crate::game::nether_portal::veio_portals::for_rider(plan);}
     let source=game.dim;let from=guest.position;
     if game.enter_level(Some(host),target).is_err(){return ControlFlow::Break(());}
     game.place_portal_ticket((plan.approximate.x>>4,plan.approximate.z>>4));
@@ -32,9 +33,10 @@ pub(super) fn tick(game:&mut Game<'_>,host:&mut LanHost) {
         game.place_portal_ticket((p.plan.approximate.x>>4,p.plan.approximate.z>>4));
         if !(-2..=2).all(|z|(-2..=2).all(|x|game.streaming.is_lit((p.plan.approximate.x>>4)+x,(p.plan.approximate.z>>4)+z))){waiting.push(p);continue;}
         if game.nether_exit_portal(&p.plan).is_none(){
+            if crate::game::nether_portal::veio_portals::waiting(game,&p.plan){waiting.push(p);continue;}
             let text=horizon_client::text::Text::tr("veio.world.portal_blocked",&[]);
             let packet=C::SystemChat(play::SystemChat{content:horizon_client::lan::data::component_nbt(&text.component()),overlay:false});
-            host.hub.send(p.conn,&packet);continue;
+            host.hub.send_to(p.conn,&packet);continue;
         }
         if game.enter_level(Some(host),p.source).is_err(){waiting.push(p);continue;}
         STARTING.set(true);game.start_server_trip(host,p.conn,p.target,Some(p.plan));STARTING.set(false);

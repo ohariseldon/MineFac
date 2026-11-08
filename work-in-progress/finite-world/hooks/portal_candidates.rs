@@ -1,1 +1,1 @@
-fn finite_portal_candidates(game:&crate::game::Game<'_>,center:horizon_core::position::BlockPos,radius:i32)->std::ops::ControlFlow<Vec<horizon_core::position::BlockPos>>{crate::game::nether_portal::veio_portals::blocks(game,center,radius)}
+fn finite_portal_candidates(game:&crate::game::Game<'_>,center:horizon_core::position::BlockPos,radius:i32)->std::ops::ControlFlow<Vec<BlockPos>>{crate::game::nether_portal::veio_portals::blocks(game,center,radius)}

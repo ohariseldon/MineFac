@@ -3,35 +3,45 @@
 use super::*;
 use crate::veio_map::{Bounds, Dimension};
 use super::super::structure::start::StructureStart;
-thread_local! { static CONSTRUCTING: std::cell::Cell<bool> = const {std::cell::Cell::new(false)}; }
-
-pub fn construct(data:Arc<GeneratorData>,seed:i64,preset:&str,dimension:&str,structures:bool,saved:Option<&Value>)->std::ops::ControlFlow<Result<OverworldGenerator,GeneratorError>> {
-    if CONSTRUCTING.get() || crate::veio_map::active(seed,dimension).is_none(){return std::ops::ControlFlow::Continue(());}
-    struct Guard; impl Drop for Guard{fn drop(&mut self){CONSTRUCTING.set(false);}}
-    CONSTRUCTING.set(true);let _guard=Guard;
-    let result=OverworldGenerator::for_world_with_settings(data,seed,preset,dimension,structures,saved).map(|mut g|{wrap(&mut g,seed,dimension);g});
-    std::ops::ControlFlow::Break(result)
-}
+type Cached = (std::path::PathBuf, std::sync::Weak<dyn SeededPipeline>, std::sync::Weak<dyn SeededPipeline>);
+static WRAPPERS: Mutex<Vec<Cached>> = Mutex::new(Vec::new());
 
 struct FinitePipeline {
     inner: Arc<dyn SeededPipeline>,
-    dimension: Dimension,
     bounds: Bounds,
     specs: Vec<Value>,
     reserved: Mutex<Option<Vec<Arc<StructureStart>>>>,
+    resources: super::veio_resources::Patches,
 }
 
 /// Installed only after a new world's certificate is saved. Unmarked worlds
 /// keep their exact original pipeline, including unexplored chunks.
-pub fn wrap(generator: &mut OverworldGenerator, seed: i64, dimension: &str) {
-    let Some(session) = crate::veio_map::session().filter(|s| s.seed == seed) else { return; };
-    let Some(dimension) = Dimension::of(dimension) else { return; };
+pub fn worker(mut worker: GeneratorWorker) -> GeneratorWorker {
+    let Some(session) = crate::veio_map::session() else {
+        WRAPPERS.lock().unwrap_or_else(|p|p.into_inner()).clear();
+        return worker;
+    };
+    let mut cache = WRAPPERS.lock().unwrap_or_else(|p|p.into_inner());
+    cache.retain(|(root, base, wrapper)| root == &session.root && base.strong_count() > 0 && wrapper.strong_count()>0);
+    if let Some(wrapper) = cache.iter().find_map(|(_,base,wrapper)|base.upgrade().filter(|p|Arc::ptr_eq(p,&worker.pipeline)).and_then(|_|wrapper.upgrade())) {
+        worker.pipeline = wrapper;
+        return worker;
+    }
+    let name = worker.noise_biomes(&[[0,16,0]]).into_iter().next().flatten().expect("dimension biome");
+    let dimension = [Dimension::Overworld, Dimension::Nether, Dimension::End].into_iter()
+        .find(|d|session.plan["dimensions"][d.id()]["biomes"].get(&name).is_some()).expect("certified dimension");
     let specs = session.plan["dimensions"][dimension.id()]["structures"].as_array().expect("validated certificate").clone();
-    generator.pipeline = Arc::new(FinitePipeline { inner: generator.pipeline.clone(), dimension,
-        bounds: dimension.bounds(), specs, reserved: Mutex::new(None) });
+    let wrapper: Arc<dyn SeededPipeline> = Arc::new(FinitePipeline { inner: worker.pipeline.clone(),
+        bounds: dimension.bounds(), specs, reserved: Mutex::new(None),resources:super::veio_resources::decode(worker.pipeline.data(),&session.plan["dimensions"][dimension.id()]["resources"]).expect("validated resource habitats") });
+    cache.push((session.root.clone(),Arc::downgrade(&worker.pipeline),Arc::downgrade(&wrapper)));
+    worker.pipeline=wrapper;
+    worker
 }
 
 impl FinitePipeline {
+    fn habitat_intersects(&self,s:&StructureStart)->bool {
+        self.resources.keys().any(|&(x,z)| x>=(s.bounding_box.min[0]>>4)&&x<=(s.bounding_box.max[0]>>4)&&z>=(s.bounding_box.min[2]>>4)&&z<=(s.bounding_box.max[2]>>4))
+    }
     fn starts(&self, worker: &mut WorkerState) -> Result<Vec<Arc<StructureStart>>, GeneratorError> {
         let mut cached = self.reserved.lock().unwrap_or_else(|p| p.into_inner());
         if cached.is_none() {
@@ -73,14 +83,22 @@ impl FinitePipeline {
             }
         }
         chunk.block_entities.retain(|(p,_)| self.bounds.contains(p[0] as f64,p[2] as f64,0.0) && !self.bounds.shell(p[0],p[2]));
-        chunk.terrain.prime_heightmaps(&[HeightmapType::MotionBlocking,HeightmapType::MotionBlockingNoLeaves,HeightmapType::OceanFloor,HeightmapType::WorldSurface]).map_err(stage("finite heightmaps"))?;
+        chunk.entities.retain(|c| {
+            let Some(crate::nbt::Tag::List(p))=c.get(&"Pos".into()) else{return false;};
+            let number=|i:usize|match p.get(i){Some(crate::nbt::Tag::Double(v))=>f64::from_bits(*v),Some(crate::nbt::Tag::Float(v))=>f64::from(f32::from_bits(*v)),_=>f64::NAN};
+            self.bounds.contains(number(0),number(2),1.0)
+        });
+        let valid=|p:horizon_core::position::BlockPos|self.bounds.contains(p.x as f64,p.z as f64,0.0)&&!self.bounds.shell(p.x,p.z);
+        *chunk.terrain.block_ticks_mut()=horizon_core::ticks::ProtoChunkTicks::from_saved(chunk.terrain.block_ticks().pack(0).iter().filter(|t|valid(t.pos)).cloned().collect::<Vec<_>>());
+        *chunk.terrain.fluid_ticks_mut()=horizon_core::ticks::ProtoChunkTicks::from_saved(chunk.terrain.fluid_ticks().pack(0).iter().filter(|t|valid(t.pos)).cloned().collect::<Vec<_>>());
+        chunk.terrain.prime_heightmaps(&[HeightmapType::WorldSurfaceWg,HeightmapType::OceanFloorWg,HeightmapType::MotionBlocking,HeightmapType::MotionBlockingNoLeaves,HeightmapType::OceanFloor,HeightmapType::WorldSurface]).map_err(stage("finite heightmaps"))?;
         Ok(())
     }
     fn references(&self, worker: &mut WorkerState, pos: ChunkPos, existing: Vec<Arc<StructureStart>>) -> Result<Vec<Arc<StructureStart>>, GeneratorError> {
         let reserved = self.starts(worker)?;
         let bounds = super::super::structure::BoundingBox::new([pos.x * 16, self.inner.level().0, pos.z * 16], [pos.x * 16+15, self.inner.level().0+self.inner.level().1-1, pos.z*16+15]);
         let mut result: Vec<_> = existing.into_iter().filter(|s| self.bounds.contains_box(s.bounding_box.min,s.bounding_box.max,2.0)
-            && !reserved.iter().any(|r| r.bounding_box.intersects(&s.bounding_box))).collect();
+            && !self.habitat_intersects(s) && !reserved.iter().any(|r| r.bounding_box.intersects(&s.bounding_box))).collect();
         result.extend(reserved.into_iter().filter(|s| s.bounding_box.intersects(&bounds)));
         Ok(result)
     }
@@ -98,8 +116,27 @@ impl SeededPipeline for FinitePipeline {
     fn decorate(&self, worker: &mut WorkerState, region: &mut [ProtoChunk;9]) -> Result<DecorateStats,GeneratorError> {
         let p = region[4].position();
         if !self.bounds.chunk(p.x,p.z,0) { region[4].decorated = true; return Ok(DecorateStats::default()); }
+        // Full chunks are editable player data (proto_beside_final restores
+        // their blocks before a new neighbour decorates). Preserve their exact
+        // current habitat cells; otherwise a later neighbour could replenish a
+        // mined vein, erase a building, or duplicate bees/archaeology loot.
+        let frozen:Vec<_>=region.iter().map(|c| {
+            if !c.is_decorated(){return None;}
+            let p=c.position();let blocks=self.resources.get(&(p.x,p.z))?;
+            let cells:Vec<_>=blocks.iter().map(|&(at,_)|(at,c.block(at[0],at[1],at[2]))).collect();
+            let positions:BTreeSet<_>=blocks.iter().map(|&(at,_)|at).collect();
+            let entities:Vec<_>=c.block_entities.iter().filter(|(at,_)|positions.contains(at)).cloned().collect();
+            Some((cells,positions,entities))
+        }).collect();
+        let was_decorated:Vec<_>=region.iter().map(ProtoChunk::is_decorated).collect();
         let stats = self.inner.decorate(worker,region)?;
-        for c in region { self.trim(c)?; }
+        for (i,c) in region.iter_mut().enumerate() {
+            if let Some((cells,positions,entities))=&frozen[i] {
+                for &(at,id) in cells {c.terrain.set_block_raw(at[0],at[1],at[2],id).map_err(stage("preserve resource habitat"))?;}
+                c.block_entities.retain(|(p,_)|!positions.contains(p));c.block_entities.extend(entities.iter().cloned());
+            } else if !was_decorated[i] {super::veio_resources::apply(c,&self.resources)?;}
+            self.trim(c)?;
+        }
         Ok(stats)
     }
     fn data(&self) -> &Arc<GeneratorData> { self.inner.data() }
@@ -127,7 +164,7 @@ impl SeededPipeline for FinitePipeline {
         if !self.bounds.chunk(pos.x,pos.z,0) { return Vec::new(); }
         let mut out=self.inner.structure_starts(worker,pos);
         let reserved=self.starts(worker).expect("reserved structures validated before entry");
-        out.retain(|s| self.bounds.contains_box(s.bounding_box.min,s.bounding_box.max,2.0) && !reserved.iter().any(|r| r.bounding_box.intersects(&s.bounding_box)));
+        out.retain(|s| self.bounds.contains_box(s.bounding_box.min,s.bounding_box.max,2.0) && !self.habitat_intersects(s) && !reserved.iter().any(|r| r.bounding_box.intersects(&s.bounding_box)));
         out.extend(reserved.into_iter().filter(|s|s.chunk==pos)); out
     }
     fn structure_start(&self,worker:&mut WorkerState,name:&str,pos:ChunkPos)->Option<Arc<StructureStart>> { let s=self.inner.structure_start(worker,name,pos)?; self.bounds.contains_box(s.bounding_box.min,s.bounding_box.max,2.0).then_some(s) }
