@@ -9,6 +9,11 @@ O launcher oferece **Realismo leve — pensado para 8 GB** e **Leve — sem shad
 `Escolher-Visual.cmd` abre essa escolha de novo; `Jogar-Leve.cmd` inicia sem o pacote.
 Também dá para desligar o pacote em Opções > Vídeo > Shaders.
 
+## 3.0.1
+
+O jogo recusava o pacote ("a pack may write 4"): os efeitos agora cabem em quatro alvos de pós.
+Mesmo visual; o brilho passou a ser lido direto da imagem, em um quarto da tela.
+
 ## 3.0: o salto
 
 - **Nuvens volumétricas:** cúmulos de verdade, entre 560 e 1.150 blocos de altura, com base
@@ -78,8 +83,7 @@ Sem o mod (pacote usado sozinho), o shader usa valores neutros: primavera, sem f
 - O mod: com mil máquinas quentes, cerca de 40 µs por tick e as 8 luzes por quadro sem
   varrer a fábrica (`python tools/check_performance.py`, cenário
   `ambience_1000_hot_machines_second`).
-- O pacote: sombra de cantos, luz no ar e reflexos rodam em meia resolução; brilho em meia e um
-  quarto. Relevo custa duas leituras de textura por pixel até 32 blocos. Nuvens analíticas no
+- O pacote: sombra de cantos, luz no ar e reflexos rodam em meia resolução; brilho em um quarto. Relevo custa duas leituras de textura por pixel até 32 blocos. Nuvens analíticas no
   céu, sem volume; sem traçado de raios nem histórico temporal. No Leve nada disso roda.
 - O `budget.gpu_ms` (4,5 ms no Equilibrado) é um objetivo, não uma medição. A meta de 8 GB considera o
   computador inteiro. Placa de vídeo, resolução e tamanho da fábrica pesam mais que a RAM.

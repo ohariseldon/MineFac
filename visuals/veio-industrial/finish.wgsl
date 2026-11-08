@@ -5,15 +5,47 @@ override sharpen: f32 = 0.35;
 // Ambient occlusion from the half-size pass, upscaled along the depth: of four nearby texels,
 // those at this pixel's distance count, so no dark halo leaks around the edges of things.
 fn veio_occlusion(uv: vec2<f32>, distance: f32) -> f32 {
-    let texel = 1.0 / vec2<f32>(textureDimensions(ao));
+    let texel = 1.0 / vec2<f32>(textureDimensions(light));
     var sum = 0.0;
     var weights = 0.0;
     for (var i = 0; i < 4; i++) {
         let offset = vec2<f32>(f32(i & 1) - 0.5, f32(i >> 1u) - 0.5) * texel * 1.5;
-        let tap = textureSampleLevel(ao, linear_sampler, uv + offset, 0.0);
+        let tap = textureSampleLevel(light, linear_sampler, uv + offset, 0.0);
         let w = 1.0 / (0.05 + abs(tap.g - distance) / max(distance * 0.04, 0.05));
         sum += tap.r * w;
         weights += w;
+    }
+    return sum / max(weights, 0.0001);
+}
+
+// The colour of the light shafts the light pass measured (its b channel).
+fn veio_rays_colour() -> vec3<f32> {
+    if !shadows || frame.has_shadow == 0u {
+        return mix(vec3<f32>(1.0, 0.94, 0.82), vec3<f32>(1.0, 0.62, 0.32), veio_low_sun());
+    }
+    return veio_key_color() * 0.8;
+}
+
+// The half-size sky and mirror target, upscaled by hand: of its four nearest texels only those
+// of the wanted kind count (clouds have alpha >= 0, reflections <= 0), so no cloud bleeds onto a
+// roof's edge and no reflection onto the sky. Returns the alpha as a positive amount.
+fn veio_sky_mirror(uv: vec2<f32>, want_reflection: bool) -> vec4<f32> {
+    let size = vec2<f32>(textureDimensions(sky_mirror));
+    let at = uv * size - 0.5;
+    let base = floor(at);
+    let f = at - base;
+    var sum = vec4<f32>(0.0);
+    var weights = 0.0;
+    for (var i = 0; i < 4; i++) {
+        let corner = vec2<f32>(f32(i & 1), f32(i >> 1u));
+        let texel = vec2<i32>(clamp(base + corner, vec2<f32>(0.0), size - 1.0));
+        let tap = textureLoad(sky_mirror, texel, 0);
+        let w = mix(1.0 - f.x, f.x, corner.x) * mix(1.0 - f.y, f.y, corner.y);
+        let kind = select(tap.a >= 0.0, tap.a <= 0.0, want_reflection);
+        if kind {
+            sum += vec4<f32>(tap.rgb, abs(tap.a)) * w;
+            weights += w;
+        }
     }
     return sum / max(weights, 0.0001);
 }
@@ -55,7 +87,7 @@ fn post(input: PostInput) -> vec4<f32> {
             color *= mix(1.0, open, ambient_occlusion);
         }
         if screen_reflections {
-            let mirrored = textureSampleLevel(ssr, linear_sampler, input.uv, 0.0);
+            let mirrored = veio_sky_mirror(input.uv, true);
             color = mix(color, mirrored.rgb, mirrored.a * 0.75);
         }
     }
@@ -87,12 +119,12 @@ fn post(input: PostInput) -> vec4<f32> {
     }
     if quality >= 1u && clouds && volumetric_clouds && frame.dimension == 0 && input.depth <= 0.000001 {
         // The cumulus pass over the sky: the light the clouds send, and the sky they hide.
-        let sky_clouds = textureSampleLevel(clouds_target, linear_sampler, input.uv, 0.0);
+        let sky_clouds = veio_sky_mirror(input.uv, false);
         color = color * (1.0 - sky_clouds.a) + sky_clouds.rgb;
     }
     if quality >= 1u {
         if overworld {
-            color += textureSampleLevel(rays, linear_sampler, input.uv, 0.0).rgb;
+            color += veio_rays_colour() * textureSampleLevel(light, linear_sampler, input.uv, 0.0).b;
         }
         let halo = textureSampleLevel(glow, linear_sampler, input.uv, 0.0).rgb;
         color += halo * bloom * 0.55;

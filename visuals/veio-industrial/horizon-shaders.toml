@@ -1,7 +1,7 @@
 schema = 1
 id = "veio_industrial"
 name = "Veio — Realismo"
-version = "3.0.0"
+version = "3.0.1"
 api = "0.1"
 description = "Nuvens volumétricas, água espelhada, profundidade nas texturas, sombras suaves com penumbra e sombra das nuvens no chão, céu com atmosfera e estrelas, relevo nas texturas, sombra de cantos, luz volumétrica, reflexos em chão molhado e metal, água com refração e cáusticas, plantas em movimento, luz colorida, estações do ano e fumaça da fábrica. Três níveis de qualidade; o Leve foi pensado para PCs de 8 GB."
 authors = ["Veio"]
@@ -34,17 +34,12 @@ distance_option = "shadow_distance"
 [reflection]
 option = "reflections"
 
-# Brilho em três passos pequenos (metade e um quarto da tela), raios de sol em meia tela.
-[[post]]
-file = "bright.wgsl"
-name = "Brilho: partes claras"
-output = "bright"
-scale = 0.5
-
+# Um pacote pode escrever no máximo 4 saídas de [[post]]. Brilho em dois passos de um quarto da
+# tela; sombra de cantos e luz no ar dividem uma saída; nuvens (céu) e reflexos (chão) outra.
 [[post]]
 file = "blur_h.wgsl"
-name = "Brilho: desfoque horizontal"
-output = "blur_h"
+name = "Brilho: partes claras, desfoque horizontal"
+output = "glow_h"
 scale = 0.25
 
 [[post]]
@@ -54,27 +49,15 @@ output = "glow"
 scale = 0.25
 
 [[post]]
-file = "ao.wgsl"
-name = "Sombra de cantos (oclusão)"
-output = "ao"
+file = "light.wgsl"
+name = "Sombra de cantos e luz no ar"
+output = "light"
 scale = 0.5
 
 [[post]]
-file = "rays.wgsl"
-name = "Luz no ar (volumétrica)"
-output = "rays"
-scale = 0.5
-
-[[post]]
-file = "ssr.wgsl"
-name = "Reflexos na tela"
-output = "ssr"
-scale = 0.5
-
-[[post]]
-file = "clouds.wgsl"
-name = "Nuvens volumétricas"
-output = "clouds_target"
+file = "sky_mirror.wgsl"
+name = "Nuvens volumétricas e reflexos na tela"
+output = "sky_mirror"
 scale = 0.5
 
 [[post]]

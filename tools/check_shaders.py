@@ -23,6 +23,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PRELUDE = ROOT / "tools/horizon_shader_0_1"
 LIMIT_POST = 12
+# O Horizon recusa o pacote inteiro com mais saídas: "a pack may write 4".
+LIMIT_OUTPUTS = 4
 
 
 def piece(stage, part):
@@ -92,6 +94,11 @@ def own_rules(pack, manifest):
         problems += [f"opção {option} fora das páginas" for option in options if option not in seen]
     if len(manifest.get("post", [])) > LIMIT_POST:
         problems.append(f"mais de {LIMIT_POST} passes")
+    outputs = [entry["output"] for entry in manifest.get("post", []) if "output" in entry]
+    if len(outputs) > LIMIT_OUTPUTS:
+        problems.append(f"{len(outputs)} saídas de [[post]]; o Horizon aceita {LIMIT_OUTPUTS}")
+    if len(set(outputs)) != len(outputs):
+        problems.append("saída de [[post]] repetida")
     return problems
 
 

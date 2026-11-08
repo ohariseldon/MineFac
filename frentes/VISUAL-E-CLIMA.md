@@ -21,7 +21,7 @@ Pedido seguinte do Luiz: "aprimorar o realismo visual... dar uma impressão de u
 Usa o que a Shader API 0.1 já oferece e o pacote ainda não usava:
 
 - `set_surface` no material (normal com relevo, suavidade, 1 em folhagem) → `surface_at` no pós.
-- `ao.wgsl` (meia tela): oclusão de ambiente por hemisfério, 8/12 amostras, ampliada no
+- `ao.wgsl` (meia tela; na 3.0.1 virou parte de `light.wgsl`): oclusão de ambiente por hemisfério, 8/12 amostras, ampliada no
   `finish.wgsl` pela distância de cada texel (alvos são Rgba16Float, então o g guarda a distância).
 - `rays.wgsl`: luz volumétrica pelo `shadow_map`, 8/16 passos; sem sombras volta ao raio na tela.
 - `ssr.wgsl` (meia tela): reflexo na tela em superfícies lisas ou molhadas, 12/24 passos e 3
@@ -38,7 +38,24 @@ Pedido do Luiz com fotos de referência (pôr do sol com nuvens grandes, lago es
 `clouds.wgsl` (nuvens volumétricas em meia tela, 16/28 passos e 3/5 rumo ao sol; prévia em numpy
 usada para acertar luz e forma), sombra das nuvens no material, parallax por luminância
 (8/14 passos), PCF de Poisson com PCSS simples no Alto, reflexo planar da água ligado por padrão,
-gradação de cinema. São 8 passes de pós (o máximo do manifesto). Custo alvo 7 ms no Equilibrado.
+gradação de cinema. Custo alvo 7 ms no Equilibrado.
+
+## 3.0.1: limite de 4 saídas de pós
+
+No PC do Luiz o Horizon recusou o pacote inteiro: "6 [[post]] outputs; a pack may write 4" (a
+2.1 tinha 6, a 3.0 tinha 7). Agora são 4 saídas e 5 passes:
+
+- `blur_h.wgsl` → `glow_h` (1/4): limiar de brilho lido direto do `scene_color` (4 leituras por
+  toque, cobrindo os 4×4 pixels) e meia gaussiana horizontal. `blur_v.wgsl` → `glow` (1/4).
+- `light.wgsl` → `light` (1/2): r = oclusão de ambiente, g = distância, b = quanto o ar manda de
+  sol. A cor dos raios sai em `finish.wgsl` (`veio_rays_colour`).
+- `sky_mirror.wgsl` → `sky_mirror` (1/2): onde há céu, nuvens volumétricas (alfa 0..1); no chão,
+  reflexo na tela (alfa 0..-1). `veio_sky_mirror` no `finish.wgsl` amplia à mão e só soma
+  texels do tipo certo, para nuvem não vazar na borda do telhado.
+- `tools/check_shaders.py` agora barra mais de 4 saídas e saídas repetidas.
+
+Os arquivos antigos (`bright`, `ao`, `rays`, `ssr`, `clouds`) podem sobrar numa instalação antiga;
+o manifesto não os cita, então não pesam.
 
 ## Pelo motor, sem depender do shader
 
