@@ -1,65 +1,58 @@
-# Veio — Realismo leve 1.1
+# Veio — Realismo 2.0
 
-Visual industrial original inspirado na direção de arte de fábricas ao ar livre:
-luz quente e sombras frias discretas, céu natural, materiais com rugosidade e brilho
-dependente do ângulo, chuva e água com profundidade. Mantém os modelos, texturas e regras do Veio. Não contém
-código, imagens ou materiais de Satisfactory ou de outros pacotes de shaders.
+Visual original para o Veio: céu com atmosfera, nuvens, estrelas e sol próprios, plantas e
+água em movimento, luz colorida de tochas, fornos e máquinas quentes, brilho, raios de sol,
+estações do ano nas folhas e a fumaça da fábrica no céu. Mantém os modelos, texturas e regras
+do Veio. Não contém código, imagens ou materiais de outros jogos ou pacotes de shaders.
 
-O launcher oferece **Realismo leve — 8 GB** e **Leve — sem shaders** antes de
-abrir o jogo. A escolha fica salva. `Escolher-Visual.cmd` abre essa escolha novamente;
-`Jogar-Leve.cmd` permite iniciar sem carregar este pacote desde a primeira partida.
-Também pode desligar o pacote em Opções > Vídeo > Shaders.
+O launcher oferece **Realismo leve — pensado para 8 GB** e **Leve — sem shaders** antes de abrir o jogo.
+`Escolher-Visual.cmd` abre essa escolha de novo; `Jogar-Leve.cmd` inicia sem o pacote.
+Também dá para desligar o pacote em Opções > Vídeo > Shaders.
 
-## Aparência
+## Níveis de qualidade
 
-- O sol aquece a luz no começo e fim do dia; o luar usa a mesma sombra próxima com
-  intensidade menor. Luz de tochas mantém sua contribuição sem criar fontes novas.
-- Ferro e cobre têm brilho metálico; pintura tem brilho largo e discreto; vidro e
-  gelo recebem destaques mais estreitos. Cobre oxidado mantém a pátina fosca.
-- Superfícies voltadas para cima e expostas ao céu escurecem e ganham brilho na
-  chuva. A umidade acompanha o tempo de secagem do Horizon. Folhagem fica sem essa
-  camada brilhante e recebe luz transmitida suave quando iluminada por trás.
-- Água rasa fica mais transparente; profundidade aumenta a cor e a absorção.
-  O brilho do céu depende do ângulo. A ondulação de luz diminui com a distância
-  para evitar cintilação; mergulhar mantém o tratamento subaquático do jogo.
-- Uma névoa de distância suave dá profundidade à fábrica e à paisagem. O efeito
-  considera a luz na câmera, chuva e efeitos de visão; os painéis próximos mantêm
-  seu contraste. A suavização de bordas escolhe uma direção para preservar detalhes.
+A opção **Qualidade** decide o custo de uma vez só:
 
-O brilho do céu é uma aproximação analítica. Não reproduz objetos refletidos do
-cenário e não exige uma segunda câmera. A aparência ainda usa a geometria de blocos
-do Minecraft; esta entrega desenvolve a direção visual industrial do Veio.
+| | Leve (8 GB) | Equilibrado (padrão) | Alto |
+|---|---|---|---|
+| Nuvens | 2 camadas | 4 camadas | 5 camadas |
+| Brilho (bloom) e raios de sol | desligados | ligados, 12 passos | ligados, 24 passos |
+| Luz colorida | desligada | ligada | ligada |
+| Plantas e água balançando | desligadas | ligadas até 48 blocos | ligadas até 48 blocos |
 
-## Custo previsto
+Sombras (512, 1024 ou 2048; alcance de 32 a 96 blocos), reflexos, atmosfera, nuvens, vinheta
+e cada efeito também têm opção própria nas páginas do pacote.
 
-- Sombra de sol/lua de 1024 × 1024, alcance de 48 blocos e uma comparação bilinear por
-  fragmento exterior. Esmaece antes do limite, evitando uma borda brusca.
-- Um pós-processamento com cor, névoa e suavização espacial de cinco amostras.
-- A água faz uma leitura da profundidade já copiada pelo renderizador para o
-  material nativo. A névoa usa a profundidade fornecida ao pós-processamento.
-- Nenhuma passagem de reflexão, luz volumétrica, bloom, SSAO, traçado de raios,
-  subdivisão de geometria, histórico temporal ou textura adicional de recursos.
-  Esta revisão não solicita novos alvos de renderização nem mapas de materiais.
-- Nenhum código por tick, varredura da fábrica ou nova fonte dinâmica de luz.
-- Sombras, água, metais, chuva, atmosfera e suavização podem ser reduzidos nas opções do pacote.
-  Desligar Sombras elimina a passagem, além das consultas no material.
-  A página Qualidade das sombras também permite 512 e alcance de 32 blocos.
+## O que o jogo informa ao shader
 
-O `budget.gpu_ms` é um objetivo, não uma medição ou um teto automático. A meta de
-8 GB considera o computador inteiro; não reserva 8 GB para o jogo. O limite de
-texturas do perfil é uma preferência do Horizon, não um limite de RAM total.
-Placa gráfica, resolução e tamanho da fábrica também determinam o desempenho.
-Esta revisão foi feita sem retomar os testes no jogo ou a comparação da fábrica
-grande, conforme solicitado. A meta de 8 GB continua sem homologação completa.
+O mod nativo manda ao shader, uma vez por quadro, quatro números: a fase do ano, a temperatura
+do ar onde está a câmera, a fumaça da fábrica por perto e um sinal de que o mod está ativo.
+Com eles:
 
-Os ajustes iniciais controlam a distância de visão e simulação, os trabalhadores
-de preparação de terreno e a resolução interna. Ajustes posteriores no jogo são
-preservados nas próximas aberturas. O perfil só é reaplicado quando escolhido de
-novo; as opções originais ficam em arquivos com sufixo `.antes-do-veio`.
+- as folhas e a grama esverdeiam na primavera, ficam fortes no verão, douradas e avermelhadas no
+  outono e acinzentadas no inverno; a cor final da imagem acompanha a estação;
+- o céu, as nuvens e a névoa ficam amarelados e cinzentos perto de fábricas muito poluídas;
+- o céu fica mais encoberto na chuva, no outono e no inverno.
+
+Geradores, motores a vapor, fornos, cozinhas e outras máquinas quentes acendem uma luz colorida
+oscilante quando estão ligadas, e as mais próximas (até 8, num raio de 32 blocos) iluminam o
+pátio. Elas soltam fumaça ou vapor a cada 2 segundos, só quando há jogador a menos de 40 blocos.
+
+Sem o mod (pacote usado sozinho), o shader usa valores neutros: primavera, sem fumaça.
+
+## Custo
+
+- O mod: com mil máquinas quentes, cerca de 40 µs por tick e as 8 luzes por quadro sem
+  varrer a fábrica (`python tools/check_performance.py`, cenário
+  `ambience_1000_hot_machines_second`).
+- O pacote: pós-processamento em meia e um quarto de resolução para brilho e raios de sol;
+  nuvens analíticas no céu, sem volume; sem SSAO, traçado de raios ou histórico temporal.
+- O `budget.gpu_ms` (3 ms) é um objetivo, não uma medição. A meta de 8 GB considera o
+  computador inteiro. Placa de vídeo, resolução e tamanho da fábrica pesam mais que a RAM.
 
 ## Desenvolvimento
 
-Shader API 0.1 do Horizon. Valide com `horizon-shader check` e, para produzir um
-`.hshader`, com `horizon-shader pack`. A versão em pasta funciona diretamente.
-O perfil Leve não seleciona nem compila o pacote. A redistribuição deste shader
-original é permitida pela licença MIT incluída.
+Shader API 0.1 do Horizon. `python tools/check_shaders.py` compõe cada estágio com o prelúdio
+da API e valida com o `naga` (instale com `cargo install naga-cli`). Também confere se cada
+opção tem seu `override` e se as páginas citam opções que existem. Os arquivos `.wgsl` ficam
+na raiz do pacote. A redistribuição deste shader original é permitida pela licença MIT incluída.

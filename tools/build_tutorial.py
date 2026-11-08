@@ -429,6 +429,14 @@ for key, pt, en in [
  ("veio.hint.hydro", "Represa atrás, saída na frente", "Dam behind, outlet in front"),
  ("veio.hint.steam", "Água parada ao lado ou por cano", "Still water beside or by pipe"),
  ("veio.guide.short.hydro_turbine", "Turbina hidro", "Hydro turbine"),
+ ("veio.season.0", "Primavera", "Spring"),
+ ("veio.season.1", "Verão", "Summer"),
+ ("veio.season.2", "Outono", "Autumn"),
+ ("veio.season.3", "Inverno", "Winter"),
+ ("veio.climate", "%s · %s °C", "%s · %s °C"),
+ ("veio.climate.frozen", "%s · %s °C: água congelada", "%s · %s °C: water frozen"),
+ ("veio.climate.frost", "%s · %s °C: geada, lavoura parada", "%s · %s °C: frost, crops stopped"),
+ ("veio.climate.unknown", "Medindo o clima...", "Reading the weather..."),
  ("advancement.veio.hydro.title", "Força da queda d'água", "Power of the Falls"),
  ("advancement.veio.hydro.description", "Represe um rio e gere energia com a queda.", "Dam a river and make power from the drop."),
 ]:
@@ -1289,7 +1297,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.25.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.26.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -1726,6 +1734,12 @@ i_lava=ipage(
 i_project=ipage(
  "Grande projeto\n\nDepois dos quatro contratos, a central pede a torre de transmissão em quatro fases:\n\n1 200 aço, 100 módulos\n2 300 circuitos, 100 motores\n3 150 proc., 50 núcleos\n4 200 núcleos, 50 kits Mk.II\n\nEla recolhe aos poucos e paga cada fase.",
  "Grand project\n\nAfter the four contracts, the hub asks for the transmission tower in four phases:\n\n1 200 steel, 100 modules\n2 300 circuits, 100 motors\n3 150 proc., 50 cores\n4 200 cores, 50 Mk.II kits\n\nIt collects slowly and pays each phase.")
+i_climate=ipage(
+ "Clima e estações\n\nO ano tem 4 estações de 6 dias. Solar rende mais no verão, vento no inverno, rios cheios na primavera.\n\nNa geada a lavoura para e a roda d'água congela. Telhado sobre a plantação vira estufa: 20 °C.",
+ "Weather and seasons\n\nThe year has 4 seasons of 6 days. Solar yields more in summer, wind in winter, rivers run high in spring.\n\nIn frost crops stop and the water wheel freezes. A roof over the field makes a greenhouse: 20 °C.")
+i_visual=ipage(
+ "Veio Realismo\n\nO pacote de shaders do jogo mostra as estações nas folhas, a fumaça das fábricas no céu e a luz colorida das máquinas quentes.\n\nPC de 8 GB: escolha Leve nas opções do pacote.",
+ "Veio Realism\n\nThe game's shader pack shows the seasons on the leaves, factory smoke in the sky and the coloured glow of hot machines.\n\n8 GB PC: pick \"Leve (8 GB)\" in the pack options.")
 i_blocks=len(ipages)+1;ipages.append(None)
 irefs={}
 for name in industry_order:
@@ -1744,7 +1758,7 @@ ipages[i_blocks-1]={"text":"","extra":extra}
 ilinks=[("Começar","Start here",i_intro),("Laboratório","Research lab",i_research),("Pesquisas","Research tree",i_tree),
  ("Razões","Ratios",i_ratio),("Razões no painel","Ratios on the panel",i_panel),("Cadeia funda","Deep chain",i_chain),
  ("Kit Mk.II","Mk.II kit",i_mk2),("Monitor","Monitor",i_monitor),("Postos distantes","Distant outposts",i_stations),("Longe de você","While away",i_away),("Âncora de chunk","Chunk anchor",i_anchor),
- ("Logística nova","New logistics",i_logistics),("Lava encanada","Piped lava",i_lava),("Grande projeto","Grand project",i_project),("Blocos","Blocks",i_blocks)]
+ ("Logística nova","New logistics",i_logistics),("Lava encanada","Piped lava",i_lava),("Grande projeto","Grand project",i_project),("Clima","Weather",i_climate),("Visual","Visuals",i_visual),("Blocos","Blocks",i_blocks)]
 label("veio.industry.title","Guia da Grande Indústria","Large Industry Guide")
 extra=[{"translate":"veio.industry.title","bold":True},{"text":"\n"}]
 for n,(pt,en,target) in enumerate(ilinks):

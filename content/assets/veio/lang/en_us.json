@@ -1499,7 +1499,7 @@
   "veio.industry.contents.11": "New logistics",
   "veio.industry.contents.12": "Piped lava",
   "veio.industry.contents.13": "Grand project",
-  "veio.industry.contents.14": "Blocks",
+  "veio.industry.contents.14": "Weather",
   "veio.industry.welcome": "You received the Large Industry Guide: research, ratios and the grand project.",
   "block.veio.home": "Home Hearth",
   "veio.center.page.0": "Summary",
@@ -1832,5 +1832,17 @@
   "veio.village.page.45": "Meals away from home\n\nMeal (roasts, bread, pie): faster work, factories +5% for 5 min.\n\nFeast (stews, soups, golden carrot): +10% for 8 min, regeneration.\n\nAt home, eat at the Hearth.",
   "veio.village.reference.8": "On your network",
   "veio.village.reference.9": "Factory shortcuts",
-  "veio.village.reference.10": "Blocks"
+  "veio.village.reference.10": "Blocks",
+  "veio.season.0": "Spring",
+  "veio.season.1": "Summer",
+  "veio.season.2": "Autumn",
+  "veio.season.3": "Winter",
+  "veio.climate": "%s · %s °C",
+  "veio.climate.frozen": "%s · %s °C: water frozen",
+  "veio.climate.frost": "%s · %s °C: frost, crops stopped",
+  "veio.climate.unknown": "Reading the weather...",
+  "veio.industry.page.16": "Weather and seasons\n\nThe year has 4 seasons of 6 days. Solar yields more in summer, wind in winter, rivers run high in spring.\n\nIn frost crops stop and the water wheel freezes. A roof over the field makes a greenhouse: 20 °C.",
+  "veio.industry.page.17": "Veio Realism\n\nThe game's shader pack shows the seasons on the leaves, factory smoke in the sky and the coloured glow of hot machines.\n\n8 GB PC: pick \"Leve (8 GB)\" in the pack options.",
+  "veio.industry.contents.15": "Visuals",
+  "veio.industry.contents.16": "Blocks"
 }

@@ -232,6 +232,9 @@ pub mod mod_api {
         Composter,
         Crit,
         LargeSmoke,
+        CampfireCosySmoke,
+        Cloud,
+        Lava,
     }
     #[derive(Clone, Debug)]
     pub struct ParticleOptions {
@@ -496,6 +499,9 @@ pub mod mod_api {
             false
         }
         /// `native_server::Game::native_acting_player`: o jogador cuja ação o gancho ouve. API 21.
+        fn player(&self) -> Option<NativePlayer> {
+            unimplemented!("player")
+        }
         fn acting_player(&self) -> Option<NativeServerPlayer> {
             unimplemented!("acting_player")
         }
@@ -561,6 +567,46 @@ pub mod mod_api {
         MotionBlockingNoLeaves,
         OceanFloor,
     }
+    /// The window's player (`native_player`), on the client.
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub struct NativePlayer {
+        pub x: f64,
+        pub y: f64,
+        pub z: f64,
+        pub yaw: f32,
+        pub pitch: f32,
+        pub dimension: &'static str,
+    }
+
+    /// A block outline drawn over the world (`native_visuals`).
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub struct NativeBlockRim {
+        pub pos: [i32; 3],
+        pub argb: u32,
+        pub width: f32,
+    }
+
+    /// A camera-local visual light, with no gameplay light or shadow writes.
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub struct NativeColoredLight {
+        pub at: [f64; 3],
+        pub rgb: u32,
+        pub radius: f32,
+        pub intensity: f32,
+    }
+
+    /// `native_visuals(rims, lights)`: a world frame's rims and coloured lights (API 46).
+    pub struct VisualsEvent<'a> {
+        pub rims: &'a mut Vec<NativeBlockRim>,
+        pub lights: &'a mut Vec<NativeColoredLight>,
+    }
+
+    /// `native_shader_params(partial, params)`: `frame.mods` of the mod's shader pack (API 84).
+    pub struct ShaderParamsEvent<'a> {
+        pub partial: f32,
+        pub params: &'a mut [[f32; 4]; 8],
+    }
+
     #[derive(Clone, Debug, Default)]
     pub struct NativeServerPlayer {
         pub uuid: u128,
@@ -847,6 +893,8 @@ pub mod mod_api {
             None
         }
         fn block_entity_submit(&self, host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {}
+        fn visuals(&self, host: &dyn Host, event: &mut VisualsEvent<'_>) {}
+        fn shader_params(&self, host: &dyn Host, event: &mut ShaderParamsEvent<'_>) {}
         fn entity_tick_pre(&self, host: &mut dyn Host, event: &mut EntityTickPreEvent<'_>) -> Flow {
             Flow::Continue
         }

@@ -26,8 +26,8 @@ def main():
         if result.returncode:
             raise SystemExit(result.stdout + result.stderr)
         batch = [json.loads(raw) for raw in re.findall(r"PERF (\{[^\n]+\})", result.stdout)]
-        if len(batch) != 7:
-            raise SystemExit("Expected all seven scale scenarios")
+        if len(batch) != 8:
+            raise SystemExit("Expected all eight scale scenarios")
         for entry in batch:
             records.setdefault(entry["scenario"], []).append(entry)
         checks.append(re.findall(r"CHECK ([^\n\r]+)", result.stdout))

@@ -220,6 +220,38 @@ pub(crate) fn needs(block: &str) -> Option<(i32, i32, u8)> {
     })
 }
 
+/// Temperatura mínima de crescimento de cada cultura, em °C (temperatura-base agronômica):
+/// abaixo dela a planta para; até 4 °C acima, cresce na metade do ritmo. Melancia e abóbora
+/// pedem calor; trigo e cenoura aguentam o frio.
+pub(crate) fn base_temperature(block: &str) -> f32 {
+    match block {
+        "minecraft:wheat" => 3.0,
+        "minecraft:carrots" => 4.0,
+        "minecraft:beetroots" => 5.0,
+        "minecraft:potatoes" => 7.0,
+        "minecraft:torchflower_crop" => 9.0,
+        "minecraft:pumpkin_stem" => 12.0,
+        "minecraft:melon_stem" => 15.0,
+        _ => 5.0,
+    }
+}
+
+/// Estufa: sob teto (sem céu aberto) o ar fica pelo menos nesta temperatura.
+pub(crate) const GREENHOUSE: f32 = 20.0;
+
+/// Quantas vezes mais lento a cultura cresce no ar `air`: 1 no conforto, 2 perto da base,
+/// `None` abaixo dela (parada pelo frio).
+pub(crate) fn cold_slowdown(block: &str, air: f32) -> Option<u32> {
+    let base = base_temperature(block);
+    if air < base { None } else if air < base + 4.0 { Some(2) } else { Some(1) }
+}
+
+/// mB de evaporação por terra arada visitada: o calor seca o solo mais rápido.
+pub(crate) fn soil_cost(raining: bool, air: f32) -> i32 {
+    let heat = ((air - 25.0) / 5.0).floor().clamp(0.0, 3.0) as i32;
+    if raining { SOIL_WATER / 2 } else { SOIL_WATER + heat }
+}
+
 /// Pontos de adubo de cada item do slot.
 pub(crate) fn fertilizer(item: &str) -> Option<i32> {
     Some(match item {
@@ -269,8 +301,20 @@ pub(crate) fn sprinkle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
     if !budget::request(budget::Lane::Terrain, host.dimension(), pos, 12) {
         return;
     }
-    let raining = host.weather().0 > 0.5 && host.light([pos[0], pos[1] + 1, pos[2]]).1 == 15;
-    let soil_cost = if raining { SOIL_WATER / 2 } else { SOIL_WATER };
+    let (rain, _) = host.weather();
+    let raining = rain > 0.5 && host.light([pos[0], pos[1] + 1, pos[2]]).1 == 15;
+    // Clima da lavoura, relido a cada 40 ticks: estação, hora, altitude e chuva.
+    let countdown = number(entity, "Sense");
+    if countdown <= 0 || !entity.nbt.contains_key(nbt_key("Climate")) {
+        let day_time = host.day_time();
+        let air = climate::temperature(day_time, pos[1], rain, host.dimension());
+        set_number(entity, "Climate", climate::pack(day_time, air));
+        set_number(entity, "Sense", SENSE_EVERY - 1 + ((pos[0] ^ pos[2]) & 7));
+    } else {
+        set_number(entity, "Sense", countdown - 1);
+    }
+    let air = climate::unpack(number(entity, "Climate")).1 as f32;
+    let soil_cost = soil_cost(raining, air);
     let mut cursor = number(entity, "Scan");
     let mut acted = false;
     for _ in 0..SCANS_PER_TICK {
@@ -288,8 +332,12 @@ pub(crate) fn sprinkle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
         if age >= ripe || stored < thirst {
             continue;
         }
+        // Geada: ao ar livre a planta sente o clima; sob teto (estufa) fica no morno.
+        let felt = if air >= base_temperature(&block) + 4.0 { air }
+            else if host.light(crop).1 < 15 { air.max(GREENHOUSE) } else { air };
+        let Some(slowdown) = cold_slowdown(&block, felt) else { continue };
         let fed = fertility >= hunger;
-        if !roll(crop, time, if fed { FED_ONE_IN } else { WATERED_ONE_IN }) {
+        if !roll(crop, time, slowdown * if fed { FED_ONE_IN } else { WATERED_ONE_IN }) {
             continue;
         }
         if host.set_block_property(crop, "age", &(age + 1).to_string()) {
@@ -375,8 +423,13 @@ pub(crate) fn turbine(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
     if sense_due(entity, pos) {
         let (head, surface) = measure_dam(host, pos);
         let flow = super::super::rivers::flow_near(host.dimension(), pos, 10);
+        let day_time = host.day_time();
+        let temperature = climate::temperature(day_time, pos[1], host.weather().0, host.dimension());
+        set_number(entity, "Climate", climate::pack(day_time, temperature));
+        // O rio enche com o degelo da primavera e baixa no fim do verão.
+        let seasonal = (flow as f32 * climate::river_factor(day_time)).round() as i32;
         set_number(entity, "Head", head.max(0));
-        set_number(entity, "Info", hydro_power(head, surface, flow));
+        set_number(entity, "Info", hydro_power(head, surface, seasonal));
     }
     (energy + number(entity, "Info")).min(limit)
 }

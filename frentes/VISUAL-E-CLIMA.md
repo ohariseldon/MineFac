@@ -1,0 +1,47 @@
+# Visual Realismo 2.0 e clima
+
+Pedido do Luiz: "a gente quer um visual bonito", com imersão no mundo e não só números, sem
+pesar o PC de 8 GB. Esta frente cobre o pacote de shaders, o que o mod informa a ele e o clima
+que afeta energia e lavoura.
+
+## Pacote de shaders (`visuals/veio-industrial`, 2.0.0)
+
+Céu próprio (atmosfera, sol com escurecimento da borda, estrelas, nuvens analíticas a 1.200
+blocos), sombras, brilho e raios de sol em meia/um quarto de resolução, plantas e água
+balançando, luz colorida de tochas, lava, fornos e partículas de fogo, reflexos opcionais,
+folhagem por estação, fumaça da fábrica no céu e na névoa. Três níveis: Leve (8 GB),
+Equilibrado e Alto. Detalhes e custo em `visuals/veio-industrial/README.md`.
+
+Validação offline: `python tools/check_shaders.py` (precisa do `naga`, `cargo install naga-cli`).
+Os prelúdios da Shader API 0.1 ficam em `tools/horizon_shader_0_1/`.
+
+## O que o mod manda (native/api/src/ambience.rs)
+
+- `shader_params`: `frame.mods[0] = [fase do ano 0..4, temperatura/50, fumaça 0..1, 1]`.
+- `visuals`: até 8 luzes coloridas das máquinas quentes ligadas a até 32 blocos da câmera,
+  com oscilação de chama. O registro é alimentado no tick das máquinas, uma vez por segundo
+  cada (com defasagem por posição), e esquece máquinas paradas há 3 s.
+- Fumaça, vapor ou brasas saem das máquinas quentes a cada 2 s, só com jogador a até 40 blocos.
+- Num servidor dedicado o cliente recebe só as partículas; as luzes dependem do registro no
+  mesmo processo (um jogador).
+
+## Clima (native/api/src/climate.rs)
+
+- Ano de 4 estações de 6 dias (24 dias, ~8 h de jogo), contado de `day_time`.
+- Temperatura: média da estação (15/25/13/1 °C, sem salto na virada) ± 5,5 °C no dia,
+  −1 °C a cada 10 blocos acima de y 64, −3 °C na chuva; subsolo estável (~12 °C);
+  Nether 48 °C, End −8 °C.
+- Solar: ×1,18 no verão a ×0,62 no inverno e −0,4%/°C acima de 25 °C. Vento: ×0,85 a ×1,2.
+  Rios (turbina): ×1,35 na primavera, ×0,75 no verão. Roda d'água congela abaixo de −3 °C.
+- Aspersor: abaixo da temperatura mínima da cultura (trigo 3 °C … melão 15 °C) a lavoura para;
+  nos 4 °C acima dela cresce na metade; com telhado (luz do céu < 15) vale 20 °C (estufa).
+  Calor acima de 25 °C gasta +1 mB de água por bloco a cada 5 °C.
+- As máquinas releem o clima a cada 2 s e guardam em `Climate`; o painel mostra
+  "Estação · °C" no solar, vento, roda d'água, turbina e aspersor.
+
+## Medição
+
+`python tools/check_performance.py`: 8 cenários, verificações idênticas às de antes; os 7
+antigos sem mudança de alocações ou leituras de NBT. Novo: `ambience_1000_hot_machines_second`
+(mil geradores ligados, 3 quadros de luzes por tick) em ~40 µs por tick e 3 alocações pequenas
+por tick.

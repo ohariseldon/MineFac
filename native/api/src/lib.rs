@@ -1,4 +1,6 @@
+mod ambience;
 mod blueprint;
+pub(crate) mod climate;
 mod budget;
 mod presentation;
 mod appearance;
@@ -341,6 +343,7 @@ impl Hooks for Factory {
         onboarding::server_tick(host);
         home::tick(host, defense::clock());
         milestones::census::tick(host, defense::clock());
+        ambience::maintain(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
             industry::maintain(host, time);
@@ -456,6 +459,18 @@ impl Hooks for Factory {
         presentation::draw(host, event);
     }
 
+    /// Luz colorida das máquinas quentes trabalhando, para o pacote de shaders.
+    #[allow(elided_lifetimes_in_paths)]
+    fn visuals(&self, host: &dyn Host, event: &mut horizon_client::mod_api::VisualsEvent) {
+        ambience::visuals(host, event.lights);
+    }
+
+    /// Estação, temperatura e fumaça da fábrica para o pacote de shaders (`frame.mods`).
+    #[allow(elided_lifetimes_in_paths)]
+    fn shader_params(&self, host: &dyn Host, event: &mut horizon_client::mod_api::ShaderParamsEvent) {
+        ambience::shader_params(host, event.params);
+    }
+
 }
 
 /// Tick de um bloco do Veio. Fora do gancho para as medições chamarem o mesmo caminho.
@@ -490,6 +505,7 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     holding::observe(host.dimension(), pos, entity, time);
     pollution::emit(host, pos, entity, time);
     soundscape::after(host, pos, entity, produced, previous_status, time);
+    ambience::observe(host, pos, entity, defense::clock());
     record_performance(entity, produced);
     let cargo = presentation::publish(entity);
     if cargo || published_signature(entity) != previous {

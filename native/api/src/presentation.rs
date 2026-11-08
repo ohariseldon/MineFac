@@ -351,6 +351,8 @@ pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
             else { stage };
         let module = if number(entity, "Tier") >= 2 { module + upgrades::MK2_FLAG } else { module };
         let stage = if freight::owns(&entity.id) { number(entity, "FlightPhase") } else { stage };
+        // Slot 4: nas máquinas que sentem o tempo, a estação e a temperatura (ver `climate::pack`).
+        let burn = if production::feels_weather(&entity.id) { number(entity, "Climate") } else { burn };
         [status, progress, duration, energy, burn, capacity(&entity.id), rate, utilization, stage, total,
             damage, module, if entity.id == TESLA { smog } else if entity.id == HUB { i32::from(contracts::beacon_selected(entity)) } else { info }]
     };
