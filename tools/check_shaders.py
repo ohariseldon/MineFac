@@ -92,6 +92,14 @@ def own_rules(pack, manifest):
                     seen.add(item)
         problems += [f"página {page['id']} inalcançável" for page in pages if page["id"] not in reached]
         problems += [f"opção {option} fora das páginas" for option in options if option not in seen]
+    used = set(manifest.get("shared", []))
+    for stage in ("sky", "material", "vertex", "weather"):
+        if stage in manifest:
+            used.add(manifest[stage]["file"])
+    used.update(entry["file"] for entry in manifest.get("post", []))
+    for name in sorted(sources):
+        if name not in used:
+            problems.append(f"{name} não é usado por nenhum estágio nem em shared (o Horizon recusa)")
     if len(manifest.get("post", [])) > LIMIT_POST:
         problems.append(f"mais de {LIMIT_POST} passes")
     outputs = [entry["output"] for entry in manifest.get("post", []) if "output" in entry]

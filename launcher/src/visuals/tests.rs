@@ -31,7 +31,12 @@ fn realism_is_installed_before_launch_and_preserves_personal_options_and_origina
     let graphics = "graphicsApi:dx12\nunknownFutureOption:42\npickedShaderPack:Other.zip\n";
     fs::write(dir.join("options.txt"), original).unwrap();
     fs::write(dir.join("horizon-graphics.txt"), graphics).unwrap();
+    fs::create_dir_all(dir.join("shaderpacks/veio-industrial")).unwrap();
+    fs::write(dir.join("shaderpacks/veio-industrial/ao.wgsl"), "old").unwrap();
+    fs::write(dir.join("shaderpacks/veio-industrial/notes.txt"), "mine").unwrap();
     install(&fixture.0, &dir, selection(Profile::Realism)).unwrap();
+    assert!(!dir.join("shaderpacks/veio-industrial/ao.wgsl").exists());
+    assert!(dir.join("shaderpacks/veio-industrial/notes.txt").exists());
     let game = fs::read_to_string(dir.join("options.txt")).unwrap();
     assert!(game.contains("lang:pt_br\nkey_key.jump:key.keyboard.j\n"));
     assert!(game.contains("resourcePacks:[\"vanilla\",\"file/minha.zip\"]\n"));

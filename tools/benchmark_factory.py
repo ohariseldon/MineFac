@@ -80,7 +80,12 @@ class Game:
         (directory / "horizon-mods.txt").write_text("mod.veio:true\n", encoding="utf-8")
         pack = args.source / "visuals/veio-industrial"
         if shader:
-            shutil.copytree(pack, directory / "shaderpacks/veio-industrial", dirs_exist_ok=True)
+            installed = directory / "shaderpacks/veio-industrial"
+            # O Horizon recusa o pacote se sobrar um .wgsl de versão anterior.
+            for stale in installed.glob("*.wgsl") if installed.is_dir() else ():
+                if not (pack / stale.name).is_file():
+                    stale.unlink()
+            shutil.copytree(pack, installed, dirs_exist_ok=True)
         (directory / "options.txt").write_text(
             f"renderDistance:8\nsimulationDistance:5\nmaxFps:{args.fps_cap}\nenableVsync:false\n"
             'graphicsPreset:fast\nrenderClouds:"fast"\ncloudRange:8\nparticles:1\nao:true\n'

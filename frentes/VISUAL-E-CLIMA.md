@@ -54,8 +54,9 @@ No PC do Luiz o Horizon recusou o pacote inteiro: "6 [[post]] outputs; a pack ma
   texels do tipo certo, para nuvem não vazar na borda do telhado.
 - `tools/check_shaders.py` agora barra mais de 4 saídas e saídas repetidas.
 
-Os arquivos antigos (`bright`, `ao`, `rays`, `ssr`, `clouds`) podem sobrar numa instalação antiga;
-o manifesto não os cita, então não pesam.
+O Horizon também recusa o pacote se sobrar um `.wgsl` que nenhum estágio usa ("ao.wgsl is not used by any
+stage or in shared"). O launcher apaga os `.wgsl` da versão anterior antes de copiar, e o
+`check_shaders.py` barra arquivo não usado.
 
 ## Pelo motor, sem depender do shader
 

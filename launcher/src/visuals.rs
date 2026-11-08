@@ -98,6 +98,20 @@ pub(super) fn launch_environment(command: &mut Command, profile: Profile) {
     }
 }
 
+/// O Horizon recusa o pacote inteiro se sobrar um `.wgsl` que nenhum estágio usa, como os de
+/// uma versão anterior. Só apaga `.wgsl` da raiz que a versão nova não traz.
+fn remove_stale_shaders(source: &Path, target: &Path) -> Result<(), String> {
+    let Ok(entries) = fs::read_dir(target) else { return Ok(()) };
+    for entry in entries {
+        let path = entry.map_err(|error| error.to_string())?.path();
+        let shader = path.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("wgsl"));
+        if shader && path.is_file() && !source.join(path.file_name().unwrap_or_default()).is_file() {
+            fs::remove_file(&path).map_err(|error| format!("{}: {error}", path.display()))?;
+        }
+    }
+    Ok(())
+}
+
 pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Result<(), String> {
     // Não há shaders no pacote de conteúdo do mod: desligar aqui remove a seleção sem
     // um gancho nativo voltar a ativá-la. A instalação não executa nenhum WGSL.
@@ -106,7 +120,9 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
         if !source.join("horizon-shaders.toml").is_file() {
             return Err("o pacote visual veio-industrial está faltando. Extraia o ZIP completo, ou abra Jogar-Leve.cmd.".into());
         }
-        super::copy_dir(&source, &instance.join("shaderpacks").join(PACK_FOLDER))?;
+        let target = instance.join("shaderpacks").join(PACK_FOLDER);
+        remove_stale_shaders(&source, &target)?;
+        super::copy_dir(&source, &target)?;
     }
     let marker = format!("{}:{PRESET_REVISION}", selection.profile.id());
     if !selection.reset && fs::read_to_string(instance.join(MARKER)).unwrap_or_default().trim() == marker {
