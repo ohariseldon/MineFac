@@ -7,6 +7,25 @@ use horizon_client::mod_api::{BlockStateId, EntityRef, NativeItemEntity};
 use std::cell::Cell;
 
 #[test]
+fn active_barracks_keep_the_night_watch_while_civilians_sleep() {
+    use horizon_client::mobs::{Ai, Mob, MobType, Vec3, villager, villager_brain::{Act, Brain}};
+    let mut village = Village::new("veio:night-watch-integration");
+    village.villager(98521, [0.5, 64.0, 0.5], [98, 5, 2, 1]);
+    let mut post = block(BARRACKS);
+    set_number(&mut post, "Ration", 10);
+    assert!(hire_at(&mut village, &mut post, POST, 0));
+    village.day = 13000;
+    assert_ne!(cycle(&mut village, &mut post, 1), RESTING);
+    let mut guard = Mob { id: 98521, rider: None, extra: Default::default(),
+        kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(),
+        velocity: Vec3::default(), on_climbable: false, ai: Ai::default() };
+    villager::ext_mut(&mut guard).brain = Some(Box::new(Brain::preview(Act::Rest)));
+    assert!(matches!(steer(&mut guard, [4.0, 64.0, 0.0]), Steer::Brain),
+        "The active defender must retain its patrol target through the vanilla rest schedule");
+    assert!(villager::ext(&guard).unwrap().brain.as_ref().unwrap().mem.walk_target.get().is_some());
+}
+
+#[test]
 fn worker_discovery_keeps_cached_targets_and_cursor_while_globally_deferred() {
     struct Probe { reads: Cell<usize> }
     impl Host for Probe {

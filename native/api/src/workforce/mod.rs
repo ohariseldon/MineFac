@@ -378,11 +378,13 @@ fn steer(m: &mut Mob, goal: [f64; 3]) -> Steer {
     if villager::ext(m).and_then(|ext| ext.brain.as_ref()).is_none() {
         return Steer::Navigation;
     }
+    let id = m.id;
     let Some(brain) = villager::ext_mut(m).brain.as_mut() else { return Steer::Navigation };
-    if matches!(brain.activity, Act::Panic | Act::Raid | Act::PreRaid | Act::Hide | Act::Rest) {
+    let danger_or_rest = matches!(brain.activity, Act::Panic | Act::Raid | Act::PreRaid | Act::Hide | Act::Rest);
+    if danger_or_rest && !barracks::is_soldier(id) {
         return Steer::Busy;
     }
-    let target = WalkTarget { target: Tracker::Block(walk_block(goal)), speed: 0.6, close: 1 };
+    let target = WalkTarget { target: Tracker::Block(walk_block(goal)), speed: if danger_or_rest { 0.9 } else { 0.6 }, close: 1 };
     if brain.mem.walk_target.get() != Some(&target) {
         brain.mem.walk_target.set(target);
     }
