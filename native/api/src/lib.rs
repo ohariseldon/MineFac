@@ -11,6 +11,7 @@ mod logistics_controls;
 mod lift;
 mod milestones;
 mod inserters;
+mod joints;
 pub(crate) mod operations;
 mod defense;
 mod farm;
@@ -1153,6 +1154,9 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
 }
 
 fn tick_power(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
+    if entity.id == CABLE {
+        joints::refresh(host, pos, entity, &joints::CABLE_FACES, joints::cable_connects);
+    }
     let limit = capacity(&entity.id);
     let mut energy = number(entity, "energy").min(limit);
     // Geração (produção); a distribuição abaixo é da logística.

@@ -1,0 +1,42 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "wire": "minecraft:block/black_wool",
+    "joint": "minecraft:block/copper_block",
+    "particle": "minecraft:block/black_wool"
+  },
+  "elements": [
+    {
+      "from": [
+        6.5,
+        0,
+        11
+      ],
+      "to": [
+        9.5,
+        2.5,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#wire"
+        },
+        "up": {
+          "texture": "#wire"
+        },
+        "north": {
+          "texture": "#wire"
+        },
+        "south": {
+          "texture": "#wire"
+        },
+        "west": {
+          "texture": "#wire"
+        },
+        "east": {
+          "texture": "#wire"
+        }
+      }
+    }
+  ]
+}
