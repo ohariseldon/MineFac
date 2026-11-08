@@ -33,6 +33,7 @@ pub(super) mod farmhand;
 pub(super) mod foreman;
 pub(super) mod hauler;
 pub(super) mod shepherd;
+pub(super) mod barracks;
 pub(super) mod center;
 pub(super) mod storage;
 pub(super) mod spawn;
@@ -44,6 +45,7 @@ pub(super) const HAULER_POST: &str = "veio:hauler_post";
 pub(super) const FOREMAN_DESK: &str = "veio:foreman_desk";
 pub(super) const SHEPHERD_POST: &str = "veio:shepherd_post";
 pub(super) const CONTROL_CENTER: &str = center::CONTROL_CENTER;
+pub(super) const BARRACKS: &str = barracks::BARRACKS;
 pub(super) use zones::{FIELD_MARKER, PEN_MARKER};
 pub(super) const VILLAGER: &str = "minecraft:villager";
 /// Contratar custa uma esmeralda, paga só quando a contratação dá certo.
@@ -79,7 +81,7 @@ pub(super) const KEEP: i32 = -1;
 /// Trigo cru vale 1 e não paga o ciclo; pão vale 6 e paga três tarefas.
 pub(super) const TASK_COST: i32 = 2;
 /// O posto age a cada 10 ticks, com a fase espalhada pela posição.
-const EVERY: i64 = 10;
+pub(super) const EVERY: i64 = 10;
 /// Aldeões a até esta distância do posto podem ser contratados por ele.
 pub(super) const HIRE_RADIUS: f64 = 8.0;
 /// Procura o trabalhador nesta distância quando o id da sessão não é conhecido.
@@ -108,7 +110,7 @@ pub(super) type Uuid = [i32; 4];
 
 /// Blocos com trabalhador contratado.
 pub(super) fn is_post(block: &str) -> bool {
-    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST | CONTROL_CENTER)
+    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST | CONTROL_CENTER | BARRACKS)
 }
 
 /// Todos os blocos deste módulo: postos, marcos de zona e armazéns.
@@ -128,6 +130,7 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         SHEPHERD_POST => (5, vec![0, 1], vec![2, 3, 4]),
         // Comida do administrador; três metas (sem automação).
         CONTROL_CENTER => (4, vec![0], vec![]),
+        BARRACKS => (2, vec![0, 1], vec![]),
         _ => return zones::layout(block).or_else(|| storage::layout(block)),
     })
 }
@@ -171,6 +174,8 @@ pub(super) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (HAULER_POST, 1..=3) => true,
         (FOREMAN_DESK, 3) => stack.item.as_ref() == WAGE,
         (CONTROL_CENTER, _) => center::accepts(slot, stack),
+        (BARRACKS, 0) => is_food(&stack.item),
+        (BARRACKS, 1) => stack.item.as_ref() == WAGE,
         _ if zones::is_marker(block) => zones::accepts(block, slot, stack),
         _ if storage::is_store(block) => storage::accepts(block, slot, stack),
         _ => false,
@@ -266,6 +271,28 @@ pub(super) fn cancel(entity: u32) {
     }
 }
 
+/// Soldados de plantão (quartel): o objetivo os mantém na luta mesmo com medo ou à noite.
+static DUTY: Mutex<Vec<(u32, u64)>> = Mutex::new(Vec::new());
+static ON_DUTY: AtomicBool = AtomicBool::new(false);
+
+/// O quartel renova o plantão do seu soldado a cada tarefa.
+pub(super) fn duty(entity: u32, now: u64) {
+    let Ok(mut duty) = DUTY.lock() else { return };
+    duty.retain(|(id, seen)| *id != entity && now.saturating_sub(*seen) <= ORDER_FRESH);
+    if duty.len() < 256 {
+        duty.push((entity, now));
+    }
+    ON_DUTY.store(true, Ordering::Release);
+}
+
+/// Este aldeão está de plantão agora?
+pub(super) fn on_duty(entity: u32, now: u64) -> bool {
+    ON_DUTY.load(Ordering::Acquire)
+        && DUTY.lock().is_ok_and(|duty| {
+            duty.iter().any(|(id, seen)| *id == entity && now.saturating_sub(*seen) <= ORDER_FRESH)
+        })
+}
+
 /// Destino atual do aldeão, se o posto renovou a ordem há pouco.
 pub(super) fn order_for(entity: u32, now: u64) -> Option<[f64; 3]> {
     if !ORDERS_PENDING.load(Ordering::Acquire) {
@@ -284,6 +311,8 @@ pub(super) struct Work {
     cooldown: i32,
     /// Chamadas até a próxima consulta ao mapa de ordens.
     wait: u8,
+    /// Soldado de plantão: não foge nem dorme.
+    duty: bool,
 }
 
 /// O objetivo consulta o mapa de ordens a cada `ORDER_POLL` chamadas (meio segundo).
@@ -300,7 +329,9 @@ impl Goal for Work {
             return self.target.is_some();
         }
         self.wait = ORDER_POLL - 1;
-        self.target = order_for(m.id, defense::clock());
+        let now = defense::clock();
+        self.target = order_for(m.id, now);
+        self.duty = self.target.is_some() && on_duty(m.id, now);
         self.target.is_some()
     }
     fn start(&mut self, m: &mut Mob, cx: &mut Cx) {
@@ -309,7 +340,7 @@ impl Goal for Work {
     }
     fn tick(&mut self, m: &mut Mob, cx: &mut Cx) {
         let Some(goal) = self.target else { return };
-        match steer(m, goal) {
+        match steer(m, goal, self.duty) {
             // O cérebro anda até o alvo: nada a fazer aqui.
             Steer::Brain => {}
             // Pânico, ataque, esconderijo ou sono: o aldeão cuida de si e o posto espera.
@@ -355,14 +386,26 @@ fn walk_block(goal: [f64; 3]) -> [i32; 3] {
 /// sempre que tem um alvo de caminhada (`MoveToTargetSink`). Em vez de disputar a navegação, a
 /// ordem vira esse alvo: os outros comportamentos (passear, sino, emprego) só escolhem alvo
 /// quando não há um, então o próprio cérebro leva o trabalhador à tarefa.
-fn steer(m: &mut Mob, goal: [f64; 3]) -> Steer {
+///
+/// Um soldado de plantão (`duty`) esquece o medo e a hora de dormir: o objetivo roda antes do
+/// cérebro, então limpar as memórias de susto e voltar a atividade para `Idle` evita que o
+/// pânico o faça fugir do monstro que ele devia enfrentar.
+fn steer(m: &mut Mob, goal: [f64; 3], duty: bool) -> Steer {
     use horizon_client::mobs::villager;
     use horizon_client::mobs::villager_brain::{Act, Tracker, WalkTarget};
     if villager::ext(m).and_then(|ext| ext.brain.as_ref()).is_none() {
         return Steer::Navigation;
     }
     let Some(brain) = villager::ext_mut(m).brain.as_mut() else { return Steer::Navigation };
-    if matches!(brain.activity, Act::Panic | Act::Raid | Act::PreRaid | Act::Hide | Act::Rest) {
+    let busy = matches!(brain.activity, Act::Panic | Act::Raid | Act::PreRaid | Act::Hide | Act::Rest);
+    if duty {
+        brain.mem.hurt_by.clear();
+        brain.mem.hurt_by_entity.clear();
+        brain.mem.nearest_hostile.clear();
+        if busy {
+            brain.activity = Act::Idle;
+        }
+    } else if busy {
         return Steer::Busy;
     }
     let target = WalkTarget { target: Tracker::Block(walk_block(goal)), speed: 0.6, close: 1 };
@@ -434,7 +477,7 @@ pub(super) fn unreserve(dimension: &str, owner: [i32; 3]) {
 // ---------- NBT do posto ----------
 
 pub(super) fn worker(entity: &ModBlockEntity) -> Option<Uuid> {
-    match entity.nbt.get(&"Worker".into()) {
+    match entity.nbt.get(nbt_key("Worker")) {
         Some(Tag::IntArray(values)) if values.len() == 4 => Some([values[0], values[1], values[2], values[3]]),
         _ => None,
     }
@@ -443,7 +486,7 @@ pub(super) fn worker(entity: &ModBlockEntity) -> Option<Uuid> {
 fn set_worker(entity: &mut ModBlockEntity, uuid: Option<Uuid>) {
     match uuid {
         Some(uuid) => { entity.nbt.insert("Worker".into(), Tag::IntArray(uuid.to_vec())); }
-        None => { entity.nbt.remove(&"Worker".into()); }
+        None => { entity.nbt.remove(nbt_key("Worker")); }
     }
     for key in ["Target", "Walk", "Absent"] {
         entity.nbt.remove(&key.into());
@@ -470,14 +513,14 @@ pub(super) fn target(entity: &ModBlockEntity) -> Option<[i32; 3]> {
 
 pub(super) fn set_target(entity: &mut ModBlockEntity, pos: Option<[i32; 3]>) {
     if target(entity) != pos {
-        entity.nbt.remove(&"Walk".into());
+        entity.nbt.remove(nbt_key("Walk"));
     }
     set_pos(entity, "Target", pos);
 }
 
 /// Alvos que o trabalhador não alcançou, até a próxima volta da varredura do adaptador.
 pub(super) fn skipped(entity: &ModBlockEntity) -> Vec<[i32; 3]> {
-    match entity.nbt.get(&"Skipped".into()) {
+    match entity.nbt.get(nbt_key("Skipped")) {
         Some(Tag::IntArray(values)) => values.chunks_exact(3).map(|v| [v[0], v[1], v[2]]).collect(),
         _ => Vec::new(),
     }
@@ -493,7 +536,7 @@ pub(super) fn skip(entity: &mut ModBlockEntity, spot: [i32; 3]) {
 }
 
 pub(super) fn clear_skipped(entity: &mut ModBlockEntity) {
-    entity.nbt.remove(&"Skipped".into());
+    entity.nbt.remove(nbt_key("Skipped"));
 }
 
 /// O que acontece com a carga do trabalhador.
@@ -528,11 +571,11 @@ fn has_load(entity: &ModBlockEntity) -> bool {
 /// Itens que o trabalhador carrega. Ficam no NBT do posto: salvar, descarregar o chunk ou
 /// trocar de trabalhador não os perde.
 pub(super) fn carried(entity: &ModBlockEntity) -> Vec<(String, u32)> {
-    let Some(Tag::List(list)) = entity.nbt.get(&"Carried".into()) else { return Vec::new() };
+    let Some(Tag::List(list)) = entity.nbt.get(nbt_key("Carried")) else { return Vec::new() };
     list.iter().filter_map(|tag| {
         let Tag::Compound(item) = tag else { return None };
-        let Some(Tag::String(id)) = item.get(&"id".into()) else { return None };
-        let Some(Tag::Int(count)) = item.get(&"count".into()) else { return None };
+        let Some(Tag::String(id)) = item.get(nbt_key("id")) else { return None };
+        let Some(Tag::Int(count)) = item.get(nbt_key("count")) else { return None };
         (*count > 0).then(|| (id.to_string_lossy(), *count as u32))
     }).collect()
 }
@@ -586,14 +629,14 @@ pub(super) fn deliver(entity: &mut ModBlockEntity) -> bool {
 }
 
 fn uuid_of(nbt: &Compound) -> Option<Uuid> {
-    match nbt.get(&"UUID".into()) {
+    match nbt.get(nbt_key("UUID")) {
         Some(Tag::IntArray(values)) if values.len() == 4 => Some([values[0], values[1], values[2], values[3]]),
         _ => None,
     }
 }
 
 fn adult(nbt: &Compound) -> bool {
-    !matches!(nbt.get(&"Age".into()), Some(Tag::Int(age)) if *age < 0)
+    !matches!(nbt.get(nbt_key("Age")), Some(Tag::Int(age)) if *age < 0)
 }
 
 fn post_center([x, y, z]: [i32; 3]) -> [f64; 3] {
@@ -737,6 +780,9 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
     if block == CONTROL_CENTER && held == "minecraft:book" {
         return center::report_to_chat(host, pos);
     }
+    if block == BARRACKS && host.sneaking() && held == WAGE {
+        return barracks::cycle(host, pos);
+    }
     if !is_post(&block) {
         return None;
     }
@@ -764,7 +810,7 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
         });
         if let Some(id) = hand {
             let mut post = None;
-            host.change_mod_block_entity(pos, &mut |entity| post = Some(entity.nbt.contains_key(&"Held".into())));
+            host.change_mod_block_entity(pos, &mut |entity| post = Some(entity.nbt.contains_key(nbt_key("Held"))));
             if post == Some(true)
                 && let Some(living) = host.entity(id).and_then(|handle| host.living(handle))
             {
@@ -772,7 +818,7 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
             }
         }
         host.change_mod_block_entity(pos, &mut |entity| {
-            entity.nbt.remove(&"Held".into());
+            entity.nbt.remove(nbt_key("Held"));
             dismiss(dimension, pos, entity);
         });
         notify(host, pos, "veio.worker.dismissed");
@@ -806,7 +852,7 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
 }
 
 /// Mensagem na barra de ação do jogador mais próximo do posto.
-fn notify(host: &mut dyn Host, pos: [i32; 3], key: &str) {
+pub(super) fn notify(host: &mut dyn Host, pos: [i32; 3], key: &str) {
     let at = center(pos);
     let dimension = host.dimension();
     let nearest = host.server_players().into_iter()
@@ -922,7 +968,8 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return;
     };
     set_number(entity, "Absent", 0);
-    if night(host) {
+    // O quartel fica de plantão à noite: é quando os monstros aparecem.
+    if night(host) && entity.id != BARRACKS {
         // A carga e o alvo ficam guardados: o trabalho continua de manhã.
         show_load(host, entity, id, false);
         cancel(id);
@@ -946,7 +993,7 @@ fn show_load(host: &mut dyn Host, entity: &mut ModBlockEntity, id: u32, show: bo
     use horizon_client::mod_api::EquipmentSlot;
     let want = if show { carried(entity).into_iter().next().map(|(item, _)| item) } else { None }.unwrap_or_default();
     // Sem `Held`, a mão é desconhecida (aldeão vindo de outro posto, save antigo): acerta uma vez.
-    let held = match entity.nbt.get(&"Held".into()) {
+    let held = match entity.nbt.get(nbt_key("Held")) {
         Some(Tag::String(item)) => Some(item.to_string_lossy()),
         _ => None,
     };
@@ -1012,6 +1059,14 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         unreserve(dimension, pos);
         order(id, home, now);
         return 1;
+    }
+    if entity.id == BARRACKS {
+        if !feed(entity, TASK_COST) {
+            cancel(id);
+            set_target(entity, None);
+            return NO_FOOD;
+        }
+        return barracks::fight(host, pos, entity, id, at, now);
     }
     // 2. Comida: cada tarefa gasta `TASK_COST` pontos; o trabalhador come até cobrir.
     if !feed(entity, TASK_COST) {
@@ -1130,7 +1185,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
 }
 
 /// Uma tarefa concluída: gasta comida e conta no painel.
-fn finish_task(entity: &mut ModBlockEntity) {
+pub(super) fn finish_task(entity: &mut ModBlockEntity) {
     set_number(entity, "Ration", number(entity, "Ration").saturating_sub(TASK_COST));
     set_number(entity, "Total", number(entity, "Total").saturating_add(1));
 }
@@ -1204,7 +1259,7 @@ fn hire_for(host: &mut dyn Host, spot: [i32; 3], now: u64) -> bool {
 }
 
 /// Conta o tempo de caminhada; acima do limite, desiste do alvo (caminho obstruído).
-fn walk(entity: &mut ModBlockEntity, spot: Option<[i32; 3]>) -> i32 {
+pub(super) fn walk(entity: &mut ModBlockEntity, spot: Option<[i32; 3]>) -> i32 {
     let walked = number(entity, "Walk") + EVERY as i32;
     if walked < WALK_LIMIT {
         set_number(entity, "Walk", walked);
@@ -1253,6 +1308,7 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         // O capataz publica os postos atendidos em `Rate` (slot 6), livre fora das máquinas elétricas.
         FOREMAN_DESK => (tr("veio.metric.posts", &[&read(6), &read(7)]), "veio.hint.foreman_desk"),
         SHEPHERD_POST => (tr("veio.metric.chores", &[&read(9)]), "veio.hint.shepherd_post"),
+        BARRACKS => (tr("veio.metric.kills", &[&read(9)]), barracks::hint(read(6))),
         _ => return zones::panel_lines(block, data).or_else(|| storage::panel_lines(block, data)),
     };
     Some(vec![first, tr("veio.metric.ration", &[&read(12)]), tr(hint, &[])])
@@ -1266,6 +1322,7 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         FOREMAN_DESK => vec![Some([44.0, 45.0]), Some([62.0, 45.0]), Some([80.0, 45.0]), Some([134.0, 45.0])],
         SHEPHERD_POST => vec![Some([17.0, 45.0]), Some([39.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
         CONTROL_CENTER => center::screen_slots(),
+        BARRACKS => vec![Some([44.0, 45.0]), Some([134.0, 45.0])],
         FIELD_MARKER | PEN_MARKER => vec![Some([89.0, 45.0])],
         _ => return storage::screen_slots(block),
     })
@@ -1278,6 +1335,7 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         FOREMAN_DESK => &["food", "", "", "wage"],
         SHEPHERD_POST => &["food", "feed", "output", "", ""],
         CONTROL_CENTER => &[],
+        BARRACKS => &["food", "wage"],
         FIELD_MARKER => &["seeds"],
         PEN_MARKER => &["feed"],
         _ if storage::is_store(block) => &[],

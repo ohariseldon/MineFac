@@ -4,8 +4,16 @@
 //!   espalha aos chunks vizinhos e uma parte se dissipa.
 //! - O primeiro aviso chega pelo chat quando um chunk passa de `NOTICE`. Ataques só começam um dia
 //!   inteiro depois desse aviso, e só à noite, com alerta ao anoitecer.
-//! - Saqueadores (`veio:raider`, um zumbi) andam até a máquina poluidora mais próxima e a danificam.
-//!   Nada é destruído: a máquina para até receber um kit de reparo. Eles queimam ao sol.
+//! - Uma onda chega à noite pela borda da fábrica, junta e de um lado (a direção muda a cada noite),
+//!   com o toque de corneta. Ela traz **saqueadores** (`veio:raider`, zumbi com faro de 40 blocos),
+//!   **arqueiros** (esqueletos, a partir da 3ª noite de ataque) e **brutos**
+//!   (`veio:raider_brute`, zumbi grande e lento, a partir da 5ª). Todos queimam ao sol.
+//! - O combate é o do Minecraft: saqueadores e brutos atacam jogadores, aldeões e golens como
+//!   zumbis; arqueiros atiram neles. Esqueletos e aranhas da noite também passam a caçar aldeões
+//!   (alvo vanilla `NearestTarget`), com dano de verdade: o aldeão foge, golens defendem.
+//! - Sem ninguém por perto para atacar, saqueadores golpeiam a máquina poluidora mais próxima
+//!   (quatro golpes param a máquina, até um kit de reparo). O Bruto vai primeiro às máquinas e
+//!   bate o dobro.
 //!
 //! O estado fica em memória e recomeça ao reabrir o mundo; a poluição volta em poucos minutos.
 use super::*;
@@ -24,8 +32,19 @@ const ABSORB: f32 = 0.02;
 const SPREAD: f32 = 0.04;
 const SPREAD_ABOVE: f32 = 20.0;
 const DAY: i64 = 24000;
-const MAX_WAVE: u32 = 8;
+const MAX_WAVE: u32 = 12;
 const RAIDER: &str = "veio:raider";
+/// Dano de um golpe. Quatro golpes (4 s) param a máquina.
+pub(super) const BLOW: i32 = 25;
+const BRUTE: &str = "veio:raider_brute";
+const ARCHER: &str = "minecraft:skeleton";
+/// O Bruto derruba uma máquina em dois golpes.
+pub(super) const BRUTE_BLOW: i32 = 50;
+/// Noites de ataque a partir das quais a onda traz arqueiros e brutos.
+pub(super) const ARCHERS_FROM: u32 = 3;
+pub(super) const BRUTES_FROM: u32 = 5;
+/// A onda nasce a esta distância da máquina-alvo.
+const ARRIVAL: f64 = 26.0;
 
 /// Emissão por segundo de trabalho.
 pub(super) fn emission(block: &str) -> f32 {
@@ -213,10 +232,15 @@ fn plan_raid(world: &mut World, time: i64, day_time: i64) -> Option<Plan> {
     None
 }
 
-/// Duas criaturas na primeira onda; cresce com a poluição e com as noites de ataque.
+/// Quatro criaturas na primeira onda; cresce com a poluição e com as noites, até doze.
 pub(super) fn wave_size(level: f32, waves: u32) -> u32 {
-    let extra = ((level - RAID).max(0.0) / 600.0) as u32;
-    (2 + waves.saturating_sub(1) / 2 + extra).min(MAX_WAVE)
+    let extra = ((level - RAID).max(0.0) / 400.0) as u32;
+    (4 + waves.saturating_sub(1) + extra).min(MAX_WAVE)
+}
+
+/// Noites de ataque já vividas nesta dimensão (a onda de hoje incluída).
+fn waves_so_far(dimension: &str) -> u32 {
+    with_world(dimension, |world| world.waves).unwrap_or(1)
 }
 
 fn act(host: &mut dyn Host, dimension: &str, plan: Plan, time: i64) {
@@ -224,7 +248,7 @@ fn act(host: &mut dyn Host, dimension: &str, plan: Plan, time: i64) {
         Plan::Notice(anchor) => (anchor, "veio.raid.notice"),
         Plan::Warning(anchor) => (anchor, "veio.raid.warning"),
         Plan::Wave(anchor, size) => {
-            spawn_wave(host, dimension, anchor, size, time);
+            spawn_wave(host, dimension, anchor, size, waves_so_far(dimension), time);
             (anchor, "veio.raid.arrived")
         }
     };
@@ -244,16 +268,35 @@ fn act(host: &mut dyn Host, dimension: &str, plan: Plan, time: i64) {
     }
 }
 
-fn spawn_wave(host: &mut dyn Host, dimension: &str, anchor: [i32; 3], size: u32, time: i64) {
-    // Direção que muda a cada noite; os saqueadores chegam a 28 blocos da fábrica.
-    let angle = (time.rem_euclid(7919) as f64) * 0.0123;
-    for index in 0..size {
-        let spread = f64::from(index) * 0.35;
-        let x = anchor[0] + ((angle + spread).cos() * 28.0) as i32;
-        let z = anchor[2] + ((angle + spread).sin() * 28.0) as i32;
-        let Ok(heights) = host.surface_heights(dimension, &[(x, z)], NativeHeightmap::MotionBlocking) else { continue };
+/// Quem vem numa onda de `size` na noite de ataque `waves`: (saqueadores, arqueiros, brutos).
+pub(super) fn wave_mix(size: u32, waves: u32) -> (u32, u32, u32) {
+    let archers = if waves >= ARCHERS_FROM { size / 4 } else { 0 };
+    let brutes = if waves >= BRUTES_FROM { (size / 6).max(1) } else { 0 };
+    (size - archers - brutes, archers, brutes)
+}
+
+fn spawn_wave(host: &mut dyn Host, dimension: &str, anchor: [i32; 3], size: u32, waves: u32, time: i64) {
+    let factory = [f64::from(anchor[0]) + 0.5, f64::from(anchor[1]), f64::from(anchor[2]) + 0.5];
+    // Uma frente: um arco de 90 graus num lado da fábrica, que muda a cada noite. Os saqueadores
+    // farejam o jogador a 40 blocos; quem está na fábrica os vê chegar.
+    let angle = (time.div_euclid(DAY).rem_euclid(97) as f64) * 2.399;
+    let (raiders, archers, brutes) = wave_mix(size, waves);
+    let kinds = std::iter::repeat_n(RAIDER, raiders as usize)
+        .chain(std::iter::repeat_n(ARCHER, archers as usize))
+        .chain(std::iter::repeat_n(BRUTE, brutes as usize));
+    let mut first = None;
+    for (index, kind) in kinds.enumerate() {
+        let spread = (index as f64 / f64::from(size.max(1)) - 0.5) * std::f64::consts::FRAC_PI_2;
+        let x = factory[0] + (angle + spread).cos() * ARRIVAL;
+        let z = factory[2] + (angle + spread).sin() * ARRIVAL;
+        let Ok(heights) = host.surface_heights(dimension, &[(x.floor() as i32, z.floor() as i32)], NativeHeightmap::MotionBlocking) else { continue };
         let Some(Some(y)) = heights.first().copied() else { continue };
-        host.summon(dimension, RAIDER, [f64::from(x) + 0.5, f64::from(y), f64::from(z) + 0.5], Compound::default());
+        let at = [x, f64::from(y), z];
+        first.get_or_insert(at);
+        host.summon(dimension, kind, at, Compound::default());
+    }
+    if let Some(at) = first {
+        host.play_sound("minecraft:event.raid.horn", at, 16, 4.0, 0.7);
     }
 }
 
@@ -313,12 +356,22 @@ fn still_polluting(pos: [i32; 3]) -> bool {
     WORLDS.lock().is_ok_and(|worlds| worlds.iter().any(|world| world.anchors.contains_key(&pos)))
 }
 
-/// Objetivo do saqueador: andar até a máquina e golpeá-la. Fica abaixo do ataque ao jogador,
-/// então um jogador por perto continua sendo a prioridade do zumbi.
+/// Objetivo do saqueador: andar até a máquina poluidora e golpeá-la. Para o saqueador fica abaixo
+/// dos ataques do zumbi, então jogadores, aldeões e golens por perto vêm primeiro; o Bruto o
+/// tem acima: máquinas primeiro.
 #[derive(Clone, Debug, Default)]
 pub(super) struct Sabotage {
     target: Option<[i32; 3]>,
     cooldown: i32,
+    blow: i32,
+    /// Chamadas até procurar de novo uma máquina (meio segundo a um segundo).
+    wait: u8,
+}
+
+impl Sabotage {
+    fn new(blow: i32) -> Self {
+        Self { blow, ..Self::default() }
+    }
 }
 
 impl Goal for Sabotage {
@@ -326,10 +379,21 @@ impl Goal for Sabotage {
         goals::MOVE
     }
     fn can_use(&mut self, m: &mut Mob, _cx: &mut Cx) -> bool {
+        // A lista de máquinas tem trava: um saqueador não a consulta em todo tick.
+        if self.wait > 0 {
+            self.wait -= 1;
+            return false;
+        }
+        self.wait = 19;
         self.target = target_near([m.position.x, m.position.y, m.position.z]);
         self.target.is_some()
     }
     fn can_continue(&mut self, _m: &mut Mob, _cx: &mut Cx) -> bool {
+        if self.wait > 0 {
+            self.wait -= 1;
+            return self.target.is_some();
+        }
+        self.wait = 19;
         self.target.is_some_and(still_polluting)
     }
     fn start(&mut self, m: &mut Mob, cx: &mut Cx) {
@@ -345,7 +409,7 @@ impl Goal for Sabotage {
         self.cooldown -= 1;
         if close {
             if self.cooldown <= 0 {
-                hit([x, y, z], 8);
+                hit([x, y, z], if self.blow > 0 { self.blow } else { BLOW });
                 self.cooldown = 20;
             }
         } else if m.ai.nav.is_done() && self.cooldown <= 0 {
@@ -358,10 +422,26 @@ impl Goal for Sabotage {
     }
 }
 
+/// Mobs noturnos que não caçam aldeões no vanilla e passam a caçar. Zumbis, saqueadores e
+/// pillagers já caçam.
+pub(super) fn villager_hunter(kind: &str) -> bool {
+    matches!(kind, "minecraft:skeleton" | "minecraft:stray" | "minecraft:bogged" | "minecraft:spider" | "minecraft:cave_spider")
+}
+
 pub(super) fn register_goals(mob: &mut Mob) {
-    if mob.kind.id == RAIDER {
+    use horizon_client::mobs::Species;
+    use horizon_client::mobs::goals::{NearestTarget, Prey};
+    match mob.kind.id.as_str() {
         // Abaixo do ataque corpo a corpo do zumbi (2) e acima do passeio (7).
-        mob.ai.goals.add(3, Sabotage::default());
+        RAIDER => mob.ai.goals.add(3, Sabotage::new(BLOW)),
+        // Acima do ataque: o Bruto só briga quando não há máquina poluidora perto.
+        BRUTE => mob.ai.goals.add(1, Sabotage::new(BRUTE_BLOW)),
+        kind if villager_hunter(kind) => {
+            // O alvo vanilla (`NearestAttackableTargetGoal`): o ataque do próprio mob (arco,
+            // mordida) faz o resto, com dano de verdade. Depois de jogador e golem.
+            mob.ai.targets.add(3, NearestTarget::new(Prey::Species(vec![Species::Villager]), true));
+        }
+        _ => {}
     }
 }
 

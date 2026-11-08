@@ -206,6 +206,26 @@ fn stable_neighborhood_skips_incoming_scans() {
 }
 
 #[test]
+fn negative_signatures_also_skip_and_a_rotated_neighbor_invalidates() {
+    let mut world = RouteWorld::default();
+    world.put([0; 3], BELT, "west");
+    world.put([-1, 0, 0], BELT, "west");
+    world.put([1, 0, 0], BELT, "west");
+    let mut entity = belt();
+    refresh_path(&mut world, [0; 3], &mut entity);
+    // Uma assinatura negativa guardada vale igual (antes, o piso 0 de `number` a ignorava).
+    let sig = neighborhood_signature(&world, [0; 3], "west", 0);
+    entity.nbt.insert(nbt_key("PathSig").clone(), Tag::Int(sig));
+    let before = world.lookups.get();
+    refresh_path(&mut world, [0; 3], &mut entity);
+    let cached = world.lookups.get() - before;
+    assert!(cached <= 14, "só a assinatura: {cached} consultas");
+    // Girar a esteira de trás muda a assinatura: a curva é refeita.
+    world.put([-1, 0, 0], BELT, "north");
+    assert_ne!(neighborhood_signature(&world, [0; 3], "west", 0), sig);
+}
+
+#[test]
 fn item_paths_meet_at_the_same_height_and_preserve_the_output_edge() {
     for path in ["straight", "left", "right", "up", "down"] {
         let end = path_point(path, 1.0);
@@ -303,4 +323,20 @@ fn redstone_pauses_belts_without_consuming_and_success_counts_the_real_flow() {
     assert_eq!(number(&entity, "Produced"), 1);
     assert_eq!(world.delivered.len(), 1);
     assert_eq!(entity.items[0].as_ref().unwrap().count, 3);
+}
+
+#[test]
+fn an_arriving_item_waiting_for_its_turn_counts_as_moving() {
+    let mut entity = belt();
+    set_number(&mut entity, "Status", 0);
+    set_number(&mut entity, "MovedAt", 0);
+    update_status(&mut entity, 1000);
+    assert_eq!(number(&entity, "Status"), 1, "acabou de chegar: andando, sem luz laranja");
+    update_status(&mut entity, 1004);
+    assert_eq!(number(&entity, "Status"), 1, "ainda esperando a vez");
+    update_status(&mut entity, 1009);
+    assert_eq!(number(&entity, "Status"), 3, "parado de verdade: bloqueada");
+    entity.items = vec![None; entity.items.len()];
+    update_status(&mut entity, 1010);
+    assert_eq!(number(&entity, "Status"), 0);
 }

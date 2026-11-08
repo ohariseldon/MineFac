@@ -346,7 +346,7 @@ fn raids_need_a_notice_a_day_of_grace_and_the_night() {
     assert_eq!(pollution::plan_for_test(&hot(5000.0), anchor, Some(1000), 20000, 15000), None);
     // Depois da carência: alerta ao anoitecer e onda à noite.
     assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 12000), Some(Plan::Warning(anchor)));
-    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 15000), Some(Plan::Wave(anchor, 2)));
+    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 15000), Some(Plan::Wave(anchor, 4)));
     // De dia ou abaixo do limite, não há ataque.
     assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 3000), None);
     assert_eq!(pollution::plan_for_test(&hot(900.0), anchor, Some(0), 30000, 24000 + 15000), None);
@@ -354,9 +354,24 @@ fn raids_need_a_notice_a_day_of_grace_and_the_night() {
 
 #[test]
 fn waves_grow_but_stay_capped() {
-    assert_eq!(pollution::wave_size(pollution::RAID, 1), 2);
-    assert_eq!(pollution::wave_size(pollution::RAID + 1200.0, 3), 5);
-    assert_eq!(pollution::wave_size(1.0e6, 50), 8);
+    assert_eq!(pollution::wave_size(pollution::RAID, 1), 4);
+    assert_eq!(pollution::wave_size(pollution::RAID + 1200.0, 3), 9);
+    assert_eq!(pollution::wave_size(1.0e6, 50), 12);
+    assert_eq!(100 / pollution::BLOW, 4, "quatro golpes param a máquina");
+    assert_eq!(100 / pollution::BRUTE_BLOW, 2, "o Bruto para a máquina em dois golpes");
+}
+
+#[test]
+fn waves_bring_archers_and_brutes_later() {
+    let (raiders, archers, brutes) = pollution::wave_mix(4, 1);
+    assert_eq!((raiders, archers, brutes), (4, 0, 0), "a primeira onda é só de saqueadores");
+    let (raiders, archers, brutes) = pollution::wave_mix(8, pollution::ARCHERS_FROM);
+    assert_eq!((raiders + archers + brutes, archers, brutes), (8, 2, 0), "da 3ª onda vêm arqueiros");
+    let (raiders, archers, brutes) = pollution::wave_mix(12, pollution::BRUTES_FROM);
+    assert_eq!(raiders + archers + brutes, 12, "o tamanho da onda não muda");
+    assert!(brutes >= 1 && archers >= 1 && raiders > brutes, "da 5ª vem o Bruto, ainda com maioria de saqueadores");
+    assert!(pollution::villager_hunter("minecraft:skeleton") && pollution::villager_hunter("minecraft:spider"));
+    assert!(!pollution::villager_hunter("minecraft:creeper"), "creeper continua atrás do jogador");
 }
 
 #[test]
@@ -379,6 +394,60 @@ fn panels_publish_as_many_values_as_the_menus_declare() {
     let mut press = entity(PRESS, 2);
     presentation::publish(&mut press);
     assert_eq!(press.data.len(), presentation::DATA_SLOTS);
+}
+
+#[test]
+fn one_pass_numbers_read_like_number() {
+    let mut n = entity(PRESS, 2);
+    n.nbt.insert("Burn".into(), Tag::Int(-3));
+    n.nbt.insert("Info".into(), Tag::String("x".into()));
+    n.nbt.insert("Aaa".into(), Tag::Int(9));
+    n.nbt.insert("Zzz".into(), Tag::Int(9));
+    set_number(&mut n, "Module", 2);
+    set_number(&mut n, "energy", 77);
+    let names = ["Burn", "Damage", "Info", "Module", "Status", "energy"];
+    let keys = names.map(nbt_key);
+    assert_eq!(numbers_sorted(&n, &keys), names.map(|name| number(&n, name)));
+    assert_eq!(numbers_sorted(&n, &keys), [0, 0, 0, 2, 0, 77]);
+}
+
+#[test]
+fn published_signature_matches_the_nbt_for_every_block() {
+    let blocks = [DRILL, DRILL_MK2, PRESS, ASSEMBLER, BELT, FAST_BELT, SPLITTER, MERGER, CUTTER, INTEGRATOR,
+        GENERATOR, CABLE, SOLAR, BATTERY, GEOTHERMAL, CRUSHER, ALLOY, ELECTRONICS, HUB, HARVESTER, TESLA,
+        POLE, STEEL_POLE, inserters::ID, inserters::FAST, inserters::LONG, "veio:drill_mk3", "veio:electric_furnace",
+        "veio:mill", "veio:kitchen", "veio:biomass_generator", "veio:water_wheel", "veio:wind_turbine",
+        "veio:steam_engine", "veio:planter", "veio:grow_lamp", "veio:tree_farm", "veio:ranch", "veio:pantry",
+        "veio:farm_post", "veio:hauler_post", "veio:foreman_desk", "veio:shepherd_post", "veio:barn", "veio:silo",
+        "veio:control_center", "veio:field_marker", "veio:pen_marker"];
+    for block in blocks {
+        assert!(is_factory_block(block), "{block}");
+        for seed in 0..4 {
+            let mut n = entity(block, layout(block).map_or(0, |(slots, _, _)| slots));
+            for (key, value) in [("Status", 1 + seed), ("Module", seed % 3), ("Info", 7 * seed), ("MovedAt", 11 + seed),
+                ("LocalSmog", 40 + seed), ("RoutingPriority", seed % 3)] {
+                set_number(&mut n, key, value);
+            }
+            presentation::publish(&mut n);
+            assert_eq!(published_signature(&n), visual_signature(&n), "{block}");
+        }
+    }
+}
+
+#[test]
+fn belt_cargo_syncs_only_when_the_drawn_item_changes() {
+    let mut belt = entity(BELT, 1);
+    assert!(!presentation::publish(&mut belt), "vazia antes e depois: nada a redesenhar");
+    belt.items[0] = Some(ItemStack::new(PLATE, 3));
+    assert!(presentation::publish(&mut belt), "item novo aparece no desenho");
+    belt.items[0] = Some(ItemStack::new(PLATE, 2));
+    assert!(!presentation::publish(&mut belt), "só a quantidade mudou: o desenho é o mesmo");
+    assert_eq!(number(&belt, "DisplayCount"), 2, "o NBT continua com a quantidade");
+    belt.items[0] = Some(ItemStack::new(GEAR, 2));
+    assert!(presentation::publish(&mut belt));
+    belt.items[0] = None;
+    assert!(presentation::publish(&mut belt), "a carga some do desenho");
+    assert!(matches!(belt.nbt.get(nbt_key("DisplayItem")), Some(Tag::String(name)) if name.0.is_empty()));
 }
 
 #[test]

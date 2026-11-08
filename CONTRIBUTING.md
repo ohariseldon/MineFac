@@ -1,6 +1,6 @@
 # Trabalhar no MineFac / Veio
 
-Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.16.1**, com aldeões trabalhadores, energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
+Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.17.2**, com aldeões trabalhadores, energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
 
 ## Começar na nuvem
 
@@ -23,7 +23,8 @@ A divisão atual é Cloud para trabalhadores, Grok para desempenho e balanceamen
 - `native/api/src/defense.rs`: torre Tesla e registro de monstros hostis.
 - `native/api/src/power.rs`: postes, fios aéreos e área de alimentação.
 - `native/api/src/operations.rs`: interface comum de postos, motivos de espera e validação de entregas, preparada para integrar os trabalhadores. Veja [INTERFACE_POSTOS.md](frentes/INTERFACE_POSTOS.md).
-- `native/api/src/pollution.rs`: poluição por chunk, avisos, ondas noturnas e o objetivo dos Saqueadores.
+- `native/api/src/pollution.rs`: poluição por chunk, avisos, ondas noturnas (Saqueadores, arqueiros e o Bruto), o objetivo de sabotagem e os mobs que caçam aldeões.
+- `native/api/src/workforce/barracks.rs`: quartel (classes, dano real, cura do guarda, plantão).
 - `native/api/src/upgrades.rs`: módulos de velocidade, eficiência e produtividade.
 - `native/api/src/workforce/`: aldeões trabalhadores, postos e tarefas. Veja [TRABALHADORES.md](TRABALHADORES.md).
 - `native/api/src/tests.rs`: testes de regras.

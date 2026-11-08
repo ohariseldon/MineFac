@@ -193,25 +193,7 @@ impl Hooks for Factory {
     }
 
     fn block_entity_tick(&self, host: &mut dyn Host, event: &mut BlockEntityTickEvent<'_>) {
-        if !is_factory_block(&event.entity.id) {
-            return;
-        }
-        let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) else {
-            return;
-        };
-        pollution::update(host, time);
-        if power::tick(host, event.pos, event.entity, time) {
-            host.block_entity_sync(event.pos);
-        }
-        let previous = visual_signature(event.entity);
-        let produced = number(event.entity, "Produced");
-        tick_factory(host, event.pos, event.entity, time);
-        pollution::emit(host, event.pos, event.entity, time);
-        record_performance(event.entity, produced);
-        presentation::publish(event.entity);
-        if visual_signature(event.entity) != previous {
-            host.block_entity_sync(event.pos);
-        }
+        block_entity_tick(host, event.pos, event.entity);
     }
 
     fn entity_tick_pre(&self, host: &mut dyn Host,
@@ -314,6 +296,29 @@ impl Hooks for Factory {
 
 }
 
+/// Tick de um bloco do Veio. Fora do gancho para as medições chamarem o mesmo caminho.
+fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
+    if !is_factory_block(&entity.id) {
+        return;
+    }
+    let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) else {
+        return;
+    };
+    pollution::update(host, time);
+    if power::tick(host, pos, entity, time) {
+        host.block_entity_sync(pos);
+    }
+    let previous = visual_signature(entity);
+    let produced = number(entity, "Produced");
+    tick_factory(host, pos, entity, time);
+    pollution::emit(host, pos, entity, time);
+    record_performance(entity, produced);
+    let cargo = presentation::publish(entity);
+    if cargo || published_signature(entity) != previous {
+        host.block_entity_sync(pos);
+    }
+}
+
 fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
         SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
@@ -403,6 +408,9 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
 }
 
 /// Chaves NBT lidas todo tick. A primeira vez monta o `JavaString`; as seguintes reaproveitam.
+/// Sempre embutida: com o nome literal, o compilador resolve o `match` na compilação e a
+/// leitura vira um acesso direto à chave pronta, sem comparar textos a cada tick.
+#[inline(always)]
 fn nbt_key(name: &str) -> &'static JavaString {
     #[cfg(test)] perf::key_read();
     macro_rules! key {
@@ -413,6 +421,18 @@ fn nbt_key(name: &str) -> &'static JavaString {
     }
     match name {
         "Absent" => key!("Absent"),
+        "Age" => key!("Age"),
+        "BusyAt" => key!("BusyAt"),
+        "Carried" => key!("Carried"),
+        "CustomName" => key!("CustomName"),
+        "Edits" => key!("Edits"),
+        "Held" => key!("Held"),
+        "ScanArea" => key!("ScanArea"),
+        "Skipped" => key!("Skipped"),
+        "UUID" => key!("UUID"),
+        "Worker" => key!("Worker"),
+        "count" => key!("count"),
+        "id" => key!("id"),
         "Action" => key!("Action"),
         "Admin" => key!("Admin"),
         "Area" => key!("Area"),
@@ -444,12 +464,9 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "HaulSearchPending" => key!("HaulSearchPending"),
         "HaulTaskDesk" => key!("HaulTaskDesk"),
         "HaulTaskId" => key!("HaulTaskId"),
-        "Carried" => key!("Carried"),
-        "id" => key!("id"),
         "from" => key!("from"),
         "slot" => key!("slot"),
         "item" => key!("item"),
-        "count" => key!("count"),
         "to" => key!("to"),
         "into" => key!("into"),
         "by" => key!("by"),
@@ -473,6 +490,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Side" => key!("Side"),
         "Module" => key!("Module"),
         "MovedAt" => key!("MovedAt"),
+        "HeldSince" => key!("HeldSince"),
         "NextInput" => key!("NextInput"),
         "Organize" => key!("Organize"),
         "PathReady" => key!("PathReady"),
@@ -484,6 +502,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Progress" => key!("Progress"),
         "Queued" => key!("Queued"),
         "Rate" => key!("Rate"),
+        "Role" => key!("Role"),
         "Ration" => key!("Ration"),
         "Recipe" => key!("Recipe"),
         "Refresh" => key!("Refresh"),
@@ -500,24 +519,29 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Walk" => key!("Walk"),
         "Work" => key!("Work"),
         "energy" => key!("energy"),
-        _ => {
-            // Chave rara: vive até o fim do processo, para o tick seguinte não alocar de novo.
-            #[cfg(test)] perf::fallback_lock();
-            use std::collections::HashMap;
-            use std::sync::Mutex;
-            static EXTRA: Mutex<Option<HashMap<String, &'static JavaString>>> = Mutex::new(None);
-            let mut extra = EXTRA.lock().unwrap_or_else(|err| err.into_inner());
-            let extra = extra.get_or_insert_with(HashMap::new);
-            if let Some(key) = extra.get(name) {
-                return key;
-            }
-            let key: &'static JavaString = Box::leak(Box::new(JavaString::from(name)));
-            extra.insert(name.to_owned(), key);
-            key
-        }
+        _ => rare_nbt_key(name),
     }
 }
 
+/// Chave rara: vive até o fim do processo, para o tick seguinte não alocar de novo.
+#[cold]
+#[inline(never)]
+fn rare_nbt_key(name: &str) -> &'static JavaString {
+    #[cfg(test)] perf::fallback_lock();
+    use std::collections::HashMap;
+    use std::sync::Mutex;
+    static EXTRA: Mutex<Option<HashMap<String, &'static JavaString>>> = Mutex::new(None);
+    let mut extra = EXTRA.lock().unwrap_or_else(|err| err.into_inner());
+    let extra = extra.get_or_insert_with(HashMap::new);
+    if let Some(key) = extra.get(name) {
+        return key;
+    }
+    let key: &'static JavaString = Box::leak(Box::new(JavaString::from(name)));
+    extra.insert(name.to_owned(), key);
+    key
+}
+
+#[inline(always)]
 pub(super) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -> T {
     read(nbt_key(name))
 }
@@ -528,32 +552,100 @@ pub(super) fn java_eq(text: &JavaString, value: &str) -> bool {
     value.encode_utf16().all(|unit| units.next() == Some(unit)) && units.next().is_none()
 }
 
+// `number`/`set_number` resolvem a chave no local da chamada; a busca no NBT fica numa
+// função só, para não copiar o código do mapa em cada chamada.
+#[inline(always)]
 fn number(entity: &ModBlockEntity, key: &str) -> i32 {
-    with_nbt_key(key, |key| match entity.nbt.get(key) {
+    number_at(entity, nbt_key(key))
+}
+
+fn number_at(entity: &ModBlockEntity, key: &JavaString) -> i32 {
+    match entity.nbt.get(key) {
         Some(Tag::Int(value)) => (*value).max(0),
         _ => 0,
-    })
+    }
 }
 
+#[inline(always)]
 fn set_number(entity: &mut ModBlockEntity, key: &str, value: i32) {
-    with_nbt_key(key, |key| {
-        if let Some(tag) = entity.nbt.get_mut(key) {
-            let current = match tag { Tag::Int(stored) => (*stored).max(0), _ => 0 };
-            if current != value { *tag = Tag::Int(value); }
-        } else {
-            entity.nbt.insert(key.clone(), Tag::Int(value));
-        }
-    });
+    set_number_at(entity, nbt_key(key), value);
 }
 
-fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, Option<ItemStack>) {
-    // A carga desenhada no mundo é só de esteira, divisor e unificador; o braço anima pelo `MovedAt`.
-    let cargo = if matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
-        logistics::display_stack(entity).cloned()
+fn set_number_at(entity: &mut ModBlockEntity, key: &JavaString, value: i32) {
+    if let Some(tag) = entity.nbt.get_mut(key) {
+        let current = match tag { Tag::Int(stored) => (*stored).max(0), _ => 0 };
+        if current != value { *tag = Tag::Int(value); }
     } else {
-        None
-    };
-    (number(entity, "Status"), number(entity, "Module"), number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }), cargo)
+        entity.nbt.insert(key.clone(), Tag::Int(value));
+    }
+}
+
+/// Vários inteiros do NBT numa passada só pelo mapa, cada um como em `number`. `keys` vem em
+/// ordem crescente, a mesma do `BTreeMap`: a passada compara cada chave no máximo uma vez.
+fn numbers_sorted<const N: usize>(entity: &ModBlockEntity, keys: &[&JavaString; N]) -> [i32; N] {
+    debug_assert!(keys.is_sorted());
+    let mut values = [0; N];
+    let mut wanted = 0;
+    'entries: for (key, tag) in &entity.nbt {
+        while wanted < N {
+            match keys[wanted].cmp(key) {
+                std::cmp::Ordering::Less => wanted += 1,
+                std::cmp::Ordering::Equal => {
+                    values[wanted] = match tag { Tag::Int(value) => (*value).max(0), _ => 0 };
+                    wanted += 1;
+                    continue 'entries;
+                }
+                std::cmp::Ordering::Greater => continue 'entries,
+            }
+        }
+        break;
+    }
+    values
+}
+
+/// O que o desenho no mundo lê do NBT, além da carga (que `presentation::publish` acusa).
+/// O braço anima pelo `MovedAt`.
+fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {
+    (number(entity, "Status"), number(entity, "Module"), number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }))
+}
+
+/// A mesma assinatura logo depois de `presentation::publish`: o painel acabou de copiar
+/// `Status`, `Module` e `Info` para `data[0]`, `data[11]` e `data[12]`, sem novas buscas no NBT.
+/// Quem publica outra coisa nessas posições (ou não publica) relê o NBT.
+fn published_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {
+    let standard = !matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE | TESLA | workforce::CONTROL_CENTER)
+        && !inserters::is_arm(&entity.id) && !workforce::zones::is_marker(&entity.id);
+    match entity.data.as_slice() {
+        [status, .., module, info] if standard && entity.data.len() == presentation::DATA_SLOTS => (*status, *module, *info),
+        _ => visual_signature(entity),
+    }
+}
+
+/// Hash multiplicativo (o do rustc) para chaves pequenas consultadas todo tick: chunks e
+/// posições. Os mapas que o usam só são consultados por chave, nunca percorridos em ordem.
+#[derive(Default, Clone, Copy)]
+pub(super) struct FastHasher(u64);
+pub(super) type FastHash = std::hash::BuildHasherDefault<FastHasher>;
+
+impl FastHasher {
+    #[inline]
+    fn add(&mut self, word: u64) {
+        self.0 = (self.0.rotate_left(5) ^ word).wrapping_mul(0x51_7c_c1_b7_27_22_0a_95);
+    }
+}
+
+impl std::hash::Hasher for FastHasher {
+    fn finish(&self) -> u64 { self.0 }
+    fn write(&mut self, bytes: &[u8]) {
+        let mut chunks = bytes.chunks_exact(8);
+        for chunk in &mut chunks { self.add(u64::from_le_bytes(chunk.try_into().expect("8 bytes"))); }
+        for byte in chunks.remainder() { self.add(u64::from(*byte)); }
+    }
+    fn write_u8(&mut self, value: u8) { self.add(u64::from(value)); }
+    fn write_u32(&mut self, value: u32) { self.add(u64::from(value)); }
+    fn write_i32(&mut self, value: i32) { self.add(u64::from(value as u32)); }
+    fn write_u64(&mut self, value: u64) { self.add(value); }
+    fn write_usize(&mut self, value: usize) { self.add(value as u64); }
 }
 
 fn center([x, y, z]: [i32; 3]) -> [f64; 3] {

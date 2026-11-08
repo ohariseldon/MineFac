@@ -80,6 +80,8 @@ struct Village {
     /// Item na mão de cada aldeão e NBT mesclado neles.
     hands: HashMap<u32, Option<String>>,
     villager_nbt: HashMap<u32, Compound>,
+    /// Vida dos aldeões que têm uma (`set_mob_health`).
+    lives: HashMap<u32, f32>,
     players: Vec<horizon_client::mod_api::NativeServerPlayer>,
     edits: Cell<u32>,
     reads: Cell<u32>,
@@ -170,12 +172,36 @@ impl Host for Village {
             return Some(data.clone());
         }
         let (_, uuid, age) = self.villagers.get(&entity.id())?;
-        Some(Compound::from([("UUID".into(), Tag::IntArray(uuid.to_vec())), ("Age".into(), Tag::Int(*age))]))
+        let mut nbt = Compound::from([("UUID".into(), Tag::IntArray(uuid.to_vec())), ("Age".into(), Tag::Int(*age))]);
+        if let Some(life) = self.lives.get(&entity.id()) {
+            nbt.insert("Health".into(), Tag::Float(life.to_bits()));
+        }
+        Some(nbt)
+    }
+    fn set_mob_health(&mut self, _: &str, id: u32, health: f32) -> bool {
+        if health <= 0.0 {
+            return false;
+        }
+        if let Some((_, data)) = self.animals.get_mut(&id) {
+            data.insert("Health".into(), Tag::Float(health.to_bits()));
+            return true;
+        }
+        if self.villagers.contains_key(&id) {
+            self.lives.insert(id, health);
+            return true;
+        }
+        false
     }
     fn send_particles(&mut self, _: &ParticleOptions, _: Option<BlockStateId>, _: [f64; 3], _: [f64; 3], _: f64, _: i32) -> bool {
         true
     }
     fn play_sound(&mut self, _: &str, _: [f64; 3], _: usize, _: f32, _: f32) -> bool {
+        true
+    }
+    fn kill_mob(&mut self, _: &str, id: u32) -> bool {
+        self.animals.remove(&id).is_some()
+    }
+    fn action_bar(&mut self, _: u128, _: horizon_client::mod_api::Text) -> bool {
         true
     }
     fn edit_blocks(&mut self, _: &str, edit: &horizon_client::mod_api::NativeBlockEdit) -> Result<u64, String> {
@@ -1377,4 +1403,70 @@ fn worker_holds_what_it_carries_and_empties_the_hand_after_delivery() {
     cycle(&mut village, &mut entity, now + 1);
     assert_eq!(hand(&village), None, "entregou: mão vazia");
     assert!(outputs_of(&entity).contains(&("minecraft:wheat".into(), 1)), "a colheita está no posto, não na mão");
+}
+
+#[test]
+fn barracks_trains_a_class_and_the_militia_kills_in_three_blows() {
+    assert!(barracks::class(3).reach > barracks::class(1).reach, "arqueiro alcança mais que a milícia");
+    assert!(barracks::class(2).heal > 0.0 && barracks::class(1).heal == 0.0, "só o guarda se cura");
+    assert!(barracks::class(4).damage > barracks::class(1).damage, "o mago bate mais forte");
+
+    let mut village = Village::new("veio:test_barracks");
+    village.villager(77022, [2.5, 64.0, 0.5], [77, 0, 0, 1]);
+    let mut entity = block(BARRACKS);
+    entity.items[0] = Some(ItemStack::new("minecraft:bread", 1));
+    entity.items[1] = Some(ItemStack::new("minecraft:emerald", 2));
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    village.stations.insert(POST, entity.clone());
+    assert_eq!(barracks::cycle(&mut village, POST), Some(Flow::Cancel));
+    assert_eq!(barracks::cycle(&mut village, POST), Some(Flow::Cancel));
+    let station = village.stations.get(&POST).unwrap();
+    assert_eq!(number(station, "Role"), 2, "milícia e depois guarda");
+    assert!(station.items[1].is_none(), "cada troca gasta uma esmeralda");
+    assert_eq!(barracks::cycle(&mut village, POST), Some(Flow::Cancel));
+    assert_eq!(number(village.stations.get(&POST).unwrap(), "Role"), 2, "sem esmeralda a classe fica");
+
+    // Milícia contra um zumbi de 20 de vida: 7 + 7 + 7.
+    set_number(&mut entity, "Role", 1);
+    let zombie = Compound::from([("Health".into(), Tag::Float(20f32.to_bits()))]);
+    village.animals.insert(77021, ([4.5, 64.0, 0.5], zombie));
+    defense::observe(village.dimension, 77021, "minecraft:zombie");
+    let life = |village: &Village| match village.animals.get(&77021).and_then(|(_, nbt)| nbt.get(&"Health".into())) {
+        Some(Tag::Float(bits)) => Some(f32::from_bits(*bits)),
+        _ => None,
+    };
+    let mut blows = Vec::new();
+    for now in 0..7 {
+        step(&mut village, POST, &mut entity, now as i64 * EVERY, now);
+        if let Some(left) = life(&village)
+            && blows.last() != Some(&left)
+        {
+            blows.push(left);
+        }
+    }
+    assert_eq!(blows, vec![13.0, 6.0], "cada golpe tira 7 de vida de verdade");
+    assert!(village.animals.get(&77021).is_none(), "o terceiro golpe mata");
+    assert_eq!(number(&entity, "Produced"), 1);
+    assert_eq!(entity.items[0], None, "o pão pagou os três golpes");
+    assert!(on_duty(77022, 6), "o soldado está de plantão");
+}
+
+#[test]
+fn barracks_guard_heals_and_stays_on_duty_at_night() {
+    let mut village = Village::new("veio:test_barracks_night");
+    village.villager(77032, [2.5, 64.0, 0.5], [78, 0, 0, 1]);
+    village.lives.insert(77032, 10.0);
+    let mut entity = block(BARRACKS);
+    entity.items[0] = Some(ItemStack::new("minecraft:bread", 4));
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    set_number(&mut entity, "Role", 2);
+    village.day = 13000;
+    // Sem NBT de vida, o golpe conta pelo contador: 5 de 20.
+    village.animals.insert(77031, ([4.5, 64.0, 0.5], Compound::default()));
+    defense::observe(village.dimension, 77031, "minecraft:zombie");
+    step(&mut village, POST, &mut entity, 0, 0);
+    assert_ne!(number(&entity, "Status"), RESTING, "o quartel não dorme");
+    assert_eq!(village.lives.get(&77032), Some(&(10.0 + barracks::GUARD_HEAL)), "o guarda se cura no golpe");
+    assert!(village.animals.contains_key(&77031), "um golpe de guarda não mata");
+    assert_eq!(barracks::after_blow(None, 77031, 5.0), 10.0, "o contador lembra os golpes");
 }
