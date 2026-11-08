@@ -17,7 +17,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:gear"
+            "items": "veio:gear",
+            "count": {
+              "min": 32
+            }
           }
         ]
       }

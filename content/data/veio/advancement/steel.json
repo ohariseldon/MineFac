@@ -17,7 +17,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:steel_plate"
+            "items": "veio:steel_plate",
+            "count": {
+              "min": 16
+            }
           }
         ]
       }
