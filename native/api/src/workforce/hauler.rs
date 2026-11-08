@@ -26,7 +26,7 @@ pub(super) const BATCH: u32 = 16;
 pub(super) const TOP_UP: u32 = 16;
 
 pub(super) fn station(block: &str) -> bool {
-    !is_post(block) && operations::profile(block).is_some_and(|profile| profile.kind == StationKind::Workstation)
+    freight::owns(block) || !is_post(block) && operations::profile(block).is_some_and(|profile| profile.kind == StationKind::Workstation)
 }
 
 /// O que o carregador vê numa máquina.
@@ -40,7 +40,7 @@ struct Look {
     output_blocked: bool,
 }
 
-fn look(host: &mut dyn Host, spot: [i32; 3], stock: &[(usize, ItemStack)], room: &[Option<ItemStack>]) -> Option<Look> {
+fn look(host: &mut dyn Host, spot: [i32; 3], stock: &[(usize, ItemStack)], room: &[Option<ItemStack>], batch: u32) -> Option<Look> {
     let mut seen = None;
     host.change_mod_block_entity(spot, &mut |machine| {
         let machine: &ModBlockEntity = machine;
@@ -63,8 +63,8 @@ fn look(host: &mut dyn Host, spot: [i32; 3], stock: &[(usize, ItemStack)], room:
                 Some(present) if is_plain(present, &stack.item) => present.count,
                 Some(_) => return None,
             };
-            (current < TOP_UP && operations::accepts_material(machine, slot.index, stack))
-                .then(|| (*from, slot.index, (TOP_UP - current).min(stack.count).min(BATCH)))
+            (current < TOP_UP.max(batch) && operations::accepts_material(machine, slot.index, stack))
+                .then(|| (*from, slot.index, (TOP_UP.max(batch) - current).min(stack.count).min(batch)))
         }));
         seen = Some(look);
     });
@@ -83,7 +83,9 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         foreman::TaskSearch::Pending => return Err(KEEP),
         foreman::TaskSearch::Empty => {},
     }
-    let Some(stations) = scan_blocks(host, pos, entity, RADIUS, SCAN, MAX_STATIONS, &station) else {
+    // Mais andares, mais leituras por ciclo: a volta inteira leva o mesmo tempo (até 4x).
+    let per_cycle = SCAN * (ladders::layers(entity).len() as i32 / 3).clamp(1, 4);
+    let Some(stations) = scan_blocks(host, pos, entity, RADIUS, per_cycle, MAX_STATIONS * (per_cycle / SCAN).min(2) as usize, &station) else {
         return Err(KEEP);
     };
     set_number(entity, "Rate", stations.len() as i32);
@@ -96,6 +98,8 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         .collect();
     let room = entity.items[outputs(&entity.id)].to_vec();
     let avoid = skipped(entity);
+    // Ferraria (obra da vila): viagens maiores.
+    let batch = projects::haul_batch(projects::at(dimension, pos, now));
     let mut blocked = false;
     let mut topping = None;
     let mut inspected = 0;
@@ -104,7 +108,7 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             continue;
         }
         inspected += 1;
-        let Some(look) = look(host, spot, &stock, &room) else { continue };
+        let Some(look) = look(host, spot, &stock, &room, batch) else { continue };
         blocked |= look.output_blocked;
         let bring = |(from, into, count)| Plan::Bring { from, count, to: spot, into, kind: Carry::Supply };
         if look.hungry && let Some(feed) = look.feed {
@@ -133,6 +137,7 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
 
 /// Recolhe os produtos da máquina ao lado do trabalhador, até `2 x BATCH` e o que couber no posto.
 pub(super) fn perform(host: &mut dyn Host, spot: [i32; 3], entity: &mut ModBlockEntity) -> Option<Vec<(String, u32)>> {
+    let batch = projects::haul_batch(projects::at(host.dimension(), spot, defense::clock()));
     let mut room = entity.items[outputs(&entity.id)].to_vec();
     let mut taken: Vec<(String, u32)> = Vec::new();
     host.change_mod_block_entity(spot, &mut |machine| {
@@ -141,7 +146,7 @@ pub(super) fn perform(host: &mut dyn Host, spot: [i32; 3], entity: &mut ModBlock
         }
         // `layout` da raiz (todas as máquinas); o de `workforce` só conhece os postos.
         let Some((_, _, slots)) = super::super::layout(&machine.id) else { return };
-        let mut budget = BATCH * 2;
+        let mut budget = batch * 2;
         for index in slots {
             let Some(stack) = machine.items.get(index).and_then(Option::as_ref).filter(|stack| plain(stack)) else { continue };
             let item = stack.item.to_string();

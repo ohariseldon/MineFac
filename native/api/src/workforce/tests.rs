@@ -7,6 +7,26 @@ use horizon_client::mod_api::{BlockStateId, EntityRef, NativeItemEntity};
 use std::cell::Cell;
 
 #[test]
+fn active_barracks_keep_the_night_watch_while_civilians_sleep() {
+    use horizon_client::mobs::{Ai, Mob, MobType, Vec3, villager, villager_brain::{Act, Brain}};
+    let mut village = Village::new("veio:night-watch-integration");
+    village.villager(98521, [0.5, 64.0, 0.5], [98, 5, 2, 1]);
+    let mut post = block(BARRACKS);
+    set_number(&mut post, "Ration", 10);
+    assert!(hire_at(&mut village, &mut post, POST, 0));
+    village.day = 13000;
+    assert_ne!(cycle(&mut village, &mut post, 1), RESTING);
+    let mut guard = Mob { id: 98521, rider: None, extra: Default::default(),
+        kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(),
+        velocity: Vec3::default(), climbing: false, ai: Ai::default() };
+    villager::ext_mut(&mut guard).brain = Some(Box::new(Brain::preview(Act::Rest)));
+    let duty = on_duty(guard.id, 1);
+    assert!(matches!(steer(&mut guard, [4.0, 64.0, 0.0], duty), Steer::Brain),
+        "The active defender must retain its patrol target through the vanilla rest schedule");
+    assert!(villager::ext(&guard).unwrap().brain.as_ref().unwrap().mem.walk_target.get().is_some());
+}
+
+#[test]
 fn worker_discovery_keeps_cached_targets_and_cursor_while_globally_deferred() {
     struct Probe { reads: Cell<usize> }
     impl Host for Probe {
@@ -74,6 +94,8 @@ struct Village {
     /// Esmeraldas no inventário do jogador.
     emeralds: u32,
     summoned: Vec<[f64; 3]>,
+    parts: HashMap<[i32; 3], String>,
+    notices: Vec<String>,
     commands: Vec<String>,
     /// Hora do dia (0 = manhã).
     day: i64,
@@ -85,6 +107,11 @@ struct Village {
     players: Vec<horizon_client::mod_api::NativeServerPlayer>,
     edits: Cell<u32>,
     reads: Cell<u32>,
+    /// Mensagens no chat e na barra de ação.
+    told: Vec<String>,
+    /// Outros itens no inventário do jogador.
+    bag: HashMap<String, u32>,
+    sneak: bool,
 }
 
 impl Village {
@@ -123,9 +150,12 @@ impl Host for Village {
         true
     }
     fn block_property(&self, pos: [i32; 3], key: &str) -> Option<String> {
-        (key == "age").then(|| self.crops.get(&pos).map(|(_, age)| age.to_string())).flatten()
+        self.parts.get(&pos).cloned().or_else(|| {
+            (key == "age").then(|| self.crops.get(&pos).map(|(_, age)| age.to_string())).flatten()
+        })
     }
     fn set_block_property(&mut self, pos: [i32; 3], key: &str, value: &str) -> bool {
+        if key != "age" { return self.crops.contains_key(&pos); }
         let Some((_, age)) = self.crops.get_mut(&pos) else { return false };
         let value: u8 = value.parse().unwrap();
         if key != "age" || *age == value { return false; }
@@ -201,9 +231,6 @@ impl Host for Village {
     fn kill_mob(&mut self, _: &str, id: u32) -> bool {
         self.animals.remove(&id).is_some()
     }
-    fn action_bar(&mut self, _: u128, _: horizon_client::mod_api::Text) -> bool {
-        true
-    }
     fn edit_blocks(&mut self, _: &str, edit: &horizon_client::mod_api::NativeBlockEdit) -> Result<u64, String> {
         for run in &edit.runs {
             for dy in 0..run.height as i32 {
@@ -213,7 +240,12 @@ impl Host for Village {
         Ok(edit.runs.len() as u64)
     }
     fn take_items(&mut self, item: &str, count: u32) -> u32 {
-        if item != WAGE { return 0; }
+        if item != WAGE {
+            let have = self.bag.entry(item.to_owned()).or_default();
+            let taken = count.min(*have);
+            *have -= taken;
+            return taken;
+        }
         let taken = count.min(self.emeralds);
         self.emeralds -= taken;
         taken
@@ -223,13 +255,22 @@ impl Host for Village {
         count
     }
     fn sneaking(&self) -> bool {
-        false
+        self.sneak
     }
     fn server_players(&self) -> Vec<horizon_client::mod_api::NativeServerPlayer> {
         self.players.clone()
     }
     fn run_command(&mut self, line: &str) -> bool {
         self.commands.push(line.to_owned());
+        true
+    }
+    fn tell(&mut self, _: u128, line: Text) -> bool {
+        self.told.push(line.plain());
+        true
+    }
+    fn action_bar(&mut self, _: u128, line: Text) -> bool {
+        self.notices.push(line.plain());
+        self.told.push(line.plain());
         true
     }
     fn surface_heights(&self, _: &str, columns: &[(i32, i32)], _: horizon_client::mod_api::NativeHeightmap) -> Result<Vec<Option<i32>>, String> {
@@ -1095,11 +1136,22 @@ fn control_center_dashboard_counts_workers_zones_storage_and_goals() {
     marker(&mut village, PEN_MARKER, [110, 64, 100], 1, None);
     let mut console = block(CONTROL_CENTER);
     console.items[1] = Some(ItemStack::new("minecraft:bread", 4));
-    center::refresh(dimension, at, &mut console, 5);
+    center::refresh(&village, at, &mut console, 5);
     let data = center::data(&console);
-    assert_eq!(&data[1..9], &[2, 1, 1, 1, 0, 1, 3, 0], "trabalhadores, trabalhando, esperando, sem comida, lavouras, cercados, ocupação, fila");
+    assert_eq!(data[12], 0, "página do resumo");
+    assert_eq!(center::split(data[1]), (2, 1), "trabalhadores e trabalhando");
+    assert_eq!(center::split(data[2]), (1, 1), "esperando e sem comida");
+    assert_eq!(center::split(data[3]), (0, 1), "lavouras e cercados");
+    assert_eq!(center::split(data[5]), (0, 3 + 1), "fila e ocupação (+1; 0 = sem armazéns)");
+    assert_eq!(data[6], 0, "exportação do dia");
+    assert_eq!(data[8], 40 * 6 / TASK_COST, "40 pães guardados pagam 120 tarefas");
     assert_eq!(data[9], 62, "meta de 64 pães com 40 guardados");
     assert_eq!(data[10], -1, "slot de meta vazio");
+    // Página Atenção: o carregador sem comida, com a direção a partir do centro.
+    set_number(&mut console, "Page", 1);
+    let data = center::data(&console);
+    assert_eq!(data[1], 1, "uma pendência");
+    assert_eq!(center::unpack(data[2]), (NO_FOOD, 2, -4, 0, 0), "carregador sem comida 4 blocos a oeste");
 }
 
 #[test]
@@ -1124,6 +1176,47 @@ fn villages_grow_with_births_until_the_cap() {
     village.villagers.get_mut(&15001).unwrap().0 = [0.5, 64.0, 0.5];
     village::observe(&mut village, "veio:test_work_births", 15001, now);
     assert_eq!(village::pending("veio:test_work_births"), 0, "acima do teto não há nascimento");
+}
+
+#[test]
+fn full_houses_stop_births_and_ask_for_more() {
+    let dimension = "veio:test_work_houses";
+    let mut village = Village::new(dimension);
+    village.crops.insert([2, 64, 1], ("minecraft:red_bed".into(), 0));
+    village.crops.insert([3, 64, 1], ("minecraft:red_bed".into(), 0));
+    village.parts.insert([3, 64, 1], "foot".into());
+    village.villager(15200, [0.5, 64.0, 0.5], [52, 0, 0, 9]);
+    for now in 0..2_000 {
+        village::scan_homes(&village, dimension, 15200, now);
+        if village::homes(dimension, [0, 64, 0]).is_some() {
+            break;
+        }
+    }
+    assert_eq!(village::homes(dimension, [0, 64, 0]), Some(1), "a cabeceira conta, o pé da cama não");
+    for (index, id) in (15201..15204).enumerate() {
+        village.villager(id, [index as f64, 64.0, 0.0], [52, 0, 0, index as i32]);
+    }
+    village.players.push(player(1, "tester", [0.5, 64.0, 0.5]));
+    village.players[0].dimension = dimension.to_owned();
+    let now = (0..village::CHECK * village::CHANCE * 4)
+        .map(|step| step * village::CHECK + (village::CHECK - 15201 % village::CHECK))
+        .find(|now| {
+            village::observe(&mut village, dimension, 15201, *now);
+            !village.notices.is_empty()
+        })
+        .expect("com uma cama e três aldeões, o jogo pede casas");
+    assert_eq!(village::pending(dimension), 0, "sem cama livre, não nasce");
+    assert_eq!(village.notices[0], "veio.village.need_houses");
+    village.notices.clear();
+    // Mais uma cabeceira na volta seguinte: o aviso some e o nascimento volta a ser possível.
+    village.crops.insert([4, 64, 1], ("minecraft:white_bed".into(), 0));
+    for step in 0..2_000 {
+        village::scan_homes(&village, dimension, 15200, now + 1 + step);
+        if village::homes(dimension, [0, 64, 0]) == Some(2) {
+            break;
+        }
+    }
+    assert_eq!(village::homes(dimension, [0, 64, 0]), Some(2));
 }
 
 #[test]
@@ -1251,8 +1344,18 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     assert!(joined.contains("tag Steve add veio_village"));
     assert!(!joined.contains("bad name"), "nome inseguro não entra em comando");
 
-    // Longe de qualquer vila: espera os chunks, gera uma vila e só depois desiste.
+    // Quem entra longe, com a vila do anfitrião já conhecida, vai para ela e não ganha outra.
     village.commands.clear();
+    spawn::logged_in(9, "Alex", 40);
+    spawn::tick(&mut village, 60);
+    let joined = village.commands.join("\n");
+    assert!(joined.contains("tp @s 100 70 100"), "convidado da LAN vai ao centro já conhecido\n{joined}");
+    assert!(!joined.contains("place structure"), "não gera uma segunda vila");
+
+    // Sozinho e longe de tudo: espera os chunks, gera uma vila e só depois desiste.
+    spawn::reset();
+    village.commands.clear();
+    village.players = vec![player(9, "Alex", [5000.0, 64.0, 5000.0])];
     spawn::logged_in(9, "Alex", 40);
     spawn::tick(&mut village, 60);
     assert!(village.commands.is_empty(), "ainda esperando os aldeões carregarem");
@@ -1271,9 +1374,121 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     let before = village.commands.len();
     spawn::control_center(&mut village, [200, 64, 200]);
     assert_eq!(village.commands.len(), before, "mesmo centro: nada a refazer");
-    spawn::respawned(&mut village, "Steve");
-    assert!(village.commands.last().is_some_and(|line| line.ends_with("tp Steve 200 65 200")));
+    spawn::respawned(7, "Steve");
+    assert_eq!(village.commands.len(), before, "nada de comando dentro do gancho de renascimento");
+    spawn::tick(&mut village, 1);
+    assert!(village.commands.last().is_some_and(|line| line.ends_with("tp Steve 200 65 200")), "vai no tick seguinte");
     spawn::reset();
+}
+
+#[test]
+fn hiring_prefers_villagers_without_a_trade() {
+    let data = |profession: &str, level: i32| Compound::from([("VillagerData".into(), Tag::Compound(Compound::from([
+        ("profession".into(), Tag::String(profession.into())), ("level".into(), Tag::Int(level)),
+    ])))]);
+    assert_eq!(trade_rank(&data("minecraft:none", 1)), 0);
+    assert_eq!(trade_rank(&data("minecraft:nitwit", 1)), 0);
+    assert_eq!(trade_rank(&data("minecraft:librarian", 1)), 1);
+    assert_eq!(trade_rank(&data("minecraft:librarian", 3)), 2);
+    assert_eq!(trade_rank(&Compound::new()), 0, "sem dados de aldeão: livre");
+}
+
+
+
+#[test]
+fn hauler_fills_a_freight_dispatch_and_uses_received_goods_at_local_machines() {
+    let mut village = Village::new("veio:test_freight_workers");
+    let mut desk = desk_with_foreman(&mut village, 19001, [90, 0, 0, 1]);
+    desk.items[0] = Some(ItemStack::new("minecraft:bread", foreman::DESK_FOOD));
+    let mut drill = block(DRILL);
+    drill.items[0] = Some(ItemStack::new("minecraft:raw_copper", 10));
+    village.stations.insert(MANAGED, drill);
+    let mut station = block(freight::RAIL);
+    station.nbt.insert("FreightExport".into(), Tag::String("minecraft:raw_copper".into()));
+    village.stations.insert(MILL_AT, station);
+    assert!(hauler::station(freight::RAIL));
+    let now = cycles_at(&mut village, DESK, &mut desk, 1, 100, |desk| !foreman::queue(desk).is_empty());
+    let task = foreman::queue(&desk).remove(0);
+    assert_eq!((task.from, task.to, task.into), (MANAGED, MILL_AT, 0));
+    village.stations.insert(DESK, desk);
+    village.villager(19002, [10.5, 64.0, 11.5], [90, 0, 0, 2]);
+    let mut hauler = block(HAULER_POST);
+    set_number(&mut hauler, "Ration", 30);
+    assert!(assign(village.dimension, HAULER_AT, &mut hauler, ([90, 0, 0, 2], 19002), now));
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 1);
+    village.walk(19002, [11, 64, 8]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 2);
+    assert!(village.stations[&MANAGED].items[0].is_none());
+    village.walk(19002, [8, 64, 11]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 3);
+    assert_eq!(village.stations[&MILL_AT].items[0], Some(ItemStack::new("minecraft:raw_copper", 10)));
+    assert!(carried(&hauler).is_empty());
+
+    // Simulate transport depositing return goods in the received compartment.
+    village.stations.get_mut(&MILL_AT).unwrap().items[3] = Some(ItemStack::new(PLATE, 10));
+    let assembler = [4, 64, 8];
+    village.stations.insert(assembler, block(ASSEMBLER));
+    let mut desk = village.stations.remove(&DESK).unwrap();
+    set_queue_empty(&mut desk);
+    let later = cycles_at(&mut village, DESK, &mut desk, now + 4, 100,
+        |desk| foreman::queue(desk).iter().any(|task| task.from == MILL_AT && task.to == assembler));
+    let task = foreman::queue(&desk).into_iter().find(|task| task.to == assembler).unwrap();
+    assert_eq!((task.from, task.slot, task.item.as_str()), (MILL_AT, 3, PLATE));
+    village.stations.insert(DESK, desk);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, later + 1);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, later + 2);
+    village.walk(19002, [4, 64, 9]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, later + 3);
+    assert_eq!(village.stations[&assembler].items[0], Some(ItemStack::new(PLATE, 10)));
+    assert!(village.stations[&MILL_AT].items[3].is_none());
+    assert_eq!(village.stations[&MILL_AT].items[0], Some(ItemStack::new("minecraft:raw_copper", 10)), "dispatch is not grabbed as received stock");
+}
+
+#[test]
+fn sneaking_with_an_emerald_on_the_barracks_switches_the_class() {
+    let mut village = Village::new("veio:test_barracks_click");
+    village.stations.insert(POST, block(BARRACKS));
+    village.sneak = true;
+    // A esmeralda distingue o treino de abrir o painel.
+    assert_eq!(right_click(&mut village, POST, WAGE), Some(Flow::Cancel));
+    assert_eq!(number(&village.stations[&POST], "Role"), 1, "sem soldado, escolher a classe é de graça");
+    village.sneak = false;
+    assert_eq!(right_click(&mut village, POST, ""), None, "sem agachar, abre o painel");
+}
+
+
+#[test]
+fn worker_orders_reset_navigation_on_cancel_and_refresh_changed_destinations() {
+    use horizon_client::mobs::{Ai, Extra, Mob, MobType, MobWorld, Vec3, goals::{Cx, Goal}};
+    let mut mob = Mob { id: 98001, rider: None, extra: Extra::default(),
+        kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(), velocity: Vec3::default(), climbing: false, ai: Ai::default() };
+    let world = MobWorld::preview(); let mut cx = Cx { w: &world };
+    let mut goal = Work::default();
+    order(mob.id, [1.0, 64.0, 1.0], defense::clock());
+    assert!(goal.can_use(&mut mob, &mut cx));
+    goal.cooldown = 15;
+    goal.wait = 0;
+    order(mob.id, [10.0, 64.0, 10.0], defense::clock());
+    for _ in 0..ORDER_POLL { assert!(goal.can_use(&mut mob, &mut cx)); }
+    assert_eq!(goal.cooldown, 0);
+    assert_eq!(goal.target, Some([10.0, 64.0, 10.0]));
+    mob.ai.nav.done = false;
+    cancel(mob.id); goal.stop(&mut mob, &mut cx);
+    assert!(mob.ai.nav.is_done()); assert!(goal.target.is_none());
+}
+
+
+#[test]
+fn shepherd_keeps_riding_pigs_out_of_the_breeding_queue() {
+    let mut village = Village::new("veio:saddled_pig_shepherd");
+    let mut post = shepherd_with_worker(&mut village, 98011, [98, 0, 0, 11], [2.5, 64.0, 2.5]);
+    post.items[1] = Some(ItemStack::new("minecraft:carrot", 5));
+    for id in [98012, 98013] {
+        animal(&mut village, id, "minecraft:pig", [2.5, 64.0, 2.5], &[("Age", Tag::Int(0)), ("Saddle", Tag::Byte(1))]);
+    }
+    assert_eq!(cycle(&mut village, &mut post, 1), IDLE_WORK);
+    assert_eq!(post.items[1], Some(ItemStack::new("minecraft:carrot", 5)));
+    assert!(village.animals.values().all(|(_, nbt)| !nbt.contains_key(&"InLove".into())));
 }
 
 // ---------- Medição: vila grande ----------
@@ -1302,8 +1517,8 @@ fn bench_large_village() {
     let hooks = super::super::hooks();
     let world = MobWorld::preview();
     let kind = Arc::new(MobType { id: VILLAGER.to_owned() });
-    let mut mobs: Vec<(Mob, Work)> = (0..VILLAGERS).map(|id| (Mob {
-        id: 200_000 + id, kind: kind.clone(), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 }, ai: Ai::default(), extra: Default::default(),
+    let mut mobs: Vec<(Mob, Work)> = (0..VILLAGERS).map(|id| (Mob { rider: None,
+        id: 200_000 + id, kind: kind.clone(), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 }, velocity: Vec3::default(), climbing: false, ai: Ai::default(), extra: Default::default(),
     }, Work::default())).collect();
     // Um posto em cada sete aldeões tem ordem viva.
     for id in (0..VILLAGERS).step_by(7) {
@@ -1343,8 +1558,8 @@ fn work_goal_hands_the_order_to_the_villager_brain_and_respects_danger() {
     use horizon_client::mobs::villager_brain::{Act, Brain, Tracker};
     use std::sync::Arc;
     let world = MobWorld::preview();
-    let mut mob = Mob { id: 17001, kind: Arc::new(MobType { id: VILLAGER.to_owned() }), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 },
-        ai: Ai::default(), extra: Default::default() };
+    let mut mob = Mob { rider: None, id: 17001, kind: Arc::new(MobType { id: VILLAGER.to_owned() }), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 },
+        velocity: Vec3::default(), climbing: false, ai: Ai::default(), extra: Default::default() };
     villager::ext_mut(&mut mob).brain = Some(Box::new(Brain::preview(Act::Idle)));
     let mut goal = Work::default();
     order(17001, [5.5, 64.0, 7.5], defense::clock());
@@ -1671,6 +1886,636 @@ fn the_mayor_phase_sets_the_zone_limit_and_house_permits_need_a_well() {
     society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
     assert_eq!(number(&house, "Status"), society::NO_PERMIT);
     assert_eq!(number(&house, "Rate"), 0, "sem alvará, ninguém se muda");
+}
+
+// ---------- Obras da vila, painel executivo, foco e lar ----------
+
+fn named_player(dimension: &str, uuid: u128, name: &str, at: [f64; 3]) -> horizon_client::mod_api::NativeServerPlayer {
+    horizon_client::mod_api::NativeServerPlayer { uuid, name: name.into(), dimension: dimension.into(), position: at, ..Default::default() }
+}
+
+#[test]
+fn village_projects_take_site_materials_and_change_the_rules() {
+    let mut console = block(CONTROL_CENTER);
+    assert_eq!(console.items.len(), 8, "comida, três metas, cofre, saque, obra e decreto");
+    assert!(center::accepts(projects::SITE, &ItemStack::new("minecraft:brick", 1)));
+    assert!(!center::accepts(projects::SITE, &ItemStack::new("minecraft:dirt", 1)), "o canteiro só aceita materiais de obra");
+    // Tijolos vão para o refeitório e depois para a escola; nada some.
+    console.items[projects::SITE] = Some(ItemStack::new("minecraft:brick", 50));
+    assert!(projects::deliver(&mut console, 0).is_empty());
+    assert_eq!(projects::progress(&console, 0, 0), 24);
+    assert_eq!(projects::progress(&console, 1, 2), 16);
+    assert_eq!(console.items[projects::SITE].as_ref().map(|stack| stack.count), Some(10), "sobra no canteiro");
+    assert_eq!(projects::deliver(&mut console, 0), Vec::<usize>::new(), "sobra sem obra que precise fica");
+    console.items[projects::SITE] = Some(ItemStack::new("veio:iron_plate", 8));
+    projects::deliver(&mut console, 0);
+    console.items[projects::SITE] = Some(ItemStack::new("veio:kitchen", 1));
+    assert_eq!(projects::deliver(&mut console, 0), vec![0], "refeitório pronto");
+    assert_eq!(projects::active(&console, 0) & projects::CANTEEN, 0, "paga, mas sem prédio: ainda sem efeito");
+    set_number(&mut console, "Standing", projects::CANTEEN as i32);
+    assert_eq!(projects::active(&console, 0) & projects::CANTEEN, projects::CANTEEN, "prédio de pé: efeito ativo");
+    let packed = projects::packed(&console, 0, 0);
+    assert!(projects::unpack(packed).1, "painel mostra a obra feita");
+    assert_eq!(projects::prestige(&console), 25, "obra pronta dá prestígio");
+    let (percent, done, index, left, _, locked, _) = projects::unpack(projects::packed(&console, 1, 0));
+    assert!(!locked);
+    assert_eq!((done, index, left), (false, 0, 24), "escola: faltam 24 papéis");
+    assert_eq!(percent, 16 * 100 / 46);
+    // Festa: repetível, vale hoje e amanhã e emenda.
+    for (item, count) in [("minecraft:cake", 1), ("minecraft:cookie", 16), ("minecraft:bread", 16)] {
+        console.items[projects::SITE] = Some(ItemStack::new(item, count));
+        projects::deliver(&mut console, 5);
+    }
+    assert!(projects::active(&console, 5) & projects::FESTIVAL != 0);
+    assert!(projects::active(&console, 6) & projects::FESTIVAL != 0);
+    assert!(projects::active(&console, 7) & projects::FESTIVAL == 0);
+    assert_eq!(projects::percent(&console, 4), 0, "a festa recomeça vazia");
+    // Regras.
+    assert_eq!(projects::food_cost(0, 3), TASK_COST);
+    assert_eq!(projects::food_cost(projects::CANTEEN, 3), 0, "toda 4ª tarefa é de graça");
+    assert_eq!(projects::food_cost(projects::CANTEEN, 4), TASK_COST);
+    assert_eq!(projects::food_cost(projects::FESTIVAL, 0), 0);
+    assert_eq!(projects::food_cost(projects::RATION, 0), 1);
+    assert_eq!(projects::food_cost(projects::PLENTY, 0), 3);
+    assert_eq!(projects::haul_batch(projects::SMITHY), 24);
+    assert_eq!([8, 16, 32].map(|cost| projects::zone_cost(projects::MARKET, cost)), [6, 12, 24]);
+    assert_eq!(projects::birth_chance(projects::SCHOOL), Some(3));
+    assert_eq!(projects::birth_chance(projects::SCHOOL | projects::FESTIVAL), Some(2));
+    assert_eq!(projects::birth_chance(projects::RATION | projects::FESTIVAL), None, "racionamento: ninguém nasce");
+}
+
+#[test]
+fn canteen_tasks_and_school_reach_the_posts_and_the_village_cap() {
+    let dimension = "veio:test_work_projects_reach";
+    let mut post = block(FARM_POST);
+    set_number(&mut post, "Ration", 8);
+    for _ in 0..4 {
+        finish_task(&mut post, projects::CANTEEN);
+    }
+    assert_eq!(number(&post, "Ration"), 2, "quatro tarefas, três pagas");
+    let base = village::cap(dimension, [10, 64, 10], 50);
+    projects::publish(projects::Village { dimension: dimension.into(), pos: [0, 64, 0], perks: projects::SCHOOL,
+        waiting: 0, villagers: 3, cap: 30, funded: 0, requests: 0, seen: 50 });
+    assert_eq!(projects::at(dimension, [10, 64, 10], 60), projects::SCHOOL);
+    assert_eq!(projects::at(dimension, [200, 64, 10], 60), 0, "longe do centro, sem efeito");
+    assert_eq!(village::cap(dimension, [10, 64, 10], 60), base + 15);
+    projects::withdraw_village(dimension, [0, 64, 0]);
+    assert_eq!(projects::at(dimension, [10, 64, 10], 60), 0, "sem administrador, o efeito para");
+}
+
+#[test]
+fn attention_page_sorts_packs_and_points_the_way() {
+    let dimension = "veio:test_work_attention";
+    let at = [300, 64, 300];
+    let mut far = block(FARM_POST);
+    set_number(&mut far, "Status", NO_WORKER);
+    center::report(dimension, [300, 64, 260], &far, 10);
+    let mut hungry = block(SHEPHERD_POST);
+    set_number(&mut hungry, "Status", NO_FOOD);
+    center::report(dimension, [330, 66, 330], &hungry, 10);
+    let list = center::issues(dimension, at, 12);
+    assert_eq!(list.iter().map(|issue| issue.code).collect::<Vec<_>>(), vec![NO_FOOD, NO_WORKER], "sem comida antes de sem trabalhador");
+    let packed = center::pack(&list[0], at);
+    assert_eq!(center::unpack(packed), (NO_FOOD, 4, 30, 2, 30));
+    let far_issue = center::Issue { code: NO_WORKER, kind: 1, pos: [100, 0, 900] };
+    assert_eq!(center::unpack(center::pack(&far_issue, at)), (NO_WORKER, 1, -128, -16, 127), "longe: preso na borda");
+    assert_eq!(center::direction(0.0, -5.0), 0, "norte");
+    assert_eq!(center::direction(5.0, 0.0), 2, "leste");
+    assert_eq!(center::direction(-3.0, 3.0), 5, "sudoeste");
+}
+
+#[test]
+fn compass_focus_leads_the_player_to_each_issue_until_the_village_is_in_order() {
+    let mut village = Village::new("veio:test_work_focus");
+    let dimension = village.dimension;
+    let hub = [500, 64, 500];
+    let mut console = block(CONTROL_CENTER);
+    console.nbt.insert("Worker".into(), Tag::IntArray(vec![9, 9, 9, 9]));
+    village.stations.insert(hub, console);
+    village.players = vec![named_player(dimension, 77, "Bea", [500.5, 65.0, 502.5])];
+    let mut hungry = block(FARM_POST);
+    set_number(&mut hungry, "Status", NO_FOOD);
+    let mut empty = block(HAULER_POST);
+    set_number(&mut empty, "Status", NO_WORKER);
+    let clock = 2_000_000;
+    center::report(dimension, [520, 64, 500], &hungry, clock);
+    center::report(dimension, [500, 64, 480], &empty, clock);
+    assert_eq!(focus::from_center(&mut village, hub), Some(Flow::Cancel));
+    let focus = focus::current(77).expect("foco escolhido");
+    assert_eq!(focus.issue.pos, [520, 64, 500], "o mais urgente primeiro");
+    // Segundo clique: a próxima pendência.
+    focus::choose(&mut village, 77, hub, clock);
+    assert_eq!(focus::current(77).unwrap().issue.pos, [500, 64, 480]);
+    focus::choose(&mut village, 77, hub, clock);
+    assert_eq!(focus::current(77).unwrap().issue.pos, [520, 64, 500], "volta ao começo");
+    village.told.clear();
+    focus::tick(&mut village, clock + 20);
+    assert_eq!(village.told, vec![Text::tr("veio.focus.bar", &[]).plain()], "barra com distância e direção");
+    // O jogador chega: a barra explica o que fazer.
+    village.players[0].position = [520.5, 64.0, 501.5];
+    village.told.clear();
+    focus::tick(&mut village, clock + 40);
+    assert_eq!(village.told, vec![Text::tr("veio.focus.here", &[&center::advice(NO_FOOD)]).plain()]);
+    // Resolvido: vai para a próxima e, no fim, a vila fica em ordem.
+    set_number(&mut hungry, "Status", WALKING);
+    center::report(dimension, [520, 64, 500], &hungry, clock + 50);
+    focus::tick(&mut village, clock + 60);
+    assert_eq!(focus::current(77).unwrap().issue.pos, [500, 64, 480], "próxima pendência");
+    set_number(&mut empty, "Status", WALKING);
+    center::report(dimension, [500, 64, 480], &empty, clock + 70);
+    focus::tick(&mut village, clock + 80);
+    assert!(focus::current(77).is_none());
+    assert_eq!(village.told.last(), Some(&Text::tr("veio.focus.all_clear", &[]).plain()));
+}
+
+#[test]
+fn home_comfort_reads_vanilla_furniture() {
+    let found: Vec<Option<usize>> = ["minecraft:red_bed", "minecraft:oak_door", "minecraft:glass_pane", "minecraft:lantern",
+        "minecraft:barrel", "minecraft:smoker", "minecraft:crafting_table", "minecraft:potted_poppy", "minecraft:stone_bricks",
+        "minecraft:oak_trapdoor", "minecraft:dirt"].iter().map(|block| home::category(block)).collect();
+    assert_eq!(found, vec![Some(0), Some(1), Some(2), Some(3), Some(4), Some(5), Some(6), Some(7), Some(8), None, None]);
+    assert_eq!(home::comfort(0, 0, 0), 0);
+    assert_eq!(home::comfort(0b111_1111, 3, 24), 100, "casa completa");
+    assert_eq!(home::comfort(0b1, 1, 12), 15 + 4 + 7, "cama, um enfeite e metade do acabamento");
+}
+
+#[test]
+fn home_hearth_meals_upgrades_rest_and_daily_order() {
+    let mut village = Village::new("veio:test_work_home");
+    village.crops.clear();
+    let dimension = village.dimension;
+    let at = [0, 64, 0];
+    village.players = vec![named_player(dimension, 88, "Ana", [1.5, 64.0, 1.5])];
+    let mut lar = block(HOME);
+    lar.items[home::FUEL] = Some(ItemStack::new("minecraft:coal", 2));
+    lar.items[1] = Some(ItemStack::new("minecraft:bread", 3));
+    lar.items[2] = Some(ItemStack::new("minecraft:cooked_beef", 1));
+    lar.items[3] = Some(ItemStack::new("minecraft:beef", 2));
+    assert!(home::accepts(home::FUEL, &ItemStack::new("veio:biomass", 1)));
+    assert!(!home::accepts(home::FUEL, &ItemStack::new("minecraft:bread", 1)));
+    assert!(home::accepts(home::BUILD, &ItemStack::new("veio:circuit", 1)));
+    village.stations.insert(at, lar);
+    let mut time = 0;
+    let tick = |village: &mut Village, time: &mut i64| {
+        let mut lar = village.stations.remove(&at).unwrap();
+        home::tick(village, at, &mut lar, *time, 3_000_000);
+        village.stations.insert(at, lar);
+        *time += 10;
+    };
+    tick(&mut village, &mut time);
+    assert!(village.commands.iter().any(|line| line.contains("spawnpoint Ana 0 65 0")), "{:?}", village.commands);
+    assert_eq!(home::home_of("Ana").map(|home| home.pos), Some(at));
+    let lar = &village.stations[&at];
+    assert_eq!(number(lar, "Status"), 1, "lareira acesa");
+    assert_eq!(lar.items[home::FUEL].as_ref().map(|stack| stack.count), Some(1));
+    // Refeição em casa: o prato mais valioso, com a lareira acesa.
+    village.commands.clear();
+    assert_eq!(home::right_click(&mut village, at, home::BOWL), Some(Flow::Cancel));
+    assert!(village.commands.iter().any(|line| line.starts_with("effect give Ana minecraft:saturation")));
+    assert!(village.commands.iter().any(|line| line.starts_with("effect give Ana minecraft:regeneration")));
+    assert!(village.stations[&at].items[2].is_none(), "comeu a carne assada");
+    village.commands.clear();
+    home::right_click(&mut village, at, home::BOWL);
+    assert!(village.commands.is_empty(), "uma refeição a cada 2 minutos");
+    // Dia em ordem: comeu, lareira acesa e despensa com 3 itens.
+    tick(&mut village, &mut time);
+    assert!(village.commands.iter().any(|line| line.starts_with("xp add Ana")), "{:?}", village.commands);
+    assert_eq!(number(&village.stations[&at], "Streak"), 1);
+    // Melhoria: casa de tijolos.
+    for (item, count) in [("minecraft:brick", 24), ("minecraft:glass", 12), ("veio:copper_plate", 8)] {
+        village.stations.get_mut(&at).unwrap().items[home::BUILD] = Some(ItemStack::new(item, count));
+        tick(&mut village, &mut time);
+    }
+    assert_eq!(home::level(&village.stations[&at]), 2);
+    // Nível 2: a lareira cozinha a carne crua.
+    for _ in 0..45 {
+        tick(&mut village, &mut time);
+    }
+    let pantry: Vec<String> = village.stations[&at].items[1..4].iter().flatten().map(|stack| format!("{} {}", stack.item, stack.count)).collect();
+    assert!(pantry.iter().any(|line| line.starts_with("minecraft:cooked_beef")), "{pantry:?}");
+    // Noite em casa com a lareira acesa: acorda descansado.
+    village.day = 13_000;
+    tick(&mut village, &mut time);
+    village.commands.clear();
+    village.day = 100;
+    tick(&mut village, &mut time);
+    assert!(village.commands.iter().any(|line| line.starts_with("effect give Ana minecraft:speed")), "{:?}", village.commands);
+    // Renascer em casa.
+    village.commands.clear();
+    spawn::respawned(1, "Ana");
+    assert!(village.commands.is_empty(), "nada de comando dentro do gancho de renascimento");
+    spawn::tick(&mut village, 1);
+    assert_eq!(village.commands.last(), Some(&format!("execute in {dimension} run tp Ana 0 65 0")));
+    // Painel: oito linhas, com o que falta fazer.
+    let data = home::data(&village.stations[&at]);
+    assert_eq!(data[3], 2);
+    assert!(data[6] & 16 != 0, "ainda há melhoria");
+}
+
+#[test]
+fn prestige_unlocks_projects_decrees_change_the_rules_and_the_treasury_pays() {
+    let mut console = block(CONTROL_CENTER);
+    assert_eq!(projects::tier(&console), 0);
+    // Biblioteca exige prestígio Vila: os livros vão só para a escola.
+    console.items[projects::SITE] = Some(ItemStack::new("minecraft:book", 30));
+    projects::deliver(&mut console, 0);
+    assert_eq!(projects::progress(&console, 1, 1), 6, "escola");
+    assert_eq!(projects::progress(&console, 5, 1), 0, "biblioteca bloqueada");
+    assert!(projects::unpack(projects::packed(&console, 5, 0)).5);
+    projects::gain(&mut console, 60);
+    assert_eq!(projects::tier(&console), 1);
+    projects::deliver(&mut console, 0);
+    assert_eq!(projects::progress(&console, 5, 1), 16, "liberada com prestígio");
+    assert_eq!(console.items[projects::SITE].as_ref().map(|stack| stack.count), Some(8), "sobra fica no slot");
+    // Decreto no slot: efeito ativo, item não é gasto.
+    assert!(center::accepts(projects::DECREE, &ItemStack::new("minecraft:bell", 1)));
+    assert!(!center::accepts(projects::DECREE, &ItemStack::new("minecraft:dirt", 1)));
+    console.items[projects::DECREE] = Some(ItemStack::new("minecraft:bell", 1));
+    let perks = projects::active(&console, 0);
+    assert!(perks & projects::CALL != 0);
+    assert_eq!(projects::tier_bits(perks), 1);
+    assert_eq!(projects::hire_radius(perks), HIRE_RADIUS * 2.0);
+    assert_eq!(projects::extra_cap(perks), 5, "prestígio Vila: teto +5");
+    assert_eq!(projects::zone_credit(projects::LIBRARY | projects::PLENTY), 3);
+    // Caixa paga as esmeraldas do mercado.
+    let (built, used) = projects::pay_with(&mut console, 0, 20);
+    assert!(built.is_empty());
+    assert_eq!(used, 8);
+    assert_eq!(projects::progress(&console, 3, 2), 8);
+    assert_eq!(projects::interest(projects::HALL, 200), 8);
+    assert_eq!(projects::interest(projects::HALL, 40), 2);
+}
+
+#[test]
+fn village_requests_fill_each_morning_pay_the_treasury_and_never_lose_items() {
+    let mut console = block(CONTROL_CENTER);
+    let pos = [40, 64, 40];
+    requests::morning(&mut console, pos, 0, 0);
+    let open: Vec<requests::Request> = (0..requests::SLOTS).filter_map(|index| requests::get(&console, index)).collect();
+    assert_eq!(open.len(), 3, "3 pedidos sem o correio");
+    assert!(open.iter().all(|request| requests::POOL[request.wish].tier == 0), "aldeia pede coisas simples");
+    let mut wishes: Vec<usize> = open.iter().map(|request| request.wish).collect();
+    wishes.dedup();
+    assert_eq!(wishes.len(), 3, "sem pedidos repetidos");
+    // Entrega parcial e depois completa.
+    let first = open[0];
+    let item = requests::POOL[first.wish].item;
+    console.items[projects::SITE] = Some(ItemStack::new(item, first.need - 1));
+    assert_eq!(requests::deliver(&mut console, 0), (0, 0));
+    assert!(console.items[projects::SITE].is_none());
+    console.items[projects::SITE] = Some(ItemStack::new(item, 5));
+    let (earned, done) = requests::deliver(&mut console, 0);
+    assert_eq!((earned, done), (requests::POOL[first.wish].reward, 1));
+    assert_eq!(console.items[projects::SITE].as_ref().map(|stack| stack.count), Some(4), "sobra fica no slot");
+    assert_eq!(requests::open(&console), 2);
+    // Manhã: o atendido dá lugar a um novo; os abertos ficam e envelhecem.
+    requests::morning(&mut console, pos, 1, projects::POST_OFFICE);
+    let after: Vec<requests::Request> = (0..requests::SLOTS).filter_map(|index| requests::get(&console, index)).collect();
+    assert_eq!(after.len(), 4, "correio: 4 pedidos");
+    assert!(after.iter().all(|request| !request.done()));
+    assert_eq!(after.iter().filter(|request| request.age == 1).count(), 2);
+    assert_eq!(requests::reward(0, projects::POST_OFFICE), 3, "correio: +50%");
+    // Parados por 3 dias sem entrega são trocados.
+    requests::morning(&mut console, pos, 2, projects::POST_OFFICE);
+    requests::morning(&mut console, pos, 3, projects::POST_OFFICE);
+    assert!((0..requests::SLOTS).filter_map(|index| requests::get(&console, index)).all(|request| request.age < 3));
+}
+
+#[test]
+fn center_morning_sends_a_bulletin_and_delivers_requests() {
+    let mut village = Village::new("veio:test_work_bulletin");
+    let dimension = village.dimension;
+    let pos = [700, 64, 700];
+    let mut console = block(CONTROL_CENTER);
+    console.nbt.insert("Worker".into(), Tag::IntArray(vec![7, 7, 7, 7]));
+    village.players = vec![named_player(dimension, 66, "Caio", [700.5, 65.0, 703.5])];
+    village.day = 1000;
+    let clock = 3_000_000;
+    center::tick(&mut village, pos, &mut console, clock);
+    assert_eq!(requests::open(&console), 3, "começa com pedidos");
+    assert!(village.told.is_empty(), "sem boletim na primeira vez");
+    // Entrega um pedido inteiro pelo slot de obra.
+    let request = requests::get(&console, 0).unwrap();
+    console.items[projects::SITE] = Some(ItemStack::new(requests::POOL[request.wish].item, request.need));
+    center::tick(&mut village, pos, &mut console, clock + 10);
+    let reward = requests::POOL[request.wish].reward;
+    // Sem prefeitura, a recompensa não tem de onde sair (economia fechada): só o prestígio.
+    assert_eq!(projects::progress(&console, 3, 2), 0, "sem caixa público, nada para o mercado");
+    assert_eq!(center::coins(&console), 0);
+    assert_eq!(projects::prestige(&console), requests::PRESTIGE);
+    // Esmeraldas soltas no slot vão para o caixa.
+    console.items[projects::SITE] = Some(ItemStack::new(WAGE, 3));
+    center::tick(&mut village, pos, &mut console, clock + 20);
+    assert!(console.items[projects::SITE].is_none());
+    // O mercado pede 8 esmeraldas: o caixa paga o que tiver.
+    let _ = reward;
+    assert_eq!(projects::progress(&console, 3, 2), 3);
+    assert_eq!(center::coins(&console), 0);
+    // Manhã seguinte: boletim e prestígio de vila em ordem.
+    village.told.clear();
+    village.day = 13_000;
+    center::tick(&mut village, pos, &mut console, clock + 30);
+    village.day = 200;
+    center::tick(&mut village, pos, &mut console, clock + 40);
+    assert!(village.told.iter().any(|line| line == "veio.bulletin.title"), "{:?}", village.told);
+    assert!(village.told.iter().any(|line| line == "veio.bulletin.calm"));
+    assert_eq!(projects::prestige(&console), requests::PRESTIGE + 3);
+    assert_eq!(number(&console, "ReqToday"), 0, "contagem do dia recomeça");
+    // Agachar + esmeralda: saque do caixa.
+    let before = village.emeralds;
+    let left = (center::coins(&console) / society::COINS_PER_EMERALD) as u32;
+    village.stations.insert(pos, console);
+    center::cash_out(&mut village, pos);
+    assert_eq!(village.emeralds - before, left.min(16));
+}
+
+#[test]
+fn banquet_brings_free_villagers_home_and_makes_the_host_a_hero() {
+    let mut village = Village::new("veio:test_work_banquet");
+    village.crops.clear();
+    let dimension = village.dimension;
+    let at = [900, 64, 900];
+    village.players = vec![named_player(dimension, 99, "Davi", [901.5, 64.0, 900.5])];
+    village.bag.insert("minecraft:cake".into(), 2);
+    for (index, id) in (17001..17009).enumerate() {
+        village.villager(id, [905.5 + index as f64, 64.0, 905.5], [70, 0, 0, index as i32]);
+    }
+    // Um deles trabalha num posto: não é convidado.
+    let base = defense::clock();
+    assert!(claim([70, 0, 0, 0], dimension, [0, 0, 0], base));
+    let mut lar = block(HOME);
+    lar.items[home::FUEL] = Some(ItemStack::new("minecraft:coal", 1));
+    village.stations.insert(at, lar);
+    let tick = |village: &mut Village, time: i64, now: u64| {
+        let mut lar = village.stations.remove(&at).unwrap();
+        home::tick(village, at, &mut lar, time, now);
+        village.stations.insert(at, lar);
+    };
+    // Lareira apagada: sem banquete.
+    assert_eq!(home::right_click(&mut village, at, home::CAKE), Some(Flow::Cancel));
+    assert_eq!(village.bag["minecraft:cake"], 2);
+    tick(&mut village, 0, base);
+    home::right_click(&mut village, at, home::CAKE);
+    assert_eq!(village.bag["minecraft:cake"], 1, "o bolo é gasto");
+    let guests = home::guests(dimension, at);
+    assert_eq!(guests.len(), home::GUESTS);
+    assert!(!guests.contains(&17001), "trabalhador não é convidado");
+    assert!(village.commands.iter().any(|line| line.contains("hero_of_the_village")), "{:?}", village.commands);
+    // Os convidados recebem ordem de ir até a casa.
+    tick(&mut village, 10, base + 10);
+    assert!(guests.iter().all(|id| order_for(*id, base + 10).is_some()));
+    // Uma vez por dia.
+    home::right_click(&mut village, at, home::CAKE);
+    assert_eq!(village.bag["minecraft:cake"], 1);
+    // Acaba: as ordens são retiradas.
+    tick(&mut village, 20, base + home::BANQUET_TICKS + 100_000);
+    assert!(home::guests(dimension, at).is_empty());
+    assert!(guests.iter().all(|id| order_for(*id, base + home::BANQUET_TICKS + 100_000).is_none()));
+}
+
+// ---------- Plantas e canteiro de obras ----------
+
+#[test]
+fn blueprints_turn_with_the_site_and_keep_one_cell_per_block() {
+    for plan in &blueprints::BLUEPRINTS {
+        assert!(projects::PROJECTS.iter().any(|project| project.key == plan.key && !project.repeat), "{}: obra com prédio", plan.key);
+        let mut seen = std::collections::HashSet::new();
+        for cell in plan.cells {
+            let (spot, index) = blueprints::decode(*cell);
+            assert!(index < blueprints::PALETTE.len());
+            assert!((0..3).all(|axis| spot[axis] >= 0 && spot[axis] < plan.size[axis]), "{}: {spot:?}", plan.key);
+            assert!(seen.insert(spot), "{}: célula repetida {spot:?}", plan.key);
+            assert_ne!(spot, plan.site, "o canteiro não é reconstruído");
+        }
+    }
+    let plan = &blueprints::BLUEPRINTS[0];
+    let site = [100, 64, 100];
+    // A entrada (última linha da planta) fica do lado para onde o canteiro olha.
+    let front = [plan.site[0], 1, plan.size[2] - 1];
+    for (facing, rot, dir) in [("south", 0, [0, 1]), ("west", 1, [-1, 0]), ("north", 2, [0, -1]), ("east", 3, [1, 0])] {
+        assert_eq!(blueprints::rotation(Some(facing)), rot);
+        let at = blueprints::world(plan, site, rot, front);
+        assert_eq!([at[0] - site[0], at[2] - site[2]], [dir[0] * (front[2] - plan.site[2]), dir[1] * (front[2] - plan.site[2])], "{facing}");
+        assert_eq!(blueprints::world(plan, site, rot, plan.site), site, "o canteiro fica na sua célula");
+    }
+    assert_eq!(blueprints::turned("facing", "north", 0), "north");
+    assert_eq!(blueprints::turned("facing", "south", 1), "west");
+    assert_eq!(blueprints::turned("facing", "north", 2), "south");
+    assert_eq!(blueprints::turned("facing", "east", 3), "north");
+    assert_eq!(blueprints::turned("axis", "x", 1), "z");
+    assert_eq!(blueprints::turned("axis", "y", 1), "y");
+    assert!(blueprints::protected("minecraft:chest") && blueprints::protected("veio:press"));
+    assert!(!blueprints::protected("minecraft:grass_block") && !blueprints::protected(site::SITE));
+}
+
+fn funded_village(village: &mut Village, center_at: [i32; 3], bits: u32, now: u64) {
+    projects::publish(projects::Village { dimension: village.dimension.into(), pos: center_at, perks: 0, waiting: 0,
+        villagers: 10, cap: 40, funded: bits, requests: 0, seen: now });
+}
+
+#[test]
+fn site_waits_for_payment_stops_on_player_blocks_and_builds_the_canteen() {
+    let mut village = Village::new("veio:test_site_build");
+    village.crops.clear();
+    let dimension = village.dimension;
+    let pos = [0, 64, 0];
+    let mut site_block = block(SITE);
+    let now = defense::clock();
+    // Sem centro: espera.
+    for time in (0..40).step_by(10) {
+        site::tick(&mut village, pos, &mut site_block, time, now);
+    }
+    assert_eq!(number(&site_block, "Status"), site::SITE_PLAN);
+    assert_eq!(number(&site_block, "Utilization"), site::NO_CENTER);
+    funded_village(&mut village, [20, 64, 0], 0, now);
+    site::tick(&mut village, pos, &mut site_block, 40, now);
+    assert_eq!(number(&site_block, "Utilization"), site::NOT_PAID, "obra não paga");
+    // Paga: confere o terreno; um baú do jogador dentro da planta para a obra.
+    funded_village(&mut village, [20, 64, 0], projects::CANTEEN, now);
+    let plan = &blueprints::BLUEPRINTS[0];
+    let chest = blueprints::world(plan, pos, 0, [3, 1, 3]);
+    village.crops.insert(chest, ("minecraft:chest".into(), 0));
+    for time in (50..2000).step_by(10) {
+        site::tick(&mut village, pos, &mut site_block, time, now);
+        if number(&site_block, "Status") == site::SITE_BLOCKED { break; }
+    }
+    assert_eq!(number(&site_block, "Status"), site::SITE_BLOCKED);
+    let value = number(&site_block, "Utilization");
+    assert_eq!([(value & 255) - 128, ((value >> 8) & 255) - 128, ((value >> 16) & 255) - 128],
+        [chest[0] - pos[0], 0, chest[2] - pos[2]], "o painel mostra onde está o bloco");
+    village.crops.remove(&chest);
+    let mut time = 2000;
+    while number(&site_block, "ContractStage") != site::BUILDING && time < 8000 {
+        site::tick(&mut village, pos, &mut site_block, time, now);
+        time += 10;
+    }
+    assert_eq!(number(&site_block, "ContractStage"), site::BUILDING, "terreno livre: começa a obra");
+    // Mestre de obras com pão; ele fica ao lado de cada parte.
+    village.villager(19001, [0.5, 64.0, 1.5], [91, 0, 0, 1]);
+    site_block.items[0] = Some(ItemStack::new("minecraft:bread", 64));
+    assert!(hire_at(&mut village, &mut site_block, pos, now));
+    let mut guard = 0;
+    while number(&site_block, "ContractStage") != site::DONE && guard < 4000 {
+        if let Some(target) = target(&site_block) {
+            village.walk(19001, target);
+        }
+        site::tick(&mut village, pos, &mut site_block, time, now);
+        time += 10;
+        guard += 1;
+    }
+    assert_eq!(number(&site_block, "ContractStage"), site::DONE, "o refeitório ficou pronto");
+    assert!(worker(&site_block).is_none(), "o mestre de obras foi dispensado");
+    // Os blocos estão no mundo, na orientação certa.
+    let door = blueprints::world(plan, pos, 0, [5, 1, 8]);
+    assert_eq!(village.block(door), "minecraft:spruce_door");
+    let chimney_fire = blueprints::world(plan, pos, 0, [1, 11, 0]);
+    assert_eq!(village.block(chimney_fire), "minecraft:campfire");
+    assert_eq!(village.block(pos), "minecraft:air", "o canteiro não é substituído (no teste ele não está no mapa)");
+    // De pé: o centro passa a ver o prédio.
+    let found = site::near(dimension, [20, 64, 0], center::RADIUS, now, None);
+    assert_eq!(found.erected, projects::CANTEEN);
+    assert_eq!(found.operating, 0, "de pé, mas sem cozinheira o refeitório não funciona");
+    // Outro canteiro com a mesma planta na mesma vila espera.
+    let mut other = block(SITE);
+    site::tick(&mut village, [40, 64, 0], &mut other, 0, now);
+    assert_eq!(number(&other, "Utilization"), site::ALREADY);
+}
+
+fn finished_site(key: &str) -> (ModBlockEntity, &'static blueprints::Blueprint) {
+    let index = blueprints::BLUEPRINTS.iter().position(|plan| plan.key == key).unwrap();
+    let mut entity = block(SITE);
+    set_number(&mut entity, "Rate", index as i32);
+    set_number(&mut entity, "Rot", 0);
+    set_number(&mut entity, "ContractStage", site::DONE);
+    (entity, &blueprints::BLUEPRINTS[index])
+}
+
+#[test]
+fn every_blueprint_has_a_project_and_staffed_ones_have_furniture() {
+    for plan in blueprints::BLUEPRINTS.iter() {
+        assert_ne!(blueprints::project_bit(plan), 0, "{} sem obra", plan.key);
+        if staff::staffed(plan.role) {
+            assert!(!plan.work.is_empty(), "{} sem móveis de trabalho", plan.key);
+        }
+        if plan.visitors > 0 {
+            assert!(!plan.seats.is_empty() && plan.hours[0] < plan.hours[1], "{} sem assentos", plan.key);
+        }
+        for spot in plan.work.iter().chain(plan.seats) {
+            assert!((0..3).all(|axis| spot[axis] >= 0 && spot[axis] < plan.size[axis]), "{}: {spot:?} fora da planta", plan.key);
+        }
+    }
+    let lab = blueprints::BLUEPRINTS.iter().find(|plan| plan.key == "lab").unwrap();
+    assert_eq!(lab.role, "scientist");
+    assert_eq!(blueprints::project_bit(lab), projects::LAB);
+}
+
+#[test]
+fn canteen_cook_cooks_and_the_building_starts_operating() {
+    let mut village = Village::new("veio:test_staff_cook");
+    village.crops.clear();
+    village.day = 1000;
+    let dimension = village.dimension;
+    let pos = [0, 64, 0];
+    let now = defense::clock();
+    funded_village(&mut village, [20, 64, 0], projects::CANTEEN, now);
+    let (mut site_block, _) = finished_site("canteen");
+    site::tick(&mut village, pos, &mut site_block, 0, now);
+    assert_eq!(site::near(dimension, pos, 8, now, None).operating, 0, "sem cozinheira, parado");
+    village.villager(19101, [0.5, 64.0, 1.5], [92, 0, 0, 1]);
+    site_block.items[0] = Some(ItemStack::new("minecraft:bread", 64));
+    site_block.items[1] = Some(ItemStack::new("minecraft:beef", 8));
+    assert!(hire_at(&mut village, &mut site_block, pos, now));
+    let mut time = 10;
+    for _ in 0..400 {
+        if let Some(target) = target(&site_block) {
+            village.walk(19101, target);
+        }
+        site::tick(&mut village, pos, &mut site_block, time, now);
+        time += 10;
+    }
+    let cooked = site_block.items[2].as_ref().expect("a cozinheira cozinhou");
+    assert_eq!(cooked.item.as_ref(), "minecraft:cooked_beef");
+    assert!(cooked.count >= 3, "cozinhou {} carnes", cooked.count);
+    assert_eq!(site::near(dimension, pos, 8, now, None).operating, projects::CANTEEN);
+}
+
+#[test]
+fn school_calls_children_to_class_and_they_grow() {
+    let mut village = Village::new("veio:test_staff_school");
+    village.crops.clear();
+    village.day = 2000;
+    let pos = [0, 64, 0];
+    let now = defense::clock();
+    funded_village(&mut village, [20, 64, 0], projects::SCHOOL, now);
+    let (mut site_block, plan) = finished_site("school");
+    village.villager(19201, [0.5, 64.0, 1.5], [93, 0, 0, 1]);
+    site_block.items[0] = Some(ItemStack::new("minecraft:bread", 64));
+    assert!(hire_at(&mut village, &mut site_block, pos, now));
+    village.villager(19202, [3.5, 64.0, 3.5], [94, 0, 0, 1]);
+    village.villagers.get_mut(&19202).unwrap().2 = -24000;
+    let mut time = 10;
+    for _ in 0..30 {
+        if let Some(target) = target(&site_block) {
+            village.walk(19201, target);
+        }
+        if let Some(goal) = order_for(19202, now) {
+            village.villagers.get_mut(&19202).unwrap().0 = goal;
+        }
+        site::tick(&mut village, pos, &mut site_block, time, now);
+        time += 10;
+    }
+    assert_eq!(staff::visitors_of(village.dimension, pos), vec![19202], "o aluno foi para a carteira");
+    let seat = order_for(19202, now).unwrap();
+    assert!(plan.seats.iter().any(|spot| {
+        let at = blueprints::world(plan, pos, 0, *spot);
+        [f64::from(at[0]) + 0.5, f64::from(at[1]), f64::from(at[2]) + 0.5] == seat
+    }));
+    assert!(matches!(village.villager_nbt.get(&19202).and_then(|nbt| nbt.get(&"Age".into())), Some(Tag::Int(age)) if *age > -24000),
+        "a aula fez o aluno crescer");
+    // Fim da aula: o aluno é liberado.
+    village.day = 9000;
+    site::tick(&mut village, pos, &mut site_block, time, now);
+    assert!(order_for(19202, now).is_none());
+    assert!(staff::visitors_of(village.dimension, pos).is_empty());
+}
+
+#[test]
+fn scientist_researches_a_tech_and_the_village_gets_it() {
+    let mut entity = finished_site("lab").0;
+    assert_eq!(staff::current(&entity), Some(0));
+    for item in ["minecraft:bone_meal", "minecraft:wheat_seeds", "minecraft:composter"] {
+        entity.items[1] = Some(ItemStack::new(item, 64));
+        assert!(staff::accepts_input(entity.items[1].as_ref().unwrap()));
+        staff::feed_for_test(&mut entity);
+    }
+    assert!(staff::tech_missing(&entity, 0).is_none());
+    for _ in 0..staff::RESEARCH_WORK {
+        staff::research_for_test(&mut entity);
+    }
+    assert_eq!(staff::known(&entity) & staff::AGRONOMY, staff::AGRONOMY);
+    assert_eq!(staff::current(&entity), Some(1));
+    let perks = projects::research_bit(staff::AGRONOMY);
+    assert_eq!(projects::zone_credit(perks), 2);
+    assert_eq!(projects::food_cost(projects::research_bit(staff::NUTRITION), 0), TASK_COST - 1);
+}
+
+#[test]
+fn village_rewards_come_from_the_town_hall_cash() {
+    let (mut village, _, _) = society_town("veio:test_work_reward_public", 9);
+    let dimension = village.dimension;
+    let (office, hall) = ([30, 64, 30], [60, 64, 0]);
+    let mut console = village.stations.remove(&office).unwrap();
+    let before = balance(COMPANY, &village, office);
+    let public = balance(PUBLIC, &village, hall);
+    let (entered, _) = society::ledger::borders(dimension);
+    society::ledger::put(society::ledger::Book::Public, dimension, hall, 0, 100, society::ledger::RECEIVED, defense::clock());
+    assert_eq!(center::reward(dimension, office, &mut console, 60), 60, "a prefeitura paga");
+    assert_eq!(balance(COMPANY, &village, office), before + 60);
+    assert_eq!(balance(PUBLIC, &village, hall), public + 40);
+    assert_eq!(center::reward(dimension, office, &mut console, 600), public + 40, "paga só o que tem");
+    assert_eq!(balance(PUBLIC, &village, hall), 0);
+    assert_eq!(center::reward(dimension, office, &mut console, 60), 0, "caixa público vazio: nada");
+    assert_eq!(society::ledger::borders(dimension).0, entered, "recompensa não cria moeda");
 }
 
 /// Mar em volta de `pos` (7x7, no nível e abaixo).

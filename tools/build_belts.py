@@ -3,7 +3,7 @@ import math
 
 
 def build(root, model, box, write):
-    for name in ("belt", "fast_belt"):
+    for name in ("belt", "fast_belt", "express_belt"):
         textures, straight = model("belt", name, None)
         shapes = {"default": [[0, 0, 0, 1, .25, 1]]}
         variants = {}

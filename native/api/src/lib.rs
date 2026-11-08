@@ -1,16 +1,29 @@
+mod blueprint;
 mod budget;
 mod presentation;
+mod appearance;
+mod motion;
+mod soundscape;
 mod contracts;
+mod freight;
 mod logistics;
 mod logistics_controls;
+mod lift;
+mod milestones;
 mod inserters;
 pub(crate) mod operations;
 mod defense;
 mod farm;
+mod home;
 mod pollution;
 mod production;
 mod power;
+mod industry;
+mod research;
+mod stations;
+mod rivers;
 mod tutorial;
+mod onboarding;
 mod upgrades;
 mod holding;
 mod workforce;
@@ -22,7 +35,7 @@ use horizon_client::mod_api::{
 
 // Horizon exports Compound but not its UTF-16 key type. Derive that type from
 // the public map instead of requiring an engine patch or a second dependency.
-pub(super) trait CompoundKey { type Key; }
+pub(crate) trait CompoundKey { type Key; }
 impl<K, V> CompoundKey for std::collections::BTreeMap<K, V> { type Key = K; }
 type JavaString = <Compound as CompoundKey>::Key;
 
@@ -31,6 +44,8 @@ const PRESS: &str = "veio:press";
 const ASSEMBLER: &str = "veio:assembler";
 const BELT: &str = "veio:belt";
 const FAST_BELT: &str = "veio:fast_belt";
+const EXPRESS_BELT: &str = "veio:express_belt";
+const TUNNEL: &str = "veio:belt_tunnel";
 const SPLITTER: &str = "veio:splitter";
 const MERGER: &str = "veio:merger";
 const CUTTER: &str = "veio:cutter";
@@ -71,6 +86,14 @@ pub fn hooks() -> Box<dyn Hooks> {
 struct Factory;
 
 impl Hooks for Factory {
+    fn server_about_to_start(&self, _host: &mut dyn Host, _event: &mut horizon_client::mod_api::ServerAboutToStartEvent) {
+        // A casa, as camas e os bônus em memória pertencem ao mundo que abre.
+        // O painel carrega os próprios dados salvos quando começar a funcionar.
+        home::reset();
+        milestones::census::reset();
+        blueprint::reset();
+    }
+
     fn block_entity(
         &self,
         _host: &mut dyn Host,
@@ -90,7 +113,13 @@ impl Hooks for Factory {
         _host: &dyn Host,
         event: &mut BlockEntityContainerEvent<'_>,
     ) -> Option<ModContainer> {
-        let (slots, inputs, outputs) = layout(event.block)?;
+        let (slots, mut inputs, mut outputs) = layout(event.block)?;
+        if freight::owns(event.block) {
+            inputs = (0..6).collect();
+            if event.block == freight::caravan::ID { inputs.push(7); }
+            // Hoppers load trains from dispatch stock; workers use received stock.
+            outputs = if event.block == freight::RAIL { (0..3).collect() } else { (3..6).collect() };
+        }
         Some(ModContainer {
             slots,
             faces: std::array::from_fn(|_| (0..slots).collect()),
@@ -112,16 +141,30 @@ impl Hooks for Factory {
         event: &mut horizon_client::mod_api::RightClickBlockEvent) -> Flow
     {
         let block = host.block(event.pos);
+        if let Some(flow) = freight::right_click(host, event.pos, &block) { return flow; }
+        onboarding::select(host, event.pos, &block, true);
         if let Some(flow) = logistics_controls::right_click(host, event.pos, &block) { return flow; }
-        let Some((held, _, _)) = host.held() else { return Flow::Continue };
+        if blueprint::owns(&block) {
+            let held = host.held().map(|(item, _, _)| item);
+            if let Some(flow) = blueprint::right_click(host, event.pos, &block, held.as_deref()) { return flow; }
+        }
         if !is_factory_block(&block) {
             return Flow::Continue;
         }
-        if workforce::owns(&block)
-            && let Some(flow) = workforce::right_click(host, event.pos, &held)
+        // Mão vazia chega como `None`. O quartel usa agachar com a mão vazia, então os postos
+        // recebem "" nesse caso; o resto continua exigindo um item na mão.
+        let held = host.held().map(|(item, _, _)| item);
+        if lift::owns(&block)
+            && let Some(flow) = lift::right_click(host, event.pos, held.as_deref().unwrap_or(""))
         {
             return flow;
         }
+        if workforce::owns(&block)
+            && let Some(flow) = workforce::right_click(host, event.pos, held.as_deref().unwrap_or(""))
+        {
+            return flow;
+        }
+        let Some(held) = held else { return Flow::Continue };
         let pos = event.pos;
         let mut damage = 0;
         let mut module = 0;
@@ -129,6 +172,11 @@ impl Hooks for Factory {
             damage = number(entity, "Damage");
             module = number(entity, "Module");
         });
+        if stations::is_station(&block) && let Some(channel) = stations::dye_channel(&held) {
+            host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Channel", channel));
+            host.play_sound("minecraft:item.dye.use", center(pos), 4, 0.6, 1.0);
+            return Flow::Cancel;
+        }
         if held == REPAIR_KIT {
             if damage == 0 || host.take_items(REPAIR_KIT, 1) == 0 {
                 return Flow::Continue;
@@ -147,12 +195,30 @@ impl Hooks for Factory {
             host.play_sound("minecraft:block.smithing_table.use", center(pos), 4, 0.6, 1.2);
             return Flow::Cancel;
         }
+        if held == upgrades::MK2_KIT {
+            let mut tier = 0;
+            host.change_mod_block_entity(pos, &mut |entity| tier = number(entity, "Tier"));
+            if !upgrades::supports(&block) || tier >= 2 || host.take_items(&held, 1) == 0 {
+                return Flow::Continue;
+            }
+            host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Tier", 2));
+            host.play_sound("minecraft:block.anvil.use", center(pos), 4, 0.6, 1.0);
+            return Flow::Cancel;
+        }
         if held != WRENCH {
             return Flow::Continue;
         }
         if host.sneaking() && module > 0 {
             host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Module", 0));
             host.give_items(upgrades::MODULES[(module - 1) as usize], 1);
+            return Flow::Cancel;
+        }
+        // Sem módulo, a chave agachada devolve o kit Mk.II.
+        let mut tier = 0;
+        host.change_mod_block_entity(pos, &mut |entity| tier = number(entity, "Tier"));
+        if host.sneaking() && tier >= 2 && upgrades::supports(&block) {
+            host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Tier", 0));
+            host.give_items(upgrades::MK2_KIT, 1);
             return Flow::Cancel;
         }
         let facing = host.block_property(pos, "facing");
@@ -205,17 +271,26 @@ impl Hooks for Factory {
         // 40-60 ticks, então nada se perde; o número é ímpar para cobrir todos os ids mesmo que o
         // relógio avance de 2 em 2 (janela e servidor no mesmo processo).
         let now = defense::clock();
+        // As caravanas acompanham seus animais em todo tick (`freight::caravan`).
+        freight::caravan::observe(host, event.dimension, event.entity, event.kind);
         if (now + u64::from(event.entity)) % OBSERVE_EVERY == 0 {
             defense::observe(event.dimension, event.entity, event.kind);
             production::ranch::observe(event.dimension, event.entity, event.kind);
         }
         if event.kind == "minecraft:villager" {
-            workforce::village::observe(host, event.dimension, event.entity, defense::clock());
+            let now = defense::clock();
+            workforce::village::observe(host, event.dimension, event.entity, now);
+            workforce::village::scan_homes(host, event.dimension, event.entity, now);
         }
         Flow::Continue
     }
 
-    fn player_logged_in(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
+    fn chunk_load(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::ChunkLoadEvent<'_>) {
+        rivers::chunk_loaded(event.dimension, event.chunk, event.new, defense::clock());
+    }
+
+    fn player_logged_in(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
+        onboarding::logged_in(host);
         workforce::spawn::logged_in(event.player, event.name, defense::clock());
     }
 
@@ -225,24 +300,81 @@ impl Hooks for Factory {
         }
     }
 
-    fn player_respawned(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
-        workforce::spawn::respawned(host, event.name);
+    fn player_respawned(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
+        workforce::spawn::respawned(event.player, event.name);
+    }
+
+    /// Casa do fundador: a primeira cama é a da casa, e só mais uma fora dela.
+    fn player_spawn_point_set(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerSpawnPointSetEvent<'_>) -> Flow {
+        home::spawn_point(host, event.player, event.dimension, event.pos, event.cause)
+    }
+
+    fn player_bed_enter(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerBedEnterEvent<'_>) -> Flow {
+        home::bed_enter(host, event.player, event.pos)
+    }
+
+    /// Comida do jogador: refeições e banquetes aceleram as máquinas (`home::food`).
+    fn living_entity_use_item_finish(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::LivingEntityUseItemFinishEvent<'_>) {
+        if event.entity.is_some() {
+            return;
+        }
+        if let Some(player) = host.acting_player() {
+            home::food::eaten(player.uuid, &player.name, &player.dimension, player.position, &event.stack.item, defense::clock());
+        }
     }
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
+        // No jogo de um jogador só, o gancho roda duas vezes por tick: no servidor interno e na
+        // janela (cliente). O Veio é todo do servidor; na janela, o relógio andaria em dobro e
+        // fora de ordem, as cotas zerariam no meio do tick e um passo da poluição podia ser
+        // gasto no cliente (onde não há jogadores nem `summon`), perdendo a onda da noite.
+        if host.window() {
+            return;
+        }
         defense::advance_clock();
+        soundscape::refresh(host, defense::clock());
         budget::begin_tick(defense::clock());
         power::maintenance(defense::clock());
         workforce::maintenance(defense::clock());
-        workforce::spawn::tick(host, defense::clock());
+        workforce::world_tick(host, defense::clock());
+        rivers::tick(host, defense::clock());
+        onboarding::server_tick(host);
+        home::tick(host, defense::clock());
+        milestones::census::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
+            industry::maintain(host, time);
+            stations::maintain(host, time);
         }
+    }
+
+    fn inventory_move_item(&self, host: &dyn Host, event: &mut horizon_client::mod_api::InventoryMoveItemEvent<'_>) -> Flow {
+        onboarding::hopper_attempt(host, event.source, event.destination, event.item);
+        Flow::Continue
+    }
+
+    fn place_block(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlaceBlockEvent<'_>) {
+        onboarding::select(host, event.pos, &host.block(event.pos), false);
+    }
+
+    fn player_logged_out(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedOutEvent<'_>) {
+        onboarding::logout(host, event.player);
+    }
+
+    fn register_commands(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::RegisterCommandsEvent<'_>) {
+        for action in ["ocultar", "mostrar", "reiniciar"] {
+            event.commands.push(horizon_client::mod_api::NativeCommand::new(&format!("veiotutorial {action}")));
+        }
+    }
+
+    fn perform_command(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PerformCommandEvent<'_>) -> Flow {
+        if onboarding::command(host, event.player, event.command) { Flow::Cancel } else { Flow::Continue }
     }
 
     fn register_goals(&self, event: &mut horizon_client::mod_api::RegisterGoalsEvent<'_>) {
         pollution::register_goals(event.mob);
         workforce::register_goals(event.mob);
+        freight::caravan::register_goals(event.mob);
     }
 
     fn block_entity_render_bounding_box(&self, _host: &dyn Host,
@@ -252,9 +384,14 @@ impl Hooks for Factory {
             power::bounds(event.entity, event.bounds);
         }
         production::generation::bounds(event.block, event.bounds);
+        if event.block == freight::DRONE { freight::bounds(event.entity, event.bounds); }
         if inserters::is_arm(event.block) { *event.bounds = [-1.5, 0.0, -1.5, 2.5, 1.0, 2.5]; }
+        if blueprint::owns(event.block) { blueprint::bounds(event.entity, event.bounds); }
         if workforce::zones::is_marker(event.block) {
             workforce::zones::bounds(event.entity, event.bounds);
+        }
+        if event.block == workforce::SITE {
+            workforce::site::bounds(event.entity, event.bounds);
         }
         if logistics::is_belt(event.block) {
             event.bounds[4] = event.bounds[4].max(1.6);
@@ -272,7 +409,9 @@ impl Hooks for Factory {
     }
 
     fn screen_click(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::ScreenClickEvent<'_>) -> Option<i32> {
-        let tab = event.data.first().copied().unwrap_or(0) / 1000;
+        // Aba da holding; nas outras páginas da vila (Atenção, Obras, Pedidos) não há saque.
+        let first = event.data.first().copied().unwrap_or(0);
+        let tab = if first < 1000 && (first / 100) % 10 != 0 { -1 } else { first / 1000 };
         (event.block == workforce::CONTROL_CENTER && !event.right).then(|| holding::click(event.at, tab)).flatten()
     }
 
@@ -304,7 +443,11 @@ impl Hooks for Factory {
         &self,
         event: &mut horizon_client::mod_api::BlockEntityUpdateTagEvent<'_>,
     ) -> Option<Compound> {
-        is_factory_block(&event.entity.id).then(|| event.entity.nbt.clone())
+        is_factory_block(&event.entity.id).then(|| if blueprint::owns(&event.entity.id) {
+            blueprint::client_tag(event.entity)
+        } else {
+            event.entity.nbt.clone()
+        })
     }
 
     fn block_entity_submit(&self, host: &dyn Host,
@@ -329,9 +472,24 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     }
     let previous = visual_signature(entity);
     let produced = number(entity, "Produced");
+    let previous_status = number(entity, "Status");
+    let training = onboarding::tracking().then(|| {
+        onboarding::before_machine(host, pos, entity);
+        (number(entity, "Total"), if entity.id == HUB { number(entity, "ContractStage") } else { 0 })
+    });
     tick_factory(host, pos, entity, time);
+    if entity.id == freight::DRONE {
+        set_number(entity, "FlightVisualAt", stamp(time));
+    }
+    if let Some((cycles, contract)) = training {
+        onboarding::observe_production(host.dimension(), pos, entity, produced, cycles, contract, time);
+    }
+    milestones::census::observe(host.dimension(), pos, entity, previous_status,
+        number(entity, "Produced") - produced, defense::clock());
+    industry::observe(host.dimension(), pos, entity, time);
     holding::observe(host.dimension(), pos, entity, time);
     pollution::emit(host, pos, entity, time);
+    soundscape::after(host, pos, entity, produced, previous_status, time);
     record_performance(entity, produced);
     let cargo = presentation::publish(entity);
     if cargo || published_signature(entity) != previous {
@@ -340,17 +498,18 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
 }
 
 fn is_factory_block(block: &str) -> bool {
-    matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
-        SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
+    matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT | EXPRESS_BELT | TUNNEL |
+        SPLITTER | MERGER | lift::LIFT | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::is_machine(block) || workforce::owns(block)
+        || production::is_machine(block) || workforce::owns(block) || freight::owns(block) || milestones::owns(block) || blueprint::owns(block)
+        || matches!(block, research::LAB | industry::MONITOR | industry::ANCHOR) || stations::is_station(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
 fn needs_power(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | CUTTER | INTEGRATOR |
         CRUSHER | ALLOY | ELECTRONICS | HARVESTER | TESLA | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::consumes(block)
+        || production::consumes(block) || block == freight::DRONE || matches!(block, research::LAB | industry::ANCHOR | stations::SENDER)
 }
 
 /// Produzem, guardam ou conduzem energia.
@@ -366,6 +525,7 @@ fn is_generator(block: &str) -> bool {
 fn capacity(block: &str) -> i32 {
     match block {
         BATTERY => 30000,
+        freight::DRONE => 8000,
         TESLA => defense::CAPACITY,
         _ => power::tier(block).map_or(2000, |tier| tier.capacity),
     }
@@ -377,7 +537,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         DRILL | DRILL_MK2 => (1, vec![], vec![0]),
         PRESS | ASSEMBLER | CUTTER | CRUSHER => (2, vec![0], vec![1]),
         INTEGRATOR | ALLOY | ELECTRONICS => (3, vec![0, 1], vec![2]),
-        BELT | FAST_BELT | SPLITTER => (1, vec![0], vec![0]),
+        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL | lift::LIFT => (1, vec![0], vec![0]),
         MERGER => (2, vec![0, 1], vec![0, 1]),
         GENERATOR => (1, vec![0], vec![]),
         GEOTHERMAL => (2, vec![0], vec![1]),
@@ -385,6 +545,12 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         CABLE | POLE | STEEL_POLE => (0, vec![], vec![]),
         HUB => (4, vec![0, 1], vec![2, 3]),
         HARVESTER => (4, vec![0], vec![1, 2, 3]),
+        research::LAB => (2, vec![0, 1], vec![]),
+        industry::MONITOR | industry::ANCHOR => (1, vec![], vec![]),
+        stations::SENDER => (4, vec![0, 1, 2, 3], vec![]),
+        stations::RECEIVER => (4, vec![], vec![0, 1, 2, 3]),
+        _ if freight::owns(block) => return freight::layout(block),
+        _ if milestones::owns(block) => milestones::layout(),
         _ if workforce::owns(block) => return workforce::layout(block),
         _ => return production::layout(block),
     })
@@ -393,10 +559,12 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
 /// Há slot de entrada de itens? Evita alocar o `layout` só para decidir uma curva de esteira.
 fn has_item_inputs(block: &str) -> bool {
     match block {
-        BELT | FAST_BELT | SPLITTER | MERGER | PRESS | ASSEMBLER | CUTTER | CRUSHER |
-        INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER => true,
-        DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => false,
-        _ if workforce::is_post(block) || workforce::storage::is_store(block) => true,
+        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL | lift::LIFT | PRESS | ASSEMBLER | CUTTER | CRUSHER |
+        INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER | research::LAB | stations::SENDER => true,
+        DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG
+            | industry::MONITOR | industry::ANCHOR | stations::RECEIVER => false,
+        _ if freight::owns(block) => true,
+        _ if workforce::is_post(block) || workforce::storage::is_store(block) || milestones::owns(block) => true,
         _ => production::has_inputs(block),
     }
 }
@@ -409,9 +577,13 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         INTEGRATOR | ALLOY | ELECTRONICS => 2..3,
         HUB => 2..4,
         HARVESTER => 1..4,
+        research::LAB | industry::MONITOR | industry::ANCHOR | stations::SENDER => 0..0,
+        stations::RECEIVER => 0..4,
         GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => 0..0,
+        _ if freight::owns(block) => 3..6,
         _ if production::is_machine(block) => production::outputs(block),
         _ if workforce::owns(block) => workforce::outputs(block),
+        _ if milestones::owns(block) => 1..2,
         _ => 0..1,
     }
 }
@@ -419,8 +591,13 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
 fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
     match (block, slot) {
         (HUB, _) => contracts::valid_input(slot, stack),
-        (BELT | FAST_BELT | SPLITTER, 0) => true,
+        (research::LAB, _) => research::accepts(slot, stack),
+        (stations::SENDER, 0..4) => stack.damage == 0 && stack.extra.is_none(),
+        (stations::RECEIVER, _) => false,
+        (milestones::BOARD, _) => milestones::valid_input(slot, stack),
+        (BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL | lift::LIFT, 0) => true,
         (MERGER, 0 | 1) => true,
+        _ if freight::owns(block) => (slot < 6 || block == freight::caravan::ID && slot == 7 && freight::caravan::feed(&stack.item)) && stack.damage == 0 && stack.extra.is_none(),
         _ if workforce::owns(block) => workforce::accepts(block, slot, stack),
         // Entradas das máquinas de produção, pela tabela de receitas e combustíveis.
         _ => production::accepts(block, slot, stack),
@@ -446,6 +623,9 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Carried" => key!("Carried"),
         "CustomName" => key!("CustomName"),
         "Edits" => key!("Edits"),
+        "Fertility" => key!("Fertility"),
+        "Water" => key!("Water"),
+        "WaterPort" => key!("WaterPort"),
         "Held" => key!("Held"),
         "ScanArea" => key!("ScanArea"),
         "Skipped" => key!("Skipped"),
@@ -456,15 +636,33 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Action" => key!("Action"),
         "Admin" => key!("Admin"),
         "Area" => key!("Area"),
+        "Bonus" => key!("Bonus"),
+        "BonusItem" => key!("BonusItem"),
         "Burn" => key!("Burn"),
         "BurnTotal" => key!("BurnTotal"),
         "ContractStage" => key!("ContractStage"),
+        "FlightTarget" => key!("FlightTarget"),
+        "FlightDelta" => key!("FlightDelta"),
+        "FlightPhase" => key!("FlightPhase"),
+        "FreightExport" => key!("FreightExport"),
+        "FreightImport" => key!("FreightImport"),
+        "FreightChannel" => key!("FreightChannel"),
+        "FreightManualImport" => key!("FreightManualImport"),
+        "CaravanAnimal" => key!("CaravanAnimal"),
+        "CaravanEntity" => key!("CaravanEntity"),
+        "CaravanProbe" => key!("CaravanProbe"),
+        "CaravanLastPos" => key!("CaravanLastPos"),
+        "CaravanStall" => key!("CaravanStall"),
+
+
         "Cooldown" => key!("Cooldown"),
         "Damage" => key!("Damage"),
         "DisplayCount" => key!("DisplayCount"),
         "DisplayItem" => key!("DisplayItem"),
         "Duration" => key!("Duration"),
         "Herd" => key!("Herd"),
+        "Home" => key!("Home"),
+        "HomeBeds" => key!("HomeBeds"),
         "Info" => key!("Info"),
         "Level" => key!("Level"),
         "LogisticsFilter" => key!("LogisticsFilter"),
@@ -538,9 +736,132 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Villagers" => key!("Villagers"),
         "Walk" => key!("Walk"),
         "Work" => key!("Work"),
-        "energy" => key!("energy"),
+        // Painel do centro, obras da vila e lar do jogador.
+        "Rot" => key!("Rot"),
+        "Survey" => key!("Survey"),
+        "Wait" => key!("Wait"),
+        "Cursor" => key!("Cursor"),
+        "Footing" => key!("Footing"),
+        "Standing" => key!("Standing"),
+        "Erected" => key!("Erected"),
+        "Research" => key!("Research"),
+        "Operating" => key!("Operating"),
+        "Techs" => key!("Techs"),
+        "RWork" => key!("RWork"),
+        "Guests" => key!("Guests"),
+        "Probe" => key!("Probe"),
+        "Class" => key!("Class"),
+        "Taught" => key!("Taught"),
+        "Install" => key!("Install"),
+        "Mail" => key!("Mail"),
+        "Delivered" => key!("Delivered"),
+        "Shift" => key!("Shift"),
+        "Made" => key!("Made"),
+        "Installed" => key!("Installed"),
+        "LabScan" => key!("LabScan"),
+        "LabFound" => key!("LabFound"),
+        "Lab" => key!("Lab"),
+        "Prestige" => key!("Prestige"),
+        "Treasury" => key!("Treasury"),
+        "Morning" => key!("Morning"),
+        "TasksAt" => key!("TasksAt"),
+        "PopAt" => key!("PopAt"),
+        "ReqToday" => key!("ReqToday"),
+        "Req0" => key!("Req0"),
+        "Req1" => key!("Req1"),
+        "Req2" => key!("Req2"),
+        "Req3" => key!("Req3"),
+        "BanquetDay" => key!("BanquetDay"),
+        "DD1" => key!("DD1"),
+        "DD2" => key!("DD2"),
+        "DD3" => key!("DD3"),
+        "DD4" => key!("DD4"),
+        "DD5" => key!("DD5"),
+        "DD6" => key!("DD6"),
+        "DD7" => key!("DD7"),
+        "DD8" => key!("DD8"),
+        "DD9" => key!("DD9"),
+        "DD10" => key!("DD10"),
+        "DD11" => key!("DD11"),
+        "Page" => key!("Page"),
+        "Tick" => key!("Tick"),
+        "Market" => key!("Market"),
+        "Day" => key!("Day"),
+        "LastHour" => key!("LastHour"),
         "Built" => key!("Built"),
+        "FestivalDay" => key!("FestivalDay"),
+        "Office" => key!("Office"),
+        "Todo" => key!("Todo"),
         "Comfort" => key!("Comfort"),
+        "Have" => key!("Have"),
+        "Decor" => key!("Decor"),
+        "Finish" => key!("Finish"),
+        "Streak" => key!("Streak"),
+        "MealWait" => key!("MealWait"),
+        "MealAt" => key!("MealAt"),
+        "MealDay" => key!("MealDay"),
+        "RewardDay" => key!("RewardDay"),
+        "SeenDay" => key!("SeenDay"),
+        "Warm" => key!("Warm"),
+        "Cook" => key!("Cook"),
+        "Menu" => key!("Menu"),
+        "Owner" => key!("Owner"),
+        "CScan" => key!("CScan"),
+        "CHave" => key!("CHave"),
+        "CDecor" => key!("CDecor"),
+        "CFinish" => key!("CFinish"),
+        "Up0" => key!("Up0"),
+        "Up1" => key!("Up1"),
+        "Up2" => key!("Up2"),
+        "DA1" => key!("DA1"),
+        "DA2" => key!("DA2"),
+        "DA3" => key!("DA3"),
+        "DA4" => key!("DA4"),
+        "DA5" => key!("DA5"),
+        "DA6" => key!("DA6"),
+        "DA7" => key!("DA7"),
+        "DA8" => key!("DA8"),
+        "DA9" => key!("DA9"),
+        "DA10" => key!("DA10"),
+        "DA11" => key!("DA11"),
+        "DB1" => key!("DB1"),
+        "DB2" => key!("DB2"),
+        "DB3" => key!("DB3"),
+        "DB4" => key!("DB4"),
+        "DB5" => key!("DB5"),
+        "DB6" => key!("DB6"),
+        "DB7" => key!("DB7"),
+        "DB8" => key!("DB8"),
+        "DB9" => key!("DB9"),
+        "DB10" => key!("DB10"),
+        "DB11" => key!("DB11"),
+        "DC1" => key!("DC1"),
+        "DC2" => key!("DC2"),
+        "DC3" => key!("DC3"),
+        "DC4" => key!("DC4"),
+        "DC5" => key!("DC5"),
+        "DC6" => key!("DC6"),
+        "DC7" => key!("DC7"),
+        "DC8" => key!("DC8"),
+        "DC9" => key!("DC9"),
+        "DC10" => key!("DC10"),
+        "DC11" => key!("DC11"),
+        "Obra0_0" => key!("Obra0_0"),
+        "Obra0_1" => key!("Obra0_1"),
+        "Obra0_2" => key!("Obra0_2"),
+        "Obra1_0" => key!("Obra1_0"),
+        "Obra1_1" => key!("Obra1_1"),
+        "Obra1_2" => key!("Obra1_2"),
+        "Obra2_0" => key!("Obra2_0"),
+        "Obra2_1" => key!("Obra2_1"),
+        "Obra2_2" => key!("Obra2_2"),
+        "Obra3_0" => key!("Obra3_0"),
+        "Obra3_1" => key!("Obra3_1"),
+        "Obra3_2" => key!("Obra3_2"),
+        "Obra4_0" => key!("Obra4_0"),
+        "Obra4_1" => key!("Obra4_1"),
+        "Obra4_2" => key!("Obra4_2"),
+        "energy" => key!("energy"),
         "Company" => key!("Company"),
         "DAssist" => key!("DAssist"),
         "DEmploy" => key!("DEmploy"),
@@ -556,7 +877,6 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "DTax" => key!("DTax"),
         "DUpkeep" => key!("DUpkeep"),
         "DWages" => key!("DWages"),
-        "Day" => key!("Day"),
         "Debt" => key!("Debt"),
         "Demand" => key!("Demand"),
         "Employed" => key!("Employed"),
@@ -585,6 +905,8 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "UpkeepHalf" => key!("UpkeepHalf"),
         "Wallet" => key!("Wallet"),
         "Wealth" => key!("Wealth"),
+        "Tier" => key!("Tier"),
+        "RecipeIndex" => key!("RecipeIndex"),
         "Tab" => key!("Tab"),
         "HData" => key!("HData"),
         "Cash" => key!("Cash"),
@@ -594,7 +916,30 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "DExport" => key!("DExport"),
         "Trade" => key!("Trade"),
         "TradeRecent" => key!("TradeRecent"),
-        "Water" => key!("Water"),
+        "BoxHeight" => key!("BoxHeight"),
+        "BoxSize" => key!("BoxSize"),
+        "CarryInto" => key!("CarryInto"),
+        "CarryKind" => key!("CarryKind"),
+        "Credit" => key!("Credit"),
+        "DesignBlocks" => key!("DesignBlocks"),
+        "DesignFacing" => key!("DesignFacing"),
+        "DesignFootprint" => key!("DesignFootprint"),
+        "DesignHeight" => key!("DesignHeight"),
+        "DesignSkipped" => key!("DesignSkipped"),
+        "Down" => key!("Down"),
+        "Gust" => key!("Gust"),
+        "Hired" => key!("Hired"),
+        "Linked" => key!("Linked"),
+        "Order" => key!("Order"),
+        "OrderDone" => key!("OrderDone"),
+        "OrderPaid" => key!("OrderPaid"),
+        "Searched" => key!("Searched"),
+        "Size" => key!("Size"),
+        "DBlocked" => key!("DBlocked"),
+        "DDamaged" => key!("DDamaged"),
+        "DPower" => key!("DPower"),
+        "DSetup" => key!("DSetup"),
+        "DTotal" => key!("DTotal"),
         _ => rare_nbt_key(name),
     }
 }
@@ -618,12 +963,12 @@ fn rare_nbt_key(name: &str) -> &'static JavaString {
 }
 
 #[inline(always)]
-pub(super) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -> T {
+pub(crate) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -> T {
     read(nbt_key(name))
 }
 
 /// `JavaString` igual a `value`, sem montar uma `String` no meio.
-pub(super) fn java_eq(text: &JavaString, value: &str) -> bool {
+pub(crate) fn java_eq(text: &JavaString, value: &str) -> bool {
     let mut units = text.0.iter().copied();
     value.encode_utf16().all(|unit| units.next() == Some(unit)) && units.next().is_none()
 }
@@ -681,18 +1026,31 @@ fn numbers_sorted<const N: usize>(entity: &ModBlockEntity, keys: &[&JavaString; 
 
 /// O que o desenho no mundo lê do NBT, além da carga (que `presentation::publish` acusa).
 /// O braço anima pelo `MovedAt`.
-fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {
-    (number(entity, "Status"), number(entity, "Module"), number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }))
+/// Drones e caravanas animam pela fase do voo; máquinas que queimam mostram a chama.
+fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, bool) {
+    let motion = if matches!(entity.id.as_str(), freight::DRONE | freight::caravan::ID) {
+        number(entity, "FlightPhase") * 1_000_000 + number(entity, "Progress") / 4
+    } else if entity.id == HUB {
+        i32::from(contracts::beacon_selected(entity))
+    } else {
+        number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" })
+    };
+    (number(entity, "Status"), number(entity, "Module"), motion, burning(entity))
+}
+
+fn burning(entity: &ModBlockEntity) -> bool {
+    production::burns(&entity.id) && number(entity, "Burn") > 0
 }
 
 /// A mesma assinatura logo depois de `presentation::publish`: o painel acabou de copiar
 /// `Status`, `Module` e `Info` para `data[0]`, `data[11]` e `data[12]`, sem novas buscas no NBT.
 /// Quem publica outra coisa nessas posições (ou não publica) relê o NBT.
-fn published_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {
+fn published_signature(entity: &ModBlockEntity) -> (i32, i32, i32, bool) {
     let standard = !matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE | TESLA | workforce::CONTROL_CENTER | workforce::TOWN_HALL)
-        && !inserters::is_arm(&entity.id) && !workforce::zones::is_marker(&entity.id);
+        && !inserters::is_arm(&entity.id) && !workforce::zones::is_marker(&entity.id)
+        && !freight::owns(&entity.id) && !milestones::owns(&entity.id);
     match entity.data.as_slice() {
-        [status, .., module, info] if standard && entity.data.len() == presentation::DATA_SLOTS => (*status, *module, *info),
+        [status, .., module, info] if standard && entity.data.len() == presentation::DATA_SLOTS => (*status, *module, *info, burning(entity)),
         _ => visual_signature(entity),
     }
 }
@@ -700,8 +1058,8 @@ fn published_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {
 /// Hash multiplicativo (o do rustc) para chaves pequenas consultadas todo tick: chunks e
 /// posições. Os mapas que o usam só são consultados por chave, nunca percorridos em ordem.
 #[derive(Default, Clone, Copy)]
-pub(super) struct FastHasher(u64);
-pub(super) type FastHash = std::hash::BuildHasherDefault<FastHasher>;
+pub(crate) struct FastHasher(u64);
+pub(crate) type FastHash = std::hash::BuildHasherDefault<FastHasher>;
 
 impl FastHasher {
     #[inline]
@@ -733,11 +1091,25 @@ fn stamp(time: i64) -> i32 {
 }
 
 fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
+    if freight::owns(&entity.id) { freight::tick(host, pos, entity, time); return; }
     if inserters::is_arm(&entity.id) { return inserters::tick(host, pos, entity, time); }
+    if lift::owns(&entity.id) { return lift::tick(host, pos, entity, time); }
+    if blueprint::owns(&entity.id) { return blueprint::tick(host, pos, entity); }
     logistics::transfer_outputs(host, pos, entity, time);
     if entity.id == HUB {
-        contracts::tick(entity);
+        if contracts::tick(entity) && industry::on_server(host) {
+            host.run_command("advancement grant @a only veio:grand_project");
+            for player in host.server_players() {
+                host.tell(player.uuid, horizon_client::mod_api::Text::tr("veio.project.done", &[]));
+            }
+        }
         return;
+    }
+    if entity.id == industry::MONITOR {
+        return industry::tick_monitor(host, pos, entity, time);
+    }
+    if milestones::owns(&entity.id) {
+        return milestones::tick(host, pos, entity);
     }
     if power::tier(&entity.id).is_some() {
         return;
@@ -767,6 +1139,15 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
         }
         return defense::tick(host, pos, entity);
     }
+    if entity.id == research::LAB {
+        return research::tick(host, entity, time);
+    }
+    if entity.id == industry::ANCHOR {
+        return industry::tick_anchor(host, pos, entity, time);
+    }
+    if stations::is_station(&entity.id) {
+        return stations::tick(host, pos, entity, time);
+    }
     // Extração, receitas, lavouras, rancho e armazém: módulo de produção.
     production::tick(host, pos, entity, time);
 }
@@ -775,7 +1156,9 @@ fn tick_power(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     let limit = capacity(&entity.id);
     let mut energy = number(entity, "energy").min(limit);
     // Geração (produção); a distribuição abaixo é da logística.
+    let stored = energy;
     energy = production::generation::produce(host, pos, entity, energy, limit);
+    soundscape::generated(host, pos, entity, energy > stored);
     // A rede só empurra. Sem carga, as seis consultas a vizinhos não movem energia.
     if energy > 0 {
         let offset = number(entity, "Port") as usize % 6;

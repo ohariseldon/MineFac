@@ -237,6 +237,6 @@ pub(super) fn fight(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
     if killed {
         set_number(entity, "Produced", number(entity, "Produced").saturating_add(1));
     }
-    finish_task(entity);
+    finish_task(entity, 0);
     1
 }

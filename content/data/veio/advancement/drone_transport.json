@@ -1,0 +1,32 @@
+{
+  "parent": "veio:freight",
+  "display": {
+    "icon": {
+      "id": "veio:drone_port"
+    },
+    "title": {
+      "translate": "advancement.veio.drone_transport.title"
+    },
+    "description": {
+      "translate": "advancement.veio.drone_transport.description"
+    },
+    "announce_to_chat": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:circuit"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:drone_port"
+    ]
+  }
+}

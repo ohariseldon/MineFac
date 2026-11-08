@@ -4,11 +4,23 @@
   "items": [
     "veio:belt",
     "veio:fast_belt",
+    "veio:express_belt",
+    "veio:belt_tunnel",
+    "veio:cargo_lift",
     "veio:splitter",
     "veio:merger",
     "veio:inserter",
     "veio:fast_inserter",
     "veio:long_inserter",
-    "veio:wrench"
+    "veio:rail_terminal",
+    "veio:drone_port",
+    "veio:caravan_station",
+    "veio:route_card",
+    "veio:wrench",
+    "veio:clipboard",
+    "minecraft:rail",
+    "minecraft:powered_rail",
+    "minecraft:chest_minecart",
+    "minecraft:hopper"
   ]
 }

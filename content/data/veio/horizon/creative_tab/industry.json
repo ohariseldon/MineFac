@@ -13,6 +13,9 @@
     "veio:alloy_furnace",
     "veio:electronics",
     "veio:electric_furnace",
+    "veio:factory_board",
+    "veio:blueprint_designer",
+    "veio:build_marker",
     "veio:contract_hub",
     "veio:wrench",
     "veio:copper_plate",
@@ -26,6 +29,19 @@
     "veio:module",
     "veio:speed_module",
     "veio:efficiency_module",
-    "veio:productivity_module"
+    "veio:productivity_module",
+    "veio:fabricator",
+    "veio:research_lab",
+    "veio:factory_monitor",
+    "veio:chunk_anchor",
+    "veio:cargo_station",
+    "veio:unloading_station",
+    "veio:motor",
+    "veio:processor",
+    "veio:automation_core",
+    "veio:mk2_kit",
+    "veio:permit_workshop",
+    "veio:permit_steel",
+    "veio:permit_electronics"
   ]
 }

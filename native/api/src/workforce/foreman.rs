@@ -18,7 +18,6 @@
 use super::*;
 mod planning;
 mod search;
-use std::sync::Mutex;
 
 pub(super) const RADIUS: i32 = 12;
 /// Uma fileira do 25×25 por ciclo; a volta (1875 blocos) leva 75 ciclos.

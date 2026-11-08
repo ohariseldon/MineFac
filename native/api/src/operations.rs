@@ -33,17 +33,18 @@ pub(crate) struct Profile {
 
 pub(crate) fn profile(block: &str) -> Option<Profile> {
     use production::*;
+    if freight::owns(block) { return Some(Profile { sector: Sector::Logistics, kind: StationKind::Transport }); }
     let sector = match block {
         DRILL | DRILL_MK2 | DRILL_MK3 => Sector::Extraction,
-        PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE
+        PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE | FABRICATOR
             | workforce::HAULER_POST => Sector::Industry,
-        workforce::FOREMAN_DESK | workforce::CONTROL_CENTER | workforce::SHOP | workforce::TOWN_HALL => Sector::Workforce,
+        workforce::FOREMAN_DESK | workforce::CONTROL_CENTER | workforce::SHOP | workforce::TOWN_HALL | workforce::SITE => Sector::Workforce,
         _ if workforce::society::is_society_block(block) => Sector::Workforce,
         HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH | workforce::FARM_POST | workforce::SHEPHERD_POST => Sector::Farming,
         MILL | KITCHEN | PANTRY => Sector::Food,
-        HUB => Sector::Projects,
+        HUB | research::LAB | milestones::BOARD => Sector::Projects,
         TESLA | workforce::BARRACKS => Sector::Defense,
-        BELT | FAST_BELT | SPLITTER | MERGER | inserters::ID | inserters::FAST | inserters::LONG => Sector::Logistics,
+        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL | inserters::ID | inserters::FAST | inserters::LONG => Sector::Logistics,
         _ if workforce::storage::is_store(block) => return Some(Profile { sector: Sector::Logistics, kind: StationKind::Storage }),
         _ if is_power_block(block) || power::tier(block).is_some() => Sector::Power,
         _ => return None,
@@ -62,14 +63,14 @@ pub(crate) enum Blockage { None, Input, Output, Power, Fuel, Resource, Environme
 
 pub(crate) fn blockage(status: i32) -> Blockage {
     match status {
-        0 | 1 | 8 | 11 | 23 | 24 | 26 | 27 | 28 => Blockage::None,
-        2 | 16 | 21 | 25 => Blockage::Input,
+        0 | 1 | 8 | 11 | 23 | 24 | 26 | 27 | 28 | 36 | 38 | 39 => Blockage::None,
+        2 | 16 | 21 | 25 | 42 => Blockage::Input,
         3 => Blockage::Output,
         4 | 12 => Blockage::Resource,
         5 => Blockage::Power,
         6 => Blockage::Fuel,
-        7 | 10 | 14 | 15 | 17 | 20 | 22 => Blockage::Environment,
-        18 | 19 => Blockage::Worker,
+        7 | 10 | 14 | 15 | 17 | 20 | 22 | 37 | 40 | 43 => Blockage::Environment,
+        18 | 19 | 41 => Blockage::Worker,
         9 => Blockage::Control,
         13 => Blockage::Damage,
         _ => Blockage::Unknown,
@@ -136,7 +137,9 @@ pub(crate) fn inspect(entity: &ModBlockEntity) -> Option<StationView<'_>> {
 
 /// Material compatibility for planning. Does not check space, reach or side access.
 pub(crate) fn accepts_material(entity: &ModBlockEntity, slot: usize, stack: &ItemStack) -> bool {
-    let compatible = if entity.id == HUB { contracts::accepts(entity, slot, stack) }
+    let compatible = if freight::owns(&entity.id) { freight::accepts_plan(entity, slot, stack) }
+        else if entity.id == HUB { contracts::accepts(entity, slot, stack) }
+        else if milestones::owns(&entity.id) { milestones::accepts(entity, slot, stack) }
         else { accepts(&entity.id, slot, stack) };
     if !compatible { return false; }
     // Preserve the slot fence, allocating its layout only for accepted candidates.
@@ -146,6 +149,7 @@ pub(crate) fn accepts_material(entity: &ModBlockEntity, slot: usize, stack: &Ite
 /// Live delivery validation, shared with host insertion. The host remains responsible
 /// for stack limits and moving items; an inspection is never an inventory transaction.
 pub(crate) fn accepts_delivery(host: &dyn Host, event: &ContainerAcceptsEvent<'_>) -> bool {
+    if freight::owns(&event.entity.id) { return freight::accepts_delivery(event.entity, event.slot, event.stack); }
     accepts_material(event.entity, event.slot, event.stack)
         && (event.entity.id != MERGER || logistics::accepts_merger(host, event))
 }

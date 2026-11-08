@@ -25,9 +25,8 @@ impl Node {
         if entity.id == HUB && let Some(stage) = live.nbt.get(nbt_key("ContractStage")) {
             entity.nbt.insert(nbt_key("ContractStage").clone(), stage.clone());
         }
-        // The parallel freight branch uses this filter in accepts_plan. Keep
-        // its small configuration when that branch is integrated.
-        if matches!(entity.id.as_str(), "veio:freight_station" | "veio:drone_port" | "veio:caravan_station")
+        // Terminais de transporte: `freight::accepts_plan` lê o filtro do que sai.
+        if freight::owns(&entity.id)
             && let Some(export) = live.nbt.get(nbt_key("FreightExport")) {
             entity.nbt.insert(nbt_key("FreightExport").clone(), export.clone());
         }

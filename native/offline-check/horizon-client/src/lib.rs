@@ -176,24 +176,32 @@ pub mod mod_api {
     }
     #[derive(Default)]
     pub struct HudBatch;
+    // Offline render probe only: command traces let tests verify cached/GPU
+    // movement and export geometry; none of these fields belong to the real API.
+    #[derive(Clone, Debug)]
+    pub enum DrawOp {
+        Push, Pop, Still, Translate([f32;3]), Scale([f32;3]),
+        Rotate([f32;3], f32, [f32;3]), Spin([f32;3], [f32;3], f32, f32),
+    }
     #[derive(Default)]
     pub struct BlockEntityDraw {
         pub partial: f32,
         pub game_time: i64,
         pub light: u32,
-        kept: bool,
+        pub trace: Vec<DrawOp>,
+        pub kept: bool,
     }
     impl BlockEntityDraw {
         pub fn keep(&mut self) { self.kept = true; }
         /// Só no substituto: o desenho pediu `keep` (o jogo o reaproveitaria).
         pub fn preview_kept(&self) -> bool { self.kept }
-        pub fn spin(&mut self, axis: [f32; 3], pivot: [f32; 3], degrees_per_tick: f32, phase: f32) {}
-        pub fn still(&mut self) {}
-        pub fn push(&mut self) {}
-        pub fn pop(&mut self) {}
-        pub fn translate(&mut self, by: [f32; 3]) {}
-        pub fn rotate_about(&mut self, axis: [f32; 3], degrees: f32, pivot: [f32; 3]) {}
-        pub fn scale(&mut self, by: [f32; 3]) {}
+        pub fn spin(&mut self, axis: [f32;3], pivot: [f32;3], rate: f32, phase: f32) { self.trace.push(DrawOp::Spin(axis,pivot,rate,phase)); }
+        pub fn still(&mut self) { self.trace.push(DrawOp::Still); }
+        pub fn push(&mut self) { self.trace.push(DrawOp::Push); }
+        pub fn pop(&mut self) { self.trace.push(DrawOp::Pop); }
+        pub fn translate(&mut self, by: [f32;3]) { self.trace.push(DrawOp::Translate(by)); }
+        pub fn rotate_about(&mut self, axis: [f32;3], angle: f32, pivot: [f32;3]) { self.trace.push(DrawOp::Rotate(axis,angle,pivot)); }
+        pub fn scale(&mut self, by: [f32;3]) { self.trace.push(DrawOp::Scale(by)); }
     }
     #[derive(Clone, Copy, Debug)]
     pub struct CubeFace<'a> {
@@ -272,7 +280,14 @@ pub mod mod_api {
     pub struct LevelRef {
         dimension: &'static str,
     }
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct NativeWorldEpoch(u64);
+    impl NativeWorldEpoch {
+        pub fn new(n: u64) -> Self { Self(n) }
+        pub fn get(self) -> u64 { self.0 }
+    }
     impl LevelRef {
+        pub fn epoch(self) -> NativeWorldEpoch { NativeWorldEpoch::new(1) }
         pub fn new(dimension: &'static str) -> Self {
             Self { dimension }
         }
@@ -290,6 +305,7 @@ pub mod mod_api {
     // ---------- Host: métodos com o nome e a assinatura do jogo ----------
     /// Each method's default panics with its name, as in the generated trait.
     pub trait Host {
+        fn mod_block_entity(&self, pos: [i32; 3]) -> Option<ModBlockEntity> { unimplemented!("mod_block_entity") }
         fn block(&self, pos: [i32; 3]) -> String {
             unimplemented!("block")
         }
@@ -305,6 +321,8 @@ pub mod mod_api {
         fn level(&self, dimension: &str) -> Option<LevelRef> {
             unimplemented!("level")
         }
+        fn level_is_loaded(&self, level: LevelRef, pos: [i32; 3]) -> bool { unimplemented!("level_is_loaded") }
+        fn level_block(&self, level: LevelRef, pos: [i32; 3]) -> Option<String> { unimplemented!("level_block") }
         fn level_game_time(&self, level: LevelRef) -> Option<i64> {
             unimplemented!("level_game_time")
         }
@@ -440,6 +458,22 @@ pub mod mod_api {
         fn edit_blocks(&mut self, dimension: &str, edit: &NativeBlockEdit) -> Result<u64, String> {
             unimplemented!("edit_blocks")
         }
+        /// `native_world_columns::Game::native_read_columns`: `below` blocos abaixo e `above` a
+        /// partir da altura de cada coluna pelo `heightmap`, de baixo para cima.
+        fn read_columns(
+            &self,
+            dimension: &str,
+            columns: &[(i32, i32)],
+            heightmap: NativeHeightmap,
+            range: (u32, u32),
+        ) -> Result<NativeColumnBlocks, String> {
+            unimplemented!("read_columns")
+        }
+        /// `native_server::Game::native_world_dir`: a pasta do mundo aberto (ao lado do
+        /// `level.dat`); None sem mundo.
+        fn world_dir(&self) -> Option<std::path::PathBuf> {
+            unimplemented!("world_dir")
+        }
         fn entity_nbt(&mut self, entity: EntityRef) -> Option<Compound> {
             unimplemented!("entity_nbt")
         }
@@ -457,6 +491,19 @@ pub mod mod_api {
         fn run_command(&mut self, line: &str) -> bool {
             unimplemented!("run_command")
         }
+        /// `native_hooks::Game::native_window`: este `Game` é o da janela, não um servidor.
+        fn window(&self) -> bool {
+            false
+        }
+        /// `native_server::Game::native_acting_player`: o jogador cuja ação o gancho ouve. API 21.
+        fn acting_player(&self) -> Option<NativeServerPlayer> {
+            unimplemented!("acting_player")
+        }
+        /// `native_inventories::Game::native_send_map`: 128 x 128 cores de mapa para um jogador.
+        /// API 132.
+        fn send_map(&mut self, uuid: u128, map_id: i32, colors: &[u8]) -> bool {
+            unimplemented!("send_map")
+        }
         /// `native_living_refs::Game::native_living`: a entidade como ser vivo.
         fn living(&self, entity: EntityRef) -> Option<LivingRef> {
             unimplemented!("living")
@@ -466,6 +513,13 @@ pub mod mod_api {
         fn living_set_equipment(&mut self, living: LivingRef, slot: EquipmentSlot, stack: Option<ItemStack>) -> bool {
             unimplemented!("living_set_equipment")
         }
+    }
+
+    /// `horizon_client::first_person::Hand`, reexportado em `mod_api`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Hand {
+        MainHand,
+        OffHand,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq)]
@@ -483,6 +537,14 @@ pub mod mod_api {
         pub palette: Vec<String>,
         pub filters: Vec<String>,
         pub runs: Vec<NativeBlockRun>,
+    }
+    /// `native_world_columns::NativeColumnBlocks`.
+    #[derive(Clone, Debug, PartialEq, Default)]
+    pub struct NativeColumnBlocks {
+        pub palette: Vec<String>,
+        pub bases: Vec<Option<i32>>,
+        pub blocks: Vec<u16>,
+        pub tints: Vec<u32>,
     }
     #[derive(Clone, Debug)]
     pub struct NativeItemEntity {
@@ -612,6 +674,9 @@ pub mod mod_api {
         pub draw: &'a mut BlockEntityDraw,
     }
     impl<'a> BlockEntitySubmitEvent<'a> {
+        pub fn new(pos: [i32;3], block: &'a str, entity: &'a ModBlockEntity, draw: &'a mut BlockEntityDraw) -> Self {
+            Self {pos,block,state:BlockStateId(0),entity,draw}
+        }
         /// Só no substituto: monta o evento para medições do quadro.
         pub fn preview(pos: [i32; 3], block: &'a str, state: BlockStateId, entity: &'a ModBlockEntity,
             draw: &'a mut BlockEntityDraw) -> Self {
@@ -639,9 +704,18 @@ pub mod mod_api {
         }
     }
     #[non_exhaustive]
+    pub struct ServerAboutToStartEvent { pub dedicated: bool }
+    #[non_exhaustive]
     pub struct PlayerLoggedInEvent<'a> {
         pub player: u128,
         pub name: &'a str,
+    }
+    /// `native_hooks::Game::native_chunk_load` (API 57).
+    #[non_exhaustive]
+    pub struct ChunkLoadEvent<'a> {
+        pub dimension: &'a str,
+        pub chunk: [i32; 2],
+        pub new: bool,
     }
     /// `merchant::ItemCost` (Horizon 66f3981): o Veio só lê `stack`.
     #[derive(Clone, Debug)]
@@ -675,6 +749,28 @@ pub mod mod_api {
         pub name: &'a str,
     }
     #[non_exhaustive]
+    pub struct PlayerSpawnPointSetEvent<'a> {
+        pub player: u128,
+        pub name: &'a str,
+        pub dimension: &'a str,
+        pub pos: [i32; 3],
+        pub cause: &'a str,
+    }
+    #[non_exhaustive]
+    pub struct PlayerBedEnterEvent<'a> {
+        pub player: u128,
+        pub name: &'a str,
+        pub pos: [i32; 3],
+    }
+    #[non_exhaustive]
+    pub struct LivingEntityUseItemFinishEvent<'a> {
+        pub stack: &'a ItemStack,
+        pub entity: Option<i32>,
+        pub hand: Hand,
+        pub duration: i32,
+        pub result: &'a mut Option<ItemStack>,
+    }
+    #[non_exhaustive]
     pub struct RegisterGoalsEvent<'a> {
         pub mob: &'a mut crate::mobs::Mob,
     }
@@ -687,8 +783,30 @@ pub mod mod_api {
         pub bounds: &'a mut [f32; 6],
     }
 
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct NativeCommand { pub usage: String, pub level: u8 }
+    impl NativeCommand {
+        pub fn new(usage: &str) -> Self { Self { usage: usage.to_owned(), level: 0 } }
+    }
+    #[non_exhaustive]
+    pub struct PlaceBlockEvent<'a> { pub stack: &'a ItemStack, pub pos: [i32; 3], pub state: BlockStateId }
+    #[non_exhaustive]
+    pub struct PlayerLoggedOutEvent<'a> { pub player: u128, pub name: &'a str }
+    #[non_exhaustive]
+    pub struct RegisterCommandsEvent<'a> { pub commands: &'a mut Vec<NativeCommand> }
+    #[non_exhaustive]
+    pub struct PerformCommandEvent<'a> { pub player: &'a NativeServerPlayer, pub command: &'a str }
+
+    pub struct InventoryMoveItemEvent<'a> { pub source: [i32; 3], pub destination: [i32; 3], pub item: &'a str }
+
     // ---------- Ganchos ----------
     pub trait Hooks: Send + Sync {
+        fn server_about_to_start(&self, host: &mut dyn Host, event: &mut ServerAboutToStartEvent) {}
+        fn inventory_move_item(&self, host: &dyn Host, event: &mut InventoryMoveItemEvent<'_>) -> Flow { Flow::Continue }
+        fn place_block(&self, host: &mut dyn Host, event: &mut PlaceBlockEvent<'_>) {}
+        fn player_logged_out(&self, host: &mut dyn Host, event: &mut PlayerLoggedOutEvent<'_>) {}
+        fn register_commands(&self, host: &mut dyn Host, event: &mut RegisterCommandsEvent<'_>) {}
+        fn perform_command(&self, host: &mut dyn Host, event: &mut PerformCommandEvent<'_>) -> Flow { Flow::Continue }
         fn block_entity(&self, host: &mut dyn Host, event: &mut BlockEntityEvent<'_>) -> Option<(String, Compound)> {
             None
         }
@@ -733,9 +851,17 @@ pub mod mod_api {
             Flow::Continue
         }
         fn tick(&self, host: &mut dyn Host, event: &mut TickEvent) {}
+        fn chunk_load(&self, host: &mut dyn Host, event: &mut ChunkLoadEvent<'_>) {}
         fn player_logged_in(&self, host: &mut dyn Host, event: &mut PlayerLoggedInEvent<'_>) {}
         fn player_respawned(&self, host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {}
         fn trade_with_villager(&self, host: &mut dyn Host, event: &mut TradeWithVillagerEvent<'_>) {}
+        fn player_spawn_point_set(&self, host: &mut dyn Host, event: &mut PlayerSpawnPointSetEvent<'_>) -> Flow {
+            Flow::Continue
+        }
+        fn player_bed_enter(&self, host: &mut dyn Host, event: &mut PlayerBedEnterEvent<'_>) -> Flow {
+            Flow::Continue
+        }
+        fn living_entity_use_item_finish(&self, host: &mut dyn Host, event: &mut LivingEntityUseItemFinishEvent<'_>) {}
         fn register_goals(&self, event: &mut RegisterGoalsEvent<'_>) {}
         fn block_entity_render_bounding_box(
             &self,
@@ -763,17 +889,17 @@ pub mod mobs {
     pub struct MobWorld<'w> {
         _world: std::marker::PhantomData<&'w ()>,
     }
-    impl MobWorld<'static> {
-        /// Só no substituto: um mundo vazio para rodar objetivos em testes e medições.
-        pub fn preview() -> Self {
-            Self { _world: std::marker::PhantomData }
-        }
+    impl<'w> MobWorld<'w> {
+        /// Offline fixture, not a Horizon API method.
+        pub fn preview() -> Self { Self { _world: std::marker::PhantomData } }
+        pub fn fixture() -> Self { Self { _world: std::marker::PhantomData } }
     }
     #[derive(Default)]
     pub struct Navigation {
         pub done: bool,
     }
     impl Navigation {
+        pub fn stop(&mut self) { self.done = true; }
         pub fn is_done(&self) -> bool {
             self.done
         }
@@ -784,10 +910,16 @@ pub mod mobs {
         pub targets: goals::GoalSelector,
         pub nav: Navigation,
     }
+    /// Nome antigo usado nos testes de caravana.
+    pub type Extra = MobExtra;
     pub struct Mob {
+        pub rider: Option<()>,
         pub id: u32,
         pub kind: Arc<MobType>,
         pub position: Vec3,
+        /// `Mob.velocity` e `Mob.climbing` do Horizon: a subida por escada de mão (`workforce`).
+        pub velocity: Vec3,
+        pub climbing: bool,
         pub ai: Ai,
         /// No jogo, `MobExtra` tem muito mais; o Veio só chega ao aldeão por `villager::ext`.
         pub extra: MobExtra,
@@ -795,6 +927,9 @@ pub mod mobs {
     #[derive(Default)]
     pub struct MobExtra {
         pub villager: Option<Box<villager::Ext>>,
+        pub rider: Option<u32>,
+        pub leash: Option<()>,
+        pub leash_pending: Option<()>,
     }
 
     /// `mobs::villager` (Horizon 66f3981): só o acesso ao cérebro que o Veio usa.
@@ -872,6 +1007,11 @@ pub mod mobs {
         pub fn nav_move_to(&mut self, w: &MobWorld, at: [f64; 3], speed: f64) -> bool {
             let _ = (w, at, speed);
             true
+        }
+        /// No Horizon (`mobs/living.rs`) é método e lê o bloco do mundo; aqui devolve `climbing`.
+        pub fn on_climbable(&self, w: &MobWorld) -> bool {
+            let _ = w;
+            self.climbing
         }
     }
 

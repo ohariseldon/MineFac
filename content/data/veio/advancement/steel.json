@@ -17,7 +17,20 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:steel_plate"
+            "items": "veio:steel_plate",
+            "count": {
+              "min": 16
+            }
+          }
+        ]
+      }
+    },
+    "permit": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:permit_steel"
           }
         ]
       }
@@ -25,15 +38,14 @@
   },
   "rewards": {
     "recipes": [
-      "veio:battery",
-      "veio:geothermal",
       "veio:electronics",
-      "veio:belts_bulk",
-      "veio:cables_bulk",
-      "veio:steel_pole",
-      "veio:steam_engine",
-      "veio:tree_farm",
-      "veio:ranch"
+      "veio:cargo_lift"
     ]
-  }
+  },
+  "requirements": [
+    [
+      "stock",
+      "permit"
+    ]
+  ]
 }

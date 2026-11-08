@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:motor",
+    "veio:circuit",
+    "minecraft:chest",
+    "minecraft:hopper"
+  ],
+  "result": {
+    "id": "veio:unloading_station",
+    "count": 1
+  }
+}

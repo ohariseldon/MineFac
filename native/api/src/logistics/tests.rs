@@ -340,3 +340,26 @@ fn an_arriving_item_waiting_for_its_turn_counts_as_moving() {
     update_status(&mut entity, 1010);
     assert_eq!(number(&entity, "Status"), 0);
 }
+
+#[test]
+fn belt_tunnels_pair_up_and_skip_what_is_between() {
+    let mut world = RouteWorld::default();
+    // "west" leva para leste (+x). Entrada em 0, saída em 5, nova entrada em 6 e saída em 9.
+    for x in [0, 5, 6, 9] { world.put([x, 0, 0], TUNNEL, "west"); }
+    world.put([2, 0, 0], "minecraft:stone", "");
+    world.put([7, 0, 0], TUNNEL, "east"); // outra direção: não conta
+    assert!(!tunnel_is_exit(&world, [0; 3], Direction::East, 0));
+    assert!(tunnel_is_exit(&world, [5, 0, 0], Direction::East, 0));
+    assert!(!tunnel_is_exit(&world, [6, 0, 0], Direction::East, 0));
+    assert!(tunnel_is_exit(&world, [9, 0, 0], Direction::East, 0));
+    assert_eq!(tunnel_exit(&world, [0; 3], Direction::East), Some([5, 0, 0]));
+    let mut entity = belt();
+    entity.id = TUNNEL.into();
+    transfer_outputs(&mut world, [0; 3], &mut entity, 0);
+    assert_eq!(world.delivered[0].0, [5, 0, 0], "a entrada entrega na saída");
+    assert_eq!(entity.items[0].as_ref().unwrap().count, 2, "dois por vez, como a esteira rápida");
+    let mut exit = belt();
+    exit.id = TUNNEL.into();
+    transfer_outputs(&mut world, [5, 0, 0], &mut exit, 4);
+    assert_eq!(world.delivered[1].0, [6, 0, 0], "a saída entrega ao vizinho da frente");
+}

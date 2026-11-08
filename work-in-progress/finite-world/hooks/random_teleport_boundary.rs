@@ -1,0 +1,1 @@
+fn finite_random_teleport_boundary(game:&crate::game::Game<'_>,target:&[f64;3],cancel:&mut bool){if let Some(b)=horizon_world::veio_map::for_world(&game.world_root,game.dim.id()) && !b.contains(target[0],target[2],2.0){*cancel=true;}}

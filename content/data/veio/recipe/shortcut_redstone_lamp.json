@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "veio:circuit",
+    "minecraft:glowstone"
+  ],
+  "result": {
+    "id": "minecraft:redstone_lamp",
+    "count": 2
+  }
+}

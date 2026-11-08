@@ -41,6 +41,10 @@ def add_labels(langs):
         "no_wage": ("Coloque esmeraldas na mesa para recontratar trabalhadores.", "Put emeralds in the desk to rehire workers."),
         "zone": ("Postos perto da borda trabalham nesta zona.", "Posts near the border work in this zone."),
         "rest": ("Noite: o trabalhador dorme e volta de manhã.", "Night: the worker sleeps and returns in the morning."),
+        "site_plan": ("Escolha a planta (chave) e pague a obra no centro de controle.", "Pick the blueprint (wrench) and pay for the project at the control center."),
+        "site_blocked": ("Tire o bloco marcado no painel de dentro da planta.", "Remove the block shown in the panel from inside the blueprint."),
+        "site_building": ("O mestre de obras está construindo. Mantenha comida no canteiro.", "The master builder is building. Keep food in the site."),
+        "site_done": ("Prédio de pé: o efeito da obra vale para a vila.", "Building standing: the project's effect applies to the village."),
         "housed": ("A família mora aqui. Veja a dica do painel para o que falta.", "A family lives here. The panel hint shows what is missing."),
         "no_permit": ("Sem alvará: o prefeito exige saneamento, energia ou comércio, ou acabaram os alvarás da fase.", "No permit: the mayor requires sanitation, power or commerce, or the phase ran out of permits."),
         "empty_home": ("Casa vazia: aldeões a até 10 blocos viram moradores.", "Empty house: villagers within 10 blocks move in."),
@@ -49,6 +53,11 @@ def add_labels(langs):
         "not_frontier": ("A estação de carga fica na fronteira: a 96 blocos da sede e das prefeituras.", "The freight station goes at the frontier: 96 blocks from headquarters and town halls."),
         "locked_market": ("O mundo ainda não compra essa camada: cumpra contratos para subir a reputação.", "The world does not buy this tier yet: fulfill contracts to raise reputation."),
         "storing": ("A fila do capataz guarda e retira itens daqui.", "The foreman's queue stores and takes items here."),
+        "caravan_animal": ("Aproxime animal adulto equipado e use um laço no terminal; não precisa gastar o laço.", "Bring an equipped adult animal and use a lead on the terminal; the lead is kept."),
+        "caravan_feed": ("Cavalo/burro: trigo, maçã ou feno; porco: cenoura, batata ou beterraba.", "Horse/donkey: wheat, apple or hay; pig: carrot, potato or beetroot."),
+        "caravan_busy": ("Desmonte e retire o laço do animal para liberar a viagem.", "Dismount and unleash the animal to resume its trip."),
+        "freight_route": ("Use exatamente dois terminais do mesmo tipo e canal; confira filtros, distância e destino carregado.", "Use exactly two terminals of the same type and channel; check filters, range and loaded destination."),
+        "resting": ("De noite o trabalhador dorme em casa e volta ao amanhecer.", "At night the worker sleeps at home and comes back at dawn."),
         "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
     }
     for prefix, entries in (("sector", sectors), ("advice", advice)):

@@ -17,7 +17,20 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:circuit"
+            "items": "veio:circuit",
+            "count": {
+              "min": 16
+            }
+          }
+        ]
+      }
+    },
+    "permit": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:permit_electronics"
           }
         ]
       }
@@ -25,13 +38,15 @@
   },
   "rewards": {
     "recipes": [
-      "veio:solar",
-      "veio:drill_mk2",
-      "veio:tesla",
       "veio:barracks",
-      "veio:speed_module",
-      "veio:efficiency_module",
-      "veio:grow_lamp"
+      "veio:blueprint_designer",
+      "veio:build_marker"
     ]
-  }
+  },
+  "requirements": [
+    [
+      "stock",
+      "permit"
+    ]
+  ]
 }

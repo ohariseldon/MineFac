@@ -18,9 +18,12 @@ use std::io::{self, BufRead, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
+mod visuals;
+
 const CONFIG: &str = "launcher.ini";
 /// Arquivo gravado na pasta do mod depois de uma compilação bem-sucedida.
 const STAMP: &str = ".veio-native-build";
+const NATIVE_PROFILE: &str = "performance";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -42,6 +45,7 @@ fn run(args: &[String]) -> Result<(), String> {
 
     let config_path = root.join(CONFIG);
     let mut config = read_config(&config_path);
+    let visual = visuals::choose(args, &mut config)?;
     let horizon = horizon_launcher(&mut config)?;
     let instance = config.entry("instance".into()).or_insert_with(|| "Veio".into()).clone();
     let mods = mods_dir(&mut config, &horizon, &instance)?;
@@ -49,16 +53,18 @@ fn run(args: &[String]) -> Result<(), String> {
 
     let target = mods.join("veio");
     let built = fs::read_to_string(target.join(STAMP)).unwrap_or_default();
-    let rebuild = args.iter().any(|arg| arg == "--rebuild") || built.trim() != version;
+    // A versão não basta: na mesma versão o código muda (correções, testes no PC).
+    let build_stamp = format!("{version}\nprofile={NATIVE_PROFILE}\nsource={:016x}", source_digest(&root.join("native")));
+    let rebuild = args.iter().any(|arg| arg == "--rebuild") || built.trim() != build_stamp;
     let skip = args.iter().any(|arg| arg == "--skip-build");
     if skip {
         println!("[1/3] Compilação pulada (--skip-build).");
     } else if rebuild {
-        println!("[1/3] Compilando o código nativo do Veio {version} na instância {instance}.");
+        println!("[1/3] Compilando o Veio {version} otimizado para jogar na instância {instance}.");
         println!("      Na primeira vez o Horizon baixa o Rust: leva de 20 a 30 minutos e alguns GB.");
         let status = Command::new(&horizon)
             .arg("native-build").arg(root.join("native"))
-            .args(["--instance", &instance, "--trust-native-code", "--profile", "dev"])
+            .args(["--instance", &instance, "--trust-native-code", "--profile", NATIVE_PROFILE])
             .status()
             .map_err(|error| format!("não foi possível executar {}: {error}", horizon.display()))?;
         if !status.success() {
@@ -72,17 +78,24 @@ fn run(args: &[String]) -> Result<(), String> {
     install(&root.join("content"), &target)?;
     // A marca só vale para uma compilação desta versão (feita agora ou antes).
     if !skip || !rebuild {
-        fs::write(target.join(STAMP), &version).map_err(|error| format!("não foi possível gravar {STAMP}: {error}"))?;
+        fs::write(target.join(STAMP), &build_stamp).map_err(|error| format!("não foi possível gravar {STAMP}: {error}"))?;
     }
+
+    let instance_dir = mods.parent().ok_or("a pasta horizon-mods precisa estar dentro da instância")?;
+    visuals::install(&root, instance_dir, visual)?;
 
     println!("[3/3] Abrindo o jogo na instância {instance}.");
     println!("      Na primeira partida, ative o Veio em Opções > Mods (mods de conteúdo começam desligados)");
     println!("      e reinicie o jogo. Se o jogo não abrir, use o Horizon Launcher: Prepare, conta e Play.");
-    let started = Command::new(&horizon).args(["play", "--instance", &instance]).args(config_args(&config)).status()
+    let mut play = Command::new(&horizon);
+    visuals::launch_environment(&mut play, visual.profile);
+    let started = play.args(["play", "--instance", &instance]).args(config_args(&config)).status()
         .map(|status| status.success()).unwrap_or(false);
     if !started {
         println!("      O jogo não abriu pela linha de comando; abrindo o Horizon Launcher.");
-        Command::new(&horizon).spawn()
+        let mut launcher = Command::new(&horizon);
+        visuals::launch_environment(&mut launcher, visual.profile);
+        launcher.spawn()
             .map_err(|error| format!("não foi possível abrir {}: {error}", horizon.display()))?;
     }
     Ok(())
@@ -123,8 +136,9 @@ fn write_config(path: &Path, config: &BTreeMap<String, String>) -> Result<(), St
          # horizon_launcher: caminho do horizon-launcher.exe\n\
          # instance: nome da instância no Horizon Launcher\n\
          # mods_dir: pasta horizon-mods da instância\n\
+         # visual_profile: realismo-8gb ou leve; use Escolher-Visual.cmd para mudar\n\
          # launch_args: argumentos extras ao abrir o Horizon Launcher (opcional)\n");
-    for key in ["horizon_launcher", "instance", "mods_dir", "launch_args"] {
+    for key in ["horizon_launcher", "instance", "mods_dir", "visual_profile", "launch_args"] {
         text.push_str(&format!("{key}={}\n", config.get(key).map_or("", String::as_str)));
     }
     fs::write(path, text).map_err(|error| format!("não foi possível gravar {}: {error}", path.display()))
@@ -235,6 +249,34 @@ fn ask(question: &str) -> Result<String, String> {
     if line.is_empty() { Err("nenhum caminho informado".into()) } else { Ok(line) }
 }
 
+/// Impressão digital do código nativo (caminhos e conteúdo, FNV-1a), sem `target` e a verificação offline.
+fn source_digest(dir: &Path) -> u64 {
+    fn walk(dir: &Path, base: &Path, files: &mut Vec<PathBuf>) {
+        let Ok(entries) = fs::read_dir(dir) else { return };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let name = entry.file_name();
+            if path.is_dir() {
+                if name != "target" && name != "offline-check" { walk(&path, base, files); }
+            } else {
+                files.push(path.strip_prefix(base).unwrap_or(&path).to_path_buf());
+            }
+        }
+    }
+    let mut files = Vec::new();
+    walk(dir, dir, &mut files);
+    files.sort();
+    let mut hash: u64 = 0xcbf29ce484222325;
+    let mut feed = |bytes: &[u8]| for byte in bytes { hash = (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3); };
+    for file in files {
+        feed(file.to_string_lossy().replace('\\', "/").as_bytes());
+        feed(&[0]);
+        feed(&fs::read(dir.join(&file)).unwrap_or_default());
+        feed(&[0]);
+    }
+    hash
+}
+
 fn pause() {
     print!("\nPressione Enter para fechar...");
     io::stdout().flush().ok();
@@ -260,6 +302,20 @@ mod tests {
         assert_eq!(read.get("instance").map(String::as_str), Some("Veio"));
         assert_eq!(config_args(&read), ["--a", "b"]);
         assert!(!read.contains_key("mods_dir"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn source_digest_changes_with_the_code_but_not_with_build_output() {
+        let dir = std::env::temp_dir().join(format!("veio-launcher-digest-{}", std::process::id()));
+        fs::create_dir_all(dir.join("api/src")).unwrap();
+        fs::write(dir.join("api/src/lib.rs"), "fn a() {}").unwrap();
+        let first = source_digest(&dir);
+        fs::create_dir_all(dir.join("api/target")).unwrap();
+        fs::write(dir.join("api/target/x.o"), "obj").unwrap();
+        assert_eq!(source_digest(&dir), first, "saída de compilação não conta");
+        fs::write(dir.join("api/src/lib.rs"), "fn b() {}").unwrap();
+        assert_ne!(source_digest(&dir), first, "código mudado pede nova compilação");
         fs::remove_dir_all(dir).unwrap();
     }
 

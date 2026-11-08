@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:paper",
+    "veio:wire",
+    "minecraft:redstone"
+  ],
+  "result": {
+    "id": "veio:route_card",
+    "count": 1
+  }
+}

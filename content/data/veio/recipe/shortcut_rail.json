@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "veio:steel_plate",
+    "minecraft:stick"
+  ],
+  "result": {
+    "id": "minecraft:rail",
+    "count": 16
+  }
+}

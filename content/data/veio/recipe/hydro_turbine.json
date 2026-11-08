@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:gear",
+    "veio:gear",
+    "veio:circuit"
+  ],
+  "result": {
+    "id": "veio:hydro_turbine",
+    "count": 1
+  }
+}

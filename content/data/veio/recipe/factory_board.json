@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:chest",
+    "minecraft:copper_ingot",
+    "minecraft:copper_ingot",
+    "minecraft:stick"
+  ],
+  "result": {
+    "id": "veio:factory_board",
+    "count": 1
+  }
+}

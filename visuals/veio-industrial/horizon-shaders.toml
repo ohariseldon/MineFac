@@ -1,0 +1,134 @@
+schema = 1
+id = "veio_industrial"
+name = "Veio — Realismo leve"
+version = "1.1.0"
+api = "0.1"
+description = "Sol e luar, metais e pintura distintos, chuva, água com profundidade e atmosfera industrial. Sem redesenhar o cenário para reflexos."
+authors = ["Veio"]
+license = "MIT"
+shared = ["common.wgsl"]
+
+[sky]
+file = "sky.wgsl"
+
+[material]
+file = "material.wgsl"
+
+[shadow]
+resolution = 1024
+distance = 48.0
+option = "shadows"
+resolution_option = "shadow_resolution"
+distance_option = "shadow_distance"
+
+[[post]]
+file = "finish.wgsl"
+name = "Cor industrial e suavização"
+
+[[materials]]
+id = 1
+sprites = ["block/iron_block", "block/iron_trapdoor", "block/iron_bars", "block/anvil*", "block/chain", "block/heavy_core", "block/netherite_block", "block/hopper_*", "veio:block/machine_top_iron", "veio:block/machine_top_steel", "veio:block/tesla_coil", "veio:block/port"]
+
+[[materials]]
+id = 2
+sprites = ["block/copper_block", "block/cut_copper", "block/exposed_copper", "block/exposed_cut_copper", "veio:block/machine_top_copper"]
+
+[[materials]]
+id = 3
+sprites = ["veio:block/*_front", "veio:block/belt_rail", "veio:block/fast_belt_rail", "veio:block/splitter_top", "veio:block/merger_top"]
+
+[[materials]]
+id = 4
+sprites = ["block/glass", "block/tinted_glass", "block/*_stained_glass", "block/*_stained_glass_pane_top", "block/ice"]
+
+[[materials]]
+id = 5
+sprites = ["block/*_leaves", "block/short_grass", "block/tall_grass_*", "block/fern", "block/large_fern_*", "block/vine", "block/wheat_stage*", "block/carrots_stage*", "block/potatoes_stage*"]
+
+[[materials]]
+id = 6
+sprites = ["block/weathered_copper", "block/oxidized_copper", "block/weathered_cut_copper", "block/oxidized_cut_copper"]
+
+[[options]]
+id = "shadows"
+name = "Sombras próximas"
+description = "Sol de dia e lua à noite. Desligar elimina a passagem de sombras."
+type = "bool"
+default = true
+
+[[options]]
+id = "shadow_resolution"
+name = "Resolução das sombras"
+type = "choice"
+default = "1024"
+values = ["512", "1024"]
+
+[[options]]
+id = "shadow_distance"
+name = "Alcance das sombras (blocos)"
+type = "choice"
+default = "48"
+values = ["32", "48", "64"]
+
+[[options]]
+id = "metal_highlights"
+name = "Brilho dos metais"
+type = "float"
+default = 0.65
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "water_detail"
+name = "Detalhe da água"
+description = "Ondulação de luz próxima, transparência pela profundidade e brilho do céu. Reutiliza a profundidade já copiada pelo Horizon."
+type = "bool"
+default = true
+
+[[options]]
+id = "wet_surfaces"
+name = "Superfícies molhadas"
+description = "A chuva escurece e dá brilho discreto às superfícies expostas; a aparência seca gradualmente."
+type = "bool"
+default = true
+
+[[options]]
+id = "atmosphere"
+name = "Atmosfera"
+description = "Céu e névoa de distância discretos. Mantém interiores, água e efeitos de visão sob as regras do jogo."
+type = "float"
+default = 0.55
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "edge_smoothing"
+name = "Suavizar bordas"
+type = "bool"
+default = true
+
+[[options]]
+id = "color_strength"
+name = "Intensidade da cor industrial"
+type = "float"
+default = 0.65
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[pages]]
+id = "main"
+name = "Realismo leve — 8 GB"
+items = ["shadows", "atmosphere", "metal_highlights", "water_detail", "wet_surfaces", "edge_smoothing", "color_strength", "page:shadow_quality"]
+
+[[pages]]
+id = "shadow_quality"
+name = "Qualidade das sombras"
+description = "O padrão usa 1024 e 48 blocos. Reduza para 512 e 32 em placas gráficas mais limitadas."
+items = ["shadow_resolution", "shadow_distance"]
+
+# Objetivo de custo, não uma medição nem um limitador automático.
+[budget]
+gpu_ms = 2.0

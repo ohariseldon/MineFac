@@ -19,7 +19,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:module"
+            "items": "veio:module",
+            "count": {
+              "min": 1
+            }
           }
         ]
       }

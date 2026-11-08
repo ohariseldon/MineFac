@@ -27,8 +27,9 @@ type Seen = Vec<(String, HashMap<u32, (u8, u64)>)>;
 static SEEN: Mutex<Seen> = Mutex::new(Vec::new());
 static SWEEP: AtomicU64 = AtomicU64::new(u64::MAX);
 
-/// Esquece marcas velhas no máximo uma vez a cada 40 ticks. Quem consulta continua filtrando `FRESH`.
-fn sweep(mobs: &mut HashMap<u32, (u8, u64)>, now: u64) {
+/// Esquece marcas velhas no máximo uma vez a cada 40 ticks, em todas as dimensões (a marca da
+/// limpeza é uma só). Quem consulta continua filtrando `FRESH`.
+fn sweep(seen: &mut Seen, now: u64) {
     let generation = now / 40;
     if SWEEP.load(Ordering::Relaxed) == generation {
         return;
@@ -36,7 +37,9 @@ fn sweep(mobs: &mut HashMap<u32, (u8, u64)>, now: u64) {
     if SWEEP.swap(generation, Ordering::Relaxed) == generation {
         return;
     }
-    mobs.retain(|_, (_, stamp)| now.saturating_sub(*stamp) <= FORGET);
+    for (_, mobs) in seen.iter_mut() {
+        mobs.retain(|_, (_, stamp)| now.saturating_sub(*stamp) <= FORGET);
+    }
 }
 
 pub(crate) fn observe(dimension: &str, id: u32, kind: &str) {
@@ -66,8 +69,8 @@ pub(crate) fn observe(dimension: &str, id: u32, kind: &str) {
 pub(crate) fn recent(dimension: &str) -> Vec<(u32, u8)> {
     let now = defense::clock();
     let Ok(mut seen) = SEEN.lock() else { return Vec::new() };
+    sweep(&mut seen, now);
     let Some((_, mobs)) = seen.iter_mut().find(|(name, _)| name == dimension) else { return Vec::new() };
-    sweep(mobs, now);
     mobs.iter().filter(|(_, (_, stamp))| now.saturating_sub(*stamp) <= FRESH).map(|(id, (kind, _))| (*id, *kind)).collect()
 }
 
@@ -75,8 +78,8 @@ pub(crate) fn recent(dimension: &str) -> Vec<(u32, u8)> {
 pub(crate) fn recent_villagers(dimension: &str) -> Vec<u32> {
     let now = defense::clock();
     let Ok(mut seen) = SEEN.lock() else { return Vec::new() };
+    sweep(&mut seen, now);
     let Some((_, mobs)) = seen.iter_mut().find(|(name, _)| name == dimension) else { return Vec::new() };
-    sweep(mobs, now);
     mobs.iter()
         .filter(|(_, (kind, stamp))| *kind == VILLAGER && now.saturating_sub(*stamp) <= FRESH)
         .map(|(id, _)| *id)
@@ -223,6 +226,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             continue;
         }
         let Some(nbt) = host.entity_nbt(handle) else { continue };
+        // Riding/transport pigs are companions, not surplus meat or breeding stock.
+        if kind == 2 && freight::caravan::saddled(&nbt) { continue; }
         animals.push(Animal {
             id, kind,
             adult: tag_int(&nbt, "Age") >= 0,

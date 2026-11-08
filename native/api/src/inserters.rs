@@ -49,7 +49,8 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let to = [pos[0] + dx * tier.reach, pos[1], pos[2] + dz * tier.reach];
     // Refused items stay at the source; no temporary hand stack can be lost.
     let filter = logistics_controls::filter(entity);
-    let moved = host.move_items(host.dimension(), from, output, to, output.opposite(), filter.as_deref(), 1);
+    let dimension = host.dimension();
+    let moved = onboarding::move_items(host, dimension, from, output, to, output.opposite(), filter.as_deref(), 1);
     if moved > 0 {
         set_number(entity, "energy", number(entity, "energy") - tier.cost);
         set_number(entity, "Produced", number(entity, "Produced") + moved as i32);
@@ -70,6 +71,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut horizon_client::mod_api::BlockEn
     let t = if active { (elapsed as f32 + event.draw.partial).clamp(0.0, tier.swing as f32) / tier.swing as f32 }
         else if paused { number(event.entity, "Progress") as f32 / tier.swing as f32 }
         else { 0.0 };
+    let t = motion::travel(t);
     let end = if active || paused { 8.0 + 12.0 * tier.reach as f32 * (1.0 - 2.0 * t) } else { 8.0 };
     let faces = [Some(CubeFace { sprite: "veio:gui/material", uv: None }); 6];
     event.draw.push();

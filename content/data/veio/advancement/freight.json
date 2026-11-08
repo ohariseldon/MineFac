@@ -1,0 +1,33 @@
+{
+  "parent": "veio:modules",
+  "display": {
+    "icon": {
+      "id": "veio:rail_terminal"
+    },
+    "title": {
+      "translate": "advancement.veio.freight.title"
+    },
+    "description": {
+      "translate": "advancement.veio.freight.description"
+    },
+    "announce_to_chat": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:module"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:rail_terminal",
+      "veio:route_card"
+    ]
+  }
+}

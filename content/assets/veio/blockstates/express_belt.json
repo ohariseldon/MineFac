@@ -1,0 +1,84 @@
+{
+  "variants": {
+    "facing=south,path=straight": {
+      "model": "veio:block/express_belt_straight",
+      "y": 0
+    },
+    "facing=west,path=straight": {
+      "model": "veio:block/express_belt_straight",
+      "y": 90
+    },
+    "facing=north,path=straight": {
+      "model": "veio:block/express_belt_straight",
+      "y": 180
+    },
+    "facing=east,path=straight": {
+      "model": "veio:block/express_belt_straight",
+      "y": 270
+    },
+    "facing=south,path=left": {
+      "model": "veio:block/express_belt_left",
+      "y": 0
+    },
+    "facing=west,path=left": {
+      "model": "veio:block/express_belt_left",
+      "y": 90
+    },
+    "facing=north,path=left": {
+      "model": "veio:block/express_belt_left",
+      "y": 180
+    },
+    "facing=east,path=left": {
+      "model": "veio:block/express_belt_left",
+      "y": 270
+    },
+    "facing=south,path=right": {
+      "model": "veio:block/express_belt_right",
+      "y": 0
+    },
+    "facing=west,path=right": {
+      "model": "veio:block/express_belt_right",
+      "y": 90
+    },
+    "facing=north,path=right": {
+      "model": "veio:block/express_belt_right",
+      "y": 180
+    },
+    "facing=east,path=right": {
+      "model": "veio:block/express_belt_right",
+      "y": 270
+    },
+    "facing=south,path=up": {
+      "model": "veio:block/express_belt_up",
+      "y": 0
+    },
+    "facing=west,path=up": {
+      "model": "veio:block/express_belt_up",
+      "y": 90
+    },
+    "facing=north,path=up": {
+      "model": "veio:block/express_belt_up",
+      "y": 180
+    },
+    "facing=east,path=up": {
+      "model": "veio:block/express_belt_up",
+      "y": 270
+    },
+    "facing=south,path=down": {
+      "model": "veio:block/express_belt_down",
+      "y": 0
+    },
+    "facing=west,path=down": {
+      "model": "veio:block/express_belt_down",
+      "y": 90
+    },
+    "facing=north,path=down": {
+      "model": "veio:block/express_belt_down",
+      "y": 180
+    },
+    "facing=east,path=down": {
+      "model": "veio:block/express_belt_down",
+      "y": 270
+    }
+  }
+}

@@ -16,6 +16,16 @@ Divisão atual definida pelo usuário após a integração da 0.9.1. Ela substit
 
 Geração e distribuição continuam sendo sistemas distintos no código. Essa separação técnica não representa mais uma atribuição exclusiva de toda a produção ao Cloud: a nova frente dele é o sistema de trabalhadores.
 
+## Restrição obrigatória do mapa
+
+[MAPA.md](MAPA.md) define o contrato dos novos mundos: Overworld quadrado de
+**15.000 blocos de lado**, muralha de bedrock e restrição de coordenadas, cobertura
+garantida de biomas e conteúdo de sobrevivência em cada mundo, e portais seguros
+com Nether na escala 8:1. A geração adaptada foi autorizada pelo usuário. Todas as
+frentes devem respeitar esse contrato ao planejar recursos, estruturas, spawn,
+exploração, progressão e desempenho. Sua implementação ainda está pendente; o
+documento não altera mundos existentes.
+
 ## Fluxo compartilhado
 
 1. Partir da `main` atualizada. A base de código desta rodada é a **0.9.1**, commit `26599ecd7d8e94f9889a84da42b3928ad3156a9e`; este documento e as ordens acrescentam a coordenação da rodada.
@@ -27,6 +37,27 @@ Geração e distribuição continuam sendo sistemas distintos no código. Essa s
 
 O usuário testa a versão jogável. Evitar recompilar ou abrir o jogo a cada iteração. Dados pessoais, mundos, executáveis e caches ficam fora do Git; os arquivos pesados locais permanecem no E:.
 
+## Integração 0.16.0 (Claude, na falta de tokens das outras frentes)
+
+Com o Codex e o Grok sem tokens, o Claude fez a integração desta rodada na branch
+`claude/ajustes-vila-mobs`, sobre a main `cf37004`, e subiu a versão para 0.16.0 (o
+`launcher.exe` só recompila o código nativo quando a versão muda).
+
+Entraram, nesta ordem: casa do fundador, `cursor/grok-quartel-c7d9` (com revisão de aldeões e
+mobs), `research/connected-veins`, `cursor/grok-lan-c7d9`, `cursor/grok-vilas-c7d9`,
+`cursor/grok-balance-c7d9`, `grok/mission-balance` e `codex/interzone-logistics`. A
+`cursor/grok-lote2-c7d9` ficou de fora: o lote 3 já tinha substituído o conteúdo dela.
+
+Contratos que mudaram para quem continuar:
+
+- O gancho `tick` sai logo na janela (`Host::window()`): o relógio do mod conta só ticks do
+  servidor. Código novo no tick global não roda mais duas vezes no jogo de um jogador só.
+- Estados do painel: `freight_route` (Codex) é 28 e `resting` (lavrador e pastor à noite) é 29.
+- Postos recebem `""` como item na mão quando a mão está vazia (o quartel precisa disso).
+- `tools/check_project.py` mede as páginas dos dois guias e recusa a que passar de 14 linhas.
+  Nas páginas de consulta, o link para o sumário fica na linha do título (`«`).
+- `tools/build_house.py` gera a casa; `native/api/src/home/` é a casa, a comida e o mural.
+
 ## Arquivos e interfaces
 
 A preparação comum de postos está descrita em [frentes/INTERFACE_POSTOS.md](frentes/INTERFACE_POSTOS.md). Cloud deve usar essa consulta como ponto de integração para tarefas e inventários; ela não implementa atribuições nem substitui suas transações.
@@ -36,6 +67,7 @@ A preparação comum de postos está descrita em [frentes/INTERFACE_POSTOS.md](f
 - `native/api/src/farm.rs`: colheitadeira; compartilhada quando trabalhadores ou novas funções agrícolas exigirem integração.
 - `native/api/src/lib.rs`: reúne ganchos, registros e distribuição adjacente de energia. Receitas e jazidas estão em `production/`. Evite substituí-lo inteiro em uma entrega; envie alterações pequenas e descreva quais funções mudou.
 - `native/api/src/workforce/`: trabalhadores (Cloud). Posto, atribuição exclusiva por UUID, ordens de caminhada, objetivo `Work` dos aldeões e tarefas por setor (`farmhand.rs`). Estados 18-23 do painel. Detalhes e contratos tocados em [TRABALHADORES.md](TRABALHADORES.md).
+- `native/api/src/home/`: casa do fundador (Cloud): construção, presença com bônus nas máquinas, regra das duas camas, comida do jogador e mural. Liga-se a `upgrades::effect` (multiplicador de tempo) e ao tick do centro de controle. Detalhes em [TRABALHADORES.md](TRABALHADORES.md), sexta entrega.
 - `presentation.rs`, `tutorial.rs`, traduções e geradores de conteúdo são compartilhados. Preserve as entradas do outro lado ao acrescentar conteúdo.
 
 O transporte consulta `output_slots` para descobrir quais slots uma máquina permite esvaziar. Produção define suas entradas, saídas e filtros em `layout`/`accepts`. O transporte entrega itens por `Host::insert_item` e desconta da origem somente a quantidade aceita. Receita, consumo de ingredientes e criação de produtos continuam na produção. Estoque cheio deve parar o fluxo sem destruir itens.
@@ -84,3 +116,8 @@ Para continuar na nuvem, use o pacote consolidado mais recente entregue pelo age
 Ao devolver trabalho, envie o código completo ou um patch, a referência usada, uma lista dos arquivos alterados/removidos e as verificações realizadas. Diferencie verificação com o substituto offline, verificação contra a API real, compilação pelo launcher e teste dentro do jogo. Não inclua contas, mundos, compiladores ou caches.
 
 Faça as verificações necessárias ao concluir uma entrega. O usuário prefere testar os lotes no jogo e pediu para evitar testes repetidos a cada ajuste.
+
+
+## Consolidação 0.16.1
+
+Integração local em `codex/consolidated-0161`, com 0.16.0, `13758bd`, `fd2a446`, tutorial, realismo, caravanas e progressão por fases. Consulte [CONSOLIDACAO.md](CONSOLIDACAO.md) e a lista de branches em `frentes/branches-consolidadas.json`. O mapa finito segue como checkpoint desativado.

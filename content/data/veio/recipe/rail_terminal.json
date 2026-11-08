@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:chest",
+    "minecraft:hopper",
+    "minecraft:rail",
+    "veio:iron_plate",
+    "veio:module"
+  ],
+  "result": {
+    "id": "veio:rail_terminal",
+    "count": 1
+  }
+}

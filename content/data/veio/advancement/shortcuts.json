@@ -1,0 +1,33 @@
+{
+  "criteria": {
+    "plates": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "veio:copper_plate",
+              "veio:iron_plate",
+              "veio:circuit",
+              "veio:gear",
+              "veio:steel_plate"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:shortcut_bucket",
+      "veio:shortcut_hopper",
+      "veio:shortcut_lantern",
+      "veio:shortcut_lightning_rod",
+      "veio:shortcut_piston",
+      "veio:shortcut_compass",
+      "veio:shortcut_clock",
+      "veio:shortcut_redstone_lamp",
+      "veio:shortcut_rail"
+    ]
+  }
+}

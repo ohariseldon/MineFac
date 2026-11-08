@@ -87,7 +87,7 @@ pub(super) fn exported(dimension: &str, coins: i32) {
 }
 
 /// Exportações do dia nesta dimensão.
-pub(super) fn exports_day(dimension: &str) -> i32 {
+pub(crate) fn exports_day(dimension: &str) -> i32 {
     with_world(dimension, |world| world.export_day).unwrap_or(0)
 }
 
@@ -250,7 +250,7 @@ fn extras(dimension: &str, pos: [i32; 3], division: u8) -> [i32; 3] {
 pub(super) fn refresh(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let tab = number(entity, "Tab").clamp(0, TABS - 1);
     if tab == 0 {
-        set_number(entity, "DExport", exports_day(dimension));
+        // A visão geral (páginas da vila) é do `workforce::center::refresh`.
         return;
     }
     if tab == FOREIGN {
@@ -285,14 +285,17 @@ pub(super) fn data(entity: &ModBlockEntity) -> [i32; 11] {
     out
 }
 
-/// Clique nas setas do cabeçalho ou, na visão geral, na linha da companhia (saque).
+/// Altura da linha da companhia na página Resumo (4ª linha do painel).
+const TOP_COMPANY: f32 = 33.0 + 3.0 * 9.5;
+
+/// Clique nas setas do cabeçalho ou, no Resumo (`tab` 0), na linha da companhia (saque).
 pub(super) fn click(at: [f32; 2], tab: i32) -> Option<i32> {
     let row = (20.0..32.0).contains(&at[1]);
     if row && (5.0..20.0).contains(&at[0]) {
         Some(PREVIOUS)
     } else if row && (162.0..180.0).contains(&at[0]) {
         Some(NEXT)
-    } else if tab == 0 && (64.0..76.0).contains(&at[1]) && (5.0..160.0).contains(&at[0]) {
+    } else if tab == 0 && (TOP_COMPANY..TOP_COMPANY + 9.5).contains(&at[1]) && (5.0..160.0).contains(&at[0]) {
         Some(workforce::society::ledger::CASH_OUT)
     } else {
         None
@@ -305,8 +308,9 @@ pub(super) fn press(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity,
         workforce::society::ledger::cash_out(dimension, pos, entity, defense::clock());
         return;
     }
-    let step = match id { PREVIOUS => TABS - 1, NEXT => 1, _ => return };
-    set_number(entity, "Tab", (number(entity, "Tab") + step).rem_euclid(TABS));
+    // As setas passam pelas páginas da vila (aba 0) e depois pelas divisões.
+    let step = match id { PREVIOUS => -1, NEXT => 1, _ => return };
+    workforce::center::step_view(entity, step);
     refresh(dimension, pos, entity, time);
 }
 

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "minecraft:chest"
+  ],
+  "result": {
+    "id": "minecraft:hopper",
+    "count": 1
+  }
+}

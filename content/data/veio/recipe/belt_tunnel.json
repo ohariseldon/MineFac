@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:belt",
+    "veio:belt",
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "minecraft:cobblestone"
+  ],
+  "result": {
+    "id": "veio:belt_tunnel",
+    "count": 2
+  }
+}

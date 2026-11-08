@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:rail_terminal",
+    "veio:circuit",
+    "veio:circuit",
+    "veio:circuit",
+    "veio:module",
+    "veio:module",
+    "veio:battery",
+    "veio:steel_plate",
+    "veio:steel_plate"
+  ],
+  "result": {
+    "id": "veio:drone_port",
+    "count": 1
+  }
+}

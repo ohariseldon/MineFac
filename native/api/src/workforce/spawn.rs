@@ -31,6 +31,10 @@ struct Arrival {
 }
 
 static ARRIVALS: Mutex<Vec<Arrival>> = Mutex::new(Vec::new());
+/// Quem renasceu e vai para o centro no próximo tick: `run_command` falha dentro do gancho de
+/// renascimento, que roda com o estado do jogador trocado.
+static RESPAWNS: Mutex<Vec<String>> = Mutex::new(Vec::new());
+static RESPAWNING: AtomicBool = AtomicBool::new(false);
 static ARRIVING: AtomicBool = AtomicBool::new(false);
 /// Centro conhecido e se veio de um centro de controle.
 static CENTER: Mutex<Option<([i32; 3], bool)>> = Mutex::new(None);
@@ -55,12 +59,33 @@ pub(crate) fn logged_in(player: u128, name: &str, now: u64) {
     }
 }
 
-/// Quem renasce volta ao centro da vila (mesmo com cama em outro lugar).
-pub(crate) fn respawned(host: &mut dyn Host, name: &str) {
-    if let Some(([x, y, z], _)) = center()
-        && safe_name(name)
+/// Quem renasce volta ao próprio lar (`home.rs`). Sem lar e sem cama (a da casa do fundador ou a
+/// de fora, ver `crate::home`), volta ao centro da vila; com cama, o jogo leva o jogador para ela.
+/// O teleporte sai no tick seguinte: dentro do gancho o jogo ainda reposiciona o jogador.
+pub(crate) fn respawned(player: u128, name: &str) {
+    let lar = home::home_of(name).is_some();
+    if safe_name(name)
+        && (lar || (center().is_some() && !super::super::home::has_bed(player)))
+        && let Ok(mut respawns) = RESPAWNS.lock()
     {
-        host.run_command(&format!("execute in {OVERWORLD} run tp {name} {x} {y} {z}"));
+        respawns.retain(|known| known != name);
+        respawns.push(name.to_owned());
+        RESPAWNING.store(true, Ordering::Release);
+    }
+}
+
+fn send_respawns(host: &mut dyn Host) {
+    if !RESPAWNING.swap(false, Ordering::AcqRel) {
+        return;
+    }
+    let names = RESPAWNS.lock().map(|mut list| std::mem::take(&mut *list)).unwrap_or_default();
+    for name in names {
+        if let Some(home) = home::home_of(&name) {
+            let [x, y, z] = home.pos;
+            host.run_command(&format!("execute in {} run tp {name} {x} {} {z}", home.dimension, y + 1));
+        } else if let Some(([x, y, z], _)) = center() {
+            host.run_command(&format!("execute in {OVERWORLD} run tp {name} {x} {y} {z}"));
+        }
     }
 }
 
@@ -100,7 +125,8 @@ fn settle(host: &mut dyn Host, name: &str, [x, y, z]: [i32; 3]) -> bool {
 
 /// Chamado no tick do jogo. Sai na primeira comparação quando ninguém está chegando.
 pub(crate) fn tick(host: &mut dyn Host, now: u64) {
-    if !ARRIVING.load(Ordering::Acquire) || now % 20 != 0 {
+    send_respawns(host);
+    if !ARRIVING.load(Ordering::Acquire) || !now.is_multiple_of(20) {
         return;
     }
     let players = host.server_players();
@@ -122,7 +148,9 @@ pub(crate) fn tick(host: &mut dyn Host, now: u64) {
             waiting.push(arrival);
             continue;
         }
-        let known = center().filter(|(_, control)| *control).map(|(at, _)| at);
+        // Centro já conhecido (a vila do anfitrião ou o centro de controle): quem entra na LAN
+        // vai para lá, mesmo longe. Sem isso, o convidado ganharia outra vila onde apareceu.
+        let known = center().map(|(at, _)| at);
         let found = known.or_else(|| find_village(host, player.position));
         if let Some(at) = found {
             if settle(host, &arrival.name, at) {
@@ -185,5 +213,8 @@ pub(crate) fn reset() {
     }
     if let Ok(mut arrivals) = ARRIVALS.lock() {
         arrivals.clear();
+    }
+    if let Ok(mut respawns) = RESPAWNS.lock() {
+        respawns.clear();
     }
 }

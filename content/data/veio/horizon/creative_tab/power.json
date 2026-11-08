@@ -8,11 +8,14 @@
     "veio:wind_turbine",
     "veio:steam_engine",
     "veio:geothermal",
+    "veio:hydro_turbine",
     "veio:solar",
     "veio:battery",
     "veio:pole",
     "veio:steel_pole",
     "veio:cable",
+    "veio:pump",
+    "veio:pipe",
     "minecraft:coal",
     "minecraft:lava_bucket"
   ]

@@ -49,7 +49,7 @@ fn integrator_waits_for_both_inputs_and_preserves_them_when_output_is_full() {
     assert_eq!(integrator.items, blocked);
     assert_eq!(number(&integrator, "Status"), 3);
     integrator.items[2] = None;
-    run(&mut integrator, 60);
+    run(&mut integrator, 80);
     assert_eq!(integrator.items[0].as_ref().unwrap().count, 1);
     assert_eq!(integrator.items[1].as_ref().unwrap().count, 2);
     assert_eq!(integrator.items[2], Some(ItemStack::new(MODULE, 1)));
@@ -273,15 +273,39 @@ fn tesla_picks_the_closest_hostile_in_range() {
 #[test]
 fn contract_hub_keeps_exporting_after_the_last_project() {
     let mut hub = entity(HUB, 4);
-    set_number(&mut hub, "ContractStage", contracts::CONTRACTS.len() as i32);
+    let export = contracts::CONTRACTS.len() + contracts::PHASES.len();
+    set_number(&mut hub, "ContractStage", export as i32);
     hub.items[0] = Some(ItemStack::new(CIRCUIT, 8));
     hub.items[1] = Some(ItemStack::new(STEEL, 8));
     contracts::tick(&mut hub);
     contracts::tick(&mut hub);
-    assert_eq!(number(&hub, "ContractStage") as usize, contracts::CONTRACTS.len());
+    assert_eq!(number(&hub, "ContractStage") as usize, export);
     assert_eq!(number(&hub, "Total"), 2);
     assert_eq!(hub.items[2], Some(ItemStack::new("minecraft:emerald", 8)));
     assert!(hub.items[0].is_none() && hub.items[1].is_none());
+}
+
+#[test]
+fn grand_project_collects_slowly_and_pays_each_phase() {
+    let mut hub = entity(HUB, 4);
+    set_number(&mut hub, "ContractStage", contracts::CONTRACTS.len() as i32);
+    hub.items[0] = Some(ItemStack::new(STEEL, 64));
+    hub.items[1] = Some(ItemStack::new(MODULE, 3));
+    assert!(!contracts::tick(&mut hub));
+    assert_eq!((number(&hub, "Total"), number(&hub, "Info")), (4, 3), "4 por tick, o que houver");
+    set_number(&mut hub, "Total", 199);
+    set_number(&mut hub, "Info", 100);
+    assert!(!contracts::tick(&mut hub));
+    assert_eq!(number(&hub, "ContractStage") as usize, contracts::CONTRACTS.len() + 1, "fase 1 fechada");
+    assert_eq!(hub.items[0].as_ref().map(|stack| stack.count), Some(59), "não leva além da meta");
+    assert_eq!(hub.items[2], Some(ItemStack::new("minecraft:emerald", 32)));
+    assert_eq!(number(&hub, "Total"), 0);
+    set_number(&mut hub, "ContractStage", (contracts::CONTRACTS.len() + 3) as i32);
+    hub.items = vec![Some(ItemStack::new("veio:automation_core", 1)), Some(ItemStack::new("veio:mk2_kit", 1)), None, None];
+    set_number(&mut hub, "Total", 199);
+    set_number(&mut hub, "Info", 49);
+    assert!(contracts::tick(&mut hub), "a última fase concede o avanço");
+    assert!(contracts::valid_input(0, &ItemStack::new("veio:processor", 1)));
 }
 
 #[test]
@@ -384,8 +408,8 @@ fn modules_trade_one_bottleneck_for_another() {
     assert_eq!(upgrades::apply(30, 8, efficiency), (30, 5));
     let mut press = entity(PRESS, 2);
     set_number(&mut press, "Module", 3);
-    let extras = (0..20).filter(|_| upgrades::bonus_ready(&mut press)).count();
-    assert_eq!(extras, 2, "produtividade: um extra a cada dez ciclos");
+    let extras = (0..20).filter(|_| upgrades::bonus_ready(&mut press, PLATE)).count();
+    assert_eq!(extras, 4, "produtividade: um lote extra a cada cinco ciclos");
     assert!(!upgrades::supports(TESLA));
 }
 
@@ -501,11 +525,19 @@ fn the_holding_counts_units_workers_and_daily_production_per_division() {
     assert_eq!(click([90.0, 70.0], 0), Some(workforce::society::ledger::CASH_OUT), "linha da companhia: saque");
     let mut center = ModBlockEntity::default();
     center.id = workforce::CONTROL_CENTER.to_owned();
+    // Primeiro as páginas da vila (aba 0), depois as divisões.
     press(dimension, [0, 64, 0], &mut center, NEXT, 0);
+    assert_eq!((number(&center, "Tab"), number(&center, "Page")), (0, 1), "página Atenção");
+    for _ in 1..workforce::center::PAGES {
+        press(dimension, [0, 64, 0], &mut center, NEXT, 0);
+    }
     assert_eq!(number(&center, "Tab"), 1, "aba Mineração");
     assert_eq!(data(&center)[0], 1, "uma extratora na aba");
     press(dimension, [0, 64, 0], &mut center, PREVIOUS, 0);
-    press(dimension, [0, 64, 0], &mut center, PREVIOUS, 0);
+    assert_eq!((number(&center, "Tab"), number(&center, "Page")), (0, workforce::center::PAGES - 1), "volta à última página");
+    for _ in 0..workforce::center::PAGES {
+        press(dimension, [0, 64, 0], &mut center, PREVIOUS, 0);
+    }
     assert_eq!(number(&center, "Tab"), TABS - 1, "volta pela última aba");
 }
 
@@ -517,4 +549,124 @@ fn each_good_pays_the_business_that_makes_it() {
     assert_eq!(item_division("minecraft:oak_log"), FORESTRY);
     assert_eq!(item_division("minecraft:raw_iron"), MINING);
     assert_eq!(item_division("veio:gear"), MANUFACTURING);
+}
+
+#[test]
+fn a_raid_that_cannot_spawn_is_not_announced_and_comes_back_later() {
+    struct Night { summons: bool, summoned: u32, bars: u32 }
+    impl Host for Night {
+        fn dimension(&self) -> &'static str { "minecraft:overworld" }
+        fn day_time(&self) -> i64 { 24000 * 5 + 15000 }
+        fn surface_heights(&self, _: &str, columns: &[(i32, i32)], _: horizon_client::mod_api::NativeHeightmap) -> Result<Vec<Option<i32>>, String> {
+            Ok(columns.iter().map(|_| Some(70)).collect())
+        }
+        fn summon(&mut self, _: &str, _: &str, _: [f64; 3], _: Compound) -> Option<u32> {
+            self.summons.then(|| { self.summoned += 1; self.summoned })
+        }
+        fn server_players(&self) -> Vec<horizon_client::mod_api::NativeServerPlayer> {
+            vec![horizon_client::mod_api::NativeServerPlayer {
+                uuid: 5, dimension: "minecraft:overworld".into(), position: [10.0, 64.0, 10.0], ..Default::default()
+            }]
+        }
+        fn action_bar(&mut self, _: u128, _: horizon_client::mod_api::Text) -> bool { self.bars += 1; true }
+        fn play_sound(&mut self, _: &str, _: [f64; 3], _: usize, _: f32, _: f32) -> bool { true }
+    }
+    let (time, overworld) = (64 * 100_000, "minecraft:overworld");
+    pollution::seed_for_test(overworld, &[((0, 0), 1500.0)], [0, 64, 0], time + 64, Some(0));
+    let mut night = Night { summons: false, summoned: 0, bars: 0 };
+    pollution::update(&mut night, time);
+    assert_eq!((night.bars, pollution::waves_for_test(overworld)), (0, 0), "nenhum saqueador: nem aviso, nem onda contada");
+    night.summons = true;
+    pollution::update(&mut night, time + 64);
+    assert_eq!(night.summoned, pollution::wave_size(1400.0, 1), "a mesma noite tenta de novo");
+    assert_eq!((night.bars, pollution::waves_for_test(overworld)), (1, 1));
+    pollution::update(&mut night, time + 128);
+    assert_eq!(night.summoned, pollution::wave_size(1400.0, 1), "uma onda por noite");
+}
+
+#[test]
+fn industrial_exports_do_not_require_the_optional_boss() {
+    let mut hub = entity(HUB, 4);
+    set_number(&mut hub, "ContractStage", 3);
+    hub.items[0] = Some(ItemStack::new(CIRCUIT, 8));
+    hub.items[1] = Some(ItemStack::new(STEEL, 8));
+    for _ in 0..2 { contracts::tick(&mut hub); }
+    assert_eq!(number(&hub, "ContractStage"), 3);
+    assert_eq!(number(&hub, "Total"), 2);
+    assert_eq!(hub.items[2], Some(ItemStack::new("minecraft:emerald", 8)));
+    presentation::publish(&mut hub);
+    assert_eq!(hub.data[8], 3);
+    assert_eq!(hub.data[12], 0);
+}
+
+#[test]
+fn optional_beacon_selects_its_inputs_and_returns_to_export() {
+    let mut hub = entity(HUB, 4);
+    set_number(&mut hub, "ContractStage", 3);
+    assert!(contracts::accepts(&hub, 0, &ItemStack::new("minecraft:nether_star", 1)));
+    assert!(!contracts::accepts(&hub, 1, &ItemStack::new(CIRCUIT, 48)));
+    hub.items[0] = Some(ItemStack::new("minecraft:nether_star", 1));
+    assert!(contracts::accepts(&hub, 1, &ItemStack::new(CIRCUIT, 48)));
+    assert!(!contracts::accepts(&hub, 1, &ItemStack::new(STEEL, 4)));
+    presentation::publish(&mut hub);
+    assert_eq!(hub.data[12], 1);
+    hub.items[1] = Some(ItemStack::new(CIRCUIT, 48));
+    contracts::tick(&mut hub);
+    assert_eq!(number(&hub, "ContractStage"), 4);
+    assert_eq!(number(&hub, "Total"), 0);
+    assert_eq!(hub.items[2], Some(ItemStack::new("minecraft:beacon", 1)));
+    assert_eq!(hub.items[3], Some(ItemStack::new(DRILL_MK2, 2)));
+    assert!(!contracts::accepts(&hub, 0, &ItemStack::new("minecraft:nether_star", 1)));
+    assert_eq!(contracts::current(&hub).unwrap().title, contracts::PHASES[0].title, "depois do farol vem o grande projeto");
+}
+
+#[test]
+fn every_project_preserves_inputs_until_both_rewards_fit() {
+    for (stage, contract) in contracts::CONTRACTS.iter().enumerate() {
+        let mut hub = entity(HUB, 4);
+        set_number(&mut hub, "ContractStage", stage as i32);
+        for (slot, &(item, count)) in contract.inputs.iter().enumerate() {
+            assert!(count > 0 && count <= 64);
+            hub.items[slot] = Some(ItemStack::new(item, count));
+        }
+        // A segunda saída cheia também deve proteger a primeira recompensa.
+        hub.items[3] = Some(ItemStack::new(contract.rewards[1].0, 64));
+        let before = hub.items.clone();
+        contracts::tick(&mut hub);
+        assert_eq!(hub.items, before);
+        assert_eq!(number(&hub, "ContractStage"), stage as i32);
+        hub.items[3] = None;
+        hub.items[1].as_mut().unwrap().count -= 1;
+        let before = hub.items.clone();
+        contracts::tick(&mut hub);
+        assert_eq!(hub.items, before);
+        hub.items[1].as_mut().unwrap().count += 1;
+        contracts::tick(&mut hub);
+        assert_eq!(number(&hub, "ContractStage"), stage as i32 + 1);
+        assert!(hub.items[..2].iter().all(Option::is_none));
+        for (slot, &(item, count)) in contract.rewards.iter().enumerate() {
+            assert!(count > 0 && count <= 64);
+            assert_eq!(hub.items[slot + 2], Some(ItemStack::new(item, count)));
+        }
+    }
+}
+
+#[test]
+fn every_block_with_a_menu_has_a_screen_with_one_slot_per_container_slot() {
+    // A tela de um bloco sem `screen` derrubaria o jogo (`expect` em `screen_draw`).
+    let menus = std::path::Path::new(file!()).parent().unwrap().join("../../../content/data/veio/horizon/menu");
+    let menus = if menus.exists() { menus } else {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../content/data/veio/horizon/menu")
+    };
+    let mut checked = 0;
+    for file in std::fs::read_dir(&menus).unwrap() {
+        let name = file.unwrap().file_name().to_string_lossy().trim_end_matches(".json").to_owned();
+        let block = format!("veio:{name}");
+        let screen = presentation::screen(&block).unwrap_or_else(|| panic!("{block}: sem tela"));
+        let (slots, _, _) = layout(&block).unwrap_or_else(|| panic!("{block}: sem contêiner"));
+        let shown = screen.slots.iter().filter(|slot| slot.is_some()).count();
+        assert!(shown == slots || screen.slots == vec![None], "{block}: {shown} slots na tela, {slots} no contêiner");
+        checked += 1;
+    }
+    assert!(checked > 40, "menus encontrados: {checked}");
 }

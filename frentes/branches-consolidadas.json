@@ -1,0 +1,176 @@
+[
+  {
+    "branch": "github",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "5217b622206461f2d2a3e626b9c35a8de4ab7d3f"
+  },
+  {
+    "branch": "github/claude/trusting-ritchie-sc9ty8",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "494d3e750fc28cd2129a1a8b5dee8ec81ac39cac"
+  },
+  {
+    "branch": "github/codex/expansion",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "20f9dba3113348981e1cc08cfbee06ed0cb34915"
+  },
+  {
+    "branch": "github/codex/global-budget",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "690f554eb23316cde70362b70f261eb6cd78188b"
+  },
+  {
+    "branch": "github/codex/incremental-foremen",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "13758bd7859602b50bd7028377035fe005806d5d"
+  },
+  {
+    "branch": "github/codex/incremental-hauler-search",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "604369d6eede12e2a3fde191e1e5d31f243ccc88"
+  },
+  {
+    "branch": "github/codex/incremental-topology",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "cad77c3d921f34e718c81f4fe50094f40c659d23"
+  },
+  {
+    "branch": "github/codex/inserters",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "d5a85fa6251458cc0a105af806f5dd13083d4d7b"
+  },
+  {
+    "branch": "github/codex/interzone-logistics",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "8b8e8d95c6b3686552481a4ad6535ea822a45cb5"
+  },
+  {
+    "branch": "github/codex/machine-identity",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "d396f69b5480960ceb6d010cd23fac99d48acee0"
+  },
+  {
+    "branch": "github/codex/optimization",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "4244a7e1810d151b4b7c8553a6d9985d59eb27b4"
+  },
+  {
+    "branch": "github/codex/scaling",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "350f06455695f4e33853a21e8a3f2ac76bcd4dc9"
+  },
+  {
+    "branch": "github/cursor/grok-balance-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "96458cf29ab949e18cd017aa546334f8b167a8e5"
+  },
+  {
+    "branch": "github/cursor/grok-lan-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "cf2a63ceb757af5ab627040dfe7eee8db0da6afa"
+  },
+  {
+    "branch": "github/cursor/grok-lote2-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "2d5a202c9de525d8310c917891b03d315adc2d62"
+  },
+  {
+    "branch": "github/cursor/grok-lote3-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "b6a6cdfc09e4f3963dbc54d013845decec9932ad"
+  },
+  {
+    "branch": "github/cursor/grok-lote4-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "0a435a3193b61716684efd9fdae7b8395d8b9f4e"
+  },
+  {
+    "branch": "github/cursor/grok-lote5-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "4c541aca910197e4b602beec804586775958eaeb"
+  },
+  {
+    "branch": "github/cursor/grok-lote6-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "8d64fe33bf0572f8482145eb27cb2d6f1e8fbbfa"
+  },
+  {
+    "branch": "github/cursor/grok-lote7-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "dda34fa4f7255becacf361f8930bbe39f9cb70d0"
+  },
+  {
+    "branch": "github/cursor/grok-lote8-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "a8e474102014a90a4dbeedb440d73b0f536151d2"
+  },
+  {
+    "branch": "github/cursor/grok-noite-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "ce0e7d1eaf66de8c4b0d48164b4085a03a44fc41"
+  },
+  {
+    "branch": "github/cursor/grok-performance-balance-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "068a61b92aa72acfd74a9a987da377b813784f7c"
+  },
+  {
+    "branch": "github/cursor/grok-quartel-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "a6d2744057bde8c13b684c2f604d91466bb80b92"
+  },
+  {
+    "branch": "github/cursor/grok-vilas-c7d9",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "19a311ed2dae3e8f3064aa2f6ba9c4e8179ec937"
+  },
+  {
+    "branch": "github/grok/mission-balance",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "c5db4f642e05b1e10b362a9461899c8fea2f7628"
+  },
+  {
+    "branch": "github/logistics/merger",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "26599ecd7d8e94f9889a84da42b3928ad3156a9e"
+  },
+  {
+    "branch": "github/main",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "5217b622206461f2d2a3e626b9c35a8de4ab7d3f"
+  },
+  {
+    "branch": "github/research/connected-veins",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "2edc6c0fc24444c2272eef057d67c7b0a65361eb"
+  }
+]

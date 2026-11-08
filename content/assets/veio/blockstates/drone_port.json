@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/drone_port"
+    },
+    "facing=west": {
+      "model": "veio:block/drone_port",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/drone_port",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/drone_port",
+      "y": 270
+    }
+  }
+}

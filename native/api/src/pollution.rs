@@ -248,7 +248,13 @@ fn act(host: &mut dyn Host, dimension: &str, plan: Plan, time: i64) {
         Plan::Notice(anchor) => (anchor, "veio.raid.notice"),
         Plan::Warning(anchor) => (anchor, "veio.raid.warning"),
         Plan::Wave(anchor, size) => {
-            spawn_wave(host, dimension, anchor, size, waves_so_far(dimension), time);
+            if spawn_wave(host, dimension, anchor, size, waves_so_far(dimension), time) == 0 {
+                with_world(dimension, |world| {
+                    world.wave_day = -1;
+                    world.waves = world.waves.saturating_sub(1);
+                });
+                return;
+            }
             (anchor, "veio.raid.arrived")
         }
     };
@@ -275,7 +281,7 @@ pub(super) fn wave_mix(size: u32, waves: u32) -> (u32, u32, u32) {
     (size - archers - brutes, archers, brutes)
 }
 
-fn spawn_wave(host: &mut dyn Host, dimension: &str, anchor: [i32; 3], size: u32, waves: u32, time: i64) {
+fn spawn_wave(host: &mut dyn Host, dimension: &str, anchor: [i32; 3], size: u32, waves: u32, time: i64) -> u32 {
     let factory = [f64::from(anchor[0]) + 0.5, f64::from(anchor[1]), f64::from(anchor[2]) + 0.5];
     // Uma frente: um arco de 90 graus num lado da fábrica, que muda a cada noite. Os saqueadores
     // farejam o jogador a 40 blocos; quem está na fábrica os vê chegar.
@@ -285,6 +291,7 @@ fn spawn_wave(host: &mut dyn Host, dimension: &str, anchor: [i32; 3], size: u32,
         .chain(std::iter::repeat_n(ARCHER, archers as usize))
         .chain(std::iter::repeat_n(BRUTE, brutes as usize));
     let mut first = None;
+    let mut spawned = 0;
     for (index, kind) in kinds.enumerate() {
         let spread = (index as f64 / f64::from(size.max(1)) - 0.5) * std::f64::consts::FRAC_PI_2;
         let x = factory[0] + (angle + spread).cos() * ARRIVAL;
@@ -292,12 +299,15 @@ fn spawn_wave(host: &mut dyn Host, dimension: &str, anchor: [i32; 3], size: u32,
         let Ok(heights) = host.surface_heights(dimension, &[(x.floor() as i32, z.floor() as i32)], NativeHeightmap::MotionBlocking) else { continue };
         let Some(Some(y)) = heights.first().copied() else { continue };
         let at = [x, f64::from(y), z];
-        first.get_or_insert(at);
-        host.summon(dimension, kind, at, Compound::default());
+        if host.summon(dimension, kind, at, Compound::default()).is_some() {
+            first.get_or_insert(at);
+            spawned += 1;
+        }
     }
     if let Some(at) = first {
         host.play_sound("minecraft:event.raid.horn", at, 16, 4.0, 0.7);
     }
+    spawned
 }
 
 /// Golpes dos saqueadores nesta máquina desde o último tick.
@@ -456,4 +466,19 @@ pub(super) fn plan_for_test(cells: &[((i32, i32), f32)], anchor: [i32; 3], notic
         ..World::default()
     };
     plan_raid(&mut world, time, day_time)
+}
+
+#[cfg(test)]
+pub(super) fn seed_for_test(dimension: &str, cells: &[((i32, i32), f32)], anchor: [i32; 3], seen: i64, noticed_at: Option<i64>) {
+    with_world(dimension, |world| {
+        *world = World {
+            name: dimension.to_owned(), cells: cells.iter().copied().collect(), anchors: HashMap::from([(anchor, seen)]),
+            noticed_at, warned_day: -1, wave_day: -1, ..World::default()
+        };
+    });
+}
+
+#[cfg(test)]
+pub(super) fn waves_for_test(dimension: &str) -> u32 {
+    with_world(dimension, |world| world.waves).unwrap_or(0)
 }

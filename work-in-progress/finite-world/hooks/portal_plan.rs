@@ -1,0 +1,1 @@
+fn finite_portal_plan(game:&crate::game::Game<'_>,entry:horizon_core::position::BlockPos,at:horizon_core::geometry::Vec3,width:f32,height:f32,reset:bool)->std::ops::ControlFlow<Plan>{crate::game::nether_portal::veio_portals::plan(game,entry,at,width,height,reset)}
