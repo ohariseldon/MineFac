@@ -308,6 +308,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -429,14 +443,6 @@
                           },
                           {
                             "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }
@@ -450,6 +456,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -461,17 +481,6 @@
                           {
                             "translate": "veio.guide.craft.farm_post",
                             "color": "dark_gray"
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }
@@ -485,6 +494,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -496,17 +519,6 @@
                           {
                             "translate": "veio.guide.craft.field_marker",
                             "color": "dark_gray"
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }
@@ -520,6 +532,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -531,17 +557,6 @@
                           {
                             "translate": "veio.guide.craft.shepherd_post",
                             "color": "dark_gray"
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }
@@ -555,6 +570,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -566,17 +595,6 @@
                           {
                             "translate": "veio.guide.craft.pen_marker",
                             "color": "dark_gray"
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }
@@ -590,6 +608,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -601,17 +633,6 @@
                           {
                             "translate": "veio.guide.craft.barn",
                             "color": "dark_gray"
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }
@@ -625,6 +646,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -636,17 +671,6 @@
                           {
                             "translate": "veio.guide.craft.silo",
                             "color": "dark_gray"
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }
@@ -660,6 +684,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -671,17 +709,6 @@
                           {
                             "translate": "veio.guide.craft.hauler_post",
                             "color": "dark_gray"
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }
@@ -695,6 +722,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -706,17 +747,6 @@
                           {
                             "translate": "veio.guide.craft.foreman_desk",
                             "color": "dark_gray"
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }
@@ -730,6 +760,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -741,17 +785,6 @@
                           {
                             "translate": "veio.guide.craft.control_center",
                             "color": "dark_gray"
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }
@@ -765,6 +798,20 @@
                             "bold": true
                           },
                           {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
                             "text": "\n"
                           },
                           {
@@ -776,17 +823,6 @@
                           {
                             "translate": "veio.guide.craft.barracks",
                             "color": "dark_gray"
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "veio.guide.back",
-                            "color": "dark_blue",
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 1
-                            }
                           }
                         ]
                       }

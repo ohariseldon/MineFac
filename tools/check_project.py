@@ -23,9 +23,81 @@ def main():
     languages = [read_json(CONTENT / f"assets/veio/lang/{code}.json") for code in ("pt_br", "en_us")]
     pages = check_book(languages, "guide")
     check_book(languages, "village_guide")
+    check_page_fit(languages, "guide")
+    check_page_fit(languages, "village_guide")
     textures = check_assets(languages)
     print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas; "
           f"{textures} texturas 16x16 encontradas.")
+
+
+# Largura dos caracteres da fonte padrão do Minecraft, com o espaço depois de cada um. O que
+# não está aqui ocupa 6 pixels (a maioria das letras, acentuadas ou não, e os dígitos).
+GLYPH = {**dict.fromkeys("i!.,:;|'", 2), **dict.fromkeys("l`", 3),
+         **dict.fromkeys("It []()\"{}*", 4), **dict.fromkeys("fk<>", 5), **dict.fromkeys("@~", 7)}
+PAGE_WIDTH = 114
+PAGE_LINES = 14
+
+
+def page_lines(runs):
+    """Linhas que um texto ocupa na página do livro, quebrando por palavra como o jogo.
+    `runs` é uma lista de (texto, negrito); o negrito soma um pixel por caractere."""
+    lines, width = 1, 0
+    word = 0
+    # Quebras no fim não ocupam linha visível.
+    while runs and runs[-1][0].strip("\n") == "":
+        runs = runs[:-1]
+    if runs:
+        runs = runs[:-1] + [(runs[-1][0].rstrip("\n"), runs[-1][1])]
+    for text, bold in runs:
+        for char in text:
+            if char == "\n":
+                lines, width, word = lines + 1, 0, 0
+                continue
+            advance = GLYPH.get(char, 6) + (1 if bold else 0)
+            if char == " ":
+                width += advance
+                word = 0
+                continue
+            if width + advance > PAGE_WIDTH:
+                if 0 < word < width:
+                    width = word
+                else:
+                    width = 0
+                lines += 1
+            width += advance
+            word += advance
+    return lines
+
+
+def flatten(node, lang, bold=False):
+    if isinstance(node, list):
+        return [run for child in node for run in flatten(child, lang, bold)]
+    if isinstance(node, str):
+        return [(node, bold)]
+    bold = node.get("bold", bold)
+    runs = []
+    if "text" in node:
+        runs.append((node["text"], bold))
+    if "translate" in node:
+        key = node["translate"]
+        # Nomes vanilla vêm das traduções do jogo, que não estão aqui: o id vira palavras,
+        # com o tamanho parecido com o do nome traduzido.
+        vanilla = key.split(".")[-1].replace("_", " ").capitalize()
+        runs.append((lang.get(key, vanilla).replace("%%", "%"), bold))
+    return runs + flatten(node.get("extra", []), lang, bold)
+
+
+def check_page_fit(languages, name):
+    """Nenhuma página passa das 14 linhas do livro (o resto ficaria cortado no jogo)."""
+    recipe = read_json(CONTENT / f"data/veio/recipe/{name}.json")
+    pages = recipe["result"]["components"]["minecraft:written_book_content"]["pages"]
+    long = []
+    for number, page in enumerate(pages, 1):
+        for code, lang in zip(("pt_br", "en_us"), languages):
+            lines = page_lines(flatten(page["raw"], lang))
+            if lines > PAGE_LINES:
+                long.append(f"{name} p.{number} {code}: {lines} linhas")
+    assert not long, "Páginas que não cabem no livro:\n" + "\n".join(long)
 
 
 def check_book(languages, name):

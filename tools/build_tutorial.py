@@ -176,16 +176,16 @@ label("veio.hint.inserter_wait", "Confira origem e destino", "Check source and t
 label("veio.hint.fast_inserter", "Traseira > frente: 64 FE/item", "Rear > front: 64 FE/item")
 label("veio.hint.long_inserter", "Alcance 2; 60 FE/item", "Reach 2; 60 FE/item")
 help["inserter"] = (
- "Puxa de trás, entrega à frente.\nBaús, esteiras e máquinas.\nAté 1 item/s; 40 FE por item.\nLigue um cabo ou poste.\nRedstone pausa; chave gira.",
- "Takes from rear, sends ahead.\nChests, belts and machines.\nUp to 1 item/s; 40 FE/item.\nConnect a cable or pole.\nRedstone pauses; wrench turns.")
+ "Puxa de trás, entrega à frente: baús, esteiras e máquinas.\nAté 1 item/s; 40 FE por item.\nCabo ou poste. Redstone pausa; chave gira.",
+ "Takes from rear, sends ahead: chests, belts and machines.\nUp to 1 item/s; 40 FE/item.\nCable or pole. Redstone pauses; wrench turns.")
 label("block.veio.fast_inserter", "Braço rápido", "Fast Transfer Arm")
 label("block.veio.long_inserter", "Braço longo", "Long Transfer Arm")
 help["fast_inserter"] = (
- "Até 2,5 itens/s; 64 FE/item.\nPuxa atrás, entrega à frente.\nAlcance de 1 bloco por lado.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
+ "Até 2,5 itens/s; 64 FE/item.\nDe trás para a frente, 1 bloco.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
  "Up to 2.5 items/s; 64 FE/item.\nRear to front, 1-block reach.\nSneak + item: set filter.\nSneak + empty hand: clear.")
 help["long_inserter"] = (
- "Até 1 item/s; 60 FE/item.\nAlcance de 2 blocos por lado.\nIgnora inventário intermediário.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
- "Up to 1 item/s; 60 FE/item.\nReaches 2 blocks on each side.\nSkips intermediate inventory.\nSneak + item: set filter.\nSneak + empty hand: clear.")
+ "Até 1 item/s; 60 FE/item.\nAlcance 2, pula o bloco do meio.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
+ "Up to 1 item/s; 60 FE/item.\nReach 2, skips the middle block.\nSneak + item: set filter.\nSneak + empty hand: clear.")
 for key, pt, en in [
  ("balanced", "Distribuição equilibrada", "Balanced routing"),
  ("left", "Prioridade: esquerda / A", "Priority: left / A"),
@@ -213,8 +213,8 @@ help["shepherd_post"] = (
  "Esmeralda: contrata aldeão.\nRecolhe ovos, penas e lã,\ntosquia ovelhas e dá ração\naos pares, a até 6 blocos.\nNão ordenha nem abate.",
  "Emerald: hires a villager.\nPicks up eggs, feathers and\nwool, shears sheep and feeds\npairs within 6 blocks.\nNo milking or culling.")
 help["field_marker"] = (
- "Centro da lavoura: 9x9 no\nnível 1, até 21x21. Lavradores\nperto aram, plantam e colhem.\nSemente no slot: só ela.\nEsmeralda expande; chave escolhe.",
- "Field center: 9x9 at level 1,\nup to 21x21. Nearby farmhands\ntill, plant and harvest.\nSeed in the slot: only that.\nEmerald expands; wrench sizes.")
+ "Centro da lavoura: 9x9 no nível 1, até 21x21. Lavradores perto aram, plantam e colhem.\nSemente no slot: só ela.\nEsmeralda expande; chave escolhe.",
+ "Field center: 9x9 at level 1, up to 21x21. Nearby farmhands till, plant and harvest.\nSeed in the slot: only that.\nEmerald expands; wrench sizes.")
 help["pen_marker"] = (
  "Centro do cercado: 9x9 a\n21x21. O pastor perto cuida\ndos animais dentro dele.\nRação no slot: só ela e as\nespécies que a comem.",
  "Pen center: 9x9 to 21x21.\nA nearby shepherd tends the\nanimals inside it.\nFeed in the slot: only that\nand the kinds that eat it.")
@@ -225,17 +225,17 @@ help["silo"] = (
  "18 espaços: grãos, sementes,\nração e comida. Também faz\nparte da fila do capataz.",
  "18 slots: grain, seeds, feed\nand food. Also part of the\nforeman's queue.")
 help["control_center"] = (
- "Painel da vila: trabalhadores,\nesperas, zonas, armazéns e\nmetas. Contrate um administrador.\nItem na meta: x16 guardados.\nLivro no centro: relatório.",
- "Village panel: workers, waits,\nzones, storage and goals.\nHire an administrator.\nGoal item: x16 in storage.\nBook on the center: report.")
+ "Painel da vila: trabalhadores, esperas, zonas, armazéns e metas. Contrate um administrador.\nMeta: x16 guardados.\nLivro: relatório.",
+ "Village panel: workers, waits, zones, storage and goals. Hire an administrator.\nGoal item: x16 stored.\nBook: report.")
 help["foreman_desk"] = (
  "Esmeralda: contrata o capataz.\nCuida de até 6 postos a\naté 12 blocos: leva comida\ne recontrata com esmeraldas\nda mesa. Monta a fila.",
  "Emerald: hires the foreman.\nManages up to 6 posts within\n12 blocks: brings food and\nrehires with the desk's\nemeralds. Queues transfers.")
 help["barracks"] = (
- "Esmeralda: contrata o aldeão.\nAgachar com a mão vazia troca\na classe: milícia, guarda,\narqueiro ou mago. Treinar\ngasta a esmeralda do slot.\nComida: cada golpe é uma tarefa.",
- "Emerald: hires the villager.\nSneak with an empty hand\ncycles militia, guard, archer\nor mage. Training spends the\nemerald in the slot.\nFood: each blow is one task.")
+ "Esmeralda contrata. Agachar de mão vazia troca a classe: milícia, guarda, arqueiro ou mago (1 esmeralda).\nCada golpe gasta comida.",
+ "Emerald hires. Sneak with an empty hand to cycle militia, guard, archer or mage (1 emerald).\nEach blow costs food.")
 help["farm_post"] = (
- "Esmeralda: contrata o aldeão\nadulto livre mais próximo.\nEle colhe o 9x9 e traz ao posto.\nCome 2 pontos por colheita.\nAgachar + chave: dispensa.",
- "Emerald: hires the nearest\nfree adult villager.\nHarvests the 9x9, brings it back.\nEats 2 points per harvest.\nSneak + wrench: dismiss.")
+ "Esmeralda: contrata um aldeão adulto livre por perto.\nEle colhe o 9x9 e traz ao posto; 2 pontos de comida por colheita.\nAgachar + chave: dispensa.",
+ "Emerald: hires a free adult villager nearby.\nHarvests the 9x9 and brings it back; 2 food points per harvest.\nSneak + wrench: dismiss.")
 for key, pt, en in [
  ("veio.status.no_worker", "Sem trabalhador", "No worker"),
  ("veio.status.absent", "Trabalhador ausente", "Worker missing"),
@@ -338,7 +338,7 @@ help["freight_station"] = (
  "Cartão: escolhe canal.\nAgachar + item: envio.\nItem sem agachar: recebimento.\nFunis ligam os vagões.",
  "Card: choose channel.\nSneak + item: outgoing filter.\nItem without sneak: receive.\nHoppers connect minecarts.")
 help["drone_port"] = (
- "Par de portos, mesmo canal.\nAté 64 blocos, 16 itens/voo.\nPrecisa energia e caminho livre.\nAgachar + chave: chama de volta.",
+ "Par no mesmo canal, até 64 blocos.\n16 itens/voo; energia e caminho livre.\nAgachar + chave: volta.",
  "Pair ports on one channel.\n64-block range, 16 items/flight.\nNeeds power and a clear path.\nSneak + wrench: recall.")
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
@@ -445,6 +445,10 @@ label("veio.guide.open","Selecione o guia e use o botão direito.","Select the g
 label("veio.guide.tip","Passe o cursor no ? dos painéis.","Hover over ? in machine panels.")
 label("veio.guide.welcome","Você recebeu o Guia do Veio. Selecione o livro e abra com o botão direito.","You received the Veio Field Guide. Select it and right-click to begin.")
 label("veio.guide.back","Sumário","Contents")
+def back_mark():
+ """Volta ao sumário na mesma linha do título: poupa a última linha da página."""
+ return {"text":"  «","color":"dark_blue","click_event":{"action":"change_page","page":1},
+  "hover_event":{"action":"show_text","value":{"translate":"veio.guide.back"}}}
 label("veio.guide.recipe_link","Receita","Recipe")
 label("veio.guide.role.input","Entrada","Input")
 label("veio.guide.role.output","Saída","Output")
@@ -505,8 +509,8 @@ page(
  "4. Veja a primeira chapa\n\nA prensa recebe cobre BRUTO à esquerda. A chapa sai à direita.\n\nPode colocar cobre à mão.\n\nRetire uma chapa no painel ou no baú.",
  "4. Your first plate\n\nThe press takes RAW COPPER in the left slot. The plate appears on the right.\n\nTry inserting raw copper by hand.\n\nTake a plate from the panel or chest.")
 page(
- "5. Faça engrenagens\n\nFabrique um montador. Ligue energia e leve chapas até ele.\n\nCada engrenagem usa DUAS chapas. Duas prensas enchem um montador; um veio normal enche as duas.\n\nColoque um baú na saída e recolha a primeira peça.",
- "5. Make gears\n\nCraft an assembler. Connect power and feed it copper plates.\n\nEach gear uses TWO plates. Two presses fill one assembler; a normal vein fills both presses.\n\nPut a chest at the output and take your first gear.")
+ "5. Faça engrenagens\n\nFabrique um montador, ligue energia e leve chapas até ele.\n\nCada engrenagem usa DUAS chapas: duas prensas enchem um montador.\n\nPonha um baú na saída e recolha a primeira peça.",
+ "5. Make gears\n\nCraft an assembler, connect power and feed it copper plates.\n\nEach gear uses TWO plates: two presses fill one assembler.\n\nPut a chest at the output and take your first gear.")
 page(
  "6. Seu próximo passo\n\nFabrique a chave para girar blocos com botão direito.\n\nDepois monte a linha de ferro: prensa > cortadora > moldura.\n\nNo integrador, moldura + engrenagem viram módulo.",
  "6. Next steps\n\nCraft the wrench to turn blocks with right-click.\n\nBuild an iron line: press > cutter > frame.\n\nThe integrator turns a frame and gear into a module.")
@@ -520,14 +524,14 @@ page(
  "Seu roteiro\n\nAbra Avanços > Primeira fábrica. Os marcos contam materiais obtidos.\n\nRecolha os produtos para marcar progresso.\n\nO painel de cada máquina confirma seu funcionamento.",
  "Your checklist\n\nOpen Advancements and find First Factory. Milestones track obtained materials.\n\nPick up products to mark progress.\n\nInspect machine panels to confirm operation.")
 wiring=page(
- "Postes e fios\n\nCada poste alimenta as máquinas a até 2 blocos (aço: 3) e se liga aos postes vizinhos.\n\nMadeira: fios de 8 blocos, 120 FE/t.\nAço: 16 blocos, 400 FE/t.\n\nQuando faltar energia longe do gerador, o fio é o gargalo.",
- "Poles and wires\n\nEach pole powers machines within 2 blocks (steel: 3) and links to nearby poles.\n\nWood: 8-block wires, 120 FE/t.\nSteel: 16 blocks, 400 FE/t.\n\nIf far machines starve, the wire is the bottleneck.")
+ "Postes e fios\n\nCada poste alimenta máquinas a até 2 blocos (aço: 3) e liga aos vizinhos.\n\nMadeira: fio de 8, 120 FE/t.\nAço: fio de 16, 400 FE/t.\n\nSem energia longe? O fio é o gargalo.",
+ "Poles and wires\n\nEach pole powers machines within 2 blocks (steel: 3) and links to nearby poles.\n\nWood: 8-block wire, 120 FE/t.\nSteel: 16-block wire, 400 FE/t.\n\nStarving far away? The wire is the limit.")
 smog=page(
  "Poluição\n\nMáquinas trabalhando poluem o chunk; o painel mostra quanto por minuto. A poluição se espalha e some aos poucos.\n\nLavouras colhidas a absorvem. Módulos de eficiência cortam pela metade.",
  "Pollution\n\nWorking machines pollute their chunk; the panel shows how much per minute. It spreads and slowly fades.\n\nHarvested crops absorb it. Efficiency modules halve it.")
 page(
- "Saqueadores\n\nO chat avisa um dia antes. Na noite seguinte eles vêm com o som de invasão: atrás de você e dos aldeões.\n\nEnfrente-os. Quatro golpes param uma máquina ou matam um aldeão, e o posto dele fica parado. Muros, espada e torre Tesla.",
- "Raiders\n\nChat warns a day ahead. The next night they come with a raid horn: for you and for the villagers.\n\nFace them. Four hits stop a machine or kill a villager, and that post sits idle. Walls, a sword and Tesla towers.")
+ "Saqueadores\n\nO chat avisa um dia antes. Na noite seguinte vêm com som de invasão, atrás de você e dos aldeões.\n\nQuatro golpes param uma máquina ou matam um aldeão. Muros, espada, quartel e torre Tesla.",
+ "Raiders\n\nChat warns a day ahead. The next night they come with a raid horn, for you and the villagers.\n\nFour hits stop a machine or kill a villager. Walls, a sword, barracks and Tesla towers.")
 upgrades=page(
  "Módulos\n\nBotão direito numa máquina instala um. Chave agachado retira.\n\nVelocidade: mais produção, mais energia e poluição.\nEficiência: menos energia e poluição.\nProdutividade: +20% de produtos.",
  "Modules\n\nRight-click a machine to install one. Sneak with the wrench to remove it.\n\nSpeed: more output, power and pollution.\nEfficiency: less power and pollution.\nProductivity: +20% products.")
@@ -538,14 +542,14 @@ page(
  "Comércio\n\nDepois do projeto do povoado, a central exporta sem fim: 4 circuitos e 4 chapas de aço viram 4 esmeraldas e 2 frascos de experiência.",
  "Trade\n\nAfter the village project, the hub keeps exporting: 4 circuits and 4 steel plates become 4 emeralds and 2 experience bottles.")
 page(
- "Farol opcional\n\nDepois do povoado, esvazie as entradas da central. Coloque primeiro 1 estrela do Nether na entrada 1 e depois 48 circuitos na 2.\n\nReceba 1 farol e 2 extratoras Mk.II. Retire as saídas antes de voltar a exportar.",
+ "Farol opcional\n\nDepois do povoado, esvazie a central. Ponha 1 estrela do Nether na entrada 1 e depois 48 circuitos na 2.\n\nGanhe 1 farol e 2 extratoras Mk.II. Retire as saídas antes de exportar de novo.",
  "Optional beacon\n\nAfter the village project, empty the hub inputs. Put 1 Nether star in input 1 first, then 48 circuits in input 2.\n\nReceive 1 beacon and 2 Mk.II extractors. Clear outputs before returning to exports.")
 production=page(
  "Escada de produção\n\nCada melhoria resolve um gargalo e revela o próximo: jazida, energia, fio, poluição.\n\nVeios grandes rendem mais: a extratora lê o 3x3 abaixo dela. Jazida pura dobra a velocidade.",
  "Production ladder\n\nEach upgrade fixes one bottleneck and reveals the next: vein, power, wire, pollution.\n\nBig veins pay off: the extractor reads the 3x3 below. A pure vein doubles its speed.")
 page(
- "Energia\n\nRoda d'água e cata-vento: grátis e limpos; 8 FE/t por face ou no nível do mar.\nGerador e biomassa: 40 FE/t; biomassa polui menos.\nVapor: 120 FE/t, precisa de água.\nGeotérmico e solar: escalam.\n\nAcumuladores seguram a noite.",
- "Power\n\nWater wheel and wind: free and clean; 8 FE/t per face or at sea level.\nGenerator and biomass: 40 FE/t; biomass pollutes less.\nSteam: 120 FE/t, needs water.\nGeothermal and solar: scale up.\n\nBatteries carry the night.")
+ "Energia\n\nRoda d'água e cata-vento: limpos, 8 FE/t.\nGerador e biomassa: 40 FE/t (biomassa polui menos).\nVapor: 120 FE/t, com água.\nGeotérmico e solar escalam.\nAcumuladores seguram a noite.",
+ "Power\n\nWater wheel and wind: clean, 8 FE/t.\nGenerator and biomass: 40 FE/t; biomass pollutes less.\nSteam: 120 FE/t, needs water.\nGeothermal and solar scale up.\n\nBatteries carry the night.")
 food=page(
  "Comida e povoado\n\nTrigo > moinho > farinha > cozinha > pão.\nCarnes do rancho > fornalha elétrica.\n\nO armazém paga esmeraldas pela comida, mais por comida pronta, e 50% a mais com aldeões perto.",
  "Food and village\n\nWheat > mill > flour > kitchen > bread.\nRanch meat > electric furnace.\n\nThe pantry pays emeralds for food, more for cooked food, and 50% more with villagers near.")
@@ -587,11 +591,11 @@ page(
  "Parar e medir\n\nRedstone pausa braços e esteiras. Esteiras reagem em até 8 ticks.\n\nPainéis mostram itens/min. Divisor filtrado: iguais à esquerda, outros à direita.",
  "Stop and measure\n\nRedstone pauses arms and belts. Belts respond within 8 ticks.\n\nPanels show items/min. A sorting splitter sends matching left, other right.")
 page(
- "Rotas entre zonas\n\nCartão no terminal: canal 1 a 16. Use exatamente dois terminais do mesmo tipo por canal. Agachar + item copia o produto a enviar.\n\nCarregadores e capataz levam o envio e usam o recebido. Cada ponta pode enviar um produto diferente.",
- "Inter-zone routes\n\nCard on terminal: channel 1 to 16. Use exactly two terminals of one type per channel. Sneak + item copies the outgoing product.\n\nHaulers and foremen fill dispatch and use received stock. Each end may send a different product.")
+ "Rotas entre zonas\n\nCartão no terminal: canal 1 a 16, dois terminais do mesmo tipo por canal. Agachar + item: produto a enviar.\n\nCarregadores e capataz levam o envio e usam o recebido.",
+ "Inter-zone routes\n\nCard on terminal: channel 1 to 16, two terminals of one type per channel. Sneak + item: product to send.\n\nHaulers and foremen fill dispatch and use received stock.")
 page(
- "Vagões e drones\n\nTrens: funis ligam terminal e vagão com baú. Separe descarga e carga; trilhos e redstone definem a viagem.\n\nDrones: até 64 blocos, 16 itens por voo. Energize os portos e deixe livre o trajeto a 3 blocos acima deles. Agachar + chave chama de volta.",
- "Minecarts and drones\n\nTrains: hoppers link terminal and chest minecart. Separate unloading and loading; rails and redstone define travel.\n\nDrones: up to 64 blocks, 16 items/flight. Power ports and clear the path 3 blocks above them. Sneak + wrench recalls.")
+ "Vagões e drones\n\nTrens: funis ligam terminal e vagão com baú; trilhos e redstone fazem a viagem.\n\nDrones: até 64 blocos, 16 itens por voo. Portos com energia e trajeto livre 3 blocos acima. Agachar + chave: volta.",
+ "Minecarts and drones\n\nTrains: hoppers link terminal and chest minecart; rails and redstone do the trip.\n\nDrones: up to 64 blocks, 16 items per flight. Powered ports, clear path 3 blocks up. Sneak + wrench recalls.")
 category_pages=[]
 for _ in categories:
  category_pages.append(len(pages)+1);pages.append(None)
@@ -632,20 +636,18 @@ for name in order:
   parts=", ".join(f"{count} {item_name(item,code)}" for item,count in ingredients.items())
   langs[code][craft_key]=("Fabricar: " if pt else "Craft: ")+parts+(f" ({made})" if made>1 else "")
  references[name]=len(pages)+1
- pages.append({"text":"","extra":[{"translate":f"{kind}.veio.{name}","bold":True},{"text":"\n"},
-  {"translate":usage_key},{"text":"\n"},{"translate":craft_key,"color":"dark_gray"},{"text":"\n"},
-  {"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}}]})
+ pages.append({"text":"","extra":[{"translate":f"{kind}.veio.{name}","bold":True},back_mark(),{"text":"\n"},
+  {"translate":usage_key},{"text":"\n"},{"translate":craft_key,"color":"dark_gray"}]})
 for g,(pt,en,members) in enumerate(categories):
  key=f"veio.guide.category.{g}"
  label(key,pt,en)
- extra=[{"translate":key,"bold":True},{"text":"\n"}]
+ extra=[{"translate":key,"bold":True},back_mark(),{"text":"\n"}]
  for name in members:
   kind="item" if name=="wrench" else "block"
   short_key=f"veio.guide.short.{name}"
   title_key=short_key if short_key in langs["pt_br"] else f"{kind}.veio.{name}"
   extra.extend([{"translate":title_key,"color":"dark_blue","underlined":True,
                  "click_event":{"action":"change_page","page":references[name]}},{"text":"\n"}])
- extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
  pages[category_pages[g]-1]={"text":"","extra":extra}
 
 # Receitas das máquinas, geradas de tools/production.json. Os nomes vanilla usam as chaves do
@@ -774,8 +776,8 @@ v_intro=vpage(
  "A vila operária\n\nVocê começa no centro de uma vila. Os aldeões passam a trabalhar por você, e a vila cresce com a fábrica.\n\nSiga os passos em ordem. A aba de avanços Vila operária marca o progresso.",
  "The worker village\n\nYou start at the center of a village. Villagers start working for you, and the village grows with the factory.\n\nFollow the steps in order. The Worker Village advancement tab tracks progress.")
 v_hire=vpage(
- "1. Primeiro trabalhador\n\nColoque um posto do lavrador perto da plantação e de aldeões.\n\nPonha pão no slot da esquerda e clique no posto com uma esmeralda.\n\nO aldeão colhe e traz a colheita ao posto.",
- "1. First worker\n\nPlace a farmhand post near crops and villagers.\n\nPut bread in the left slot and click the post with an emerald.\n\nThe villager harvests and brings the crop back.")
+ "1. Primeiro trabalhador\n\nPosto do lavrador perto da plantação e de aldeões.\n\nPão no slot da esquerda; clique no posto com uma esmeralda.\n\nO aldeão colhe e traz a colheita.",
+ "1. First worker\n\nFarmhand post near crops and villagers.\n\nBread in the left slot; click the post with an emerald.\n\nThe villager harvests and brings the crop back.")
 v_field=vpage(
  "2. Demarque a lavoura\n\nColoque o marco de lavoura no centro do campo, com água perto.\n\nPostos a até 3 blocos da borda trabalham na área toda: aram, plantam e colhem.\n\nSemente no marco: só ela é plantada.",
  "2. Mark the field\n\nPlace the field marker at the center of the field, with water nearby.\n\nPosts within 3 blocks of the border work the whole area: till, plant and harvest.\n\nSeed in the marker: only that is planted.")
@@ -801,37 +803,35 @@ v_grow=vpage(
  "A vila cresce\n\nTeto: 30 aldeões, +3 por posto com trabalhador, +5 por nível de zona, +2 por armazém, +20 pelo centro de controle. Máximo 150.\n\nCada um precisa de uma cama: sem cama livre, ninguém nasce.",
  "The village grows\n\nCap: 30 villagers, +3 per staffed post, +5 per zone level, +2 per storage, +20 for the control center. Max 150.\n\nEach one needs a bed: with no free bed, nobody is born.")
 v_lan=vpage(
- "Jogar na mesma rede\n\nQuem hospeda: Esc, Abrir para a LAN, Iniciar mundo LAN. O mundo fica no seu computador.\n\nQuem entra: o mesmo Wi-Fi, Multijogador, o mundo aparece na lista. Instale o Veio na mesma versão.\n\nCada um usa a própria conta. As máquinas são as do anfitrião.",
- "Play on your network\n\nHost: Esc, Open to LAN, Start LAN World. The world stays on your computer.\n\nJoin: the same Wi-Fi, Multiplayer, the world shows in the list. Install the same Veio version.\n\nEach player uses their own account. The machines are the host's.")
+ "Na mesma rede\n\nAnfitrião: Esc, Abrir para a LAN, Iniciar mundo LAN.\n\nQuem entra: mesmo Wi-Fi, Multijogador; o mundo aparece na lista. Mesma versão do Veio.\n\nAs máquinas são as do anfitrião.",
+ "On your network\n\nHost: Esc, Open to LAN, Start LAN World.\n\nJoin: same Wi-Fi, Multiplayer; the world shows in the list. Same Veio version.\n\nThe machines are the host's.")
 v_trouble=vpage(
  "Quando um aldeão para\n\nSem comida: ponha pão.\nAusente: traga-o ou dispense (agachar + chave).\nCaminho obstruído: abra passagem.\nSaída cheia: esvazie ou use um celeiro.\nPasse o cursor no estado do painel para dicas.",
  "When a villager stops\n\nNo food: add bread.\nMissing: bring them back or dismiss (sneak + wrench).\nPath blocked: clear the way.\nOutput full: empty it or use a barn.\nHover over the panel status for tips.")
 v_barracks=vpage(
- "Quartel\n\nQuatro lingotes de ferro, uma esmeralda e pedra lisa. A receita abre com os circuitos.\n\nEsmeralda contrata. Agachar com a mão vazia troca a classe, e cada troca gasta uma esmeralda do slot.\n\nMilícia: três golpes.\nGuarda: tanque, os monstros vão nele.\nArqueiro: atira de longe.\nMago: dois golpes e fere outro.\n\nCada golpe come uma tarefa. Sem comida, o soldado fica no posto. Um quartel, um soldado.",
- "Barracks\n\nFour iron ingots, one emerald and smooth stone. The recipe unlocks with circuits.\n\nAn emerald hires. Sneak with an empty hand cycles the class, and each change spends an emerald from the slot.\n\nMilitia: three blows.\nGuard: tank, monsters come for them.\nArcher: shoots from far away.\nMage: two blows and wounds another.\n\nEach blow eats one task. With no food the soldier stays at the post. One barracks, one soldier.")
+ "Quartel\n\nEsmeralda contrata. Agachar de mão vazia troca a classe (1 esmeralda).\n\nMilícia: 3 golpes.\nGuarda: tanque.\nArqueiro: de longe.\nMago: 2 golpes, fere 2.\nGolpe gasta comida.",
+ "Barracks\n\nAn emerald hires. Sneak with an empty hand to switch class (1 emerald).\n\nMilitia: 3 blows.\nGuard: tank.\nArcher: from afar.\nMage: 2 blows, hits 2.\nBlows cost food.")
 v_food=vpage(
  "Comida\n\nCada tarefa gasta 2 pontos. Trigo vale 1, batata e cenoura 1, pão 6 (3 tarefas), carne assada 8 (4 tarefas), torta 10.\n\nComida pronta rende mais: monte moinho e cozinha cedo.",
  "Food\n\nEach task costs 2 points. Wheat is worth 1, potato and carrot 1, bread 6 (3 tasks), cooked meat 8 (4 tasks), pie 10.\n\nCooked food goes further: build a mill and kitchen early.")
 v_home=vpage(
- "Sua casa\n\nA vila já vem com a casa do fundador: painel, lareira, sofá, cama e um mural com o mapa.\n\nDentro dela, perto do painel, as fábricas rendem 15% mais.\n\nSua primeira cama é a da casa; fora dela, só mais uma.",
- "Your house\n\nThe village comes with the founder's house: panel, fireplace, sofa, bed and a map mural.\n\nInside it, near the panel, factories produce 15% more.\n\nYour first bed is the one at home; outside it, just one more.")
+ "Sua casa\n\nA vila já vem com a casa do fundador: painel, lareira, sofá, cama e mural.\n\nDentro, perto do painel, as fábricas rendem 15% mais.\n\nA primeira cama é a da casa; fora, só mais uma.",
+ "Your house\n\nThe village comes with the founder's house: panel, fireplace, sofa, bed and mural.\n\nInside, near the panel, factories produce 15% more.\n\nYour first bed is the one at home; outside, just one more.")
 v_meals=vpage(
- "Refeições\n\nRefeição (assados, pão, batata assada, torta): trabalho mais rápido e fábricas +5% por 5 min.\n\nBanquete (ensopados, sopas, cenoura dourada): +10% por 8 min e regeneração.\n\nComer em casa dobra o tempo.",
- "Meals\n\nMeal (roasts, bread, baked potato, pie): faster work and factories +5% for 5 min.\n\nFeast (stews, soups, golden carrot): +10% for 8 min and regeneration.\n\nEating at home doubles the time.")
+ "Refeições\n\nRefeição (assados, pão, torta): trabalho mais rápido e fábricas +5% por 5 min.\n\nBanquete (sopas, cenoura dourada): +10% por 8 min e regeneração.\n\nEm casa, dura o dobro.",
+ "Meals\n\nMeal (roasts, bread, pie): faster work, factories +5% for 5 min.\n\nFeast (stews, soups, golden carrot): +10% for 8 min, regeneration.\n\nAt home it lasts twice as long.")
 v_blocks=len(vpages)+1;vpages.append(None)
 vrefs={}
 for name in village_order:
  reference_labels(name)
  vrefs[name]=len(vpages)+1
- vpages.append({"text":"","extra":[{"translate":f"block.veio.{name}","bold":True},{"text":"\n"},
-  {"translate":f"veio.guide.use.{name}"},{"text":"\n"},{"translate":f"veio.guide.craft.{name}","color":"dark_gray"},{"text":"\n"},
-  {"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}}]})
+ vpages.append({"text":"","extra":[{"translate":f"block.veio.{name}","bold":True},back_mark(),{"text":"\n"},
+  {"translate":f"veio.guide.use.{name}"},{"text":"\n"},{"translate":f"veio.guide.craft.{name}","color":"dark_gray"}]})
 label("veio.village.blocks","Blocos da vila","Village blocks")
-extra=[{"translate":"veio.village.blocks","bold":True},{"text":"\n"}]
+extra=[{"translate":"veio.village.blocks","bold":True},back_mark(),{"text":"\n"}]
 for name in village_order:
  extra.extend([{"translate":f"block.veio.{name}","color":"dark_blue","underlined":True,
   "click_event":{"action":"change_page","page":vrefs[name]}},{"text":"\n"}])
-extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
 vpages[v_blocks-1]={"text":"","extra":extra}
 for code in langs:
  for key in [k for k in langs[code] if k.startswith("veio.village.contents.")]: del langs[code][key]
