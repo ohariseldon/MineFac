@@ -1322,3 +1322,52 @@ fn field_hands_and_shepherds_sleep_at_night_and_the_rest_keep_working() {
     assert!(!rests(FARM_POST, false));
     assert!(!rests(HAULER_POST, true) && !rests(BARRACKS, true) && !rests(CONTROL_CENTER, true), "fábrica, quartel e painel seguem");
 }
+
+#[test]
+fn hauler_fills_a_freight_dispatch_and_uses_received_goods_at_local_machines() {
+    let mut village = Village::new("veio:test_freight_workers");
+    let mut desk = desk_with_foreman(&mut village, 19001, [90, 0, 0, 1]);
+    desk.items[0] = Some(ItemStack::new("minecraft:bread", foreman::DESK_FOOD));
+    let mut drill = block(DRILL);
+    drill.items[0] = Some(ItemStack::new("minecraft:raw_copper", 10));
+    village.stations.insert(MANAGED, drill);
+    let mut station = block(freight::RAIL);
+    station.nbt.insert("FreightExport".into(), Tag::String("minecraft:raw_copper".into()));
+    village.stations.insert(MILL_AT, station);
+    assert!(hauler::station(freight::RAIL));
+    let now = cycles_at(&mut village, DESK, &mut desk, 1, 100, |desk| !foreman::queue(desk).is_empty());
+    let task = foreman::queue(&desk).remove(0);
+    assert_eq!((task.from, task.to, task.into), (MANAGED, MILL_AT, 0));
+    village.stations.insert(DESK, desk);
+    village.villager(19002, [10.5, 64.0, 11.5], [90, 0, 0, 2]);
+    let mut hauler = block(HAULER_POST);
+    set_number(&mut hauler, "Ration", 30);
+    assert!(assign(village.dimension, HAULER_AT, &mut hauler, ([90, 0, 0, 2], 19002), now));
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 1);
+    village.walk(19002, [11, 64, 8]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 2);
+    assert!(village.stations[&MANAGED].items[0].is_none());
+    village.walk(19002, [8, 64, 11]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 3);
+    assert_eq!(village.stations[&MILL_AT].items[0], Some(ItemStack::new("minecraft:raw_copper", 10)));
+    assert!(carried(&hauler).is_empty());
+
+    // Simulate transport depositing return goods in the received compartment.
+    village.stations.get_mut(&MILL_AT).unwrap().items[3] = Some(ItemStack::new(PLATE, 10));
+    let assembler = [4, 64, 8];
+    village.stations.insert(assembler, block(ASSEMBLER));
+    let mut desk = village.stations.remove(&DESK).unwrap();
+    set_queue_empty(&mut desk);
+    let later = cycles_at(&mut village, DESK, &mut desk, now + 4, 100,
+        |desk| foreman::queue(desk).iter().any(|task| task.from == MILL_AT && task.to == assembler));
+    let task = foreman::queue(&desk).into_iter().find(|task| task.to == assembler).unwrap();
+    assert_eq!((task.from, task.slot, task.item.as_str()), (MILL_AT, 3, PLATE));
+    village.stations.insert(DESK, desk);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, later + 1);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, later + 2);
+    village.walk(19002, [4, 64, 9]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, later + 3);
+    assert_eq!(village.stations[&assembler].items[0], Some(ItemStack::new(PLATE, 10)));
+    assert!(village.stations[&MILL_AT].items[3].is_none());
+    assert_eq!(village.stations[&MILL_AT].items[0], Some(ItemStack::new("minecraft:raw_copper", 10)), "dispatch is not grabbed as received stock");
+}

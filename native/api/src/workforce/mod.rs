@@ -66,7 +66,7 @@ pub(super) const NO_WAGE: i32 = 25;
 pub(super) const ZONE_ACTIVE: i32 = 26;
 pub(super) const STORING: i32 = 27;
 /// Lavrador e pastor de noite: o aldeão volta à vida vanilla (dormir em casa).
-pub(super) const RESTING: i32 = 28;
+pub(super) const RESTING: i32 = 29;
 /// Resposta de uma tarefa que ainda está procurando: o painel mantém o estado anterior.
 pub(super) const KEEP: i32 = -1;
 

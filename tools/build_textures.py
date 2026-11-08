@@ -398,10 +398,11 @@ MACHINE_TIER = {
     "farm_post": "copper", "hauler_post": "iron", "foreman_desk": "copper", "shepherd_post": "copper",
     "barracks": "iron",
     "barn": "copper", "silo": "iron", "control_center": "steel",
+    "freight_station": "iron", "drone_port": "steel",
 }
 
 def front(name):
-    motif = MOTIFS["drill" if name in ("drill_mk2", "drill_mk3") else name]
+    motif = MOTIFS[{"freight_station": "hauler_post", "drone_port": "control_center", "drill_mk2": "drill", "drill_mk3": "drill"}.get(name, name)]
     rows = [list(row) for row in FRONT]
     for y, line in enumerate(motif):
         for x, char in enumerate(line):
@@ -819,6 +820,7 @@ def main():
     out["item/productivity_module"] = module_card("oO")
     out["item/flour"] = render(FLOUR, salt=12)
     out["item/biomass"] = render(BIOMASS, salt=13)
+    out["item/route_card"] = module_card("uv")
     for name, pixels in out.items():
         write_png(ROOT / f"{name}.png", pixels)
     print(f"{len(out)} texturas 16x16 em {ROOT.relative_to(ROOT.parents[3])}")

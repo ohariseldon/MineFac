@@ -24,6 +24,10 @@ Automação industrial no mundo procedural do Minecraft, executada no Horizon. A
 
 A fábrica faz parte do mundo do Minecraft: extrai das jazidas vanilla, queima combustíveis vanilla, leva energia por postes e fios, cuida da lavoura, polui e atrai ataques noturnos, defende a base e exporta para os povoados em troca de esmeraldas.
 
+## Transporte entre zonas
+
+A integração de [terminais ferroviários e portos de drones](TRANSPORTES.md) permite definir o produto enviado e recebido por zona. O capataz cria as tarefas dos carregadores para abastecer os terminais e usar o que chega. Vagões com baú conectam-se por funis; drones levam até 16 itens entre portos a até 64 blocos, com energia, ida e volta. A entrega aguarda compilação pelo launcher e teste no jogo; consulte o documento para configuração, circuitos e limites.
+
 ## Tutorial dentro do jogo
 
 Ao entrar no mundo, cada jogador recebe uma vez o **Guia do Veio**. Selecione o livro na barra e abra com o botão direito. O sumário é clicável. Comece pela primeira fábrica de cobre e siga até a primeira engrenagem. As páginas finais servem de consulta para uso e fabricação das máquinas.

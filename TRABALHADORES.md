@@ -56,12 +56,12 @@ Revisão feita sobre a main `cf37004` com a casa do fundador (sexta entrega) e a
 ### Aldeões
 
 - **Contratação** prefere quem não faz falta no comércio (sem profissão ou nitwit, depois nível 1, por último os experientes).
-- **Lavradores e pastores dormem à noite.** Das 13000 às 23000, depois de entregar o que carregam, a ordem é retirada e o aldeão volta à vida vanilla (ir para a cama). O painel mostra o estado novo 28, **Descansando (noite)**. Carregador, capataz, administrador e soldados seguem trabalhando. Dormir numa cama longe do posto não conta como ausência (antes, a noite de 8 min passava do limite de 5 min e o posto dispensava o trabalhador).
+- **Lavradores e pastores dormem à noite.** Das 13000 às 23000, depois de entregar o que carregam, a ordem é retirada e o aldeão volta à vida vanilla (ir para a cama). O painel mostra o estado novo 29, **Descansando (noite)**. Carregador, capataz, administrador e soldados seguem trabalhando. Dormir numa cama longe do posto não conta como ausência (antes, a noite de 8 min passava do limite de 5 min e o posto dispensava o trabalhador).
 
 ### Contratos tocados
 
 - `lib.rs`: saída antecipada do gancho `tick` na janela; `note_players` e `harm_villagers` recebem o relógio.
-- `presentation.rs`: `STATUS_KEYS` com 29 entradas (novo `resting`, cor azul).
+- `presentation.rs`: `STATUS_KEYS` com 30 entradas (`freight_route` do Codex em 28, `resting` em 29, cor azul).
 - `pollution.rs`: `night_at`, `is_night`; `spawn_wave` devolve quantos nasceram.
 - Substituto offline: `Host::window`.
 

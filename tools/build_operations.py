@@ -41,6 +41,7 @@ def add_labels(langs):
         "no_wage": ("Coloque esmeraldas na mesa para recontratar trabalhadores.", "Put emeralds in the desk to rehire workers."),
         "zone": ("Postos perto da borda trabalham nesta zona.", "Posts near the border work in this zone."),
         "storing": ("A fila do capataz guarda e retira itens daqui.", "The foreman's queue stores and takes items here."),
+        "freight_route": ("Use exatamente dois terminais do mesmo tipo e canal; confira filtros, distância e destino carregado.", "Use exactly two terminals of the same type and channel; check filters, range and loaded destination."),
         "resting": ("De noite o trabalhador dorme em casa e volta ao amanhecer.", "At night the worker sleeps at home and comes back at dawn."),
         "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
     }

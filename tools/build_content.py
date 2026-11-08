@@ -78,6 +78,8 @@ BLOCKS = {
     "silo": ("machine", "iron", 18, [], 2.0),
     "control_center": ("machine", "steel", 4, [], 2.0),
     "barracks": ("machine", "iron", 2, [], 2.0),
+    "freight_station": ("machine", "iron", 6, [3, 4, 5], 2.0),
+    "drone_port": ("machine", "steel", 7, [3, 4, 5, 6], 2.0),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
 }
@@ -101,6 +103,7 @@ ITEMS = {
     "productivity_module": ("minecraft:echo_shard", 16),
     "flour": ("minecraft:sugar", 64),
     "biomass": ("minecraft:wheat", 64),
+    "route_card": ("minecraft:paper", 1),
 }
 
 TABS = {
@@ -111,7 +114,7 @@ TABS = {
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
         "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
         "minecraft:coal", "minecraft:lava_bucket"]),
-    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench"]),
+    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "freight_station", "drone_port", "route_card", "wrench", "minecraft:rail", "minecraft:powered_rail", "minecraft:chest_minecart", "minecraft:hopper"]),
     "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
         "pantry", "flour", "biomass", "tesla", "barracks", "repair_kit", "minecraft:bone_meal"]),

@@ -33,6 +33,7 @@ pub(crate) struct Profile {
 
 pub(crate) fn profile(block: &str) -> Option<Profile> {
     use production::*;
+    if freight::owns(block) { return Some(Profile { sector: Sector::Logistics, kind: StationKind::Transport }); }
     let sector = match block {
         DRILL | DRILL_MK2 | DRILL_MK3 => Sector::Extraction,
         PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE
@@ -67,7 +68,7 @@ pub(crate) fn blockage(status: i32) -> Blockage {
         4 | 12 => Blockage::Resource,
         5 => Blockage::Power,
         6 => Blockage::Fuel,
-        7 | 10 | 14 | 15 | 17 | 20 | 22 => Blockage::Environment,
+        7 | 10 | 14 | 15 | 17 | 20 | 22 | 28 => Blockage::Environment,
         18 | 19 => Blockage::Worker,
         9 => Blockage::Control,
         13 => Blockage::Damage,
@@ -135,7 +136,8 @@ pub(crate) fn inspect(entity: &ModBlockEntity) -> Option<StationView<'_>> {
 
 /// Material compatibility for planning. Does not check space, reach or side access.
 pub(crate) fn accepts_material(entity: &ModBlockEntity, slot: usize, stack: &ItemStack) -> bool {
-    let compatible = if entity.id == HUB { contracts::accepts(entity, slot, stack) }
+    let compatible = if freight::owns(&entity.id) { freight::accepts_plan(entity, slot, stack) }
+        else if entity.id == HUB { contracts::accepts(entity, slot, stack) }
         else { accepts(&entity.id, slot, stack) };
     if !compatible { return false; }
     // Preserve the slot fence, allocating its layout only for accepted candidates.
@@ -145,6 +147,7 @@ pub(crate) fn accepts_material(entity: &ModBlockEntity, slot: usize, stack: &Ite
 /// Live delivery validation, shared with host insertion. The host remains responsible
 /// for stack limits and moving items; an inspection is never an inventory transaction.
 pub(crate) fn accepts_delivery(host: &dyn Host, event: &ContainerAcceptsEvent<'_>) -> bool {
+    if freight::owns(&event.entity.id) { return freight::accepts_delivery(event.entity, event.slot, event.stack); }
     accepts_material(event.entity, event.slot, event.stack)
         && (event.entity.id != MERGER || logistics::accepts_merger(host, event))
 }
