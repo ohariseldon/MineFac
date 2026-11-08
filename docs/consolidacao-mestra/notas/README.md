@@ -17,7 +17,7 @@ A nota vai **no mesmo PR** da mudança. Se não houver PR (teste local, decisão
 
 `AAAA-MM-DD-<frente>-<assunto>.md`, tudo em minúsculas, com hífens e sem acentos. Exemplos: `2026-11-09-claude-obras-traducoes.md`, `2026-11-09-dono-teste-0-26.md`.
 
-Para `<frente>`, use `dono`, `claude`, `cloud`, `codex`, `grok` ou `integrador` (frentes em [07](../07_AGENTES_E_WORKFLOW.md)). Duas notas no mesmo dia e assunto levam sufixo `-2`, `-3`.
+Para `<frente>`, use quem fez (`dono`, `claude`, `cloud`, `codex`, `grok`, `integrador`; ver [07](../07_AGENTES_E_WORKFLOW.md)) ou a frente temática da thread (por exemplo, `visual`, `realismo`, `mapa`, `obras`). Duas notas no mesmo dia e assunto levam sufixo `-2`, `-3`.
 
 ## Modelo (cabe em meia tela)
 
