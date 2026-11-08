@@ -95,6 +95,7 @@ impl Hooks for Factory {
         // A casa, as camas e os bônus em memória pertencem ao mundo que abre.
         // O painel carrega os próprios dados salvos quando começar a funcionar.
         home::reset();
+        onboarding::world_changed();
         milestones::census::reset();
         blueprint::reset();
     }
@@ -305,7 +306,18 @@ impl Hooks for Factory {
 
     /// Clique num aldeão: escolher quem contratar para o posto que espera, ou (agachado, mão
     /// vazia) ver onde ele trabalha. Fora disso o comércio vanilla segue.
+    /// Também: conversa com o prefeito do tutorial e com o visitante da agenda (em vez da troca).
     fn interact_entity(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::InteractEntityEvent<'_>) -> Flow {
+        if event.kind == onboarding::MAYOR {
+            onboarding::talk(host);
+            return Flow::Cancel;
+        }
+        if event.kind == workforce::society::agenda::VISITOR
+            && let Ok(id) = u32::try_from(event.entity)
+            && workforce::society::agenda::talk(host, id)
+        {
+            return Flow::Cancel;
+        }
         if event.kind != "minecraft:villager" || event.entity < 0 {
             return Flow::Continue;
         }
@@ -478,17 +490,6 @@ impl Hooks for Factory {
             let time = host.level(host.dimension()).and_then(|level| level.game_time(host)).unwrap_or(0);
             holding::press(host.dimension(), event.pos, event.entity, event.id, time);
         }
-    }
-
-    fn interact_entity(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::InteractEntityEvent<'_>) -> Flow {
-        // Conversa com o visitante da agenda (em vez da tela de troca).
-        if event.kind == workforce::society::agenda::VISITOR
-            && let Ok(id) = u32::try_from(event.entity)
-            && workforce::society::agenda::talk(host, id)
-        {
-            return Flow::Cancel;
-        }
-        Flow::Continue
     }
 
     fn screen_tooltip(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::ScreenTooltipEvent<'_>) {

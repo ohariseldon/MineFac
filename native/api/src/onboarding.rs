@@ -64,6 +64,14 @@ struct Progress {
     crafted: u16,
     tips: u16,
     pending_tips: u16,
+    /// Prólogo (`intro`): casa, prefeito e terreno; `plot` é o centro do terreno e o nível dele;
+    /// `outro` marca a última conversa com o prefeito. Salvos.
+    intro: u8,
+    plot: Option<Pos>,
+    outro: bool,
+    intro_announced: Option<u8>,
+    intro_since: Option<u64>,
+    plot_level: Option<intro::Level>,
     // Unsaved transient evidence must not survive a reload or manual intervention.
     input_credit: u32,
     output_credit: u32,
@@ -223,10 +231,11 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-2\n{} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-3\n{} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
-            self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips, self.dimension);
-        for pos in self.blocks {
+            self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips,
+            self.intro, u8::from(self.outro), self.dimension);
+        for pos in self.blocks.iter().chain([&self.plot]) {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
         }
@@ -235,24 +244,30 @@ impl Progress {
 
     fn decode(text: &str) -> Option<Self> {
         let mut lines = text.lines();
-        let fields = match lines.next()? { "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, _ => return None };
+        let fields = match lines.next()? { "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, "veio-onboarding-3" => 14, _ => return None };
         let values: Vec<u32> = lines.next()?.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
         if values.len() != fields || values[0] > u32::from(DONE) { return None; }
-        let (crafted, tips) = if fields == 12 { (values[10] as u16, values[11] as u16) } else { (0, 0) };
+        let (crafted, tips) = if fields >= 12 { (values[10] as u16, values[11] as u16) } else { (0, 0) };
+        // Saves de antes do prólogo: quem já começou a fábrica não volta para a casa e o prefeito.
+        let (intro, outro) = if fields == 14 { ((values[12] as u8).min(intro::INTRO_DONE), values[13] != 0) }
+            else if values[0] > 0 || crafted != 0 { (intro::INTRO_DONE, values[0] == u32::from(DONE)) }
+            else { (0, false) };
         let dimension = lines.next()?.to_owned();
         if dimension.len() > 128 { return None; }
+        let parse = |line: &str| -> Option<Option<Pos>> {
+            if line == "-" { return Some(None); }
+            let coords: Vec<i32> = line.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
+            Some(Some(coords.try_into().ok()?))
+        };
         let mut blocks = [None; 5];
-        for block in &mut blocks {
-            let line = lines.next()?;
-            if line != "-" {
-                let coords: Vec<i32> = line.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
-                *block = Some(coords.try_into().ok()?);
-            }
-        }
+        for block in &mut blocks { *block = parse(lines.next()?)?; }
+        let plot = if fields == 14 { parse(lines.next()?)? } else { None };
+        // Sem o terreno salvo, o prefeito escolhe outro.
+        let intro = if intro == intro::PLOT_STAGE && plot.is_none() { intro::MAYOR_STAGE } else { intro };
         Some(Self { step: values[0] as u8, hidden: values[1] != 0, powered: values[2] != 0,
             plates: values[3].min(4), gears: values[4].min(1), copper: values[5].min(1),
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
-            delivered: values[9] != 0, crafted, tips, dimension, blocks, ..Self::default() })
+            delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro, ..Self::default() })
     }
 }
 
@@ -276,7 +291,8 @@ pub(super) fn tracking() -> bool { ACTIVE.load(Ordering::Relaxed) }
 
 pub(super) fn visible_goal(uuid: u128) -> bool {
     SESSION.lock().ok().and_then(|slot| slot.as_ref().and_then(|session|
-        session.players.get(&uuid).map(|progress| progress.step < DONE && !progress.hidden)))
+        session.players.get(&uuid).map(|progress| (progress.step < DONE || progress.intro < intro::INTRO_DONE || !progress.outro)
+            && !progress.hidden)))
         .unwrap_or(false)
 }
 
@@ -498,6 +514,14 @@ fn tick(host: &mut dyn Host, now: u64) {
     let s = slot.as_mut().unwrap();
     for player in &online {
         let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
+        // Prólogo primeiro: casa, prefeito e terreno. A fábrica só começa depois dele.
+        if p.intro < intro::INTRO_DONE {
+            intro::tick(host, player, p, now);
+            if p.dirty && (now % 100 == 0 || p.intro == intro::INTRO_DONE) && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
+                host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
+            }
+            continue;
+        }
         // Exactly one transition per update. Never skip an unperformed exercise.
         if player.dimension == p.dimension && p.ready() {
             p.step += 1; p.dirty = true; p.status = 0; p.last_status_notice = None;
@@ -530,6 +554,7 @@ fn tick(host: &mut dyn Host, now: u64) {
                 }
             } else { p.last_status_notice = None; }
         }
+        if !p.hidden && p.step == DONE && !p.outro { intro::outro_bar(host, player); }
         if p.dirty && (now % 100 == 0 || p.ready() || p.step == DONE) && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
             host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
         }
@@ -568,6 +593,7 @@ pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command:
     match action { 0 => { p.hidden = true; }, 1 => { p.hidden = false; p.announced = None; },
         // Refazer não repete as dicas já vistas.
         _ => { *p = Progress { tips: p.tips, ..Progress::default() }; } }
+    if action == 1 { p.intro_announced = None; }
     p.dirty = true;
     if save(&s.root, player.uuid, p).is_err() { host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); }
     host.tell(player.uuid, Text::tr(if action == 0 { "veio.onboarding.hidden" } else { "veio.onboarding.shown" }, &[]));
@@ -576,6 +602,26 @@ pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command:
     true
 }
 
+/// Clique no prefeito (`intro::MAYOR`): a fala do momento para quem clicou. `true` se o Veio
+/// tomou o clique.
+pub(super) fn talk(host: &mut dyn Host) -> bool {
+    let Some(player) = host.acting_player() else { return true };
+    let Ok(mut slot) = SESSION.lock() else { return true };
+    if !session(host, &mut slot) { return true; }
+    let s = slot.as_mut().unwrap();
+    let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
+    intro::talk(host, &player, p);
+    if p.dirty && save(&s.root, player.uuid, p).is_err() {
+        host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[]));
+    }
+    true
+}
+
+/// Outro mundo vai abrir: esquece o prefeito do mundo anterior.
+pub(super) fn world_changed() { intro::reset(); }
+
+mod intro;
+pub(super) use intro::MAYOR;
 #[cfg(test)]
 mod tests;
 mod transport;

@@ -320,9 +320,9 @@ for key, pt, en in [
  ("veio.barracks.archer", "Arqueiro pronto.", "Archer ready."),
  ("veio.barracks.mage", "Mago pronto.", "Mage ready."),
  ("veio.barracks.need_emerald", "Uma esmeralda no quartel treina a classe.", "An emerald in the barracks trains the class."),
- ("veio.worker.hired", "Aldeão contratado. Ele vai até as plantações maduras.", "Villager hired. They will walk to ripe crops."),
+ ("veio.worker.hired", "Aldeão contratado. Ele vai colher as plantas maduras em volta.", "Villager hired. They will harvest the ripe crops around."),
  ("veio.worker.staffed", "Este posto já tem um trabalhador.", "This post already has a worker."),
- ("veio.worker.none", "Nenhum aldeão adulto livre a até 8 blocos.", "No free adult villager within 8 blocks."),
+ ("veio.worker.none", "Ninguém livre a até 8 blocos. Clique, com a esmeralda, no aldeão que quiser (30 s).", "No one free within 8 blocks. Click the villager you want with the emerald (30 s)."),
  ("veio.worker.dismissed", "Trabalhador dispensado. Ele volta à vida de aldeão.", "Worker dismissed. They return to village life."),
  ("advancement.veio.workforce.title", "Mão de obra", "Hired Hands"),
  ("advancement.veio.workforce.description", "Contrate um aldeão para colher a lavoura.", "Hire a villager to harvest your fields."),
@@ -1399,7 +1399,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.29.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.30.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",

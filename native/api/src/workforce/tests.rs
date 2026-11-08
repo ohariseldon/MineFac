@@ -2909,6 +2909,7 @@ fn morale_and_leisure_move_the_human_development_index() {
     assert!(home(true, 100).idh() > home(true, 50).idh(), "ânimo alto melhora o IDH");
     assert!(home(true, 0).idh() < home(true, 50).idh(), "ânimo baixo piora o IDH");
     assert!(home(true, 100).idh() <= 100);
+}
 
 #[test]
 fn with_no_one_near_the_post_waits_for_the_villager_the_player_clicks() {
