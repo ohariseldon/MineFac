@@ -252,7 +252,7 @@
       "work": "press",
       "finish": "finish",
       "interval": 32,
-      "volume": 0.168,
+      "volume": 0.42,
       "ambient": false
     },
     {
@@ -263,7 +263,7 @@
       "work": "assembly",
       "finish": "finish",
       "interval": 36,
-      "volume": 0.126,
+      "volume": 0.315,
       "ambient": false
     },
     {
@@ -273,7 +273,7 @@
       "work": "cut",
       "finish": null,
       "interval": 28,
-      "volume": 0.126,
+      "volume": 0.315,
       "ambient": false
     },
     {
@@ -283,7 +283,7 @@
       "work": "crush",
       "finish": null,
       "interval": 30,
-      "volume": 0.154,
+      "volume": 0.385,
       "ambient": false
     },
     {
@@ -295,7 +295,7 @@
       "work": "motor",
       "finish": null,
       "interval": 48,
-      "volume": 0.09,
+      "volume": 0.225,
       "ambient": true
     },
     {
@@ -306,7 +306,7 @@
       "work": "motor",
       "finish": "finish",
       "interval": 48,
-      "volume": 0.09,
+      "volume": 0.225,
       "ambient": true
     },
     {
@@ -316,7 +316,7 @@
       "work": "electronics",
       "finish": "assembly",
       "interval": 40,
-      "volume": 0.07,
+      "volume": 0.175,
       "ambient": false
     },
     {
@@ -326,7 +326,7 @@
       "work": "grind",
       "finish": null,
       "interval": 48,
-      "volume": 0.11,
+      "volume": 0.275,
       "ambient": true
     },
     {
@@ -336,7 +336,7 @@
       "work": "rustle",
       "finish": "finish",
       "interval": 42,
-      "volume": 0.084,
+      "volume": 0.21,
       "ambient": false
     },
     {
@@ -346,7 +346,7 @@
       "work": "harvest",
       "finish": null,
       "interval": 36,
-      "volume": 0.126,
+      "volume": 0.315,
       "ambient": false
     },
     {
@@ -356,7 +356,7 @@
       "work": "rustle",
       "finish": null,
       "interval": 40,
-      "volume": 0.084,
+      "volume": 0.21,
       "ambient": false
     },
     {
@@ -366,7 +366,7 @@
       "work": "saw",
       "finish": null,
       "interval": 36,
-      "volume": 0.126,
+      "volume": 0.315,
       "ambient": false
     },
     {
@@ -379,7 +379,7 @@
       "work": "motor",
       "finish": null,
       "interval": 48,
-      "volume": 0.09,
+      "volume": 0.225,
       "ambient": true
     },
     {
@@ -390,7 +390,7 @@
       "work": "wood",
       "finish": null,
       "interval": 46,
-      "volume": 0.084,
+      "volume": 0.21,
       "ambient": false
     },
     {
@@ -402,7 +402,7 @@
       "work": null,
       "finish": "assembly",
       "interval": 24,
-      "volume": 0.1,
+      "volume": 0.25,
       "ambient": false
     },
     {
@@ -412,7 +412,7 @@
       "work": "drone",
       "finish": null,
       "interval": 48,
-      "volume": 0.09,
+      "volume": 0.225,
       "ambient": true
     },
     {
@@ -425,7 +425,7 @@
       "work": "belt",
       "finish": null,
       "interval": 48,
-      "volume": 0.055,
+      "volume": 0.138,
       "ambient": true
     }
   ]

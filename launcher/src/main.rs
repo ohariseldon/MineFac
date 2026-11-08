@@ -53,7 +53,8 @@ fn run(args: &[String]) -> Result<(), String> {
 
     let target = mods.join("veio");
     let built = fs::read_to_string(target.join(STAMP)).unwrap_or_default();
-    let build_stamp = format!("{version}\nprofile={NATIVE_PROFILE}");
+    // A versão não basta: na mesma versão o código muda (correções, testes no PC).
+    let build_stamp = format!("{version}\nprofile={NATIVE_PROFILE}\nsource={:016x}", source_digest(&root.join("native")));
     let rebuild = args.iter().any(|arg| arg == "--rebuild") || built.trim() != build_stamp;
     let skip = args.iter().any(|arg| arg == "--skip-build");
     if skip {
@@ -248,6 +249,34 @@ fn ask(question: &str) -> Result<String, String> {
     if line.is_empty() { Err("nenhum caminho informado".into()) } else { Ok(line) }
 }
 
+/// Impressão digital do código nativo (caminhos e conteúdo, FNV-1a), sem `target` e a verificação offline.
+fn source_digest(dir: &Path) -> u64 {
+    fn walk(dir: &Path, base: &Path, files: &mut Vec<PathBuf>) {
+        let Ok(entries) = fs::read_dir(dir) else { return };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let name = entry.file_name();
+            if path.is_dir() {
+                if name != "target" && name != "offline-check" { walk(&path, base, files); }
+            } else {
+                files.push(path.strip_prefix(base).unwrap_or(&path).to_path_buf());
+            }
+        }
+    }
+    let mut files = Vec::new();
+    walk(dir, dir, &mut files);
+    files.sort();
+    let mut hash: u64 = 0xcbf29ce484222325;
+    let mut feed = |bytes: &[u8]| for byte in bytes { hash = (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3); };
+    for file in files {
+        feed(file.to_string_lossy().replace('\\', "/").as_bytes());
+        feed(&[0]);
+        feed(&fs::read(dir.join(&file)).unwrap_or_default());
+        feed(&[0]);
+    }
+    hash
+}
+
 fn pause() {
     print!("\nPressione Enter para fechar...");
     io::stdout().flush().ok();
@@ -273,6 +302,20 @@ mod tests {
         assert_eq!(read.get("instance").map(String::as_str), Some("Veio"));
         assert_eq!(config_args(&read), ["--a", "b"]);
         assert!(!read.contains_key("mods_dir"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn source_digest_changes_with_the_code_but_not_with_build_output() {
+        let dir = std::env::temp_dir().join(format!("veio-launcher-digest-{}", std::process::id()));
+        fs::create_dir_all(dir.join("api/src")).unwrap();
+        fs::write(dir.join("api/src/lib.rs"), "fn a() {}").unwrap();
+        let first = source_digest(&dir);
+        fs::create_dir_all(dir.join("api/target")).unwrap();
+        fs::write(dir.join("api/target/x.o"), "obj").unwrap();
+        assert_eq!(source_digest(&dir), first, "saída de compilação não conta");
+        fs::write(dir.join("api/src/lib.rs"), "fn b() {}").unwrap();
+        assert_ne!(source_digest(&dir), first, "código mudado pede nova compilação");
         fs::remove_dir_all(dir).unwrap();
     }
 
