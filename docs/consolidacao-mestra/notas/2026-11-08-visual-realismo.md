@@ -89,3 +89,14 @@ dependam de onde o jogador está, nuvens menos serrilhadas, sempre leve (8 GB).
   "custom", BSL e Bliss "all rights reserved"; nenhum pode ir dentro do nosso zip. Plano: o
   launcher baixa do Modrinth no PC do jogador. Pedido de teste no PC do Luiz (Complementary
   Reimagined, Photon, BSL: carrega? FPS? capturas) antes de ligar isso no launcher.
+
+## Shaders Iris otimizados (commit desta seção)
+
+O Luiz não quer só baixar BSL e companhia ("o BSL é muito foda, mas é muito pesado"); quer os
+shaders otimizados para o projeto. Ele afirmou que temos licença para baixar. Não foi preciso
+mexer no código deles: o que pesa está nas opções, e opções são uso normal. Em
+`visuals/iris-presets/` há um ajuste "Veio 8 GB" para Complementary Reimagined r5.9.3, BSL 10.1.8 e
+Photon v1.4, que liga os mapas LabPBR das nossas texturas e corta o que mais custa (sombra
+grande, luz colorida, TAA, GTAO, SSRT, POM com 40 amostras). Os nomes de opção foram conferidos nos
+próprios packs. Próximo: medir FPS (padrão × ajuste) no PC do Luiz e o launcher baixar e ligar o
+vencedor.
