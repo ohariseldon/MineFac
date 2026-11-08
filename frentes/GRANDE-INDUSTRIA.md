@@ -11,7 +11,7 @@ energia. A vila operária (`native/api/src/workforce/`) não foi tocada.
 |---|---|---|
 | Progressão por volume | Laboratório de pesquisa com 4 pesquisas (128 a 256 peças cada) que liberam as receitas do ramo seguinte | `research.rs` |
 | Cadeia mais funda | Motor, processador, núcleo de automação, fabricadora (3 entradas) e kit Mk.II | `tools/production.json`, `upgrades.rs` |
-| Fábrica longe do jogador | Âncora de chunk: 32 FE/t, `forceload` do próprio chunk | `industry.rs` |
+| Fábrica longe do jogador | Estações de carga e descarga: a produção continua chegando sem carregar o posto; âncora de chunk (32 FE/t) para quem quiser o chunk vivo | `stations.rs`, `industry.rs` |
 | Razões visíveis | Itens por minuto em cada receita do guia e acima de cada slot do painel | `presentation.rs`, `tools/build_tutorial.py` |
 | Estatísticas e alertas | Monitor da fábrica: máquinas por estado, 9 itens com produção e gasto por minuto, aviso na barra a cada 30 s | `industry.rs` |
 | Projeto final | Torre de transmissão em 4 fases na central de contratos, entrega acumulada | `contracts.rs` |
@@ -59,6 +59,26 @@ O registro esquece quem ficou 200 ticks sem notícia. O monitor resume a dimens�
 Os 9 itens viajam compactados nos números do painel (índice de 7 bits, produção e gasto de
 12 bits, até 4.095/min). Com máquina parada (saída cheia, sem energia ou desgaste), avisa na barra
 de ação dos jogadores da dimensão com a posição de uma delas, no máximo a cada 600 ticks.
+
+## Postos distantes (estações)
+
+Pedido do Luiz: como no Satisfactory, uma fábrica longe deve continuar produzindo e entregando,
+sem carregar tudo, e sem pesar o jogo.
+
+- **Estação de carga** (no posto): 4 slots de entrada pelas esteiras; manda até 8 itens a cada
+  8 ticks (1.200/min) para o canal, a 10 FE por item.
+- **Estação de descarga** (na base): recebe do canal e esvazia pelo bocal da frente.
+- **Canal:** clique com um corante (16 cores). Guarda até 4.096 itens em trânsito; cheio, a carga
+  para como uma esteira travada.
+- **Longe do jogador:** a carga mede o que mandou de cada item em janelas de 1.200 ticks. Sem rodar
+  há 100 ticks (chunk descarregado), o tick do mod soma, a cada 20 ticks, ritmo × tempo passado
+  ao canal. É o regime estável que o Satisfactory supõe. Ao recarregar, a produção virtual para
+  e o posto retoma do estado em que ficou, sem contar duas vezes.
+- **Custo:** a simulação não toca blocos nem chunks; 1.000 estações descarregadas custam cerca de
+  80 µs a cada 20 ticks (teste `stations_cost`, em release). O teste de desempenho do projeto
+  ficou com as mesmas alocações e leituras de NBT da main.
+- Estado em `<mundo>/veio/estacoes.txt`. O tempo com o jogo fechado não conta, porque o relógio
+  do mundo não anda.
 
 ## Âncora de chunk
 

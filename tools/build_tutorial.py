@@ -35,6 +35,9 @@ def item_name(item,code):
   if key in langs[code]: return langs[code][key]
  return name
 
+vanilla.update({"ender_pearl":("Pérola do Fim","Ender pearl"),"obsidian":("Obsidiana","Obsidian"),
+ "glass_pane":vanilla.get("glass_pane",("Painel de vidro","Glass pane")),"book":vanilla.get("book",("Livro","Book")),
+ "glass":vanilla.get("glass",("Vidro","Glass"))})
 # Every help entry describes the actual slot order and material conversion.
 help={
  "generator":(
@@ -495,11 +498,17 @@ help.update({
  "express_belt":(
  "Mesmas curvas e rampas.\nTransporta até 10 itens/s,\no dobro da rápida.\nChave fixa a direção.",
  "Same turns and ramps.\nCarries up to 10 items/s,\ntwice the fast belt.\nWrench locks direction."),
+ "cargo_station":(
+ "No posto distante: recebe\ndas esteiras e manda ao\ncanal (corante). Longe de\nvocê, segue no ritmo medido.",
+ "At the distant outpost: takes\nfrom belts and ships to its\nchannel (dye). While you are\naway it keeps the measured rate."),
+ "unloading_station":(
+ "Na base: entrega o que\nchega pelo canal da mesma\ncor. Bocal na frente: ligue\numa esteira ou um baú.",
+ "At the base: delivers what\narrives on the same color\nchannel. Port in front: add\na belt or a chest."),
  "belt_tunnel":(
  "Coloque dois, na mesma\ndireção, até 6 blocos.\nA entrada passa os itens\npor baixo até a saída.",
  "Place two facing the same\nway, up to 6 blocks apart.\nThe entrance passes items\nunderneath to the exit."),
 })
-industry_order=["research_lab","fabricator","factory_monitor","chunk_anchor","express_belt","belt_tunnel"]
+industry_order=["research_lab","fabricator","factory_monitor","cargo_station","unloading_station","chunk_anchor","express_belt","belt_tunnel"]
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","sprinkler","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
@@ -603,12 +612,16 @@ slothelp.update({
  "fabricator":["Coloque DOIS motores.","Coloque processadores.","Aço (núcleo) ou engrenagens (kit Mk.II).","Recolha o produto."],
  "express_belt":["Itens guardados neste trecho da esteira."],
  "belt_tunnel":["Itens a caminho da saída do túnel."],
+ "cargo_station":["Itens para mandar pelo canal."]*4,
+ "unloading_station":["Itens que chegaram pelo canal."]*4,
 })
 slot_en.update({
  "research_lab":["First part of the current research.","Second part of the current research."],
  "fabricator":["Put TWO motors.","Put processors.","Steel (core) or gears (Mk.II kit).","Collect the product."],
  "express_belt":["Items held by this conveyor segment."],
  "belt_tunnel":["Items on their way to the tunnel exit."],
+ "cargo_station":["Items to ship on the channel."]*4,
+ "unloading_station":["Items that arrived on the channel."]*4,
 })
 for block,lines in slothelp.items():
  for i,line in enumerate(lines): label(f"veio.slothelp.{block}.{i}",line,slot_en[block][i])
@@ -1096,6 +1109,12 @@ for key, pt, en in [
  ("block.veio.chunk_anchor", "Âncora de chunk", "Chunk Anchor"),
  ("block.veio.express_belt", "Esteira expressa", "Express Conveyor"),
  ("block.veio.belt_tunnel", "Túnel de esteira", "Conveyor Tunnel"),
+ ("block.veio.cargo_station", "Estação de carga", "Cargo Station"),
+ ("block.veio.unloading_station", "Estação de descarga", "Unloading Station"),
+ ("veio.station.channel", "Canal %s: %s de %s em trânsito", "Channel %s: %s of %s in transit"),
+ ("veio.station.rate", "Ritmo medido: %s itens/min", "Measured rate: %s items/min"),
+ ("veio.hint.cargo", "Longe de você, segue nesse ritmo", "While you are away, keeps this rate"),
+ ("veio.hint.unloading", "Corante na estação escolhe o canal", "Dye on the station picks the channel"),
  ("item.veio.motor", "Motor elétrico", "Electric Motor"),
  ("item.veio.processor", "Processador", "Processor"),
  ("item.veio.automation_core", "Núcleo de automação", "Automation Core"),
@@ -1182,9 +1201,15 @@ i_mk2=ipage(
 i_monitor=ipage(
  "Monitor da fábrica\n\nMostra as máquinas da dimensão: ativas, esperando insumo e paradas.\n\nLista os 9 itens de maior fluxo: produção e gasto por minuto. Gasto em vermelho falta na linha.\n\nA cada 30 s avisa onde há máquina parada.",
  "Factory monitor\n\nShows the machines in the dimension: active, waiting for input and stuck.\n\nLists the 9 busiest items: made and used per minute. Red usage is short on the line.\n\nEvery 30 s it warns where a machine is stuck.")
+i_stations=ipage(
+ "Postos distantes\n\nNo posto: estação de carga no fim da linha. Na base: estação de descarga.\n\nClique as duas com o mesmo corante: é o canal. Até 1.200 itens/min, 10 FE por item.\n\nO canal guarda até 4.096 itens em trânsito.",
+ "Distant outposts\n\nAt the outpost: a cargo station at the end of the line. At the base: an unloading station.\n\nClick both with the same dye: that is the channel. Up to 1,200 items/min, 10 FE per item.\n\nThe channel holds up to 4,096 items in transit.")
+i_away=ipage(
+ "Longe de você\n\nA estação de carga mede quanto manda por minuto. Quando o posto descarrega, ela continua mandando nesse ritmo, sem carregar nada.\n\nAo voltar, o posto segue de onde parou. Mude a linha perto dela: o ritmo novo vale após 1 minuto.",
+ "While you are away\n\nThe cargo station measures what it ships per minute. When the outpost unloads it keeps shipping at that rate, loading nothing.\n\nWhen you return, the outpost resumes. Change the line nearby: the new rate counts after 1 minute.")
 i_anchor=ipage(
- "Âncora de chunk\n\nCom 32 FE/t, mantém o chunk dela carregado: a mina distante continua rodando com você longe.\n\nSem energia por 5 s, solta o chunk. Quebrada, solta em 20 s. Uma por chunk basta.",
- "Chunk anchor\n\nWith 32 FE/t it keeps its chunk loaded: the distant mine keeps running while you are away.\n\nWithout power for 5 s it releases the chunk. Broken, it releases in 20 s. One per chunk is enough.")
+ "Âncora de chunk\n\nPara manter um chunk vivo de verdade (máquinas reagindo, aldeões, redstone): com 32 FE/t ele fica carregado.\n\nPesa mais que as estações. Sem energia por 5 s, solta. Quebrada, solta em 20 s.",
+ "Chunk anchor\n\nTo keep a chunk truly alive (machines reacting, villagers, redstone): with 32 FE/t it stays loaded.\n\nHeavier than stations. Without power for 5 s it releases. Broken, in 20 s.")
 i_logistics=ipage(
  "Logística nova\n\nTúnel: dois na mesma direção, até 6 blocos. Itens passam por baixo de muros e trilhos.\n\nPrancheta: agachado copia filtro e prioridade de braço ou divisor; em pé, cola em outro.\n\nEsteira expressa: 10 itens/s.",
  "New logistics\n\nTunnel: two facing the same way, up to 6 blocks. Items pass under walls and rails.\n\nClipboard: sneak to copy an arm or splitter's filter and priority; stand to paste onto another.\n\nExpress belt: 10 items/s.")
@@ -1211,7 +1236,7 @@ extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"
 ipages[i_blocks-1]={"text":"","extra":extra}
 ilinks=[("Começar","Start here",i_intro),("Laboratório","Research lab",i_research),("Pesquisas","Research tree",i_tree),
  ("Razões","Ratios",i_ratio),("Razões no painel","Ratios on the panel",i_panel),("Cadeia funda","Deep chain",i_chain),
- ("Kit Mk.II","Mk.II kit",i_mk2),("Monitor","Monitor",i_monitor),("Âncora de chunk","Chunk anchor",i_anchor),
+ ("Kit Mk.II","Mk.II kit",i_mk2),("Monitor","Monitor",i_monitor),("Postos distantes","Distant outposts",i_stations),("Longe de você","While away",i_away),("Âncora de chunk","Chunk anchor",i_anchor),
  ("Logística nova","New logistics",i_logistics),("Lava encanada","Piped lava",i_lava),("Grande projeto","Grand project",i_project),("Blocos","Blocks",i_blocks)]
 label("veio.industry.title","Guia da Grande Indústria","Large Industry Guide")
 extra=[{"translate":"veio.industry.title","bold":True},{"text":"\n"}]

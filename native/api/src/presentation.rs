@@ -38,6 +38,7 @@ pub(super) fn screen(block: &str) -> Option<NativeScreen> {
         HARVESTER => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0])],
         research::LAB => vec![Some([62.0, 45.0]), Some([116.0, 45.0])],
         industry::MONITOR | industry::ANCHOR => vec![None],
+        stations::SENDER | stations::RECEIVER => vec![Some([53.0, 45.0]), Some([71.0, 45.0]), Some([89.0, 45.0]), Some([107.0, 45.0])],
         _ if workforce::owns(block) => workforce::screen_slots(block)?,
         _ => production::screen_slots(block)?,
     };
@@ -197,6 +198,7 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
             Text::tr("veio.metric.pollution", &[&read(12), &(read(12) * 100 / pollution::RAID as i32)]).plain(),
         ],
         research::LAB => research::panel_lines(event.data),
+        stations::SENDER | stations::RECEIVER => stations::panel_lines(event.block, event.data),
         industry::ANCHOR => vec![
             Text::tr("veio.hint.anchor", &[&industry::ANCHOR_POWER]).plain(),
             Text::tr(if read(0) == 1 { "veio.anchor.on" } else { "veio.anchor.off" }, &[]).plain(),

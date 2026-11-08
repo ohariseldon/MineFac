@@ -97,6 +97,8 @@ BLOCKS = {
     "chunk_anchor": ("machine", "steel", 1, [], 3.0),
     "express_belt": ("belt", None, 1, [], 1.5),
     "belt_tunnel": ("tunnel", None, 1, [], 1.5),
+    "cargo_station": ("machine", "steel", 4, [], 2.5),
+    "unloading_station": ("machine", "steel", 4, [0, 1, 2, 3], 2.5),
 }
 
 # Itens sem bloco: modelo vanilla de referência para os componentes de dados e tamanho da pilha.
@@ -129,7 +131,7 @@ TABS = {
     "industry": ("veio:press", ["drill", "drill_mk2", "drill_mk3", "press", "assembler", "cutter", "integrator",
         "crusher", "alloy_furnace", "electronics", "electric_furnace", "contract_hub", "wrench", "copper_plate", "iron_plate",
         "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module", "speed_module",
-        "efficiency_module", "productivity_module", "fabricator", "research_lab", "factory_monitor", "chunk_anchor",
+        "efficiency_module", "productivity_module", "fabricator", "research_lab", "factory_monitor", "chunk_anchor", "cargo_station", "unloading_station",
         "motor", "processor", "automation_core", "mk2_kit"]),
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
         "geothermal", "hydro_turbine", "solar", "battery", "pole", "steel_pole", "cable", "pump", "pipe",

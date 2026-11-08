@@ -20,6 +20,8 @@ pub(super) fn draw_labels(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         HARVESTER => &["fertilizer", "output", "", ""],
         research::LAB => &["input1", "input2"],
         industry::MONITOR | industry::ANCHOR => &[],
+        stations::SENDER => &["", "input", "", ""],
+        stations::RECEIVER => &["", "output", "", ""],
         SOLAR | BATTERY | TESLA => &[],
         _ => &["input", "output"],
     } };

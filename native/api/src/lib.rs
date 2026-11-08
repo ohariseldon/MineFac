@@ -12,6 +12,7 @@ mod production;
 mod power;
 mod industry;
 mod research;
+mod stations;
 mod rivers;
 mod tutorial;
 mod upgrades;
@@ -134,6 +135,11 @@ impl Hooks for Factory {
             damage = number(entity, "Damage");
             module = number(entity, "Module");
         });
+        if stations::is_station(&block) && let Some(channel) = stations::dye_channel(&held) {
+            host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Channel", channel));
+            host.play_sound("minecraft:item.dye.use", center(pos), 4, 0.6, 1.0);
+            return Flow::Cancel;
+        }
         if held == REPAIR_KIT {
             if damage == 0 || host.take_items(REPAIR_KIT, 1) == 0 {
                 return Flow::Continue;
@@ -266,6 +272,7 @@ impl Hooks for Factory {
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
             industry::maintain(host, time);
+            stations::maintain(host, time);
         }
     }
 
@@ -372,14 +379,14 @@ fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT | EXPRESS_BELT | TUNNEL |
         SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::is_machine(block) || workforce::owns(block) || matches!(block, research::LAB | industry::MONITOR | industry::ANCHOR)
+        || production::is_machine(block) || workforce::owns(block) || matches!(block, research::LAB | industry::MONITOR | industry::ANCHOR) || stations::is_station(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
 fn needs_power(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | CUTTER | INTEGRATOR |
         CRUSHER | ALLOY | ELECTRONICS | HARVESTER | TESLA | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::consumes(block) || matches!(block, research::LAB | industry::ANCHOR)
+        || production::consumes(block) || matches!(block, research::LAB | industry::ANCHOR | stations::SENDER)
 }
 
 /// Produzem, guardam ou conduzem energia.
@@ -416,6 +423,8 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         HARVESTER => (4, vec![0], vec![1, 2, 3]),
         research::LAB => (2, vec![0, 1], vec![]),
         industry::MONITOR | industry::ANCHOR => (1, vec![], vec![]),
+        stations::SENDER => (4, vec![0, 1, 2, 3], vec![]),
+        stations::RECEIVER => (4, vec![], vec![0, 1, 2, 3]),
         _ if workforce::owns(block) => return workforce::layout(block),
         _ => return production::layout(block),
     })
@@ -425,9 +434,9 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
 fn has_item_inputs(block: &str) -> bool {
     match block {
         BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL | PRESS | ASSEMBLER | CUTTER | CRUSHER |
-        INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER | research::LAB => true,
+        INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER | research::LAB | stations::SENDER => true,
         DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG
-            | industry::MONITOR | industry::ANCHOR => false,
+            | industry::MONITOR | industry::ANCHOR | stations::RECEIVER => false,
         _ if workforce::is_post(block) || workforce::storage::is_store(block) => true,
         _ => production::has_inputs(block),
     }
@@ -441,7 +450,8 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         INTEGRATOR | ALLOY | ELECTRONICS => 2..3,
         HUB => 2..4,
         HARVESTER => 1..4,
-        research::LAB | industry::MONITOR | industry::ANCHOR => 0..0,
+        research::LAB | industry::MONITOR | industry::ANCHOR | stations::SENDER => 0..0,
+        stations::RECEIVER => 0..4,
         GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => 0..0,
         _ if production::is_machine(block) => production::outputs(block),
         _ if workforce::owns(block) => workforce::outputs(block),
@@ -453,6 +463,8 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
     match (block, slot) {
         (HUB, _) => contracts::valid_input(slot, stack),
         (research::LAB, _) => research::accepts(slot, stack),
+        (stations::SENDER, 0..4) => stack.damage == 0 && stack.extra.is_none(),
+        (stations::RECEIVER, _) => false,
         (BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL, 0) => true,
         (MERGER, 0 | 1) => true,
         _ if workforce::owns(block) => workforce::accepts(block, slot, stack),
@@ -815,6 +827,9 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
     }
     if entity.id == industry::ANCHOR {
         return industry::tick_anchor(host, pos, entity, time);
+    }
+    if stations::is_station(&entity.id) {
+        return stations::tick(host, pos, entity, time);
     }
     // Extração, receitas, lavouras, rancho e armazém: módulo de produção.
     production::tick(host, pos, entity, time);

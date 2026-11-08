@@ -26,7 +26,9 @@
       "veio:efficiency_module",
       "veio:grow_lamp",
       "veio:hydro_turbine",
-      "veio:chunk_anchor"
+      "veio:chunk_anchor",
+      "veio:cargo_station",
+      "veio:unloading_station"
     ]
   }
 }

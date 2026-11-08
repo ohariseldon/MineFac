@@ -469,6 +469,26 @@ MOTIFS.update({
         "kkkkkkkk",
         "...ee...",
     ],
+    "cargo_station": [
+        "...yy...",
+        "..yyyy..",
+        ".yy..yy.",
+        "...yy...",
+        "...yy...",
+        "nnnnnnnn",
+        "nNNnnNNn",
+        "nnnnnnnn",
+    ],
+    "unloading_station": [
+        "nnnnnnnn",
+        "nNNnnNNn",
+        "nnnnnnnn",
+        "...HH...",
+        "...HH...",
+        ".HH..HH.",
+        "..HHHH..",
+        "...HH...",
+    ],
     "chunk_anchor": [
         "...uu...",
         "..uvvu..",
@@ -502,6 +522,7 @@ MACHINE_TIER = {
     "barn": "copper", "silo": "iron", "control_center": "steel",
     "pump": "iron", "hydro_turbine": "steel",
     "research_lab": "iron", "fabricator": "steel", "factory_monitor": "iron", "chunk_anchor": "steel",
+    "cargo_station": "steel", "unloading_station": "steel",
 }
 
 def front(name):

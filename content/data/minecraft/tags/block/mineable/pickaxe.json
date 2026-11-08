@@ -62,6 +62,8 @@
     "veio:factory_monitor",
     "veio:chunk_anchor",
     "veio:express_belt",
-    "veio:belt_tunnel"
+    "veio:belt_tunnel",
+    "veio:cargo_station",
+    "veio:unloading_station"
   ]
 }

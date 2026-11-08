@@ -183,6 +183,30 @@
                 },
                 {
                   "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.13",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 15
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.14",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 16
+                  }
+                },
+                {
+                  "text": "\n"
                 }
               ]
             }
@@ -249,6 +273,16 @@
           },
           {
             "raw": {
+              "translate": "veio.industry.page.14"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.15"
+            }
+          },
+          {
+            "raw": {
               "text": "",
               "extra": [
                 {
@@ -264,7 +298,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 15
+                    "page": 17
                   }
                 },
                 {
@@ -276,7 +310,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 16
+                    "page": 18
                   }
                 },
                 {
@@ -288,7 +322,31 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 17
+                    "page": 19
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.cargo_station",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 20
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.unloading_station",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 21
                   }
                 },
                 {
@@ -300,7 +358,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 18
+                    "page": 22
                   }
                 },
                 {
@@ -312,7 +370,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 19
+                    "page": 23
                   }
                 },
                 {
@@ -324,7 +382,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 20
+                    "page": 24
                   }
                 },
                 {
@@ -430,6 +488,76 @@
                 },
                 {
                   "translate": "veio.guide.craft.factory_monitor",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.cargo_station",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.cargo_station"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.cargo_station",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.unloading_station",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.unloading_station"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.unloading_station",
                   "color": "dark_gray"
                 },
                 {

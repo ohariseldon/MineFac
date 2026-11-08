@@ -31,6 +31,8 @@
     "veio:research_lab",
     "veio:factory_monitor",
     "veio:chunk_anchor",
+    "veio:cargo_station",
+    "veio:unloading_station",
     "veio:motor",
     "veio:processor",
     "veio:automation_core",
