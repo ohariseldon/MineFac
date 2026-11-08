@@ -69,6 +69,7 @@ fn animals(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, zone
         let (id, kind, at) = nearby[(start + step) % nearby.len()];
         let Some(handle) = host.entity(id) else { continue };
         let Some(nbt) = host.entity_nbt(handle) else { continue };
+        if freight::caravan::saddled(&nbt) { continue; }
         list.push(Seen {
             id, kind, at,
             adult: ranch::tag_int(&nbt, "Age") >= 0,
@@ -90,6 +91,7 @@ fn follow(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, zone:
     let handle = host.entity(id)?;
     let at = handle.position(host).filter(|at| in_range(*at, pos, zone))?;
     let nbt = host.entity_nbt(handle)?;
+    if freight::caravan::saddled(&nbt) { return None; }
     match action {
         SHEAR if ranch::tag_int(&nbt, "Sheared") == 0 && ranch::tag_int(&nbt, "Age") >= 0 => {
             Some(choose(entity, SHEAR, id, at))
@@ -203,6 +205,7 @@ fn act(host: &mut dyn Host, spot: [i32; 3], entity: &mut ModBlockEntity, _now: u
         return None;
     }
     let nbt = host.entity_nbt(handle)?;
+    if freight::caravan::saddled(&nbt) { return None; }
     match action {
         SHEAR if ranch::tag_int(&nbt, "Sheared") == 0 && ranch::tag_int(&nbt, "Age") >= 0 => {
             let wool = wool(ranch::tag_int(&nbt, "Color"));

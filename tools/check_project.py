@@ -23,6 +23,7 @@ def main():
     languages = [read_json(CONTENT / f"assets/veio/lang/{code}.json") for code in ("pt_br", "en_us")]
     pages = check_book(languages, "guide")
     check_book(languages, "village_guide")
+    check_book(languages, "transport_guide")
     textures = check_assets(languages)
     print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas; "
           f"{textures} texturas 16x16 encontradas.")

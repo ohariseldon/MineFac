@@ -1201,3 +1201,86 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     assert!(village.commands.last().is_some_and(|line| line.ends_with("tp Steve 200 65 200")));
     spawn::reset();
 }
+
+#[test]
+fn hauler_fills_a_freight_dispatch_and_uses_received_goods_at_local_machines() {
+    let mut village = Village::new("veio:test_freight_workers");
+    let mut desk = desk_with_foreman(&mut village, 19001, [90, 0, 0, 1]);
+    desk.items[0] = Some(ItemStack::new("minecraft:bread", foreman::DESK_FOOD));
+    let mut drill = block(DRILL);
+    drill.items[0] = Some(ItemStack::new("minecraft:raw_copper", 10));
+    village.stations.insert(MANAGED, drill);
+    let mut station = block(freight::RAIL);
+    station.nbt.insert("FreightExport".into(), Tag::String("minecraft:raw_copper".into()));
+    village.stations.insert(MILL_AT, station);
+    assert!(hauler::station(freight::RAIL));
+    let now = cycles_at(&mut village, DESK, &mut desk, 1, 100, |desk| !foreman::queue(desk).is_empty());
+    let task = foreman::queue(&desk).remove(0);
+    assert_eq!((task.from, task.to, task.into), (MANAGED, MILL_AT, 0));
+    village.stations.insert(DESK, desk);
+    village.villager(19002, [10.5, 64.0, 11.5], [90, 0, 0, 2]);
+    let mut hauler = block(HAULER_POST);
+    set_number(&mut hauler, "Ration", 30);
+    assert!(assign(village.dimension, HAULER_AT, &mut hauler, ([90, 0, 0, 2], 19002), now));
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 1);
+    village.walk(19002, [11, 64, 8]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 2);
+    assert!(village.stations[&MANAGED].items[0].is_none());
+    village.walk(19002, [8, 64, 11]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, now + 3);
+    assert_eq!(village.stations[&MILL_AT].items[0], Some(ItemStack::new("minecraft:raw_copper", 10)));
+    assert!(carried(&hauler).is_empty());
+
+    // Simulate transport depositing return goods in the received compartment.
+    village.stations.get_mut(&MILL_AT).unwrap().items[3] = Some(ItemStack::new(PLATE, 10));
+    let assembler = [4, 64, 8];
+    village.stations.insert(assembler, block(ASSEMBLER));
+    let mut desk = village.stations.remove(&DESK).unwrap();
+    set_queue_empty(&mut desk);
+    let later = cycles_at(&mut village, DESK, &mut desk, now + 4, 100,
+        |desk| foreman::queue(desk).iter().any(|task| task.from == MILL_AT && task.to == assembler));
+    let task = foreman::queue(&desk).into_iter().find(|task| task.to == assembler).unwrap();
+    assert_eq!((task.from, task.slot, task.item.as_str()), (MILL_AT, 3, PLATE));
+    village.stations.insert(DESK, desk);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, later + 1);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, later + 2);
+    village.walk(19002, [4, 64, 9]);
+    cycle_at(&mut village, HAULER_AT, &mut hauler, later + 3);
+    assert_eq!(village.stations[&assembler].items[0], Some(ItemStack::new(PLATE, 10)));
+    assert!(village.stations[&MILL_AT].items[3].is_none());
+    assert_eq!(village.stations[&MILL_AT].items[0], Some(ItemStack::new("minecraft:raw_copper", 10)), "dispatch is not grabbed as received stock");
+}
+
+
+#[test]
+fn worker_orders_reset_navigation_on_cancel_and_refresh_changed_destinations() {
+    use horizon_client::mobs::{Ai, Extra, Mob, MobType, MobWorld, Vec3, goals::{Cx, Goal}};
+    let mut mob = Mob { id: 98001, rider: None, extra: Extra::default(),
+        kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(), ai: Ai::default() };
+    let world = MobWorld::fixture(); let mut cx = Cx { w: &world };
+    let mut goal = Work::default();
+    order(mob.id, [1.0, 64.0, 1.0], defense::clock());
+    assert!(goal.can_use(&mut mob, &mut cx));
+    goal.cooldown = 15;
+    order(mob.id, [10.0, 64.0, 10.0], defense::clock());
+    assert!(goal.can_use(&mut mob, &mut cx));
+    assert_eq!(goal.cooldown, 0);
+    assert_eq!(goal.target, Some([10.0, 64.0, 10.0]));
+    mob.ai.nav.done = false;
+    cancel(mob.id); goal.stop(&mut mob, &mut cx);
+    assert!(mob.ai.nav.is_done()); assert!(goal.target.is_none());
+}
+
+
+#[test]
+fn shepherd_keeps_riding_pigs_out_of_the_breeding_queue() {
+    let mut village = Village::new("veio:saddled_pig_shepherd");
+    let mut post = shepherd_with_worker(&mut village, 98011, [98, 0, 0, 11], [2.5, 64.0, 2.5]);
+    post.items[1] = Some(ItemStack::new("minecraft:carrot", 5));
+    for id in [98012, 98013] {
+        animal(&mut village, id, "minecraft:pig", [2.5, 64.0, 2.5], &[("Age", Tag::Int(0)), ("Saddle", Tag::Byte(1))]);
+    }
+    assert_eq!(cycle(&mut village, &mut post, 1), IDLE_WORK);
+    assert_eq!(post.items[1], Some(ItemStack::new("minecraft:carrot", 5)));
+    assert!(village.animals.values().all(|(_, nbt)| !nbt.contains_key(&"InLove".into())));
+}

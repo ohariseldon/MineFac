@@ -9,6 +9,14 @@
     "veio:inserter",
     "veio:fast_inserter",
     "veio:long_inserter",
-    "veio:wrench"
+    "veio:freight_station",
+    "veio:drone_port",
+    "veio:caravan_station",
+    "veio:route_card",
+    "veio:wrench",
+    "minecraft:rail",
+    "minecraft:powered_rail",
+    "minecraft:chest_minecart",
+    "minecraft:hopper"
   ]
 }

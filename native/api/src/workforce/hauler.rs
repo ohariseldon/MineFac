@@ -26,7 +26,7 @@ pub(super) const BATCH: u32 = 16;
 pub(super) const TOP_UP: u32 = 16;
 
 pub(super) fn station(block: &str) -> bool {
-    !is_post(block) && operations::profile(block).is_some_and(|profile| profile.kind == StationKind::Workstation)
+    freight::owns(block) || !is_post(block) && operations::profile(block).is_some_and(|profile| profile.kind == StationKind::Workstation)
 }
 
 /// O que o carregador vê numa máquina.

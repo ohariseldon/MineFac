@@ -33,6 +33,36 @@ def item_name(item,code):
   if key in langs[code]: return langs[code][key]
  return name
 
+label("advancement.veio.freight.title", "Entre zonas", "Between zones")
+label("advancement.veio.freight.description", "Defina carga e retorno em um terminal de transporte.", "Define dispatch and return cargo at a freight terminal.")
+label("advancement.veio.drone_transport.title", "Entrega aérea", "Air delivery")
+label("advancement.veio.drone_transport.description", "Conecte dois portos e alimente os drones com energia.", "Connect two ports and power their drones.")
+label("block.veio.caravan_station", "Terminal de caravanas", "Caravan terminal")
+label("advancement.veio.caravan.title", "Estradas de carga", "Freight roads")
+label("advancement.veio.caravan.description", "Vincule uma montaria a uma rota terrestre.", "Assign a mount to a ground freight route.")
+label("veio.status.caravan_animal", "Vincule um animal com laço", "Assign an animal with a lead")
+label("veio.status.caravan_feed", "Confira a ração do animal", "Check the animal feed")
+label("veio.status.caravan_busy", "Animal ocupado ou preso", "Animal occupied or leashed")
+label("veio.freight.caravan", "Caravana: ração e caminho livre", "Caravan: feed and a clear road")
+label("veio.guide.role.cargo", "Carga", "Cargo")
+label("block.veio.freight_station", "Terminal ferroviário", "Rail freight terminal")
+label("block.veio.drone_port", "Porto de drones", "Drone port")
+label("item.veio.route_card", "Cartão de rota", "Route card")
+label("veio.status.freight_route", "Confira o par e o canal", "Check pair and channel")
+label("veio.freight.rail", "Vagões: use funis", "Minecarts: use hoppers")
+label("veio.freight.outbound", "Drone levando a carga", "Drone delivering cargo")
+label("veio.freight.return", "Drone retornando", "Drone returning")
+label("veio.freight.ready", "Aguardando carga para o drone", "Waiting for drone cargo")
+label("veio.freight.route_color", "Rota: %s", "Route: %s")
+label("veio.freight.disabled", "desligada", "disabled")
+label("veio.freight.capacity", "Carga por viagem: até %s", "Cargo per trip: up to %s")
+label("veio.freight.caravan_outbound", "Animal levando a carga", "Animal delivering cargo")
+label("veio.freight.caravan_return", "Animal voltando à estação", "Animal returning home")
+label("veio.freight.channel", "Canal: %s (0 desliga)", "Channel: %s (0 disables)")
+label("veio.guide.role.dispatch", "Enviar", "Dispatch")
+label("veio.guide.role.received", "Recebido", "Received")
+label("veio.guide.role.inflight", "Voo", "Flight")
+
 # Every help entry describes the actual slot order and material conversion.
 help={
  "generator":(
@@ -302,11 +332,20 @@ for key, pt, en in [
  ("advancement.veio.coordination.description", "Um capataz alimenta e recontrata os trabalhadores dos postos.", "A foreman feeds and rehires the workers of your posts."),
 ]:
  label(key, pt, en)
+help["caravan_station"] = (
+ "Cor igual liga os terminais.\nLaço vincula animal próximo.\nAgachar + item: o que sai.\nColoque ração no slot de baixo.",
+ "Match terminal dye colors.\nLead assigns a nearby animal.\nSneak + item: outgoing cargo.\nPut feed in the bottom slot.")
+help["freight_station"] = (
+ "Corante igual liga a rota.\nAgachar + item: envio.\nItem sem agachar: recebimento.\nFunis ligam os vagões.",
+ "Match terminal dye colors.\nSneak + item: outgoing filter.\nItem without sneak: receive.\nHoppers connect minecarts.")
+help["drone_port"] = (
+ "Corante igual liga portos.\nAté 64 blocos, 16 itens/voo.\nPrecisa energia e caminho livre.\nAgachar + chave: chama de volta.",
+ "Match port dye colors.\n64-block range, 16 items/flight.\nNeeds power and a clear path.\nSneak + wrench: recall.")
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
  ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
- ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","wrench"]),
+ ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","freight_station","drone_port","caravan_station","wrench"]),
  ("Projetos e defesa","Projects and defense",["contract_hub","tesla"]),
 ]
 order=[name for _,_,names in categories for name in names]
@@ -390,6 +429,16 @@ slot_en={
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
+for name in ("freight_station", "drone_port", "caravan_station"):
+ slothelp[name] = ["Carga para enviar. O filtro é copiado com agachar + item."]*3 + ["Carga recebida. O carregador pode levar às máquinas."]*3
+ slot_en[name] = ["Dispatch stock. Sneak + item copies its filter."]*3 + ["Received stock. Haulers can feed it to machines."]*3
+ if name in ("drone_port", "caravan_station"):
+  slothelp[name].append("Carga em voo, conservada aqui até a entrega. Retirar impede a entrega.")
+  slot_en[name].append("Flight cargo is kept here until delivery. Taking it prevents delivery.")
+slothelp["caravan_station"][6] = "Carga em trânsito: conservada na estação até o animal chegar ao destino."
+slot_en["caravan_station"][6] = "Transit cargo: kept at the station until the animal reaches its destination."
+slothelp["caravan_station"].append("Ração: cavalo/burro aceitam trigo, maçã ou feno; porco aceita cenoura, batata ou beterraba.")
+slot_en["caravan_station"].append("Feed: horse/donkey eat wheat, apples or hay; pig eats carrots, potatoes or beetroots.")
 for block,lines in slothelp.items():
  for i,line in enumerate(lines): label(f"veio.slothelp.{block}.{i}",line,slot_en[block][i])
 label("veio.slothelp.merger.0", "A: lateral amarela. Olhando para a saída, fica à esquerda.", "A: yellow side. Left when facing the outlet.")
@@ -423,6 +472,7 @@ components={
  "circuit":("Duas fiações e um silício no montador de circuitos.","Two copper wiring and one silicon in a circuit assembler."),
 }
 components.update({
+ "route_card":("Use no terminal para escolher canal 0-16; agachado volta um. Dois terminais do mesmo tipo por canal. Não gasta o cartão.","Use on a terminal to select channel 0-16; sneak goes back one. Two terminals of the same type per channel. Card is kept."),
  "flour":("Trigo no moinho. Vai para pão, biscoito e bolo na cozinha.","Wheat in the mill. Used for bread, cookies and cake."),
  "biomass":("Plantas ou troncos no moinho. Combustível do gerador a biomassa.","Plants or logs in the mill. Fuel for the biomass generator."),
  "repair_kit":("Botão direito numa máquina danificada: recupera 50% da integridade.","Right-click a damaged machine: restores 50% integrity."),
@@ -538,6 +588,9 @@ page(
 page(
  "Parar e medir\n\nRedstone pausa braços e esteiras. Esteiras reagem em até 8 ticks.\n\nPainéis mostram itens/min. Divisor filtrado: iguais à esquerda, outros à direita.",
  "Stop and measure\n\nRedstone pauses arms and belts. Belts respond within 8 ticks.\n\nPanels show items/min. A sorting splitter sends matching left, other right.")
+page(
+ "Transportes\n\nUse o mesmo corante em dois terminais para ligar as zonas. Agachar + produto define o que sai.\n\nConsulte o Guia de Transportes: terminais entregam uma cópia ao serem obtidos. Livro + trilho fabricam outro.",
+ "Freight transport\n\nUse the same dye on two terminals to link zones. Sneak + product sets outgoing cargo.\n\nRead the Freight Guide: obtaining a terminal grants a copy. Book + rail crafts another.")
 category_pages=[]
 for _ in categories:
  category_pages.append(len(pages)+1);pages.append(None)
@@ -818,6 +871,8 @@ for name,item,pt,en,pdesc,edesc in vstages:
   "criteria":{"obtain":{"trigger":"minecraft:inventory_changed","conditions":{"items":[{"items":item}]}}}})
  vparent="veio:village/"+name
 print("Village guide pages:",len(vpages))
+from build_transport_guide import build as build_transport_guide
+build_transport_guide(write, langs)
 from build_operations import add_labels
 add_labels(langs)
 for code,data in langs.items():write(f"{A}/lang/{code}.json",data)

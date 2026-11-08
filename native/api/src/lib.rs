@@ -1,6 +1,7 @@
 mod budget;
 mod presentation;
 mod contracts;
+mod freight;
 mod logistics;
 mod logistics_controls;
 mod inserters;
@@ -87,7 +88,13 @@ impl Hooks for Factory {
         _host: &dyn Host,
         event: &mut BlockEntityContainerEvent<'_>,
     ) -> Option<ModContainer> {
-        let (slots, inputs, outputs) = layout(event.block)?;
+        let (slots, mut inputs, mut outputs) = layout(event.block)?;
+        if freight::owns(event.block) {
+            inputs = (0..6).collect();
+            if event.block == freight::caravan::ID { inputs.push(7); }
+            // Hoppers load trains from dispatch stock; workers use received stock.
+            outputs = if event.block == freight::RAIL { (0..3).collect() } else { (3..6).collect() };
+        }
         Some(ModContainer {
             slots,
             faces: std::array::from_fn(|_| (0..slots).collect()),
@@ -109,6 +116,7 @@ impl Hooks for Factory {
         event: &mut horizon_client::mod_api::RightClickBlockEvent) -> Flow
     {
         let block = host.block(event.pos);
+        if let Some(flow) = freight::right_click(host, event.pos, &block) { return flow; }
         if let Some(flow) = logistics_controls::right_click(host, event.pos, &block) { return flow; }
         let Some((held, _, _)) = host.held() else { return Flow::Continue };
         if !is_factory_block(&block) {
@@ -215,6 +223,7 @@ impl Hooks for Factory {
     fn entity_tick_pre(&self, host: &mut dyn Host,
         event: &mut horizon_client::mod_api::EntityTickPreEvent<'_>) -> Flow
     {
+        freight::caravan::observe(host, event.dimension, event.entity, event.kind);
         defense::observe(event.dimension, event.entity, event.kind);
         production::ranch::observe(event.dimension, event.entity, event.kind);
         if event.kind == "minecraft:villager" {
@@ -244,6 +253,7 @@ impl Hooks for Factory {
     fn register_goals(&self, event: &mut horizon_client::mod_api::RegisterGoalsEvent<'_>) {
         pollution::register_goals(event.mob);
         workforce::register_goals(event.mob);
+        freight::caravan::register_goals(event.mob);
     }
 
     fn block_entity_render_bounding_box(&self, _host: &dyn Host,
@@ -253,6 +263,7 @@ impl Hooks for Factory {
             power::bounds(event.entity, event.bounds);
         }
         production::generation::bounds(event.block, event.bounds);
+        if event.block == freight::DRONE { freight::bounds(event.entity, event.bounds); }
         if inserters::is_arm(event.block) { *event.bounds = [-1.5, 0.0, -1.5, 2.5, 1.0, 2.5]; }
         if workforce::zones::is_marker(event.block) {
             workforce::zones::bounds(event.entity, event.bounds);
@@ -308,14 +319,14 @@ fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
         SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::is_machine(block) || workforce::owns(block)
+        || production::is_machine(block) || workforce::owns(block) || freight::owns(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
 fn needs_power(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | CUTTER | INTEGRATOR |
         CRUSHER | ALLOY | ELECTRONICS | HARVESTER | TESLA | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::consumes(block)
+        || production::consumes(block) || block == freight::DRONE
 }
 
 /// Produzem, guardam ou conduzem energia.
@@ -331,6 +342,7 @@ fn is_generator(block: &str) -> bool {
 fn capacity(block: &str) -> i32 {
     match block {
         BATTERY => 30000,
+        freight::DRONE => 8000,
         TESLA => defense::CAPACITY,
         _ => power::tier(block).map_or(2000, |tier| tier.capacity),
     }
@@ -350,6 +362,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         CABLE | POLE | STEEL_POLE => (0, vec![], vec![]),
         HUB => (4, vec![0, 1], vec![2, 3]),
         HARVESTER => (4, vec![0], vec![1, 2, 3]),
+        _ if freight::owns(block) => return freight::layout(block),
         _ if workforce::owns(block) => return workforce::layout(block),
         _ => return production::layout(block),
     })
@@ -361,6 +374,7 @@ fn has_item_inputs(block: &str) -> bool {
         BELT | FAST_BELT | SPLITTER | MERGER | PRESS | ASSEMBLER | CUTTER | CRUSHER |
         INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER => true,
         DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => false,
+        _ if freight::owns(block) => true,
         _ if workforce::is_post(block) || workforce::storage::is_store(block) => true,
         _ => production::has_inputs(block),
     }
@@ -375,6 +389,7 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         HUB => 2..4,
         HARVESTER => 1..4,
         GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => 0..0,
+        _ if freight::owns(block) => 3..6,
         _ if production::is_machine(block) => production::outputs(block),
         _ if workforce::owns(block) => workforce::outputs(block),
         _ => 0..1,
@@ -386,6 +401,7 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (HUB, _) => contracts::valid_input(slot, stack),
         (BELT | FAST_BELT | SPLITTER, 0) => true,
         (MERGER, 0 | 1) => true,
+        _ if freight::owns(block) => (slot < 6 || block == freight::caravan::ID && slot == 7 && freight::caravan::feed(&stack.item)) && stack.damage == 0 && stack.extra.is_none(),
         _ if workforce::owns(block) => workforce::accepts(block, slot, stack),
         // Entradas das máquinas de produção, pela tabela de receitas e combustíveis.
         _ => production::accepts(block, slot, stack),
@@ -409,6 +425,20 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Burn" => key!("Burn"),
         "BurnTotal" => key!("BurnTotal"),
         "ContractStage" => key!("ContractStage"),
+        "FlightTarget" => key!("FlightTarget"),
+        "FlightDelta" => key!("FlightDelta"),
+        "FlightPhase" => key!("FlightPhase"),
+        "FreightExport" => key!("FreightExport"),
+        "FreightImport" => key!("FreightImport"),
+        "FreightChannel" => key!("FreightChannel"),
+        "FreightManualImport" => key!("FreightManualImport"),
+        "CaravanAnimal" => key!("CaravanAnimal"),
+        "CaravanEntity" => key!("CaravanEntity"),
+        "CaravanProbe" => key!("CaravanProbe"),
+        "CaravanLastPos" => key!("CaravanLastPos"),
+        "CaravanStall" => key!("CaravanStall"),
+
+
         "Cooldown" => key!("Cooldown"),
         "Damage" => key!("Damage"),
         "DisplayCount" => key!("DisplayCount"),
@@ -528,7 +558,8 @@ fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, Option<ItemStack
     } else {
         None
     };
-    (number(entity, "Status"), number(entity, "Module"), number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }), cargo)
+    (number(entity, "Status"), number(entity, "Module"), if matches!(entity.id.as_str(), freight::DRONE | freight::caravan::ID) { number(entity, "FlightPhase") * 1_000_000 + number(entity, "Progress") / 4 }
+        else { number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }) }, cargo)
 }
 
 fn center([x, y, z]: [i32; 3]) -> [f64; 3] {
@@ -540,6 +571,7 @@ fn stamp(time: i64) -> i32 {
 }
 
 fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
+    if freight::owns(&entity.id) { freight::tick(host, pos, entity, time); return; }
     if inserters::is_arm(&entity.id) { return inserters::tick(host, pos, entity, time); }
     logistics::transfer_outputs(host, pos, entity, time);
     if entity.id == HUB {

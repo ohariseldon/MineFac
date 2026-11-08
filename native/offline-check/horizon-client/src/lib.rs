@@ -252,7 +252,14 @@ pub mod mod_api {
     pub struct LevelRef {
         dimension: &'static str,
     }
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct NativeWorldEpoch(u64);
+    impl NativeWorldEpoch {
+        pub fn new(n: u64) -> Self { Self(n) }
+        pub fn get(self) -> u64 { self.0 }
+    }
     impl LevelRef {
+        pub fn epoch(self) -> NativeWorldEpoch { NativeWorldEpoch::new(1) }
         pub fn new(dimension: &'static str) -> Self {
             Self { dimension }
         }
@@ -285,6 +292,8 @@ pub mod mod_api {
         fn level(&self, dimension: &str) -> Option<LevelRef> {
             unimplemented!("level")
         }
+        fn level_is_loaded(&self, level: LevelRef, pos: [i32; 3]) -> bool { unimplemented!("level_is_loaded") }
+        fn level_block(&self, level: LevelRef, pos: [i32; 3]) -> Option<String> { unimplemented!("level_block") }
         fn level_game_time(&self, level: LevelRef) -> Option<i64> {
             unimplemented!("level_game_time")
         }
@@ -666,11 +675,16 @@ pub mod mobs {
     pub struct MobWorld<'w> {
         _world: std::marker::PhantomData<&'w ()>,
     }
+    impl<'w> MobWorld<'w> {
+        /// Offline fixture, not a Horizon API method.
+        pub fn fixture() -> Self { Self { _world: std::marker::PhantomData } }
+    }
     #[derive(Default)]
     pub struct Navigation {
         pub done: bool,
     }
     impl Navigation {
+        pub fn stop(&mut self) { self.done = true; }
         pub fn is_done(&self) -> bool {
             self.done
         }
@@ -681,7 +695,11 @@ pub mod mobs {
         pub targets: goals::GoalSelector,
         pub nav: Navigation,
     }
+    #[derive(Default)]
+    pub struct Extra { pub rider: Option<u32>, pub leash: Option<()>, pub leash_pending: Option<()> }
     pub struct Mob {
+        pub rider: Option<()>,
+        pub extra: Extra,
         pub id: u32,
         pub kind: Arc<MobType>,
         pub position: Vec3,
