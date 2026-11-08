@@ -105,7 +105,7 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     if acted {
         set_number(entity, "BusyAt", now);
     }
-    let busy = entity.nbt.contains_key(&"BusyAt".into()) && now.wrapping_sub(number(entity, "BusyAt")) < 100;
+    let busy = entity.nbt.contains_key(nbt_key("BusyAt")) && now.wrapping_sub(number(entity, "BusyAt")) < 100;
     set_number(entity, "Status", if busy { 1 } else { 10 });
 }
 

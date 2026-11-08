@@ -434,7 +434,7 @@ pub(super) fn unreserve(dimension: &str, owner: [i32; 3]) {
 // ---------- NBT do posto ----------
 
 pub(super) fn worker(entity: &ModBlockEntity) -> Option<Uuid> {
-    match entity.nbt.get(&"Worker".into()) {
+    match entity.nbt.get(nbt_key("Worker")) {
         Some(Tag::IntArray(values)) if values.len() == 4 => Some([values[0], values[1], values[2], values[3]]),
         _ => None,
     }
@@ -443,7 +443,7 @@ pub(super) fn worker(entity: &ModBlockEntity) -> Option<Uuid> {
 fn set_worker(entity: &mut ModBlockEntity, uuid: Option<Uuid>) {
     match uuid {
         Some(uuid) => { entity.nbt.insert("Worker".into(), Tag::IntArray(uuid.to_vec())); }
-        None => { entity.nbt.remove(&"Worker".into()); }
+        None => { entity.nbt.remove(nbt_key("Worker")); }
     }
     for key in ["Target", "Walk", "Absent"] {
         entity.nbt.remove(&key.into());
@@ -470,14 +470,14 @@ pub(super) fn target(entity: &ModBlockEntity) -> Option<[i32; 3]> {
 
 pub(super) fn set_target(entity: &mut ModBlockEntity, pos: Option<[i32; 3]>) {
     if target(entity) != pos {
-        entity.nbt.remove(&"Walk".into());
+        entity.nbt.remove(nbt_key("Walk"));
     }
     set_pos(entity, "Target", pos);
 }
 
 /// Alvos que o trabalhador não alcançou, até a próxima volta da varredura do adaptador.
 pub(super) fn skipped(entity: &ModBlockEntity) -> Vec<[i32; 3]> {
-    match entity.nbt.get(&"Skipped".into()) {
+    match entity.nbt.get(nbt_key("Skipped")) {
         Some(Tag::IntArray(values)) => values.chunks_exact(3).map(|v| [v[0], v[1], v[2]]).collect(),
         _ => Vec::new(),
     }
@@ -493,7 +493,7 @@ pub(super) fn skip(entity: &mut ModBlockEntity, spot: [i32; 3]) {
 }
 
 pub(super) fn clear_skipped(entity: &mut ModBlockEntity) {
-    entity.nbt.remove(&"Skipped".into());
+    entity.nbt.remove(nbt_key("Skipped"));
 }
 
 /// O que acontece com a carga do trabalhador.
@@ -522,17 +522,17 @@ pub(super) fn carry_to(entity: &ModBlockEntity) -> Option<[i32; 3]> {
 
 /// Há carga a entregar? Evita montar o `Vec` de `Carried` em todo ciclo ocioso.
 fn has_load(entity: &ModBlockEntity) -> bool {
-    matches!(entity.nbt.get(&"Carried".into()), Some(Tag::List(list)) if !list.is_empty())
+    matches!(entity.nbt.get(nbt_key("Carried")), Some(Tag::List(list)) if !list.is_empty())
 }
 
 /// Itens que o trabalhador carrega. Ficam no NBT do posto: salvar, descarregar o chunk ou
 /// trocar de trabalhador não os perde.
 pub(super) fn carried(entity: &ModBlockEntity) -> Vec<(String, u32)> {
-    let Some(Tag::List(list)) = entity.nbt.get(&"Carried".into()) else { return Vec::new() };
+    let Some(Tag::List(list)) = entity.nbt.get(nbt_key("Carried")) else { return Vec::new() };
     list.iter().filter_map(|tag| {
         let Tag::Compound(item) = tag else { return None };
-        let Some(Tag::String(id)) = item.get(&"id".into()) else { return None };
-        let Some(Tag::Int(count)) = item.get(&"count".into()) else { return None };
+        let Some(Tag::String(id)) = item.get(nbt_key("id")) else { return None };
+        let Some(Tag::Int(count)) = item.get(nbt_key("count")) else { return None };
         (*count > 0).then(|| (id.to_string_lossy(), *count as u32))
     }).collect()
 }
@@ -586,14 +586,14 @@ pub(super) fn deliver(entity: &mut ModBlockEntity) -> bool {
 }
 
 fn uuid_of(nbt: &Compound) -> Option<Uuid> {
-    match nbt.get(&"UUID".into()) {
+    match nbt.get(nbt_key("UUID")) {
         Some(Tag::IntArray(values)) if values.len() == 4 => Some([values[0], values[1], values[2], values[3]]),
         _ => None,
     }
 }
 
 fn adult(nbt: &Compound) -> bool {
-    !matches!(nbt.get(&"Age".into()), Some(Tag::Int(age)) if *age < 0)
+    !matches!(nbt.get(nbt_key("Age")), Some(Tag::Int(age)) if *age < 0)
 }
 
 fn post_center([x, y, z]: [i32; 3]) -> [f64; 3] {
@@ -764,7 +764,7 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
         });
         if let Some(id) = hand {
             let mut post = None;
-            host.change_mod_block_entity(pos, &mut |entity| post = Some(entity.nbt.contains_key(&"Held".into())));
+            host.change_mod_block_entity(pos, &mut |entity| post = Some(entity.nbt.contains_key(nbt_key("Held"))));
             if post == Some(true)
                 && let Some(living) = host.entity(id).and_then(|handle| host.living(handle))
             {
@@ -772,7 +772,7 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
             }
         }
         host.change_mod_block_entity(pos, &mut |entity| {
-            entity.nbt.remove(&"Held".into());
+            entity.nbt.remove(nbt_key("Held"));
             dismiss(dimension, pos, entity);
         });
         notify(host, pos, "veio.worker.dismissed");
@@ -940,7 +940,7 @@ fn show_load(host: &mut dyn Host, entity: &mut ModBlockEntity, id: u32, show: bo
     use horizon_client::mod_api::EquipmentSlot;
     let want = if show { carried(entity).into_iter().next().map(|(item, _)| item) } else { None }.unwrap_or_default();
     // Sem `Held`, a mão é desconhecida (aldeão vindo de outro posto, save antigo): acerta uma vez.
-    let held = match entity.nbt.get(&"Held".into()) {
+    let held = match entity.nbt.get(nbt_key("Held")) {
         Some(Tag::String(item)) => Some(item.to_string_lossy()),
         _ => None,
     };

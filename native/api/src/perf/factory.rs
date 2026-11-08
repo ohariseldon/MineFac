@@ -11,7 +11,7 @@ const LINES: i32 = 16;
 const TICKS: i64 = 4000;
 
 #[derive(Default, Clone, Copy)]
-struct Ops { block: usize, property: usize, set_property: usize, change: usize, insert: usize, sync: usize, signal: usize }
+struct Ops { block: usize, property: usize, set_property: usize, change: usize, insert: usize, sync: usize, signal: usize, cubes: usize, items: usize, quads: usize }
 
 #[derive(Default)]
 struct World {
@@ -127,6 +127,19 @@ impl Host for World {
     fn send_particles(&mut self, _: &horizon_client::mod_api::ParticleOptions, _: Option<horizon_client::mod_api::BlockStateId>,
         _: [f64; 3], _: [f64; 3], _: f64, _: i32) -> bool { true }
     fn play_sound(&mut self, _: &str, _: [f64; 3], _: usize, _: f32, _: f32) -> bool { true }
+    // Quadro: o estado do bloco é o índice da máquina; as propriedades vêm do mundo.
+    fn block_state_property(&self, state: horizon_client::mod_api::BlockStateId, key: &str) -> Option<&str> {
+        let pos = *self.order.get(state.0 as usize)?;
+        let key: &'static str = match key { "facing" => "facing", "path" => "path", _ => return None };
+        self.properties.get(&(pos, key)).map(String::as_str)
+    }
+    fn draw_cube(&self, _: &mut horizon_client::mod_api::BlockEntityDraw, _: [f32; 3], _: [f32; 3],
+        _: [Option<horizon_client::mod_api::CubeFace<'_>>; 6], _: u32) -> bool { self.count(|o| o.cubes += 1); true }
+    fn draw_item(&self, _: &mut horizon_client::mod_api::BlockEntityDraw, _: &ItemStack,
+        _: horizon_client::mod_api::DisplayContext, _: Option<f32>, _: i32) -> bool { self.count(|o| o.items += 1); true }
+    fn draw_quad(&self, _: &mut horizon_client::mod_api::BlockEntityDraw, _: &str, _: [[f32; 3]; 4], _: [f32; 4], _: u32) -> bool {
+        self.count(|o| o.quads += 1); true
+    }
 }
 
 /// 16 linhas: extratora (comum ou Mk.III) → 8 esteiras → prensa → 8 esteiras → montadora (que enche e para).
@@ -179,4 +192,70 @@ fn bench_factory() {
     eprintln!("  sync por tick: {}", kinds.iter().map(|(id, n)| format!("{id} {:.2}", per(*n))).collect::<Vec<_>>().join(", "));
     let produced: i32 = world.nodes.iter().filter(|n| n.id == ASSEMBLER).map(|n| n.items[1].as_ref().map_or(0, |s| s.count as i32)).sum();
     eprintln!("CHECK factory_digest={:016x} gears={produced}", world.digest());
+}
+
+/// Desenhos guardados com `keep`, como o jogo: valem até a próxima sincronia do bloco.
+fn frame(world: &World, kept: &mut [Option<usize>], partial: f32) -> usize {
+    let mut submitted = 0;
+    for (i, pos) in world.order.iter().enumerate() {
+        if kept[i] == Some(world.syncs[i]) { continue; }
+        let entity = &world.nodes[i];
+        let mut draw = horizon_client::mod_api::BlockEntityDraw::default();
+        draw.partial = partial;
+        draw.game_time = world.time;
+        let mut event = horizon_client::mod_api::BlockEntitySubmitEvent::preview(*pos, &entity.id,
+            horizon_client::mod_api::BlockStateId(i as u32), entity, &mut draw);
+        presentation::draw(world, &mut event);
+        submitted += 1;
+        kept[i] = draw.preview_kept().then_some(world.syncs[i]);
+    }
+    submitted
+}
+
+#[test]
+fn stopped_belts_keep_their_drawing_and_moving_ones_animate() {
+    let mut world = World::default();
+    world.place([0, 0, 0], BELT, Some("west"));
+    world.nodes[0].nbt.insert(nbt_key("DisplayItem").clone(), Tag::String(PLATE.into()));
+    let draw = |world: &World| {
+        let mut kept = vec![None];
+        world.ops.set(Ops::default());
+        frame(world, &mut kept, 0.5);
+        (kept[0].is_some(), world.ops.get().items)
+    };
+    for (status, keeps) in [(0, false), (1, false), (3, true), (9, true)] {
+        set_number(&mut world.nodes[0], "Status", status);
+        assert_eq!(draw(&world), (keeps, 1), "estado {status}: a carga é desenhada; só a esteira parada guarda");
+    }
+}
+
+#[test]
+#[ignore = "medição explícita; rode sozinha com --release --nocapture"]
+fn bench_frame() {
+    let mut world = build();
+    for _ in 0..600 { world.tick(); }
+    let mut kept = vec![None; world.order.len()];
+    const FRAMES: usize = 3000;
+    let mut submitted = 0;
+    let mut spent = std::time::Duration::ZERO;
+    world.ops.set(Ops::default());
+    COUNTS.with(|c| c.set(Counts::default()));
+    for index in 0..FRAMES {
+        // Três quadros por tick (60 quadros/s, 20 ticks/s).
+        if index % 3 == 0 { world.tick(); }
+        let before = world.ops.get();
+        ACTIVE.with(|c| c.set(true));
+        let started = std::time::Instant::now();
+        submitted += frame(&world, &mut kept, (index % 3) as f32 / 3.0);
+        spent += started.elapsed();
+        ACTIVE.with(|c| c.set(false));
+        // Só o que o quadro fez: o tick do servidor também conta leituras.
+        let after = world.ops.get();
+        world.ops.set(Ops { cubes: after.cubes, items: after.items, quads: after.quads, ..before });
+    }
+    let counts = COUNTS.with(Cell::get);
+    let ops = world.ops.get();
+    let per = |n: usize| n as f64 / FRAMES as f64;
+    eprintln!("quadro: {} blocos: {:.1} µs por quadro (Veio), {:.0} desenhados de novo, {:.0} alocações, {:.0} cubos, {:.1} itens, {:.0} quads",
+        world.order.len(), spent.as_secs_f64() * 1e6 / FRAMES as f64, per(submitted), per(counts.allocations), per(ops.cubes), per(ops.items), per(ops.quads));
 }

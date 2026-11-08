@@ -22,7 +22,7 @@ pub(crate) fn credit(item: &str, count: u32, village: bool) -> i32 {
 
 pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let phase = (time + i64::from((pos[0] ^ pos[2]) & 15)).rem_euclid(200);
-    if phase == 0 || !entity.nbt.contains_key(&"Info".into()) {
+    if phase == 0 || !entity.nbt.contains_key(nbt_key("Info")) {
         let center = [f64::from(pos[0]) + 0.5, f64::from(pos[1]), f64::from(pos[2]) + 0.5];
         set_number(entity, "Info", ranch::villagers_near(host, center, VILLAGE_RADIUS));
     }

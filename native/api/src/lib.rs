@@ -421,6 +421,18 @@ fn nbt_key(name: &str) -> &'static JavaString {
     }
     match name {
         "Absent" => key!("Absent"),
+        "Age" => key!("Age"),
+        "BusyAt" => key!("BusyAt"),
+        "Carried" => key!("Carried"),
+        "CustomName" => key!("CustomName"),
+        "Edits" => key!("Edits"),
+        "Held" => key!("Held"),
+        "ScanArea" => key!("ScanArea"),
+        "Skipped" => key!("Skipped"),
+        "UUID" => key!("UUID"),
+        "Worker" => key!("Worker"),
+        "count" => key!("count"),
+        "id" => key!("id"),
         "Action" => key!("Action"),
         "Admin" => key!("Admin"),
         "Area" => key!("Area"),

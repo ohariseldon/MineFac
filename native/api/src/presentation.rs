@@ -294,6 +294,28 @@ pub(super) fn text_color(status: usize) -> u32 {
     }
 }
 
+/// Item desenhado a partir do nome no NBT. Os últimos nomes ficam prontos, para o quadro não
+/// montar `String` e `ItemStack` de novo em cada esteira.
+pub(super) fn with_drawn_item(name: &JavaString, draw: impl FnOnce(&ItemStack)) {
+    use std::cell::RefCell;
+    const KEPT: usize = 64;
+    thread_local! {
+        static ITEMS: RefCell<Vec<(JavaString, ItemStack)>> = const { RefCell::new(Vec::new()) };
+    }
+    ITEMS.with(|items| {
+        let mut items = items.borrow_mut();
+        let index = match items.iter().position(|(kept, _)| kept == name) {
+            Some(index) => index,
+            None => {
+                if items.len() == KEPT { items.remove(0); }
+                items.push((name.clone(), ItemStack::new(&name.to_string_lossy(), 1)));
+                items.len() - 1
+            }
+        };
+        draw(&items[index].1);
+    });
+}
+
 const FLAT: [Option<CubeFace<'static>>; 6] = [Some(CubeFace { sprite: "veio:gui/material", uv: None }); 6];
 
 pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
@@ -352,9 +374,8 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
             };
             host.draw_cube(event.draw, from, to, FLAT, 0x3a3a3a);
         }
-        if let Some(Tag::String(item)) = event.entity.nbt.get(&"DisplayItem".into()) {
-            let name = item.to_string_lossy();
-            if !name.is_empty() {
+        if let Some(Tag::String(item)) = event.entity.nbt.get(nbt_key("DisplayItem")) {
+            if !item.0.is_empty() {
                 let u = if matches!(status, 3 | 9) { 0.5 } else { t };
                 event.draw.push();
                 let point = if logistics::is_belt(event.block) {
@@ -367,9 +388,14 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
                 event.draw.translate(point);
                 event.draw.rotate_about([1.0, 0.0, 0.0], 90.0, [0.0; 3]);
                 event.draw.scale([0.4; 3]);
-                host.draw_item(event.draw, &ItemStack::new(&name, 1), DisplayContext::Fixed, None, 0);
+                with_drawn_item(item, |stack| { host.draw_item(event.draw, stack, DisplayContext::Fixed, None, 0); });
                 event.draw.pop();
             }
+        }
+        // Parada (bloqueada ou desligada), a esteira não anda: nada no desenho lê o tempo, e o
+        // jogo o reaproveita até o estado ou a carga mudarem (sincronia).
+        if matches!(status, 3 | 9) {
+            event.draw.keep();
         }
     } else {
         if event.block == TESLA {
