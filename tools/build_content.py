@@ -8,6 +8,7 @@ e as texturas 16x16 de `tools/build_textures.py`.
 """
 import json
 from pathlib import Path
+from machine_forms import form as machine_form, shapes as machine_shapes, native_profiles
 
 ROOT = Path(__file__).resolve().parents[1] / "content"
 A, D = ROOT / "assets/veio", ROOT / "data/veio"
@@ -157,6 +158,9 @@ def machine(name, tier):
     return textures, elements
 
 def model(kind, name, tier):
+    profile = machine_form(name, tier, box)
+    if profile:
+        return profile["textures"], profile["elements"]
     if kind == "inserter":
         motor = {"fast_inserter": "minecraft:block/prismarine_bricks", "long_inserter": "minecraft:block/red_terracotta"}.get(name, "minecraft:block/cut_copper")
         return {"iron": "minecraft:block/iron_block", "base": "minecraft:block/smooth_stone",
@@ -334,7 +338,8 @@ def main():
         write(A / f"items/{name}.json", {"model": {"type": "minecraft:model", "model": f"veio:block/{name}"}})
         # Sem menu, um template sem tela própria: a terracota esmaltada só gira com o jogador.
         template = "minecraft:black_glazed_terracotta" if kind in ("cable", "pole", "steel_pole") else "minecraft:stonecutter"
-        shape = {"default": SHAPES[kind]}
+        profile = machine_form(name, tier, box)
+        shape = machine_shapes(profile) if profile else {"default": SHAPES[kind]}
         properties = {"hardness": hardness, "occludes": False}
         if kind == "grow_lamp":
             properties["light"] = 15  # A lâmpada ilumina a lavoura à noite.
@@ -367,6 +372,7 @@ def main():
     for tab, (icon, members) in TABS.items():
         write(D / f"horizon/creative_tab/{tab}.json", {"title": f"itemGroup.veio.{tab}", "icon": icon,
             "items": [name if ":" in name else f"veio:{name}" for name in members]})
+    native_profiles(ROOT, BLOCKS, box)
     print(f"{len(BLOCKS)} blocos e {len(ITEMS)} itens gerados")
 
 if __name__ == "__main__":
