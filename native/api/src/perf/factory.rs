@@ -66,7 +66,9 @@ impl World {
         for pos in order {
             let entity = &self.nodes[self.index[&pos]];
             pos.hash(&mut hasher);
-            format!("{:?}{:?}{:?}{:?}", entity.id, entity.nbt, entity.items, entity.data).hash(&mut hasher);
+            // `PathSig` é só o cache da vizinhança da esteira: o valor depende da fórmula do hash.
+            let nbt: Vec<_> = entity.nbt.iter().filter(|(key, _)| **key != *nbt_key("PathSig")).collect();
+            format!("{:?}{:?}{:?}{:?}", entity.id, nbt, entity.items, entity.data).hash(&mut hasher);
         }
         let mut properties: Vec<_> = self.properties.iter().collect();
         properties.sort();

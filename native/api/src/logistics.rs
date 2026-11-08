@@ -213,8 +213,10 @@ fn incoming(host: &dyn Host, pos: [i32; 3], side: Direction) -> Option<i32> {
 
 const HORIZONTAL: [Direction; 4] = [Direction::North, Direction::East, Direction::South, Direction::West];
 
-/// Assinatura da vizinhança: blocos ao redor, orientação e trava da chave.
-/// Quando não muda, a esteira não relê entradas nem reescreve `path`/`facing`.
+/// Assinatura da vizinhança: blocos ao redor, orientação dos vizinhos do Veio, a própria
+/// orientação e a trava da chave. Quando não muda, a esteira não relê entradas nem reescreve
+/// `path`/`facing`. A orientação dos vizinhos entra porque as entradas dependem dela: girar
+/// uma esteira vizinha com a chave refaz a curva desta.
 fn neighborhood_signature(host: &dyn Host, pos: [i32; 3], facing: &str, manual: i32) -> i32 {
     let mut hash: u32 = 2166136261;
     let mix = |hash: &mut u32, text: &str| {
@@ -231,7 +233,12 @@ fn neighborhood_signature(host: &dyn Host, pos: [i32; 3], facing: &str, manual: 
     mix(&mut hash, &host.block([pos[0], pos[1] + 1, pos[2]]));
     for side in HORIZONTAL {
         for dy in [0, 1, -1] {
-            mix(&mut hash, &host.block(adjacent(pos, side, dy)));
+            let at = adjacent(pos, side, dy);
+            let block = host.block(at);
+            mix(&mut hash, &block);
+            if is_factory_block(&block) {
+                mix(&mut hash, &host.block_property(at, "facing").unwrap_or_default());
+            }
         }
     }
     hash as i32
@@ -244,7 +251,9 @@ fn refresh_path(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity)
     let mut output = output_of(&facing)?;
     let manual = number(entity, "ManualDirection");
     let sig = neighborhood_signature(host, pos, &facing, manual);
-    if number(entity, "PathReady") == 1 && number(entity, "PathSig") == sig {
+    // A assinatura pode ser negativa: compara o valor guardado, sem o piso 0 de `number`.
+    let same = with_nbt_key("PathSig", |key| matches!(entity.nbt.get(key), Some(Tag::Int(stored)) if *stored == sig));
+    if number(entity, "PathReady") == 1 && same {
         return Some(output);
     }
     let inputs: Vec<_> = HORIZONTAL.into_iter().filter_map(|side| incoming(host, pos, side).map(|dy| (side, dy))).collect();
