@@ -1,4 +1,4 @@
-# Sociedade da vila (0.18.0; contas, preços, economia fechada e comércio exterior até a 0.22.0)
+# Sociedade da vila (0.18.0; contas, preços, economia fechada e comércio exterior até a 0.23.0)
 
 A vila deixa de ser só mão de obra. Cada família mora numa **casa**, recebe **salário** dos postos onde
 seus adultos trabalham, compra **comida e bens** nas **lojas** e vive melhor ou pior conforme o que a
@@ -48,26 +48,50 @@ companhia ────────▶ famílias ──────────�
   gastos e lucro do dia em cada aba.
 - **PIB:** consumo final (o varejo do dia). O atacado aparece como produção da indústria.
 
-## Comércio exterior (0.22)
+## Comércio exterior (0.23, no estilo das conexões externas de Cities: Skylines)
 
-A moeda também entra **de fora**: a esmeralda é minerável (o jogador acha minério de esmeralda e
-deposita no cofre) e o **porto de exportação** vende ao mercado externo.
+**O problema.** A vila é pequena: a indústria satura a demanda local rápido; a moeda fica presa
+(só cresce com esmeraldas depositadas, inclusive as mineradas); e, sem referência de fora, os preços
+locais podem disparar (inflação) ou desabar. Também queremos que a geografia e a logística pesem e
+que o jogo puxe para produtos cada vez mais complexos.
 
-- **Porto de exportação** (empresa de logística): 9 espaços; um navio por turno (1 min) leva tudo.
-  A venda entra na conta da companhia como moeda nova (borda de entrada, contada como exportação), com
-  o imposto da fase retido na fonte. A receita vai para a empresa da holding que faz o item.
-- **Preço mundial por complexidade:** valor base x camada: matéria-prima 1x, processado 1,5x,
-  componente 2x, avançado 3x, módulos 4x. Ex.: minério de ferro 2, chapa de ferro 6, engrenagem 14,
-  circuito 42, módulo de velocidade 160 moedas.
-- **Saturação diária:** cada item tem `ABSORB` (64; matéria-prima 32) unidades por dia a preço cheio;
-  depois o preço cai (`absorb / (absorb + vendidas hoje)`). Exportar variado e elaborado rende mais:
-  o jogo induz a subir na cadeia de valor.
-- **Indicadores:** PIB = consumo final + exportação. O relatório da prefeitura separa a entrada de
-  moeda vinda de exportações; a visão geral da holding mostra a exportação do dia; o relatório do
-  centro de controle sugere os 3 itens guardados que mais rendem lá fora hoje.
-- **Para as outras frentes:** `society::export::world_price`, `quote` e `sell` são a porta do mercado
-  externo para novos produtos (a tabela `table` recebe os itens novos com a sua camada) e para a
-  praça do mercado. Importação (comprar de fora, moeda saindo) pode usar o mesmo caminho ao contrário.
+**A solução, em quatro partes, e por que cada uma resolve:**
+
+| Parte | Como funciona | O que resolve |
+|---|---|---|
+| Conexões externas | *Porto de carga* só opera com mar ou rio largo em volta (20 blocos de água); *estação de carga* só na fronteira, a 96 blocos da sede e das prefeituras. Porto: navio a cada 2 min, 9 pilhas, frete 4 + 1 por pilha. Estação: trem a cada minuto, 6 pilhas, frete 2 + 2 por pilha. | A geografia vira problema real: é preciso levar a carga até o mar ou a fronteira (esteiras, carregadores, capilaridade). O frete premia volume e valor. |
+| Bolsa mundial | Cotação = valor base x complexidade (1x a 4x) x índice do dia (80% a 120%, igual para todos) x saturação (o que você exportou nos últimos dias derruba o preço; os mercados se recuperam em alguns dias). | Um sinal de preço de fora: o jogador vê o que vale exportar e não ganha inundando um item só. |
+| Contratos e reputação | Até 3 contratos: um produto, um lote e um prazo (3 a 4 dias), pagando 50% a mais. Cumprir: reputação +1; deixar vencer: -1. A reputação abre os mercados de componentes (1), eletrônicos (3) e módulos (6). | Progressão no estilo do elevador espacial: metas claras que puxam para cadeias mais longas e de mais valor agregado. |
+| Importação automática | Se falta comida nas lojas e há uma conexão, o comerciante importa pão a preço mundial + 20% de frete + 10% de tarifa; a tarifa fica na prefeitura, o resto sai da economia. Com conexão, o preço local nunca passa dessa paridade de importação. | Teto para os preços (fim da inflação descontrolada) e a moeda que sai quando a vila não produz. Produzir localmente fica mais barato que importar. |
+
+Resultado: o preço local fica **entre a paridade de exportação (piso: abaixo disso, compensa
+exportar) e a de importação (teto)**. Exportar traz moeda nova, importar e o frete levam moeda embora,
+e tudo passa pelas bordas do `ledger`, então a identidade contábil continua valendo (testes conferem
+com o porto, o frete e a importação).
+
+**Detalhes do acabamento (0.24):**
+
+- Contratos nunca repetem um produto ativo; o lote é menor quanto mais complexo o produto (256 de
+  matéria-prima, 128 de processado, 80 de componente, 64 de eletrônico, 48 de módulo, mais uma variação).
+- O prêmio de 50% é somado em centésimos de moeda, para não sumir em itens baratos.
+- Reputação abre as camadas em 1 (componentes), 3 (eletrônicos) e 6 (módulos); a aba mostra quanto
+  falta. Carga de camada fechada espera no porto com o estado *Mercado fechado*, sem ser vendida.
+- Avisos no chat (pelo centro de controle): contrato novo, cumprido (com o prêmio), perdido e mercado
+  aberto. A partida de navio ou trem toca buzina ou trilho, solta fumaça e avisa quem está a 48 blocos
+  com os itens e o líquido depois do frete.
+- A saturação da bolsa e a reputação ficam salvas no centro de controle (`Trade`, `TradeRecent`): reabrir
+  o mundo não "limpa" o mercado.
+- A estação também precisa estar a 96 blocos do centro da vila.
+- A importação traz a comida que a loja mais vende (que esteja na bolsa), ou pão.
+- O relatório do centro de controle mostra as 5 melhores cotações abertas com a tendência do dia.
+- Uma trava só por pilha exportada (cotação, saturação, contratos e reputação juntos).
+
+**Onde ver:** a aba *Comércio exterior* do centro de controle (reputação, exportação e importação do
+dia, saldo comercial e os contratos); o relatório do centro sugere os itens guardados que mais rendem
+na bolsa hoje; o relatório da prefeitura separa a moeda que entrou por exportação.
+
+**Para as outras frentes:** `society::trade::{PRODUCTS, quote, import_price, export, import}`. Produto
+novo entra em `PRODUCTS` com a sua camada; a praça do mercado e as missões usam o mesmo caminho.
 
 ### Para integrar depois
 

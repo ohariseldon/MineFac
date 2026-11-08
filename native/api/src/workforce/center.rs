@@ -547,11 +547,12 @@ pub(crate) fn step_view(entity: &mut ModBlockEntity, step: i32) {
 /// Chave sem agachar: próxima visão.
 pub(crate) fn next_page(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow> {
     let dimension = host.dimension();
+    let time = host.level(dimension).and_then(|level| level.game_time(host)).unwrap_or(0);
     let mut found = false;
     host.change_mod_block_entity(pos, &mut |entity| {
         if entity.id == CONTROL_CENTER {
             step_view(entity, 1);
-            super::super::holding::refresh(dimension, pos, entity);
+            super::super::holding::refresh(dimension, pos, entity, time);
             found = true;
         }
     });
@@ -736,17 +737,35 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
     let title = fit(host, &format!("{name} ({}/{VIEWS})", index + 1), 140.0);
     host.text(event.batch, &title, [x + 22.0, y + 22.0], 0x1f4fa8, false);
     if tab > 0 {
-        let stopped = read(5).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
-        let lines = [
-            (tr("veio.holding.units", &[&read(1), &read(2), &read(3)]), presentation::INK),
-            (tr(&format!("veio.holding.made{tab}"), &[&read(4)]), presentation::INK),
-            (tr("veio.holding.profit", &[&read(10), &read(11), &(read(10) - read(11))]),
-                if read(10) >= read(11) { GOOD } else { 0xaa1f1f }),
-            (if read(6) > 0 {
-                tr("veio.holding.stopped", &[&tr(&format!("veio.status.{}", presentation::STATUS_KEYS[stopped]), &[]), &read(6)])
-            } else { tr("veio.holding.all_good", &[]) }, if read(6) > 0 { WARN } else { GOOD }),
-            (tr(&format!("veio.holding.extra{tab}"), &[&read(7), &read(8), &read(9)]), presentation::SOFT_INK),
-        ];
+        let lines: Vec<(String, u32)> = if tab == super::super::holding::FOREIGN {
+            let mut lines = vec![
+                (if read(5) > 0 { tr("veio.trade.reputation", &[&read(1), &read(2), &read(5)]) } else { tr("veio.trade.reputation_max", &[&read(1)]) },
+                    0x1f4fa8),
+                (tr("veio.trade.flows", &[&read(3), &read(4), &(read(3) - read(4))]), if read(3) >= read(4) { 0x1e7a1e } else { 0xaa1f1f }),
+            ];
+            for slot in 0..3 {
+                let (product, need) = (read(6 + slot * 2), read(7 + slot * 2));
+                if product < 0 {
+                    continue;
+                }
+                let Some(&(_, key, _, _)) = society::trade::PRODUCTS.get((product / 1000) as usize) else { continue };
+                lines.push((tr("veio.trade.contract", &[&tr(key, &[]), &(need % 10000), &(need / 10000), &(product % 1000)]),
+                    presentation::INK));
+            }
+            lines
+        } else {
+            let stopped = read(5).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
+            vec![
+                (tr("veio.holding.units", &[&read(1), &read(2), &read(3)]), presentation::INK),
+                (tr(&format!("veio.holding.made{tab}"), &[&read(4)]), presentation::INK),
+                (tr("veio.holding.profit", &[&read(10), &read(11), &(read(10) - read(11))]),
+                    if read(10) >= read(11) { GOOD } else { 0xaa1f1f }),
+                (if read(6) > 0 {
+                    tr("veio.holding.stopped", &[&tr(&format!("veio.status.{}", presentation::STATUS_KEYS[stopped]), &[]), &read(6)])
+                } else { tr("veio.holding.all_good", &[]) }, if read(6) > 0 { WARN } else { GOOD }),
+                (tr(&format!("veio.holding.extra{tab}"), &[&read(7), &read(8), &read(9)]), presentation::SOFT_INK),
+            ]
+        };
         for (index, (line, color)) in lines.iter().enumerate() {
             host.text(event.batch, &fit(host, line, 176.0), [x + 8.0, y + TOP + index as f32 * ROW], *color, false);
         }
@@ -970,7 +989,7 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     for store in storage::stores_near(dimension, pos, RADIUS, now) {
         for (item, _) in store.items {
             if !best.iter().any(|(_, known)| *known == item)
-                && let Some(price) = society::export::quote(dimension, &item, day)
+                && let Some(price) = society::trade::quote(dimension, &item, day)
             {
                 best.push((price, item));
             }
@@ -979,6 +998,12 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     best.sort_by(|a, b| b.0.cmp(&a.0));
     for (price, item) in best.into_iter().take(3) {
         host.tell(player, Text::tr("veio.export.best", &[&item, &price]));
+    }
+    // Bolsa do dia: as cinco melhores cotações abertas, com a tendência.
+    for (product, price, trend) in society::trade::board(dimension, day, 5) {
+        let arrow = if trend > 0 { "+" } else if trend < 0 { "-" } else { "=" };
+        host.tell(player, Text::tr("veio.trade.board", &[&Text::tr(society::trade::PRODUCTS[product].1, &[]).plain(),
+            &price, &format!("{arrow}{}", trend.abs())]));
     }
     for post in posts.iter().filter(|post| waiting(post.status)).take(REPORT_LINES) {
         let key = format!("veio.report.issue.{}", presentation::STATUS_KEYS.get(post.status as usize).copied().unwrap_or("idle"));

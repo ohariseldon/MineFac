@@ -35,7 +35,7 @@ Branch `cloud/obras-planta` (base: `origin/main` 542b0a0). Testes: `python tools
 ## Integração com a main 0.22.0 (feita)
 - Centro de controle com 8 espaços: 0 comida, 1-3 metas, 4 cofre, 5 saque (da 0.21), **6 obra**, **7 decreto**
   (`projects::SITE`/`DECREE` mudaram de 5/6 para 6/7).
-- Estados do canteiro mudaram para 33-36 (`site::SITE_*`); o 32 é `no_company` do porto de exportação.
+- Estados do canteiro mudaram para 36-39 (`site::SITE_*`); 32-35 são das conexões externas (0.23).
 - Resumo do centro: linha 4 é a da companhia (caixa e exportação do dia, clique saca 1 esmeralda);
   a comida foi para a linha de aldeões. `DA5` traz (fila, ocupação+1) e `DA6` a exportação do dia (`center::refresh`).
 - Economia fechada: `center::add_coins` é borda (esmeraldas de verdade); recompensas de pedidos e o

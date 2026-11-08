@@ -2326,47 +2326,181 @@ fn village_rewards_come_from_the_town_hall_cash() {
     assert_eq!(society::ledger::borders(dimension).0, entered, "recompensa não cria moeda");
 }
 
-#[test]
-fn world_prices_reward_value_added_and_saturate() {
-    use society::export::world_price;
-    assert_eq!(world_price("minecraft:raw_iron"), Some(2), "matéria-prima vale pouco");
-    assert_eq!(world_price("veio:iron_plate"), Some(6), "processado: 1,5x");
-    assert_eq!(world_price("veio:gear"), Some(14), "componente: 2x");
-    assert_eq!(world_price("veio:circuit"), Some(42), "avançado: 3x");
-    assert_eq!(world_price("veio:speed_module"), Some(160), "módulo: 4x");
-    assert_eq!(world_price(WAGE), None, "a esmeralda é a moeda, não se exporta");
-    let dimension = "veio:test_export_saturation";
-    let day = 0;
-    assert_eq!(society::export::quote(dimension, "veio:gear", day), Some(14));
-    let first = society::export::sell(dimension, [0, 64, 0], "veio:gear", 64, 0, 0);
-    assert_eq!(first, 0, "sem companhia, o navio não vende");
+/// Mar em volta de `pos` (7x7, no nível e abaixo).
+fn sea(village: &mut Village, pos: [i32; 3]) {
+    for dx in -3..=3 {
+        for dz in -3..=3 {
+            for dy in [-1, 0] {
+                let at = [pos[0] + dx, pos[1] + dy, pos[2] + dz];
+                if at != pos {
+                    village.crops.insert(at, ("minecraft:water".into(), 0));
+                }
+            }
+        }
+    }
+}
+
+fn economy_total(village: &Village) -> i32 {
+    balance(COMPANY, village, [30, 64, 30]) + balance(PUBLIC, village, [60, 64, 0]) + balance(SHOPS, village, [20, 64, 0])
 }
 
 #[test]
-fn the_export_dock_ships_every_turn_and_foreign_money_closes_the_books() {
-    let (mut village, _, _) = society_town("veio:test_export_dock", 8);
+fn the_world_market_pays_for_complexity_and_reputation_opens_markets() {
+    use society::trade::*;
+    let dimension = "veio:test_trade_market";
+    for day in 0..20 {
+        assert!((80..=120).contains(&index(3, day)), "a bolsa oscila entre 80% e 120%");
+    }
+    assert!(quote(dimension, "veio:gear", 0).is_none(), "sem reputação o mundo não compra componentes");
+    assert!(quote(dimension, "veio:iron_plate", 0).is_some(), "processados sempre");
+    set_reputation(dimension, 1);
+    let gear = quote(dimension, "veio:gear", 0).unwrap();
+    let ore = quote(dimension, "minecraft:raw_iron", 0).unwrap();
+    assert!(gear >= 5 * ore, "engrenagem vale muito mais que minério ({gear} x {ore})");
+    assert!(import_price("minecraft:bread", 0).unwrap() > quote(dimension, "minecraft:bread", 0).unwrap(),
+        "importar custa mais que exportar: o preço local fica entre os dois");
+    assert_eq!(quote(dimension, WAGE, 0), None, "a esmeralda é a moeda");
+    let contract = issue(1, 0, 10, &[]);
+    assert_eq!(PRODUCTS[contract.product].3, 2, "contratos pedem a camada mais alta liberada");
+    assert!(contract.need >= 16 && contract.due >= 13);
+}
+
+#[test]
+fn a_cargo_port_needs_the_sea_and_ships_on_schedule_with_freight() {
+    let (mut village, _, _) = society_town("veio:test_trade_port", 8);
     let dimension = village.dimension;
-    let total = |village: &Village| balance(COMPANY, village, [30, 64, 30]) + balance(PUBLIC, village, [60, 64, 0])
-        + balance(SHOPS, village, [20, 64, 0]);
-    let before = total(&village);
-    let (entered, _) = society::ledger::borders(dimension);
-    let mut dock = block(society::export::DOCK);
-    dock.items[0] = Some(ItemStack::new("veio:gear", 8));
-    dock.items[1] = Some(ItemStack::new("minecraft:raw_iron", 8));
-    // Fase 0 em [40, 64, 40]: (40 ^ 40) & 63 = 0; o navio sai no começo de cada turno.
-    society::tick_block(&mut village, [40, 64, 40], &mut dock, 1180);
-    assert!(dock.items[0].is_some(), "ainda não é hora do navio");
-    society::tick_block(&mut village, [40, 64, 40], &mut dock, 1200);
-    assert!(dock.items.iter().all(Option::is_none), "o navio levou tudo");
-    let gross = number(&dock, "Total");
-    // 8 engrenagens (~14 cada, um pouco menos com a saturação) e 8 minérios (~2 cada).
-    assert!((100..=130).contains(&gross), "a engrenagem vale 7 vezes o minério ({gross})");
-    let (after_entered, _) = society::ledger::borders(dimension);
-    assert_eq!(after_entered - entered, i64::from(gross), "a venda lá fora é moeda nova");
-    assert_eq!(total(&village) - before, gross, "identidade: o que entrou está nas contas (companhia + imposto)");
-    assert!(balance(PUBLIC, &village, [60, 64, 0]) > 0, "imposto retido na fonte");
-    // Um segundo navio com as mesmas engrenagens no mesmo dia rende menos.
-    dock.items[0] = Some(ItemStack::new("veio:gear", 8));
-    society::tick_block(&mut village, [40, 64, 40], &mut dock, 2400);
-    assert!(number(&dock, "Total") - gross < gross, "o mercado externo satura");
+    let port_pos = [40, 64, 40];
+    let mut port = block(society::trade::PORT);
+    port.items[0] = Some(ItemStack::new("veio:iron_plate", 16));
+    society::tick_block(&mut village, port_pos, &mut port, 0);
+    assert_eq!(number(&port, "Status"), society::trade::NO_WATER, "porto em terra não opera");
+    sea(&mut village, port_pos);
+    port.nbt.remove(&"Water".into());
+    let before = economy_total(&village);
+    let (entered, left) = society::ledger::borders(dimension);
+    // Fase 0 em [40, 64, 40]; o porto parte a cada 2 turnos.
+    society::tick_block(&mut village, port_pos, &mut port, 1200);
+    assert!(port.items[0].is_some(), "turno ímpar: o navio ainda não saiu");
+    society::tick_block(&mut village, port_pos, &mut port, 2400);
+    assert!(port.items[0].is_none(), "o navio levou a carga");
+    let (entered_after, left_after) = society::ledger::borders(dimension);
+    assert!(left_after - left >= 5, "o frete paga o navio, para fora");
+    assert_eq!(i64::from(economy_total(&village) - before), (entered_after - entered) - (left_after - left),
+        "identidade contábil com o comércio exterior");
+    assert!(society::trade::connected(dimension, 1), "o porto é uma conexão externa");
+}
+
+#[test]
+fn a_freight_station_only_runs_at_the_frontier() {
+    let (mut village, _, _) = society_town("veio:test_trade_station", 9);
+    let mut near = block(society::trade::STATION);
+    society::tick_block(&mut village, [100, 64, 100], &mut near, 0);
+    assert_eq!(number(&near, "Status"), society::trade::NOT_FRONTIER, "a 70 blocos da sede não é fronteira");
+    let mut far = block(society::trade::STATION);
+    society::tick_block(&mut village, [200, 64, 200], &mut far, 0);
+    assert_ne!(number(&far, "Status"), society::trade::NOT_FRONTIER, "a 170 blocos, sim");
+}
+
+#[test]
+fn contracts_pay_a_premium_and_raise_reputation() {
+    use society::trade::*;
+    let (mut village, _, _) = society_town("veio:test_trade_contracts", 10);
+    let dimension = village.dimension;
+    roll(dimension, 0);
+    let (reputation, contracts) = state(dimension);
+    assert_eq!((reputation, contracts.len()), (0, 3), "três contratos no primeiro dia");
+    let contract = contracts[0].clone();
+    let item = PRODUCTS[contract.product].0;
+    let plain = quote(dimension, item, 0).unwrap();
+    let paid = export(dimension, [40, 64, 40], item, contract.need as u32, 0, 1);
+    assert!(paid > plain * contract.need * 9 / 10, "o contrato paga prêmio");
+    assert_eq!(state(dimension).0, 1, "contrato cumprido: reputação +1");
+    let _ = &mut village;
+}
+
+#[test]
+fn shops_import_food_when_short_and_money_leaves_the_economy() {
+    let (mut village, _, _) = society_town("veio:test_trade_import", 11);
+    let dimension = village.dimension;
+    sea(&mut village, [40, 64, 40]);
+    let mut port = block(society::trade::PORT);
+    society::tick_block(&mut village, [40, 64, 40], &mut port, 0);
+    // A família leva o pão; na volta, a loja está vazia e a falta fica anotada.
+    let mut house = block(society::HOUSE);
+    set_number(&mut house, "Wallet", 100);
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    for slot in 0..3 {
+        house.items[slot] = None;
+    }
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    let mut shop = village.stations.get(&[20, 64, 0]).unwrap().clone();
+    assert!(number(&shop, "Short") > 0, "faltou comida");
+    let before = economy_total(&village) + number(&house, "Wallet");
+    let (_, left) = society::ledger::borders(dimension);
+    // Turno da loja em [20, 64, 0]: (time + 20) % 1200 < 10.
+    society::shop_cycle(&mut village, [20, 64, 0], &mut shop, 1180);
+    let bread: u32 = shop.items[1..7].iter().flatten().filter(|stack| stack.item.as_ref() == "minecraft:bread").map(|stack| stack.count).sum();
+    assert!(bread > 0, "o comerciante importou pão");
+    let (_, left_after) = society::ledger::borders(dimension);
+    assert!(left_after > left, "a importação tira moeda da economia");
+    assert_eq!(i64::from(economy_total(&village) + number(&house, "Wallet") - before), -(left_after - left),
+        "identidade contábil com a importação");
+    assert_eq!(number(&shop, "Duration"), 0, "importado não vira dívida com a indústria");
+}
+
+#[test]
+fn contracts_never_repeat_a_product_and_news_reach_the_chat() {
+    use society::trade::*;
+    let dimension = "veio:test_trade_news";
+    roll(dimension, 0);
+    let (_, contracts) = state(dimension);
+    let mut products: Vec<usize> = contracts.iter().map(|contract| contract.product).collect();
+    products.sort_unstable();
+    products.dedup();
+    assert_eq!(products.len(), 3, "três contratos, três produtos diferentes");
+    let news = drain(dimension);
+    assert_eq!(news.iter().filter(|item| matches!(item, News::Offered(..))).count(), 3, "o chat anuncia os contratos");
+    assert!(drain(dimension).is_empty(), "cada aviso sai uma vez");
+    assert_eq!(unlocked_tier(0), 1);
+    assert_eq!(unlocked_tier(TIER_AT[0]), 2, "a primeira reputação abre os componentes");
+    assert_eq!(next_unlock(0), Some(TIER_AT[0]));
+    assert_eq!(next_unlock(99), None);
+    let board = board(dimension, 0, 5);
+    assert!(board.windows(2).all(|pair| pair[0].1 >= pair[1].1), "a bolsa vem da maior cotação para a menor");
+}
+
+#[test]
+fn a_fulfilled_contract_announces_the_premium_and_opens_a_market() {
+    use society::trade::*;
+    let (mut village, _, _) = society_town("veio:test_trade_open", 12);
+    let dimension = village.dimension;
+    roll(dimension, 0);
+    drain(dimension);
+    let (_, contracts) = state(dimension);
+    let contract = contracts.iter().find(|contract| PRODUCTS[contract.product].3 <= 1).cloned().unwrap();
+    export(dimension, [40, 64, 40], PRODUCTS[contract.product].0, contract.need as u32, 0, 1);
+    let news = drain(dimension);
+    assert!(news.iter().any(|item| matches!(item, News::Fulfilled(product, premium) if *product == contract.product && *premium > 0)));
+    assert!(news.contains(&News::Opened(2)), "reputação 1: o mundo passa a comprar componentes");
+    let _ = &mut village;
+}
+
+#[test]
+fn locked_cargo_waits_at_the_port_and_reputation_survives_a_reload() {
+    use society::trade::*;
+    let (mut village, _, _) = society_town("veio:test_trade_locked", 13);
+    let dimension = village.dimension;
+    sea(&mut village, [40, 64, 40]);
+    let mut port = block(PORT);
+    port.items[0] = Some(ItemStack::new("veio:speed_module", 2));
+    society::tick_block(&mut village, [40, 64, 40], &mut port, 2400);
+    assert_eq!(number(&port, "Status"), LOCKED_MARKET, "módulos ainda não têm mercado: a carga espera");
+    assert!(port.items[0].is_some());
+    // Reputação e contratos ficam no centro de controle e voltam ao reabrir o mundo.
+    set_reputation(dimension, 4);
+    let mut office = block(CONTROL_CENTER);
+    persist(dimension, &mut office, 0);
+    persist("veio:test_trade_reloaded", &mut office, 0);
+    assert_eq!(state("veio:test_trade_reloaded").0, 4);
+    assert_eq!(state("veio:test_trade_reloaded").1.len(), state(dimension).1.len());
 }

@@ -39,10 +39,10 @@ pub(crate) const BUILDING: i32 = 2;
 pub(crate) const DONE: i32 = 3;
 
 // Estados do painel (`presentation::STATUS_KEYS`).
-pub(crate) const SITE_PLAN: i32 = 33;
-pub(crate) const SITE_BLOCKED: i32 = 34;
-pub(crate) const SITE_BUILDING: i32 = 35;
-pub(crate) const SITE_DONE: i32 = 36;
+pub(crate) const SITE_PLAN: i32 = 36;
+pub(crate) const SITE_BLOCKED: i32 = 37;
+pub(crate) const SITE_BUILDING: i32 = 38;
+pub(crate) const SITE_DONE: i32 = 39;
 
 /// Por que a obra espera na fase de planta (`Utilization`).
 pub(crate) const NO_CENTER: i32 = 1;

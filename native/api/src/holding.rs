@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 /// Abas do centro de controle: 0 é a visão geral; 1 a 9, as divisões.
-pub(super) const TABS: i32 = 10;
+pub(super) const TABS: i32 = 11;
 pub(super) const MINING: u8 = 1;
 pub(super) const MANUFACTURING: u8 = 2;
 pub(super) const ENERGY: u8 = 3;
@@ -28,6 +28,8 @@ pub(super) const FORESTRY: u8 = 6;
 pub(super) const URBAN: u8 = 7;
 pub(super) const COMMERCE: u8 = 8;
 pub(super) const MANAGEMENT: u8 = 9;
+/// Aba do comércio exterior (não é uma empresa: reputação, fluxos e contratos).
+pub(super) const FOREIGN: i32 = 10;
 const SAMPLE: i64 = 100;
 /// Botões das setas da aba (enviados pelo clique na tela, recebidos no servidor).
 pub(super) const PREVIOUS: i32 = 100;
@@ -41,7 +43,7 @@ pub(super) fn division(block: &str) -> Option<u8> {
         workforce::society::HOUSE | workforce::society::WELL => URBAN,
         workforce::SHOP => COMMERCE,
         workforce::TOWN_HALL => return None,
-        workforce::FOREMAN_DESK | workforce::society::export::DOCK => LOGISTICS,
+        workforce::FOREMAN_DESK | workforce::society::trade::PORT | workforce::society::trade::STATION => LOGISTICS,
         _ => match operations::profile(block)?.sector {
             Sector::Extraction => MINING,
             Sector::Industry | Sector::Projects => MANUFACTURING,
@@ -245,10 +247,25 @@ fn extras(dimension: &str, pos: [i32; 3], division: u8) -> [i32; 3] {
 }
 
 /// Recalcula a aba escolhida no centro de controle (`HData`).
-pub(super) fn refresh(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity) {
+pub(super) fn refresh(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let tab = number(entity, "Tab").clamp(0, TABS - 1);
     if tab == 0 {
         // A visão geral (páginas da vila) é do `workforce::center::refresh`.
+        return;
+    }
+    if tab == FOREIGN {
+        // [reputação, camada, exporta/dia, importa/dia, próxima reputação] e três contratos em dois
+        // números cada: produto x 1000 + dias, pedido x 10000 + feito.
+        let day = time.div_euclid(workforce::society::DAY);
+        let ([reputation, tier, exports, imports, next], contracts) = workforce::society::trade::summary(dimension, day);
+        let mut values = vec![reputation, tier, exports, imports, next];
+        for slot in 0..3 {
+            match contracts.get(slot) {
+                Some(&[product, done, need, days]) => values.extend([product * 1000 + days.min(999), need * 10000 + done.min(9999)]),
+                None => values.extend([-1, 0]),
+            }
+        }
+        entity.nbt.insert("HData".into(), Tag::IntArray(values));
         return;
     }
     let [units, active, workers, made, status, count, revenue, cost] = summary(dimension, tab as u8);
@@ -286,7 +303,7 @@ pub(super) fn click(at: [f32; 2], tab: i32) -> Option<i32> {
 }
 
 /// O botão chegou ao servidor: troca a aba e recalcula na hora, ou saca uma esmeralda.
-pub(super) fn press(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, id: i32) {
+pub(super) fn press(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, id: i32, time: i64) {
     if id == workforce::society::ledger::CASH_OUT {
         workforce::society::ledger::cash_out(dimension, pos, entity, defense::clock());
         return;
@@ -294,12 +311,12 @@ pub(super) fn press(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity,
     // As setas passam pelas páginas da vila (aba 0) e depois pelas divisões.
     let step = match id { PREVIOUS => -1, NEXT => 1, _ => return };
     workforce::center::step_view(entity, step);
-    refresh(dimension, pos, entity);
+    refresh(dimension, pos, entity, time);
 }
 
 /// Uma linha por divisão no relatório do centro de controle.
 pub(super) fn report_lines(dimension: &str) -> Vec<Text> {
-    (1..TABS as u8).filter_map(|division| {
+    (1..FOREIGN as u8).filter_map(|division| {
         let [units, active, workers, made, _, _, revenue, cost] = summary(dimension, division);
         (units > 0 || revenue > 0).then(|| Text::tr("veio.holding.report", &[&Text::tr(&format!("veio.holding.tab{division}"), &[]).plain(),
             &units, &active, &workers, &made, &revenue, &cost, &(revenue - cost)]))

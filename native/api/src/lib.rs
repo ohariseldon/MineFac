@@ -283,7 +283,8 @@ impl Hooks for Factory {
 
     fn menu_button(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::MenuButtonEvent<'_>) {
         if event.entity.id == workforce::CONTROL_CENTER {
-            holding::press(host.dimension(), event.pos, event.entity, event.id);
+            let time = host.level(host.dimension()).and_then(|level| level.game_time(host)).unwrap_or(0);
+            holding::press(host.dimension(), event.pos, event.entity, event.id, time);
         }
     }
 
@@ -718,6 +719,9 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Payable" => key!("Payable"),
         "Revenue" => key!("Revenue"),
         "DExport" => key!("DExport"),
+        "Trade" => key!("Trade"),
+        "TradeRecent" => key!("TradeRecent"),
+        "Water" => key!("Water"),
         _ => rare_nbt_key(name),
     }
 }

@@ -502,17 +502,17 @@ fn the_holding_counts_units_workers_and_daily_production_per_division() {
     let mut center = ModBlockEntity::default();
     center.id = workforce::CONTROL_CENTER.to_owned();
     // Primeiro as páginas da vila (aba 0), depois as divisões.
-    press(dimension, [0, 64, 0], &mut center, NEXT);
+    press(dimension, [0, 64, 0], &mut center, NEXT, 0);
     assert_eq!((number(&center, "Tab"), number(&center, "Page")), (0, 1), "página Atenção");
     for _ in 1..workforce::center::PAGES {
-        press(dimension, [0, 64, 0], &mut center, NEXT);
+        press(dimension, [0, 64, 0], &mut center, NEXT, 0);
     }
     assert_eq!(number(&center, "Tab"), 1, "aba Mineração");
     assert_eq!(data(&center)[0], 1, "uma extratora na aba");
-    press(dimension, [0, 64, 0], &mut center, PREVIOUS);
+    press(dimension, [0, 64, 0], &mut center, PREVIOUS, 0);
     assert_eq!((number(&center, "Tab"), number(&center, "Page")), (0, workforce::center::PAGES - 1), "volta à última página");
     for _ in 0..workforce::center::PAGES {
-        press(dimension, [0, 64, 0], &mut center, PREVIOUS);
+        press(dimension, [0, 64, 0], &mut center, PREVIOUS, 0);
     }
     assert_eq!(number(&center, "Tab"), TABS - 1, "volta pela última aba");
 }
