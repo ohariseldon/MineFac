@@ -7,7 +7,7 @@ Primeira etapa da ordem em [frentes/CLOUD.md](frentes/CLOUD.md): um aldeão cont
 1. Obtenha a colheitadeira. O avanço **Lavoura mecanizada** passa a liberar a receita do **Posto do lavrador** (composteira, enxada de ferro, esmeralda e barril, em qualquer posição).
 2. Coloque o posto no meio de uma lavoura de até 9x9, como a colheitadeira. A camada do posto, a de baixo e a de cima são lidas.
 3. Ponha comida no slot da esquerda. O valor é o do armazém, e cada tarefa gasta **2 pontos**: um trigo não paga a colheita; duas cenouras ou batatas pagam uma; pão (6) paga 3; carne assada (8) paga 4.
-4. Com uma **esmeralda** na mão, clique com o botão direito no posto. O aldeão adulto livre mais próximo, a até 8 blocos, é contratado e a esmeralda é gasta. Sem candidato, a esmeralda fica com o jogador.
+4. Com uma **esmeralda** na mão, clique com o botão direito no posto. Um aldeão adulto livre a até 8 blocos é contratado e a esmeralda é gasta: primeiro os sem profissão e os nitwits, depois comerciantes de nível 1, e os experientes só se não houver outro; no empate, o mais próximo. Sem candidato, a esmeralda fica com o jogador.
 5. O trabalhador anda até uma planta madura, colhe (a planta fica replantada no estágio inicial, como na colheitadeira) e leva o produto de volta ao posto. Retire pelos três slots da direita ou ligue uma esteira no bocal.
 6. **Agachar + chave** no posto dispensa o trabalhador. Ele volta ao comportamento normal de aldeão.
 
@@ -31,6 +31,43 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 | Trabalhador ausente | Aldeão não encontrado (longe, em chunk descarregado, morto). Depois de 5 minutos com o posto carregado, a atribuição é desfeita. |
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
+
+## Sétima entrega: revisão de aldeões e mobs (com o quartel do Grok)
+
+Revisão feita sobre a main `cf37004` com a casa do fundador (sexta entrega) e a branch `cursor/grok-quartel-c7d9` integrada (mobs caçando aldeões, saqueadores atrás do jogador, quartel). Só ajustes; nada foi reescrito.
+
+### Correções
+
+- **Relógio do mod em dobro no jogo de um jogador só.** O gancho `tick` roda no servidor interno e também na janela (o Horizon chama os mods dos dois lados). O Veio avançava o relógio duas vezes por tick, em threads diferentes: tudo medido nele (espera do spawn, ausência do trabalhador, ordens, reservas, natalidade, bônus da casa e da comida) corria no dobro da velocidade, e metade dos aldeões nunca tinha filhos (o sorteio `(relógio + id) % 6000` só cai em números pares). As cotas do orçamento global também eram zeradas no meio do tick do servidor, e um passo da poluição podia ser gasto na janela, onde não há jogadores nem `summon`: a onda daquela noite se perdia. Agora o gancho sai logo quando `Host::window()` é verdadeiro. Os tempos documentados (5 min, 30 s...) passam a valer de fato; no servidor dedicado nada muda.
+- **Renascer no centro da vila não funcionava.** `run_command` falha dentro de `player_respawned` (o estado do jogador está trocado). O teleporte vai para uma fila e sai no tick seguinte.
+- **Onda sem saqueadores.** Se nenhum saqueador cabe (chunks em volta descarregados), a noite não conta, nada é anunciado e o passo seguinte tenta de novo. Eles nascem no chão, não em cima de árvores, e o som de invasão só toca se alguém apareceu.
+- **Alvos de outra dimensão.** Saqueadores só miram máquinas do Overworld (antes, uma máquina do Nether com as mesmas coordenadas servia de alvo).
+- **Limpeza dos registros de mobs e animais** (`defense`, `production::ranch`): a marca de limpeza era uma só para todas as dimensões, então só uma dimensão era limpa; agora todas são limpas juntas.
+
+### Ajustes no trabalho do Grok
+
+- Zumbis, esqueletos e aranhas só caçam aldeões **à noite** (o código caçava a qualquer hora; o texto já dizia "à noite"). Saqueadores caçam sempre.
+- A presa precisa estar a até 6 blocos de altura: um monstro da caverna não tenta subir até a vila.
+- Esqueletos, strays, bogged e pillagers com o jogador a até 16 blocos continuam atirando nele em vez de largar a luta para ir atrás de aldeões (os de corpo a corpo seguem com 6 blocos).
+- Aldeões feridos se recuperam depois de 30 s sem apanhar (antes, os golpes ficavam para sempre).
+- Os registros de jogadores e aldeões dos mobs se refazem a cada 10 ticks, não a cada tick.
+- O quartel ignora monstros mais de 8 blocos acima ou abaixo dele, e o soldado corre (velocidade 0,9 em vez de 0,6) e refaz o caminho duas vezes por segundo atrás do alvo.
+
+### Aldeões
+
+- **Contratação** prefere quem não faz falta no comércio (sem profissão ou nitwit, depois nível 1, por último os experientes).
+- **Lavradores e pastores dormem à noite.** Das 13000 às 23000, depois de entregar o que carregam, a ordem é retirada e o aldeão volta à vida vanilla (ir para a cama). O painel mostra o estado novo 28, **Descansando (noite)**. Carregador, capataz, administrador e soldados seguem trabalhando. Dormir numa cama longe do posto não conta como ausência (antes, a noite de 8 min passava do limite de 5 min e o posto dispensava o trabalhador).
+
+### Contratos tocados
+
+- `lib.rs`: saída antecipada do gancho `tick` na janela; `note_players` e `harm_villagers` recebem o relógio.
+- `presentation.rs`: `STATUS_KEYS` com 29 entradas (novo `resting`, cor azul).
+- `pollution.rs`: `night_at`, `is_night`; `spawn_wave` devolve quantos nasceram.
+- Substituto offline: `Host::window`.
+
+### Verificação
+
+Substituto offline: 135 testes, entre eles onda que não nasce, contratação por profissão, descanso noturno e o teste do quartel do Grok. Conteúdo conferido. Pendentes: compilação pelo launcher e teste no jogo (prioridade: confirmar que `window()` é falso no servidor interno e verdadeiro na janela, e que `host.entity` funciona no tick global, que o censo de aldeões dos mobs usa).
 
 ## Sexta entrega: casa do fundador (missão de controle + casa)
 

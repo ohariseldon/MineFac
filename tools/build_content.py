@@ -77,6 +77,7 @@ BLOCKS = {
     "barn": ("machine", "wood", 27, [], 2.0),
     "silo": ("machine", "iron", 18, [], 2.0),
     "control_center": ("machine", "steel", 4, [], 2.0),
+    "barracks": ("machine", "iron", 2, [], 2.0),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
 }
@@ -113,7 +114,7 @@ TABS = {
     "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench"]),
     "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
-        "pantry", "flour", "biomass", "tesla", "repair_kit", "minecraft:bone_meal"]),
+        "pantry", "flour", "biomass", "tesla", "barracks", "repair_kit", "minecraft:bone_meal"]),
 }
 
 FACES = ("down", "up", "north", "south", "west", "east")

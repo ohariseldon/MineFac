@@ -31,6 +31,10 @@ struct Arrival {
 }
 
 static ARRIVALS: Mutex<Vec<Arrival>> = Mutex::new(Vec::new());
+/// Quem renasceu e vai para o centro no próximo tick: `run_command` falha dentro do gancho de
+/// renascimento, que roda com o estado do jogador trocado.
+static RESPAWNS: Mutex<Vec<String>> = Mutex::new(Vec::new());
+static RESPAWNING: AtomicBool = AtomicBool::new(false);
 static ARRIVING: AtomicBool = AtomicBool::new(false);
 /// Centro conhecido e se veio de um centro de controle.
 static CENTER: Mutex<Option<([i32; 3], bool)>> = Mutex::new(None);
@@ -57,12 +61,27 @@ pub(crate) fn logged_in(player: u128, name: &str, now: u64) {
 
 /// Quem renasce sem cama volta ao centro da vila. Com cama (a da casa ou a de fora, ver
 /// `home`), o jogo leva o jogador para ela.
-pub(crate) fn respawned(host: &mut dyn Host, player: u128, name: &str) {
-    if let Some(([x, y, z], _)) = center()
+pub(crate) fn respawned(player: u128, name: &str) {
+    if center().is_some()
         && safe_name(name)
         && !super::super::home::has_bed(player)
+        && let Ok(mut respawns) = RESPAWNS.lock()
     {
-        host.run_command(&format!("execute in {OVERWORLD} run tp {name} {x} {y} {z}"));
+        respawns.retain(|known| known != name);
+        respawns.push(name.to_owned());
+        RESPAWNING.store(true, Ordering::Release);
+    }
+}
+
+fn send_respawns(host: &mut dyn Host) {
+    if !RESPAWNING.swap(false, Ordering::AcqRel) {
+        return;
+    }
+    let names = RESPAWNS.lock().map(|mut list| std::mem::take(&mut *list)).unwrap_or_default();
+    if let Some(([x, y, z], _)) = center() {
+        for name in names {
+            host.run_command(&format!("execute in {OVERWORLD} run tp {name} {x} {y} {z}"));
+        }
     }
 }
 
@@ -102,6 +121,7 @@ fn settle(host: &mut dyn Host, name: &str, [x, y, z]: [i32; 3]) -> bool {
 
 /// Chamado no tick do jogo. Sai na primeira comparação quando ninguém está chegando.
 pub(crate) fn tick(host: &mut dyn Host, now: u64) {
+    send_respawns(host);
     if !ARRIVING.load(Ordering::Acquire) || now % 20 != 0 {
         return;
     }
@@ -180,5 +200,8 @@ pub(crate) fn reset() {
     }
     if let Ok(mut arrivals) = ARRIVALS.lock() {
         arrivals.clear();
+    }
+    if let Ok(mut respawns) = RESPAWNS.lock() {
+        respawns.clear();
     }
 }

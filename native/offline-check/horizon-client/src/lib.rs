@@ -434,6 +434,10 @@ pub mod mod_api {
         fn run_command(&mut self, line: &str) -> bool {
             unimplemented!("run_command")
         }
+        /// `native_hooks::Game::native_window`: este `Game` é o da janela, não um servidor.
+        fn window(&self) -> bool {
+            false
+        }
         /// `native_server::Game::native_acting_player`: o jogador cuja ação o gancho ouve. API 21.
         fn acting_player(&self) -> Option<NativeServerPlayer> {
             unimplemented!("acting_player")

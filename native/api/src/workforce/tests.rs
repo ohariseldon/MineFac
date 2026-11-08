@@ -138,6 +138,12 @@ impl Host for Village {
     fn play_sound(&mut self, _: &str, _: [f64; 3], _: usize, _: f32, _: f32) -> bool {
         true
     }
+    fn kill_mob(&mut self, _: &str, id: u32) -> bool {
+        self.animals.remove(&id).is_some()
+    }
+    fn action_bar(&mut self, _: u128, _: horizon_client::mod_api::Text) -> bool {
+        true
+    }
     fn edit_blocks(&mut self, _: &str, edit: &horizon_client::mod_api::NativeBlockEdit) -> Result<u64, String> {
         for run in &edit.runs {
             for dy in 0..run.height as i32 {
@@ -1197,7 +1203,66 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     let before = village.commands.len();
     spawn::control_center(&mut village, [200, 64, 200]);
     assert_eq!(village.commands.len(), before, "mesmo centro: nada a refazer");
-    spawn::respawned(&mut village, 7, "Steve");
-    assert!(village.commands.last().is_some_and(|line| line.ends_with("tp Steve 200 65 200")));
+    spawn::respawned(7, "Steve");
+    assert_eq!(village.commands.len(), before, "nada de comando dentro do gancho de renascimento");
+    spawn::tick(&mut village, 1);
+    assert!(village.commands.last().is_some_and(|line| line.ends_with("tp Steve 200 65 200")), "vai no tick seguinte");
     spawn::reset();
+}
+
+#[test]
+fn hiring_prefers_villagers_without_a_trade() {
+    let data = |profession: &str, level: i32| Compound::from([("VillagerData".into(), Tag::Compound(Compound::from([
+        ("profession".into(), Tag::String(profession.into())), ("level".into(), Tag::Int(level)),
+    ])))]);
+    assert_eq!(trade_rank(&data("minecraft:none", 1)), 0);
+    assert_eq!(trade_rank(&data("minecraft:nitwit", 1)), 0);
+    assert_eq!(trade_rank(&data("minecraft:librarian", 1)), 1);
+    assert_eq!(trade_rank(&data("minecraft:librarian", 3)), 2);
+    assert_eq!(trade_rank(&Compound::new()), 0, "sem dados de aldeão: livre");
+}
+
+#[test]
+fn barracks_trains_a_class_and_the_militia_kills_in_three_blows() {
+    assert!(barracks::class(3).reach > barracks::class(1).reach, "arqueiro alcança mais que a milícia");
+    assert!(barracks::class(2).life > barracks::class(1).life, "o guarda aguenta mais");
+    assert!(barracks::class(4).blows < barracks::class(1).blows, "o mago mata em menos golpes");
+    let origin = [0.0, 64.0, 0.0];
+    let militia = (9, 1, [1.0, 64.0, 0.0]);
+    let guard = (8, 2, [6.0, 64.0, 6.0]);
+    assert_eq!(barracks::pick(origin, &[militia, guard]).map(|found| found.0), Some(8), "o monstro vai no guarda");
+
+    let mut village = Village::new("veio:test_barracks");
+    village.villager(77022, [2.5, 64.0, 0.5], [77, 0, 0, 1]);
+    let mut entity = block(BARRACKS);
+    entity.items[0] = Some(ItemStack::new("minecraft:bread", 1));
+    entity.items[1] = Some(ItemStack::new("minecraft:emerald", 2));
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    village.stations.insert(POST, entity.clone());
+    assert_eq!(barracks::cycle(&mut village, POST), Some(Flow::Cancel));
+    assert_eq!(barracks::cycle(&mut village, POST), Some(Flow::Cancel));
+    let station = village.stations.get(&POST).unwrap();
+    assert_eq!(number(station, "Role"), 2, "milícia e depois guarda");
+    assert!(station.items[1].is_none(), "cada troca gasta uma esmeralda");
+    assert_eq!(barracks::cycle(&mut village, POST), Some(Flow::Cancel));
+    assert_eq!(number(village.stations.get(&POST).unwrap(), "Role"), 2, "sem esmeralda a classe fica");
+
+    village.animals.insert(77021, ([4.5, 64.0, 0.5], Compound::default()));
+    defense::observe(village.dimension, 77021, "minecraft:zombie");
+    for now in 0..7 {
+        step(&mut village, POST, &mut entity, now as i64 * EVERY, now);
+    }
+    assert!(village.animals.get(&77021).is_none(), "três golpes da milícia matam");
+    assert_eq!(number(&entity, "Produced"), 1);
+    assert_eq!(entity.items[0], None, "o pão pagou os três golpes");
+}
+
+#[test]
+fn field_hands_and_shepherds_sleep_at_night_and_the_rest_keep_working() {
+    assert!(pollution::night_at(24000 * 3 + 18000));
+    assert!(!pollution::night_at(24000 * 3 + 6000));
+    assert!(!pollution::night_at(23500), "amanheceu");
+    assert!(rests(FARM_POST, true) && rests(SHEPHERD_POST, true));
+    assert!(!rests(FARM_POST, false));
+    assert!(!rests(HAULER_POST, true) && !rests(BARRACKS, true) && !rests(CONTROL_CENTER, true), "fábrica, quartel e painel seguem");
 }

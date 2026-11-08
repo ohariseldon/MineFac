@@ -228,8 +228,8 @@ impl Hooks for Factory {
         workforce::spawn::logged_in(event.player, event.name, defense::clock());
     }
 
-    fn player_respawned(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
-        workforce::spawn::respawned(host, event.player, event.name);
+    fn player_respawned(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
+        workforce::spawn::respawned(event.player, event.name);
     }
 
     /// Casa do fundador: a primeira cama é a da casa, e só mais uma fora dela.
@@ -252,9 +252,18 @@ impl Hooks for Factory {
     }
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
+        // No jogo de um jogador só, o gancho roda duas vezes por tick: no servidor interno e na
+        // janela (cliente). O Veio é todo do servidor; na janela, o relógio andaria em dobro e
+        // fora de ordem, as cotas zerariam no meio do tick e um passo da poluição podia ser
+        // gasto no cliente (onde não há jogadores nem `summon`), perdendo a onda da noite.
+        if host.window() {
+            return;
+        }
         defense::advance_clock();
         budget::begin_tick(defense::clock());
         power::maintenance(defense::clock());
+        pollution::note_players(host, defense::clock());
+        pollution::harm_villagers(host, defense::clock());
         workforce::spawn::tick(host, defense::clock());
         home::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
@@ -482,6 +491,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Progress" => key!("Progress"),
         "Queued" => key!("Queued"),
         "Rate" => key!("Rate"),
+        "Role" => key!("Role"),
         "Ration" => key!("Ration"),
         "Recipe" => key!("Recipe"),
         "Refresh" => key!("Refresh"),

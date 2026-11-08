@@ -346,7 +346,7 @@ fn raids_need_a_notice_a_day_of_grace_and_the_night() {
     assert_eq!(pollution::plan_for_test(&hot(5000.0), anchor, Some(1000), 20000, 15000), None);
     // Depois da carência: alerta ao anoitecer e onda à noite.
     assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 12000), Some(Plan::Warning(anchor)));
-    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 15000), Some(Plan::Wave(anchor, 2)));
+    assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 15000), Some(Plan::Wave(anchor, 4)));
     // De dia ou abaixo do limite, não há ataque.
     assert_eq!(pollution::plan_for_test(&hot(1500.0), anchor, Some(0), 30000, 24000 + 3000), None);
     assert_eq!(pollution::plan_for_test(&hot(900.0), anchor, Some(0), 30000, 24000 + 15000), None);
@@ -354,9 +354,11 @@ fn raids_need_a_notice_a_day_of_grace_and_the_night() {
 
 #[test]
 fn waves_grow_but_stay_capped() {
-    assert_eq!(pollution::wave_size(pollution::RAID, 1), 2);
-    assert_eq!(pollution::wave_size(pollution::RAID + 1200.0, 3), 5);
-    assert_eq!(pollution::wave_size(1.0e6, 50), 8);
+    assert_eq!(pollution::wave_size(pollution::RAID, 1), 4);
+    assert_eq!(pollution::wave_size(pollution::RAID + 1200.0, 3), 9);
+    assert_eq!(pollution::wave_size(1.0e6, 50), 12);
+    assert_eq!(100 / pollution::BLOW, 4, "quatro golpes param a máquina");
+    assert_eq!(pollution::VILLAGER_BLOWS, 4, "quatro golpes matam um aldeão");
 }
 
 #[test]
@@ -388,4 +390,37 @@ fn workforce_posts_count_as_item_input_for_belt_curves() {
     assert!(has_item_inputs(workforce::FOREMAN_DESK));
     assert!(has_item_inputs(workforce::SHEPHERD_POST));
     assert!(!has_item_inputs(SOLAR));
+}
+
+#[test]
+fn a_raid_that_cannot_spawn_is_not_announced_and_comes_back_later() {
+    struct Night { summons: bool, summoned: u32, bars: u32 }
+    impl Host for Night {
+        fn dimension(&self) -> &'static str { "minecraft:overworld" }
+        fn day_time(&self) -> i64 { 24000 * 5 + 15000 }
+        fn surface_heights(&self, _: &str, columns: &[(i32, i32)], _: horizon_client::mod_api::NativeHeightmap) -> Result<Vec<Option<i32>>, String> {
+            Ok(columns.iter().map(|_| Some(70)).collect())
+        }
+        fn summon(&mut self, _: &str, _: &str, _: [f64; 3], _: Compound) -> Option<u32> {
+            self.summons.then(|| { self.summoned += 1; self.summoned })
+        }
+        fn server_players(&self) -> Vec<horizon_client::mod_api::NativeServerPlayer> {
+            vec![horizon_client::mod_api::NativeServerPlayer {
+                uuid: 5, dimension: "minecraft:overworld".into(), position: [10.0, 64.0, 10.0], ..Default::default()
+            }]
+        }
+        fn action_bar(&mut self, _: u128, _: horizon_client::mod_api::Text) -> bool { self.bars += 1; true }
+        fn play_sound(&mut self, _: &str, _: [f64; 3], _: usize, _: f32, _: f32) -> bool { true }
+    }
+    let (time, overworld) = (64 * 100_000, "minecraft:overworld");
+    pollution::seed_for_test(overworld, &[((0, 0), 1500.0)], [0, 64, 0], time + 64, Some(0));
+    let mut night = Night { summons: false, summoned: 0, bars: 0 };
+    pollution::update(&mut night, time);
+    assert_eq!((night.bars, pollution::waves_for_test(overworld)), (0, 0), "nenhum saqueador: nem aviso, nem onda contada");
+    night.summons = true;
+    pollution::update(&mut night, time + 64);
+    assert_eq!(night.summoned, pollution::wave_size(1400.0, 1), "a mesma noite tenta de novo");
+    assert_eq!((night.bars, pollution::waves_for_test(overworld)), (1, 1));
+    pollution::update(&mut night, time + 128);
+    assert_eq!(night.summoned, pollution::wave_size(1400.0, 1), "uma onda por noite");
 }
