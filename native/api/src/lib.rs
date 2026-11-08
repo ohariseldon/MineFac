@@ -5,6 +5,7 @@ mod contracts;
 mod freight;
 mod logistics;
 mod logistics_controls;
+mod milestones;
 mod inserters;
 pub(crate) mod operations;
 mod defense;
@@ -78,6 +79,7 @@ impl Hooks for Factory {
         // A casa, as camas e os bônus em memória pertencem ao mundo que abre.
         // O painel carrega os próprios dados salvos quando começar a funcionar.
         home::reset();
+        milestones::census::reset();
     }
 
     fn block_entity(
@@ -231,6 +233,8 @@ impl Hooks for Factory {
         let tutorial_contract = if event.entity.id == HUB { number(event.entity, "ContractStage") } else { 0 };
         tick_factory(host, event.pos, event.entity, time);
         onboarding::observe_production(host.dimension(), event.pos, event.entity, produced, tutorial_cycles, tutorial_contract, time);
+        milestones::census::observe(host.dimension(), event.pos, event.entity, previous.0,
+            number(event.entity, "Produced") - produced, defense::clock());
         pollution::emit(host, event.pos, event.entity, time);
         record_performance(event.entity, produced);
         presentation::publish(event.entity);
@@ -305,6 +309,7 @@ impl Hooks for Factory {
         workforce::spawn::tick(host, defense::clock());
         onboarding::server_tick(host);
         home::tick(host, defense::clock());
+        milestones::census::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
         }
@@ -402,7 +407,7 @@ fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
         SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::is_machine(block) || workforce::owns(block) || freight::owns(block)
+        || production::is_machine(block) || workforce::owns(block) || freight::owns(block) || milestones::owns(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
@@ -446,6 +451,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         HUB => (4, vec![0, 1], vec![2, 3]),
         HARVESTER => (4, vec![0], vec![1, 2, 3]),
         _ if freight::owns(block) => return freight::layout(block),
+        _ if milestones::owns(block) => milestones::layout(),
         _ if workforce::owns(block) => return workforce::layout(block),
         _ => return production::layout(block),
     })
@@ -458,7 +464,7 @@ fn has_item_inputs(block: &str) -> bool {
         INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER => true,
         DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => false,
         _ if freight::owns(block) => true,
-        _ if workforce::is_post(block) || workforce::storage::is_store(block) => true,
+        _ if workforce::is_post(block) || workforce::storage::is_store(block) || milestones::owns(block) => true,
         _ => production::has_inputs(block),
     }
 }
@@ -475,6 +481,7 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         _ if freight::owns(block) => 3..6,
         _ if production::is_machine(block) => production::outputs(block),
         _ if workforce::owns(block) => workforce::outputs(block),
+        _ if milestones::owns(block) => 1..2,
         _ => 0..1,
     }
 }
@@ -482,6 +489,7 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
 fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
     match (block, slot) {
         (HUB, _) => contracts::valid_input(slot, stack),
+        (milestones::BOARD, _) => milestones::valid_input(slot, stack),
         (BELT | FAST_BELT | SPLITTER, 0) => true,
         (MERGER, 0 | 1) => true,
         _ if freight::owns(block) => (slot < 6 || block == freight::caravan::ID && slot == 7 && freight::caravan::feed(&stack.item)) && stack.damage == 0 && stack.extra.is_none(),
@@ -666,6 +674,9 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
     if entity.id == HUB {
         contracts::tick(entity);
         return;
+    }
+    if milestones::owns(&entity.id) {
+        return milestones::tick(host, pos, entity);
     }
     if power::tier(&entity.id).is_some() {
         return;

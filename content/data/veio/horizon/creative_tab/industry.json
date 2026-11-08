@@ -13,6 +13,7 @@
     "veio:alloy_furnace",
     "veio:electronics",
     "veio:electric_furnace",
+    "veio:factory_board",
     "veio:contract_hub",
     "veio:wrench",
     "veio:copper_plate",
@@ -26,6 +27,9 @@
     "veio:module",
     "veio:speed_module",
     "veio:efficiency_module",
-    "veio:productivity_module"
+    "veio:productivity_module",
+    "veio:permit_workshop",
+    "veio:permit_steel",
+    "veio:permit_electronics"
   ]
 }

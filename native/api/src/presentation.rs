@@ -35,6 +35,7 @@ pub(super) fn screen(block: &str) -> Option<NativeScreen> {
         HUB => vec![Some([26.0, 45.0]), Some([62.0, 45.0]), Some([116.0, 45.0]), Some([152.0, 45.0])],
         HARVESTER => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0])],
         _ if freight::owns(block) => freight::screen_slots(block)?,
+        _ if milestones::owns(block) => milestones::screen_slots(),
         _ if workforce::owns(block) => workforce::screen_slots(block)?,
         _ => production::screen_slots(block)?,
     };
@@ -134,6 +135,10 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         workforce::center::draw_screen(host, event);
         return;
     }
+    if milestones::owns(event.block) {
+        milestones::draw_screen(host, event);
+        return;
+    }
     let status = read(0).clamp(0, STATUS_KEYS.len() as i32 - 1) as usize;
     let status_text = Text::tr(&format!("veio.status.{}", STATUS_KEYS[status]), &[]).plain();
     lamp_icon(host, event, [9.0, 24.0], status);
@@ -227,6 +232,8 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
         workforce::center::data(entity)
     } else if workforce::zones::is_marker(&entity.id) {
         workforce::zones::data(entity)
+    } else if milestones::owns(&entity.id) {
+        milestones::data(entity)
     } else {
         let (progress, duration) = match entity.id.as_str() {
             GENERATOR | GEOTHERMAL => (number(entity, "Burn"), number(entity, "BurnTotal").max(1)),

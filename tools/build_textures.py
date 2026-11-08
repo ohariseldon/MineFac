@@ -195,6 +195,16 @@ MOTIFS = {
         "eOooRoOe",
         "eeeeeeee",
     ],
+    "factory_board": [
+        "nnnnnnnn",
+        "nwwwwwwn",
+        "nwHHkkwn",
+        "nwwwwwwn",
+        "nwHHHHwn",
+        "nwwwwwwn",
+        "nwHkkkwn",
+        "nnnnnnnn",
+    ],
     "contract_hub": [
         "nnnnnnnn",
         "nwwwwwwn",
@@ -390,7 +400,7 @@ MOTIFS.update({
 })
 MACHINE_TIER = {
     "drill": "copper", "press": "copper", "assembler": "copper", "generator": "copper",
-    "contract_hub": "copper", "cutter": "iron", "integrator": "iron", "crusher": "iron",
+    "contract_hub": "copper", "factory_board": "copper", "cutter": "iron", "integrator": "iron", "crusher": "iron",
     "alloy_furnace": "iron", "harvester": "iron", "electronics": "steel", "geothermal": "steel",
     "drill_mk2": "steel",
     "drill_mk3": "steel", "electric_furnace": "copper", "mill": "copper", "kitchen": "iron", "pantry": "copper",
@@ -705,6 +715,28 @@ REPAIR_KIT = [
     "................",
 ]
 
+def permit(seal):
+    """Licença de fase: papel com faixa e selo na cor da fase."""
+    rows = [
+        "................",
+        "..bbbbbbbbbbbb..",
+        "..baaaaaaaaaab..",
+        "..ba" + seal[0] * 8 + "ab..",
+        "..baaaaaaaaaab..",
+        "..baeeeeeeeaab..",
+        "..baaaaaaaaaab..",
+        "..baeeeeeaaaab..",
+        "..baaaaaaaaaab..",
+        "..baeeeeeeaaab..",
+        "..baaaaaa" + seal[1] * 2 + "aab..",
+        "..baaaaa" + seal[1] * 4 + "ab..",
+        "..baaaaa" + seal[1] * 4 + "ab..",
+        "..baaaaaa" + seal[1] * 2 + "aab..",
+        "..bbbbbbbbbbbb..",
+        "................",
+    ]
+    return render(rows, salt=17)
+
 def module_card(light):
     """Placa de módulo com a luz da cor do efeito, como os módulos do Factorio."""
     rows = [
@@ -821,6 +853,9 @@ def main():
     out["item/flour"] = render(FLOUR, salt=12)
     out["item/biomass"] = render(BIOMASS, salt=13)
     out["item/route_card"] = module_card("uv")
+    out["item/permit_workshop"] = permit("qx")
+    out["item/permit_steel"] = permit("ST")
+    out["item/permit_electronics"] = permit("HG")
     for name, pixels in out.items():
         write_png(ROOT / f"{name}.png", pixels)
     print(f"{len(out)} texturas 16x16 em {ROOT.relative_to(ROOT.parents[3])}")

@@ -5,6 +5,7 @@
     "veio:assembler",
     "veio:generator",
     "veio:contract_hub",
+    "veio:factory_board",
     "veio:cutter",
     "veio:integrator",
     "veio:crusher",

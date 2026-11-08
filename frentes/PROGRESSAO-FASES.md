@@ -1,6 +1,6 @@
 # Progressão em fases e balanceamento por unidade de jazida
 
-Base: `main` cf37004 (0.15.0 + orçamento global e topologia incremental).
+Base: `main` 6f8a64b (0.16.0). Escrito sobre cf37004 e reaplicado sem conflito de código.
 Referência de projeto: [JAZIDAS-CONECTADAS.md](JAZIDAS-CONECTADAS.md), branch
 `research/connected-veins`. Compatível com `grok/mission-balance`; ver o fim.
 
@@ -132,7 +132,7 @@ pedidos nem as recompensas.
 
 ## Validação
 
-- `python3 tools/check_rust.py`: 135 testes aprovados, 2 prévias ignoradas.
+- `python3 tools/check_rust.py` (com o quadro da fábrica, sobre a 0.16.0): 151 testes aprovados.
 - `python3 tools/check_project.py`: 475 JSON, 93 páginas, traduções e texturas.
 - `python3 tools/check_performance.py`: 7 cenários, verificações idênticas.
 - Não feitos: compilação pelo launcher, teste em partida e medição de FPS com

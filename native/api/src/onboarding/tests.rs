@@ -1,5 +1,35 @@
 use super::*;
 
+#[test]
+#[ignore = "Uses the global onboarding session; run separately with --test-threads=1"]
+fn board_alerts_yield_to_the_visible_tutorial_goal() {
+    use horizon_client::mod_api::NativeServerPlayer;
+    struct Player { bars: usize }
+    impl Host for Player {
+        fn server_players(&self) -> Vec<NativeServerPlayer> {
+            vec![NativeServerPlayer { uuid: 91001, name: "Tutorial".into(), permission: 0,
+                dimension: "veio:tutorial-board".into(), position: [0.0, 64.0, 0.0],
+                game_mode: 0, health: 20.0 }]
+        }
+        fn day_time(&self) -> i64 { 1000 }
+        fn action_bar(&mut self, _: u128, _: Text) -> bool { self.bars += 1; true }
+    }
+    let mut player = Player { bars: 0 };
+    *SESSION.lock().unwrap() = Some(Session { root: PathBuf::new(),
+        players: HashMap::from([(91001, Progress::default())]), pending: Vec::new() });
+    super::super::milestones::census::reset();
+    let mut press = ModBlockEntity::default(); press.id = PRESS.into();
+    set_number(&mut press, "Status", 13);
+    super::super::milestones::census::observe("veio:tutorial-board", [0, 64, 0], &press, 0, 0, 0);
+    assert!(visible_goal(91001));
+    super::super::milestones::census::tick(&mut player, 100);
+    assert_eq!(player.bars, 0, "The tutorial keeps its single action-bar goal");
+    SESSION.lock().unwrap().as_mut().unwrap().players.get_mut(&91001).unwrap().hidden = true;
+    super::super::milestones::census::tick(&mut player, 200);
+    assert_eq!(player.bars, 1, "Factory alerts become available when the tutorial is hidden");
+    *SESSION.lock().unwrap() = None;
+}
+
 const GEN: Pos = [0, 64, 0];
 const PRESS_AT: Pos = [2, 64, 0];
 const DRILL_AT: Pos = [8, 64, 0];

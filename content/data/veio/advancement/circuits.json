@@ -24,6 +24,16 @@
           }
         ]
       }
+    },
+    "permit": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:permit_electronics"
+          }
+        ]
+      }
     }
   },
   "rewards": {
@@ -36,5 +46,11 @@
       "veio:efficiency_module",
       "veio:grow_lamp"
     ]
-  }
+  },
+  "requirements": [
+    [
+      "stock",
+      "permit"
+    ]
+  ]
 }

@@ -244,6 +244,12 @@ fn put_trace(trace: &mut HashMap<Pos, Token>, to: Pos, count: u32, now: u64) {
     token.count = (token.count + count).min(64); token.seen = now;
 }
 
+pub(super) fn visible_goal(uuid: u128) -> bool {
+    SESSION.lock().ok().and_then(|slot| slot.as_ref().and_then(|session|
+        session.players.get(&uuid).map(|progress| progress.step < DONE && !progress.hidden)))
+        .unwrap_or(false)
+}
+
 struct Session { root: PathBuf, players: HashMap<u128, Progress>, pending: Vec<transport::Pending> }
 
 fn session(host: &dyn Host, slot: &mut Option<Session>) -> bool {

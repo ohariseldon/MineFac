@@ -953,7 +953,7 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.contract_hub",
+                            "translate": "block.veio.factory_board",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
@@ -965,12 +965,24 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.tesla",
+                            "translate": "block.veio.contract_hub",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
                               "page": 73
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.tesla",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 74
                             }
                           },
                           {
@@ -996,7 +1008,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 74
+                              "page": 75
                             }
                           },
                           {
@@ -1008,7 +1020,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 76
+                              "page": 77
                             }
                           },
                           {
@@ -1020,7 +1032,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 77
+                              "page": 78
                             }
                           },
                           {
@@ -1032,7 +1044,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 78
+                              "page": 79
                             }
                           },
                           {
@@ -1044,7 +1056,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 79
+                              "page": 80
                             }
                           },
                           {
@@ -1056,7 +1068,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 81
+                              "page": 82
                             }
                           },
                           {
@@ -1068,7 +1080,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 82
+                              "page": 83
                             }
                           },
                           {
@@ -1080,7 +1092,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 83
+                              "page": 84
                             }
                           },
                           {
@@ -1092,7 +1104,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 89
+                              "page": 90
                             }
                           },
                           {
@@ -1104,7 +1116,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 90
+                              "page": 91
                             }
                           },
                           {
@@ -2674,6 +2686,44 @@
                           },
                           {
                             "translate": "veio.guide.craft.wrench",
+                            "color": "dark_gray"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.factory_board",
+                            "bold": true
+                          },
+                          {
+                            "text": "  «",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            },
+                            "hover_event": {
+                              "action": "show_text",
+                              "value": {
+                                "translate": "veio.guide.back"
+                              }
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.factory_board"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.factory_board",
                             "color": "dark_gray"
                           }
                         ]
