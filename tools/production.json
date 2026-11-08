@@ -15,6 +15,7 @@
     {"machine": "cutter", "in": [["veio:copper_plate", 1]], "out": ["veio:wire", 1], "ticks": 20, "power": 6},
     {"machine": "cutter", "in": [["veio:iron_plate", 1]], "out": ["veio:frame", 1], "ticks": 30, "power": 8},
     {"machine": "integrator", "in": [["veio:frame", 1], ["veio:gear", 1]], "out": ["veio:module", 1], "ticks": 60, "power": 16},
+    {"machine": "integrator", "in": [["veio:steel_plate", 1], ["veio:wire", 4]], "out": ["veio:motor", 1], "ticks": 100, "power": 20},
     {"machine": "crusher", "in": [["minecraft:quartz", 1]], "out": ["veio:silicon", 1], "ticks": 50, "power": 10},
     {"machine": "crusher", "in": [["minecraft:bone", 1]], "out": ["minecraft:bone_meal", 4], "ticks": 30, "power": 10},
     {"machine": "crusher", "in": [["minecraft:cobblestone", 1]], "out": ["minecraft:gravel", 1], "ticks": 30, "power": 10},
@@ -24,6 +25,9 @@
     {"machine": "alloy_furnace", "in": [["minecraft:sand", 4], ["@coal", 1]], "out": ["veio:silicon", 1], "ticks": 160, "power": 16, "alt": true},
     {"machine": "electronics", "in": [["veio:wire", 2], ["veio:silicon", 1]], "out": ["veio:circuit", 1], "ticks": 60, "power": 12},
     {"machine": "electronics", "in": [["veio:wire", 4], ["minecraft:redstone", 2]], "out": ["veio:circuit", 1], "ticks": 120, "power": 14, "alt": true},
+    {"machine": "electronics", "in": [["veio:circuit", 2], ["veio:silicon", 2]], "out": ["veio:processor", 1], "ticks": 160, "power": 24},
+    {"machine": "fabricator", "in": [["veio:motor", 2], ["veio:processor", 2], ["veio:steel_plate", 4]], "out": ["veio:automation_core", 1], "ticks": 300, "power": 40},
+    {"machine": "fabricator", "in": [["veio:motor", 2], ["veio:processor", 1], ["veio:gear", 8]], "out": ["veio:mk2_kit", 1], "ticks": 240, "power": 32},
 
     {"machine": "electric_furnace", "in": [["minecraft:raw_iron", 1]], "out": ["minecraft:iron_ingot", 1], "ticks": 80, "power": 10},
     {"machine": "electric_furnace", "in": [["minecraft:raw_copper", 1]], "out": ["minecraft:copper_ingot", 1], "ticks": 80, "power": 10},

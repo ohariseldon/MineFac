@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "tools",
+  "ingredients": [
+    "minecraft:paper",
+    "minecraft:stick",
+    "veio:iron_plate"
+  ],
+  "result": {
+    "id": "veio:clipboard",
+    "count": 1
+  }
+}

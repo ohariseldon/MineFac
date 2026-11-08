@@ -1,0 +1,25 @@
+{
+  "parent": "veio:research/automation",
+  "display": {
+    "icon": {
+      "id": "veio:automation_core"
+    },
+    "title": {
+      "translate": "advancement.veio.research.scale.title"
+    },
+    "description": {
+      "translate": "advancement.veio.research.scale.description"
+    },
+    "frame": "challenge"
+  },
+  "criteria": {
+    "research": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:express_belt"
+    ]
+  }
+}

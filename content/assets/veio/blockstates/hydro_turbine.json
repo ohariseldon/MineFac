@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/hydro_turbine"
+    },
+    "facing=west": {
+      "model": "veio:block/hydro_turbine",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/hydro_turbine",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/hydro_turbine",
+      "y": 270
+    }
+  }
+}

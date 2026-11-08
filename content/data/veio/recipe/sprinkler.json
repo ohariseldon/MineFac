@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:pipe",
+    "veio:gear",
+    "minecraft:iron_ingot"
+  ],
+  "result": {
+    "id": "veio:sprinkler",
+    "count": 1
+  }
+}

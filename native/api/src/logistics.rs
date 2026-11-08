@@ -27,8 +27,19 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
                 let moved = before - entity.items[0].as_ref().map_or(0, |stack| stack.count);
                 record_moved(entity, moved, time);
             }
+        } else if entity.id == TUNNEL {
+            // Entrada: entrega direto à saída, até 6 blocos à frente, por baixo do que houver.
+            let target = if tunnel_is_exit(host, pos, facing, 0) { adjacent(pos, facing, 0) }
+                else { tunnel_exit(host, pos, facing).unwrap_or_else(|| adjacent(pos, facing, 0)) };
+            if let Some(stack) = entity.items[0].as_ref() {
+                let moved = send_to(host, target, facing, stack, 2);
+                if moved > 0 {
+                    consume(&mut entity.items[0], moved);
+                    record_moved(entity, moved, time);
+                }
+            }
         } else {
-            let batch = if entity.id == FAST_BELT { 2 } else { 1 };
+            let batch = match entity.id.as_str() { EXPRESS_BELT => 4, FAST_BELT => 2, _ => 1 };
             for slot in outputs {
                 if let Some(stack) = entity.items[slot].as_ref() {
                     let moved = if is_belt(&entity.id) {
@@ -45,7 +56,31 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
     }
 }
 
-pub(super) fn transport(block: &str) -> bool { matches!(block, BELT | FAST_BELT | SPLITTER | MERGER) }
+pub(super) fn transport(block: &str) -> bool { matches!(block, BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL) }
+
+/// Alcance do túnel de esteira: a saída fica a até 6 blocos da entrada, na mesma direção.
+pub(super) const TUNNEL_REACH: i32 = 6;
+
+fn same_tunnel(host: &dyn Host, at: [i32; 3], facing: Direction) -> bool {
+    host.block(at) == TUNNEL && output_direction(host, at) == Some(facing)
+}
+
+/// Primeiro túnel à frente, com a mesma direção: a saída desta entrada.
+pub(super) fn tunnel_exit(host: &dyn Host, pos: [i32; 3], facing: Direction) -> Option<[i32; 3]> {
+    let [dx, _, dz] = facing.normal();
+    (1..=TUNNEL_REACH).map(|step| [pos[0] + dx * step, pos[1], pos[2] + dz * step])
+        .find(|&at| same_tunnel(host, at, facing))
+}
+
+/// Saída é o túnel cujo par anterior (o primeiro atrás, até 6 blocos) é uma entrada. Os túneis
+/// alternam entrada e saída ao longo da linha, como no Factorio.
+pub(super) fn tunnel_is_exit(host: &dyn Host, pos: [i32; 3], facing: Direction, depth: u8) -> bool {
+    if depth >= 6 { return false; }
+    let [dx, _, dz] = facing.normal();
+    (1..=TUNNEL_REACH).map(|step| [pos[0] - dx * step, pos[1], pos[2] - dz * step])
+        .find(|&at| same_tunnel(host, at, facing))
+        .is_some_and(|behind| !tunnel_is_exit(host, behind, facing, depth + 1))
+}
 
 fn record_moved(entity: &mut ModBlockEntity, count: u32, time: i64) {
     set_number(entity, "MovedAt", stamp(time));
@@ -58,7 +93,7 @@ fn record_moved(entity: &mut ModBlockEntity, count: u32, time: i64) {
 const BLOCKED_AFTER: i32 = 8;
 
 pub(super) fn update_status(entity: &mut ModBlockEntity, time: i64) -> bool {
-    if matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
+    if matches!(entity.id.as_str(), BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL) {
         let empty = entity.items.iter().all(Option::is_none);
         let now = stamp(time);
         if !empty && number(entity, "Status") == 0 {
@@ -176,7 +211,7 @@ fn send_to(host: &mut dyn Host, target: [i32; 3], facing: Direction, stack: &Ite
     count - returned.map_or(0, |remainder| remainder.count)
 }
 
-pub(super) fn is_belt(block: &str) -> bool { matches!(block, BELT | FAST_BELT) }
+pub(super) fn is_belt(block: &str) -> bool { matches!(block, BELT | FAST_BELT | EXPRESS_BELT) }
 
 fn adjacent(pos: [i32; 3], direction: Direction, dy: i32) -> [i32; 3] {
     let [dx, _, dz] = direction.normal();

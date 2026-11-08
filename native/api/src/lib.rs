@@ -10,6 +10,10 @@ mod farm;
 mod pollution;
 mod production;
 mod power;
+mod industry;
+mod research;
+mod stations;
+mod rivers;
 mod tutorial;
 mod upgrades;
 mod holding;
@@ -31,6 +35,8 @@ const PRESS: &str = "veio:press";
 const ASSEMBLER: &str = "veio:assembler";
 const BELT: &str = "veio:belt";
 const FAST_BELT: &str = "veio:fast_belt";
+const EXPRESS_BELT: &str = "veio:express_belt";
+const TUNNEL: &str = "veio:belt_tunnel";
 const SPLITTER: &str = "veio:splitter";
 const MERGER: &str = "veio:merger";
 const CUTTER: &str = "veio:cutter";
@@ -129,6 +135,11 @@ impl Hooks for Factory {
             damage = number(entity, "Damage");
             module = number(entity, "Module");
         });
+        if stations::is_station(&block) && let Some(channel) = stations::dye_channel(&held) {
+            host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Channel", channel));
+            host.play_sound("minecraft:item.dye.use", center(pos), 4, 0.6, 1.0);
+            return Flow::Cancel;
+        }
         if held == REPAIR_KIT {
             if damage == 0 || host.take_items(REPAIR_KIT, 1) == 0 {
                 return Flow::Continue;
@@ -147,12 +158,30 @@ impl Hooks for Factory {
             host.play_sound("minecraft:block.smithing_table.use", center(pos), 4, 0.6, 1.2);
             return Flow::Cancel;
         }
+        if held == upgrades::MK2_KIT {
+            let mut tier = 0;
+            host.change_mod_block_entity(pos, &mut |entity| tier = number(entity, "Tier"));
+            if !upgrades::supports(&block) || tier >= 2 || host.take_items(&held, 1) == 0 {
+                return Flow::Continue;
+            }
+            host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Tier", 2));
+            host.play_sound("minecraft:block.anvil.use", center(pos), 4, 0.6, 1.0);
+            return Flow::Cancel;
+        }
         if held != WRENCH {
             return Flow::Continue;
         }
         if host.sneaking() && module > 0 {
             host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Module", 0));
             host.give_items(upgrades::MODULES[(module - 1) as usize], 1);
+            return Flow::Cancel;
+        }
+        // Sem módulo, a chave agachada devolve o kit Mk.II.
+        let mut tier = 0;
+        host.change_mod_block_entity(pos, &mut |entity| tier = number(entity, "Tier"));
+        if host.sneaking() && tier >= 2 && upgrades::supports(&block) {
+            host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Tier", 0));
+            host.give_items(upgrades::MK2_KIT, 1);
             return Flow::Cancel;
         }
         let facing = host.block_property(pos, "facing");
@@ -215,6 +244,10 @@ impl Hooks for Factory {
         Flow::Continue
     }
 
+    fn chunk_load(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::ChunkLoadEvent<'_>) {
+        rivers::chunk_loaded(event.dimension, event.chunk, event.new, defense::clock());
+    }
+
     fn player_logged_in(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
         workforce::spawn::logged_in(event.player, event.name, defense::clock());
     }
@@ -235,8 +268,11 @@ impl Hooks for Factory {
         power::maintenance(defense::clock());
         workforce::maintenance(defense::clock());
         workforce::spawn::tick(host, defense::clock());
+        rivers::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
+            industry::maintain(host, time);
+            stations::maintain(host, time);
         }
     }
 
@@ -329,6 +365,7 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     let previous = visual_signature(entity);
     let produced = number(entity, "Produced");
     tick_factory(host, pos, entity, time);
+    industry::observe(host.dimension(), pos, entity, time);
     holding::observe(host.dimension(), pos, entity, time);
     pollution::emit(host, pos, entity, time);
     record_performance(entity, produced);
@@ -339,17 +376,17 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
 }
 
 fn is_factory_block(block: &str) -> bool {
-    matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
+    matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT | EXPRESS_BELT | TUNNEL |
         SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::is_machine(block) || workforce::owns(block)
+        || production::is_machine(block) || workforce::owns(block) || matches!(block, research::LAB | industry::MONITOR | industry::ANCHOR) || stations::is_station(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
 fn needs_power(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | CUTTER | INTEGRATOR |
         CRUSHER | ALLOY | ELECTRONICS | HARVESTER | TESLA | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::consumes(block)
+        || production::consumes(block) || matches!(block, research::LAB | industry::ANCHOR | stations::SENDER)
 }
 
 /// Produzem, guardam ou conduzem energia.
@@ -376,7 +413,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         DRILL | DRILL_MK2 => (1, vec![], vec![0]),
         PRESS | ASSEMBLER | CUTTER | CRUSHER => (2, vec![0], vec![1]),
         INTEGRATOR | ALLOY | ELECTRONICS => (3, vec![0, 1], vec![2]),
-        BELT | FAST_BELT | SPLITTER => (1, vec![0], vec![0]),
+        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL => (1, vec![0], vec![0]),
         MERGER => (2, vec![0, 1], vec![0, 1]),
         GENERATOR => (1, vec![0], vec![]),
         GEOTHERMAL => (2, vec![0], vec![1]),
@@ -384,6 +421,10 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         CABLE | POLE | STEEL_POLE => (0, vec![], vec![]),
         HUB => (4, vec![0, 1], vec![2, 3]),
         HARVESTER => (4, vec![0], vec![1, 2, 3]),
+        research::LAB => (2, vec![0, 1], vec![]),
+        industry::MONITOR | industry::ANCHOR => (1, vec![], vec![]),
+        stations::SENDER => (4, vec![0, 1, 2, 3], vec![]),
+        stations::RECEIVER => (4, vec![], vec![0, 1, 2, 3]),
         _ if workforce::owns(block) => return workforce::layout(block),
         _ => return production::layout(block),
     })
@@ -392,9 +433,10 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
 /// Há slot de entrada de itens? Evita alocar o `layout` só para decidir uma curva de esteira.
 fn has_item_inputs(block: &str) -> bool {
     match block {
-        BELT | FAST_BELT | SPLITTER | MERGER | PRESS | ASSEMBLER | CUTTER | CRUSHER |
-        INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER => true,
-        DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => false,
+        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL | PRESS | ASSEMBLER | CUTTER | CRUSHER |
+        INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER | research::LAB | stations::SENDER => true,
+        DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG
+            | industry::MONITOR | industry::ANCHOR | stations::RECEIVER => false,
         _ if workforce::is_post(block) || workforce::storage::is_store(block) => true,
         _ => production::has_inputs(block),
     }
@@ -408,6 +450,8 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         INTEGRATOR | ALLOY | ELECTRONICS => 2..3,
         HUB => 2..4,
         HARVESTER => 1..4,
+        research::LAB | industry::MONITOR | industry::ANCHOR | stations::SENDER => 0..0,
+        stations::RECEIVER => 0..4,
         GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => 0..0,
         _ if production::is_machine(block) => production::outputs(block),
         _ if workforce::owns(block) => workforce::outputs(block),
@@ -418,7 +462,10 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
 fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
     match (block, slot) {
         (HUB, _) => contracts::valid_input(slot, stack),
-        (BELT | FAST_BELT | SPLITTER, 0) => true,
+        (research::LAB, _) => research::accepts(slot, stack),
+        (stations::SENDER, 0..4) => stack.damage == 0 && stack.extra.is_none(),
+        (stations::RECEIVER, _) => false,
+        (BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL, 0) => true,
         (MERGER, 0 | 1) => true,
         _ if workforce::owns(block) => workforce::accepts(block, slot, stack),
         // Entradas das máquinas de produção, pela tabela de receitas e combustíveis.
@@ -445,6 +492,9 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Carried" => key!("Carried"),
         "CustomName" => key!("CustomName"),
         "Edits" => key!("Edits"),
+        "Fertility" => key!("Fertility"),
+        "Water" => key!("Water"),
+        "WaterPort" => key!("WaterPort"),
         "Held" => key!("Held"),
         "ScanArea" => key!("ScanArea"),
         "Skipped" => key!("Skipped"),
@@ -584,6 +634,8 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "UpkeepHalf" => key!("UpkeepHalf"),
         "Wallet" => key!("Wallet"),
         "Wealth" => key!("Wealth"),
+        "Tier" => key!("Tier"),
+        "RecipeIndex" => key!("RecipeIndex"),
         "Tab" => key!("Tab"),
         "HData" => key!("HData"),
         "Cash" => key!("Cash"),
@@ -732,8 +784,16 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
     if inserters::is_arm(&entity.id) { return inserters::tick(host, pos, entity, time); }
     logistics::transfer_outputs(host, pos, entity, time);
     if entity.id == HUB {
-        contracts::tick(entity);
+        if contracts::tick(entity) && industry::on_server(host) {
+            host.run_command("advancement grant @a only veio:grand_project");
+            for player in host.server_players() {
+                host.tell(player.uuid, horizon_client::mod_api::Text::tr("veio.project.done", &[]));
+            }
+        }
         return;
+    }
+    if entity.id == industry::MONITOR {
+        return industry::tick_monitor(host, pos, entity, time);
     }
     if power::tier(&entity.id).is_some() {
         return;
@@ -762,6 +822,15 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
             set_number(entity, "LocalSmog", pollution::local(host.dimension(), pos) as i32);
         }
         return defense::tick(host, pos, entity);
+    }
+    if entity.id == research::LAB {
+        return research::tick(host, entity, time);
+    }
+    if entity.id == industry::ANCHOR {
+        return industry::tick_anchor(host, pos, entity, time);
+    }
+    if stations::is_station(&entity.id) {
+        return stations::tick(host, pos, entity, time);
     }
     // Extração, receitas, lavouras, rancho e armazém: módulo de produção.
     production::tick(host, pos, entity, time);

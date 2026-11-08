@@ -1,0 +1,690 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:book",
+    "veio:gear"
+  ],
+  "result": {
+    "id": "minecraft:written_book",
+    "count": 1,
+    "components": {
+      "minecraft:written_book_content": {
+        "title": {
+          "raw": "Grande Indústria"
+        },
+        "author": "Veio",
+        "generation": 0,
+        "resolved": true,
+        "pages": [
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "veio.industry.title",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.0",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 2
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.1",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 3
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.2",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 4
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.3",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 5
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.4",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 6
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.5",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 7
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.6",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 8
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.7",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 9
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.8",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 10
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.9",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 11
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.10",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 12
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.11",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 13
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.12",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 14
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.13",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 15
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.14",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 16
+                  }
+                },
+                {
+                  "text": "\n"
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.02"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.03"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.04"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.05"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.06"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.07"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.08"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.09"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.10"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.11"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.12"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.13"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.14"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.15"
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "veio.industry.blocks",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.research_lab",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 17
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.fabricator",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 18
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.factory_monitor",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 19
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.cargo_station",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 20
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.unloading_station",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 21
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.chunk_anchor",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 22
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.express_belt",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 23
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.belt_tunnel",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 24
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.research_lab",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.research_lab"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.research_lab",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.fabricator",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.fabricator"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.fabricator",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.factory_monitor",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.factory_monitor"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.factory_monitor",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.cargo_station",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.cargo_station"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.cargo_station",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.unloading_station",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.unloading_station"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.unloading_station",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.chunk_anchor",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.chunk_anchor"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.chunk_anchor",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.express_belt",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.express_belt"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.express_belt",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.belt_tunnel",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.belt_tunnel"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.belt_tunnel",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "minecraft:custom_name": {
+        "translate": "veio.industry.title",
+        "italic": false
+      }
+    }
+  }
+}

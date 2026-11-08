@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:gear",
+    "veio:gear",
+    "veio:gear",
+    "veio:gear",
+    "minecraft:book",
+    "minecraft:glass",
+    "veio:copper_plate",
+    "veio:copper_plate"
+  ],
+  "result": {
+    "id": "veio:research_lab",
+    "count": 1
+  }
+}

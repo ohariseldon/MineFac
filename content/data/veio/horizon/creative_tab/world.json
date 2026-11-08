@@ -4,6 +4,7 @@
   "items": [
     "veio:harvester",
     "veio:planter",
+    "veio:sprinkler",
     "veio:grow_lamp",
     "veio:tree_farm",
     "veio:ranch",

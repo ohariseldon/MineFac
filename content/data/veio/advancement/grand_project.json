@@ -1,0 +1,20 @@
+{
+  "parent": "veio:research/scale",
+  "display": {
+    "icon": {
+      "id": "minecraft:beacon"
+    },
+    "title": {
+      "translate": "advancement.veio.grand_project.title"
+    },
+    "description": {
+      "translate": "advancement.veio.grand_project.description"
+    },
+    "frame": "challenge"
+  },
+  "criteria": {
+    "built": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

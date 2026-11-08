@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "veio:gear",
+    "minecraft:bucket"
+  ],
+  "result": {
+    "id": "veio:pump",
+    "count": 1
+  }
+}

@@ -440,6 +440,22 @@ pub mod mod_api {
         fn edit_blocks(&mut self, dimension: &str, edit: &NativeBlockEdit) -> Result<u64, String> {
             unimplemented!("edit_blocks")
         }
+        /// `native_world_columns::Game::native_read_columns`: `below` blocos abaixo e `above` a
+        /// partir da altura de cada coluna pelo `heightmap`, de baixo para cima.
+        fn read_columns(
+            &self,
+            dimension: &str,
+            columns: &[(i32, i32)],
+            heightmap: NativeHeightmap,
+            range: (u32, u32),
+        ) -> Result<NativeColumnBlocks, String> {
+            unimplemented!("read_columns")
+        }
+        /// `native_server::Game::native_world_dir`: a pasta do mundo aberto (ao lado do
+        /// `level.dat`); None sem mundo.
+        fn world_dir(&self) -> Option<std::path::PathBuf> {
+            unimplemented!("world_dir")
+        }
         fn entity_nbt(&mut self, entity: EntityRef) -> Option<Compound> {
             unimplemented!("entity_nbt")
         }
@@ -483,6 +499,14 @@ pub mod mod_api {
         pub palette: Vec<String>,
         pub filters: Vec<String>,
         pub runs: Vec<NativeBlockRun>,
+    }
+    /// `native_world_columns::NativeColumnBlocks`.
+    #[derive(Clone, Debug, PartialEq, Default)]
+    pub struct NativeColumnBlocks {
+        pub palette: Vec<String>,
+        pub bases: Vec<Option<i32>>,
+        pub blocks: Vec<u16>,
+        pub tints: Vec<u32>,
     }
     #[derive(Clone, Debug)]
     pub struct NativeItemEntity {
@@ -643,6 +667,13 @@ pub mod mod_api {
         pub player: u128,
         pub name: &'a str,
     }
+    /// `native_hooks::Game::native_chunk_load` (API 57).
+    #[non_exhaustive]
+    pub struct ChunkLoadEvent<'a> {
+        pub dimension: &'a str,
+        pub chunk: [i32; 2],
+        pub new: bool,
+    }
     /// `merchant::ItemCost` (Horizon 66f3981): o Veio só lê `stack`.
     #[derive(Clone, Debug)]
     pub struct ItemCost {
@@ -733,6 +764,7 @@ pub mod mod_api {
             Flow::Continue
         }
         fn tick(&self, host: &mut dyn Host, event: &mut TickEvent) {}
+        fn chunk_load(&self, host: &mut dyn Host, event: &mut ChunkLoadEvent<'_>) {}
         fn player_logged_in(&self, host: &mut dyn Host, event: &mut PlayerLoggedInEvent<'_>) {}
         fn player_respawned(&self, host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {}
         fn trade_with_villager(&self, host: &mut dyn Host, event: &mut TradeWithVillagerEvent<'_>) {}

@@ -1,0 +1,34 @@
+{
+  "parent": "veio:steel",
+  "display": {
+    "icon": {
+      "id": "veio:steel_plate"
+    },
+    "title": {
+      "translate": "advancement.veio.research.metallurgy.title"
+    },
+    "description": {
+      "translate": "advancement.veio.research.metallurgy.description"
+    },
+    "frame": "goal"
+  },
+  "criteria": {
+    "research": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:battery",
+      "veio:geothermal",
+      "veio:belts_bulk",
+      "veio:cables_bulk",
+      "veio:steel_pole",
+      "veio:steam_engine",
+      "veio:tree_farm",
+      "veio:ranch",
+      "veio:factory_monitor",
+      "veio:belt_tunnel"
+    ]
+  }
+}
