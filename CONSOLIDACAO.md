@@ -31,7 +31,7 @@ O mapa finito em `work-in-progress/finite-world` é apenas checkpoint de desenvo
 - Regras Rust e progressão: 206 testes aprovados, zero falhas. Quatro cenários são opcionais na execução comum; os dois cenários de tutorial abaixo foram executados separadamente e aprovados.
 - Cenários isolados: tutorial salvo/reaberto/troca de mundo e transporte misto com braços, funis e carregadores sem esteiras.
 - Launcher: seis testes, incluindo escolha de gráficos, preservação das opções pessoais e cópias dos arquivos originais.
-- Compilação do executável nativo: em verificação nesta máquina; ainda sem teste em partida.
+- Executável nativo completo: compilado pelo Horizon Launcher sobre 66f3981, perfil performance (fast, otimizado), incluindo mod-veio 0.16.1 e horizon-native-game. Etapa de compilação concluída em 7 min 14 s, sem falhas. O jogo não foi aberto.
 - Tipos nativos: conferência contra os metadados reais do Horizon `66f3981`; não equivale a teste em partida.
 
 Nenhum mundo ou conta foi apagado. O jogo não foi aberto automaticamente para testes.
