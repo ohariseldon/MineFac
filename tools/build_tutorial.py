@@ -1774,5 +1774,7 @@ from build_machine_audio import add_labels as add_sound_labels
 add_sound_labels(langs)
 from build_onboarding import add_labels as add_onboarding_labels
 add_onboarding_labels(label)
+from build_ui_text import add_labels as add_ui_labels
+add_ui_labels(langs)
 for code,data in langs.items():write(f"{A}/lang/{code}.json",data)
 print("Guide pages:",len(pages))
