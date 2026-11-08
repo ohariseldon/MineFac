@@ -59,6 +59,7 @@ struct Village {
     players: Vec<horizon_client::mod_api::NativeServerPlayer>,
     edits: Cell<u32>,
     reads: Cell<u32>,
+    sneak: bool,
 }
 
 impl Village {
@@ -168,7 +169,7 @@ impl Host for Village {
         count
     }
     fn sneaking(&self) -> bool {
-        false
+        self.sneak
     }
     fn server_players(&self) -> Vec<horizon_client::mod_api::NativeServerPlayer> {
         self.players.clone()
@@ -1370,4 +1371,16 @@ fn hauler_fills_a_freight_dispatch_and_uses_received_goods_at_local_machines() {
     assert_eq!(village.stations[&assembler].items[0], Some(ItemStack::new(PLATE, 10)));
     assert!(village.stations[&MILL_AT].items[3].is_none());
     assert_eq!(village.stations[&MILL_AT].items[0], Some(ItemStack::new("minecraft:raw_copper", 10)), "dispatch is not grabbed as received stock");
+}
+
+#[test]
+fn sneaking_with_an_empty_hand_on_the_barracks_switches_the_class() {
+    let mut village = Village::new("veio:test_barracks_click");
+    village.stations.insert(POST, block(BARRACKS));
+    village.sneak = true;
+    // A mão vazia chega aos postos como "" (o gancho recebe `None` do jogo).
+    assert_eq!(right_click(&mut village, POST, ""), Some(Flow::Cancel));
+    assert_eq!(number(&village.stations[&POST], "Role"), 1, "sem soldado, escolher a classe é de graça");
+    village.sneak = false;
+    assert_eq!(right_click(&mut village, POST, ""), None, "sem agachar, abre o painel");
 }

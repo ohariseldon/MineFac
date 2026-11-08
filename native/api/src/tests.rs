@@ -491,3 +491,23 @@ fn every_project_preserves_inputs_until_both_rewards_fit() {
         }
     }
 }
+
+#[test]
+fn every_block_with_a_menu_has_a_screen_with_one_slot_per_container_slot() {
+    // A tela de um bloco sem `screen` derrubaria o jogo (`expect` em `screen_draw`).
+    let menus = std::path::Path::new(file!()).parent().unwrap().join("../../../content/data/veio/horizon/menu");
+    let menus = if menus.exists() { menus } else {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../content/data/veio/horizon/menu")
+    };
+    let mut checked = 0;
+    for file in std::fs::read_dir(&menus).unwrap() {
+        let name = file.unwrap().file_name().to_string_lossy().trim_end_matches(".json").to_owned();
+        let block = format!("veio:{name}");
+        let screen = presentation::screen(&block).unwrap_or_else(|| panic!("{block}: sem tela"));
+        let (slots, _, _) = layout(&block).unwrap_or_else(|| panic!("{block}: sem contêiner"));
+        let shown = screen.slots.iter().filter(|slot| slot.is_some()).count();
+        assert!(shown == slots || screen.slots == vec![None], "{block}: {shown} slots na tela, {slots} no contêiner");
+        checked += 1;
+    }
+    assert!(checked > 40, "menus encontrados: {checked}");
+}

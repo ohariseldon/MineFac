@@ -118,15 +118,18 @@ impl Hooks for Factory {
         let block = host.block(event.pos);
         if let Some(flow) = freight::right_click(host, event.pos, &block) { return flow; }
         if let Some(flow) = logistics_controls::right_click(host, event.pos, &block) { return flow; }
-        let Some((held, _, _)) = host.held() else { return Flow::Continue };
         if !is_factory_block(&block) {
             return Flow::Continue;
         }
+        // Mão vazia chega como `None`. O quartel usa agachar com a mão vazia, então os postos
+        // recebem "" nesse caso; o resto continua exigindo um item na mão.
+        let held = host.held().map(|(item, _, _)| item);
         if workforce::owns(&block)
-            && let Some(flow) = workforce::right_click(host, event.pos, &held)
+            && let Some(flow) = workforce::right_click(host, event.pos, held.as_deref().unwrap_or(""))
         {
             return flow;
         }
+        let Some(held) = held else { return Flow::Continue };
         let pos = event.pos;
         let mut damage = 0;
         let mut module = 0;

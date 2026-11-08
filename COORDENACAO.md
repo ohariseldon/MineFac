@@ -27,6 +27,27 @@ Geração e distribuição continuam sendo sistemas distintos no código. Essa s
 
 O usuário testa a versão jogável. Evitar recompilar ou abrir o jogo a cada iteração. Dados pessoais, mundos, executáveis e caches ficam fora do Git; os arquivos pesados locais permanecem no E:.
 
+## Integração 0.16.0 (Claude, na falta de tokens das outras frentes)
+
+Com o Codex e o Grok sem tokens, o Claude fez a integração desta rodada na branch
+`claude/ajustes-vila-mobs`, sobre a main `cf37004`, e subiu a versão para 0.16.0 (o
+`launcher.exe` só recompila o código nativo quando a versão muda).
+
+Entraram, nesta ordem: casa do fundador, `cursor/grok-quartel-c7d9` (com revisão de aldeões e
+mobs), `research/connected-veins`, `cursor/grok-lan-c7d9`, `cursor/grok-vilas-c7d9`,
+`cursor/grok-balance-c7d9`, `grok/mission-balance` e `codex/interzone-logistics`. A
+`cursor/grok-lote2-c7d9` ficou de fora: o lote 3 já tinha substituído o conteúdo dela.
+
+Contratos que mudaram para quem continuar:
+
+- O gancho `tick` sai logo na janela (`Host::window()`): o relógio do mod conta só ticks do
+  servidor. Código novo no tick global não roda mais duas vezes no jogo de um jogador só.
+- Estados do painel: `freight_route` (Codex) é 28 e `resting` (lavrador e pastor à noite) é 29.
+- Postos recebem `""` como item na mão quando a mão está vazia (o quartel precisa disso).
+- `tools/check_project.py` mede as páginas dos dois guias e recusa a que passar de 14 linhas.
+  Nas páginas de consulta, o link para o sumário fica na linha do título (`«`).
+- `tools/build_house.py` gera a casa; `native/api/src/home/` é a casa, a comida e o mural.
+
 ## Arquivos e interfaces
 
 A preparação comum de postos está descrita em [frentes/INTERFACE_POSTOS.md](frentes/INTERFACE_POSTOS.md). Cloud deve usar essa consulta como ponto de integração para tarefas e inventários; ela não implementa atribuições nem substitui suas transações.
