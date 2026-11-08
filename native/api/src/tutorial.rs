@@ -13,7 +13,7 @@ pub(super) fn draw_labels(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     let roles: &[&str] = if let Some(roles) = production::roles(event.block).or_else(|| workforce::roles(event.block)).or_else(|| freight::roles(event.block)).or_else(|| milestones::owns(event.block).then(milestones::roles)) { roles } else { match event.block {
         DRILL | DRILL_MK2 => &["output"],
         GENERATOR => &["fuel"],
-        BELT | FAST_BELT | SPLITTER => &[],
+        BELT | FAST_BELT | SPLITTER | lift::LIFT => &[],
         MERGER => &["left", "right"],
         INTEGRATOR | ALLOY | ELECTRONICS => &["input1", "input2", "output"],
         HUB => &["input1", "input2", "output1", "output2"],

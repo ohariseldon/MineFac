@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/cargo_lift"
+    },
+    "facing=west": {
+      "model": "veio:block/cargo_lift",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/cargo_lift",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/cargo_lift",
+      "y": 270
+    }
+  }
+}

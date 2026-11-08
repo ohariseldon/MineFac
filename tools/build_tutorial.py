@@ -117,6 +117,15 @@ help={
  "splitter":(
  "Divide entre saídas laterais.\nAlterna se ambas estão livres.\nDesvia se um lado encher.\nUse a chave para orientar.",
  "Splits into the side outputs.\nAlternates when both are free.\nDiverts if one side fills.\nOrient it with the wrench."),
+ "cargo_lift":(
+ "Empilhe para subir itens.\nO último entrega pela frente.\n5 itens/s, sem energia.\nAgache + chave: sobe/desce.\nChave: gira a saída.",
+ "Stack them to lift items.\nThe last one outputs forward.\n5 items/s, no power.\nSneak + wrench: up/down.\nWrench: turns the outlet."),
+ "blueprint_designer":(
+ "Prancheta: o quadrado acima.\nPapel: copia a obra.\nAgache + chave: tamanho.\nCopia blocos e ajustes,\nnunca inventários.",
+ "Its board: the square above.\nPaper: copies the build.\nSneak + wrench: size.\nCopies blocks and settings,\nnever inventories."),
+ "build_marker":(
+ "Onde a cópia vai nascer.\nMão vazia: orçamento.\nAgache + chave: constrói\ncom o seu inventário.\nChave: gira a obra.",
+ "Where the copy will rise.\nEmpty hand: materials list.\nSneak + wrench: builds from\nyour inventory.\nWrench: turns the build."),
  "factory_board":(
  "Mostra a fase, o que falta\ne o que ela libera.\nEntregue a pilha da fase ou\no pedido do dia na entrada.\nAvisa máquinas paradas.",
  "Shows the phase, what is left\nand what it unlocks.\nDeliver the phase stack or\nthe daily order to the input.\nFlags stalled machines."),
@@ -404,12 +413,38 @@ for key, pt, en in [
  ("veio.day.dusk_paid", "Pedido da vila: pago.", "Village order: paid."),
  ("veio.day.dusk_issue", "Para amanhã: %s máquinas sem energia, %s com saída cheia, %s danificadas.", "For tomorrow: %s machines without power, %s with full output, %s damaged."),
 ]: label(key, pt, en)
+
+# Megafábricas: copiadora, marco de obra, elevador de carga e andares por escada.
+for key, pt, en in [
+ ("block.veio.cargo_lift", "Elevador de carga", "Cargo lift"),
+ ("block.veio.blueprint_designer", "Copiadora", "Blueprint copier"),
+ ("block.veio.build_marker", "Marco de obra", "Build marker"),
+ ("advancement.veio.vertical.title", "Para cima", "Going up"),
+ ("advancement.veio.vertical.description", "Leve itens entre andares com um elevador de carga.", "Move items between floors with a cargo lift."),
+ ("advancement.veio.blueprints.title", "Copiar e colar", "Copy and paste"),
+ ("advancement.veio.blueprints.description", "Fabrique uma copiadora e multiplique suas linhas.", "Build a copier and multiply your lines."),
+ ("veio.lift.up", "Sentido: subindo", "Direction: up"),
+ ("veio.lift.down", "Sentido: descendo", "Direction: down"),
+ ("veio.hint.lift", "Agache com a chave para inverter.", "Sneak with the wrench to reverse."),
+ ("veio.blueprint.copied", "Projeto copiado: %s blocos de %s materiais, prancheta de %s de lado e %s de altura.", "Design copied: %s blocks of %s materials, a %s-wide board, %s high."),
+ ("veio.blueprint.skipped", "%s blocos ficaram de fora: minério, fluido, portal ou acima do limite.", "%s blocks left out: ores, fluids, portals or over the limit."),
+ ("veio.blueprint.size", "Prancheta: %s de lado, até %s de altura.", "Board: %s wide, up to %s high."),
+ ("veio.blueprint.designer", "Copiadora: prancheta de %s de lado e até %s de altura. Projeto guardado: %s blocos. Clique com papel para copiar.", "Copier: a %s-wide board up to %s high. Stored design: %s blocks. Click with paper to copy."),
+ ("veio.blueprint.no_design", "Nenhuma copiadora com projeto a até %s blocos.", "No copier with a design within %s blocks."),
+ ("veio.blueprint.budget", "Projeto da copiadora em %s: %s blocos, %s de lado, %s de altura, girado %s graus.", "Design from the copier at %s: %s blocks, %s wide, %s high, turned %s degrees."),
+ ("veio.blueprint.cost", "  %sx %s", "  %sx %s"),
+ ("veio.blueprint.more", "  e mais %s materiais.", "  and %s more materials."),
+ ("veio.blueprint.blocked", "Obra bloqueada em %s. Libere o espaço.", "Build blocked at %s. Clear the space."),
+ ("veio.blueprint.clear", "Espaço livre. Agache com a chave para construir.", "Space is clear. Sneak with the wrench to build."),
+ ("veio.blueprint.built", "Obra concluída: %s blocos.", "Build complete: %s blocks."),
+ ("veio.blueprint.missing", "Faltam: %s. Nada foi cobrado.", "Missing: %s. Nothing was charged."),
+]: label(key, pt, en)
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
  ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
- ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","freight_station","drone_port","caravan_station","wrench"]),
- ("Projetos e defesa","Projects and defense",["factory_board","contract_hub","tesla"]),
+ ("Logística","Logistics",["belt","fast_belt","cargo_lift","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","freight_station","drone_port","caravan_station","wrench"]),
+ ("Projetos e defesa","Projects and defense",["factory_board","blueprint_designer","build_marker","contract_hub","tesla"]),
 ]
 order=[name for _,_,names in categories for name in names]
 # Blocos da vila operária: consulta no Guia da Vila Operária (fim deste arquivo).
@@ -453,6 +488,7 @@ slothelp={
  "silo":["Grãos, sementes, ração ou comida."]*18,
  "control_center":["Comida do administrador.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar."],
  "foreman_desk":["Comida do capataz e dos postos.","Comida do capataz e dos postos.","Comida do capataz e dos postos.","Esmeraldas para recontratar."],
+ "cargo_lift":["Itens a caminho. Entram por qualquer lado."],
  "factory_board":["Entrega: pilha da fase ou pedido do dia. Aceita esteira.","Recompensas: licenças, esteiras, esmeraldas."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
 }
@@ -491,6 +527,7 @@ slot_en={
  "silo":["Grain, seeds, feed or food."]*18,
  "control_center":["Administrator food.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store."],
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
+ "cargo_lift":["Items on the way. They enter from any side."],
  "factory_board":["Delivery: the phase stack or the daily order. Belts welcome.","Rewards: permits, belts, emeralds."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
@@ -627,6 +664,9 @@ for name in ("splitter", "merger"):
 page(
  "Rede de logística\n\nEsteiras levam itens longe. Braços ligam baús e máquinas. Unificadores juntam; divisores distribuem.\n\nUse rápidas depois de juntar linhas.",
  "Logistics network\n\nBelts carry over distance. Arms link chests and machines. Mergers join; splitters distribute.\n\nUse fast belts after merging.")
+page(
+ "Megafábricas\n\nCopiadora: monte a linha no quadrado acima dela e clique com papel.\nMarco de obra: mão vazia mostra o orçamento; agachado com a chave, constrói.\n\nAndares: escada de mão até o piso de cima, ou elevador de carga.",
+ "Megafactories\n\nCopier: build a line on the square above it and click with paper.\nBuild marker: empty hand lists materials; sneak with the wrench to build.\n\nFloors: a ladder up to the next floor, or a cargo lift.")
 page(
  "Configurar filtros\n\nAgache e use um item no braço ou divisor: ele vira filtro sem gastar a amostra.\n\nAgache com mão vazia para limpar. O ícone fica no bloco.",
  "Set a filter\n\nSneak and use an item on an arm or splitter to copy its filter. The sample is kept.\n\nSneak with an empty hand to clear. See the icon on the block.")

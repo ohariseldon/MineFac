@@ -1417,7 +1417,7 @@ fn sneaking_with_an_empty_hand_on_the_barracks_switches_the_class() {
 fn worker_orders_reset_navigation_on_cancel_and_refresh_changed_destinations() {
     use horizon_client::mobs::{Ai, Extra, Mob, MobType, MobWorld, Vec3, goals::{Cx, Goal}};
     let mut mob = Mob { id: 98001, rider: None, extra: Extra::default(),
-        kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(), ai: Ai::default() };
+        kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(), velocity: Vec3::default(), on_climbable: false, ai: Ai::default() };
     let world = MobWorld::fixture(); let mut cx = Cx { w: &world };
     let mut goal = Work::default();
     order(mob.id, [1.0, 64.0, 1.0], defense::clock());
@@ -1473,7 +1473,7 @@ fn bench_large_village() {
     let world = MobWorld::preview();
     let kind = Arc::new(MobType { id: VILLAGER.to_owned() });
     let mut mobs: Vec<(Mob, Work)> = (0..VILLAGERS).map(|id| (Mob { rider: None,
-        id: 200_000 + id, kind: kind.clone(), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 }, ai: Ai::default(), extra: Default::default(),
+        id: 200_000 + id, kind: kind.clone(), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 }, velocity: Vec3::default(), on_climbable: false, ai: Ai::default(), extra: Default::default(),
     }, Work::default())).collect();
     // Um posto em cada sete aldeões tem ordem viva.
     for id in (0..VILLAGERS).step_by(7) {
@@ -1514,7 +1514,7 @@ fn work_goal_hands_the_order_to_the_villager_brain_and_respects_danger() {
     use std::sync::Arc;
     let world = MobWorld::preview();
     let mut mob = Mob { rider: None, id: 17001, kind: Arc::new(MobType { id: VILLAGER.to_owned() }), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 },
-        ai: Ai::default(), extra: Default::default() };
+        velocity: Vec3::default(), on_climbable: false, ai: Ai::default(), extra: Default::default() };
     villager::ext_mut(&mut mob).brain = Some(Box::new(Brain::preview(Act::Idle)));
     let mut goal = Work::default();
     order(17001, [5.5, 64.0, 7.5], defense::clock());

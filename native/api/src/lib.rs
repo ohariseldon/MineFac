@@ -1,3 +1,4 @@
+mod blueprint;
 mod budget;
 mod presentation;
 mod appearance;
@@ -5,6 +6,7 @@ mod contracts;
 mod freight;
 mod logistics;
 mod logistics_controls;
+mod lift;
 mod milestones;
 mod inserters;
 pub(crate) mod operations;
@@ -80,6 +82,7 @@ impl Hooks for Factory {
         // O painel carrega os próprios dados salvos quando começar a funcionar.
         home::reset();
         milestones::census::reset();
+        blueprint::reset();
     }
 
     fn block_entity(
@@ -132,12 +135,21 @@ impl Hooks for Factory {
         if let Some(flow) = freight::right_click(host, event.pos, &block) { return flow; }
         onboarding::select(host, event.pos, &block, true);
         if let Some(flow) = logistics_controls::right_click(host, event.pos, &block) { return flow; }
+        if blueprint::owns(&block) {
+            let held = host.held().map(|(item, _, _)| item);
+            if let Some(flow) = blueprint::right_click(host, event.pos, &block, held.as_deref()) { return flow; }
+        }
         if !is_factory_block(&block) {
             return Flow::Continue;
         }
         // Mão vazia chega como `None`. O quartel usa agachar com a mão vazia, então os postos
         // recebem "" nesse caso; o resto continua exigindo um item na mão.
         let held = host.held().map(|(item, _, _)| item);
+        if lift::owns(&block)
+            && let Some(flow) = lift::right_click(host, event.pos, held.as_deref().unwrap_or(""))
+        {
+            return flow;
+        }
         if workforce::owns(&block)
             && let Some(flow) = workforce::right_click(host, event.pos, held.as_deref().unwrap_or(""))
         {
@@ -353,6 +365,7 @@ impl Hooks for Factory {
         production::generation::bounds(event.block, event.bounds);
         if event.block == freight::DRONE { freight::bounds(event.entity, event.bounds); }
         if inserters::is_arm(event.block) { *event.bounds = [-1.5, 0.0, -1.5, 2.5, 1.0, 2.5]; }
+        if blueprint::owns(event.block) { blueprint::bounds(event.entity, event.bounds); }
         if workforce::zones::is_marker(event.block) {
             workforce::zones::bounds(event.entity, event.bounds);
         }
@@ -392,7 +405,11 @@ impl Hooks for Factory {
         &self,
         event: &mut horizon_client::mod_api::BlockEntityUpdateTagEvent<'_>,
     ) -> Option<Compound> {
-        is_factory_block(&event.entity.id).then(|| event.entity.nbt.clone())
+        is_factory_block(&event.entity.id).then(|| if blueprint::owns(&event.entity.id) {
+            blueprint::client_tag(event.entity)
+        } else {
+            event.entity.nbt.clone()
+        })
     }
 
     fn block_entity_submit(&self, host: &dyn Host,
@@ -405,9 +422,9 @@ impl Hooks for Factory {
 
 fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT |
-        SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
+        SPLITTER | MERGER | lift::LIFT | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::is_machine(block) || workforce::owns(block) || freight::owns(block) || milestones::owns(block)
+        || production::is_machine(block) || workforce::owns(block) || freight::owns(block) || milestones::owns(block) || blueprint::owns(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
@@ -442,7 +459,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         DRILL | DRILL_MK2 => (1, vec![], vec![0]),
         PRESS | ASSEMBLER | CUTTER | CRUSHER => (2, vec![0], vec![1]),
         INTEGRATOR | ALLOY | ELECTRONICS => (3, vec![0, 1], vec![2]),
-        BELT | FAST_BELT | SPLITTER => (1, vec![0], vec![0]),
+        BELT | FAST_BELT | SPLITTER | lift::LIFT => (1, vec![0], vec![0]),
         MERGER => (2, vec![0, 1], vec![0, 1]),
         GENERATOR => (1, vec![0], vec![]),
         GEOTHERMAL => (2, vec![0], vec![1]),
@@ -460,7 +477,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
 /// Há slot de entrada de itens? Evita alocar o `layout` só para decidir uma curva de esteira.
 fn has_item_inputs(block: &str) -> bool {
     match block {
-        BELT | FAST_BELT | SPLITTER | MERGER | PRESS | ASSEMBLER | CUTTER | CRUSHER |
+        BELT | FAST_BELT | SPLITTER | MERGER | lift::LIFT | PRESS | ASSEMBLER | CUTTER | CRUSHER |
         INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER => true,
         DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => false,
         _ if freight::owns(block) => true,
@@ -490,7 +507,7 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
     match (block, slot) {
         (HUB, _) => contracts::valid_input(slot, stack),
         (milestones::BOARD, _) => milestones::valid_input(slot, stack),
-        (BELT | FAST_BELT | SPLITTER, 0) => true,
+        (BELT | FAST_BELT | SPLITTER | lift::LIFT, 0) => true,
         (MERGER, 0 | 1) => true,
         _ if freight::owns(block) => (slot < 6 || block == freight::caravan::ID && slot == 7 && freight::caravan::feed(&stack.item)) && stack.damage == 0 && stack.extra.is_none(),
         _ if workforce::owns(block) => workforce::accepts(block, slot, stack),
@@ -670,6 +687,8 @@ fn stamp(time: i64) -> i32 {
 fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     if freight::owns(&entity.id) { freight::tick(host, pos, entity, time); return; }
     if inserters::is_arm(&entity.id) { return inserters::tick(host, pos, entity, time); }
+    if lift::owns(&entity.id) { return lift::tick(host, pos, entity, time); }
+    if blueprint::owns(&entity.id) { return blueprint::tick(host, pos, entity); }
     logistics::transfer_outputs(host, pos, entity, time);
     if entity.id == HUB {
         contracts::tick(entity);

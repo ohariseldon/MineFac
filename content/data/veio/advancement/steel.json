@@ -46,7 +46,8 @@
       "veio:steel_pole",
       "veio:steam_engine",
       "veio:tree_farm",
-      "veio:ranch"
+      "veio:ranch",
+      "veio:cargo_lift"
     ]
   },
   "requirements": [

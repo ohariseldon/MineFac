@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:circuit",
+    "veio:circuit",
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "minecraft:crafting_table",
+    "minecraft:paper"
+  ],
+  "result": {
+    "id": "veio:blueprint_designer",
+    "count": 1
+  }
+}

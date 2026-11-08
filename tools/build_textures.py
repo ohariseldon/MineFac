@@ -195,6 +195,16 @@ MOTIFS = {
         "eOooRoOe",
         "eeeeeeee",
     ],
+    "blueprint_designer": [
+        "UUUUUUUU",
+        "UvUvUvUU",
+        "UUUUUUUU",
+        "UvwwwwvU",
+        "UUwUUwUU",
+        "UvwwwwvU",
+        "UUUUUUUU",
+        "UvUvUvUU",
+    ],
     "factory_board": [
         "nnnnnnnn",
         "nwwwwwwn",
@@ -400,7 +410,7 @@ MOTIFS.update({
 })
 MACHINE_TIER = {
     "drill": "copper", "press": "copper", "assembler": "copper", "generator": "copper",
-    "contract_hub": "copper", "factory_board": "copper", "cutter": "iron", "integrator": "iron", "crusher": "iron",
+    "contract_hub": "copper", "factory_board": "copper", "blueprint_designer": "steel", "cutter": "iron", "integrator": "iron", "crusher": "iron",
     "alloy_furnace": "iron", "harvester": "iron", "electronics": "steel", "geothermal": "steel",
     "drill_mk2": "steel",
     "drill_mk3": "steel", "electric_furnace": "copper", "mill": "copper", "kitchen": "iron", "pantry": "copper",

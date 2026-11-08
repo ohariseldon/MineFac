@@ -32,6 +32,7 @@ use std::sync::Mutex;
 pub(super) mod farmhand;
 pub(super) mod foreman;
 pub(super) mod hauler;
+pub(super) mod ladders;
 pub(super) mod shepherd;
 pub(super) mod barracks;
 pub(super) mod center;
@@ -319,6 +320,8 @@ impl Goal for Work {
     }
     fn tick(&mut self, m: &mut Mob, cx: &mut Cx) {
         let Some(goal) = self.target else { return };
+        // Na escada de mão, a subida é física: o cérebro não planeja degraus.
+        if ladders::climb(m, goal) { return; }
         match steer(m, goal) {
             // O cérebro anda até o alvo: nada a fazer aqui.
             Steer::Brain => {}
@@ -653,11 +656,16 @@ pub(super) fn near(at: [f64; 3], goal: [f64; 3], reach: f64) -> bool {
 
 /// Posição `index` de uma área `(2r+1)² x 3`: a camada do posto, depois a de baixo e a de cima.
 pub(super) fn area_position(pos: [i32; 3], radius: i32, index: i32) -> [i32; 3] {
+    area_position_in(pos, radius, index, &[0, -1, 1])
+}
+
+/// Como `area_position`, com as camadas dadas (andares ligados por escadas: `ladders::layers`).
+pub(super) fn area_position_in(pos: [i32; 3], radius: i32, index: i32, layers: &[i32]) -> [i32; 3] {
     let side = radius * 2 + 1;
     let layer = side * side;
-    let index = index.rem_euclid(layer * 3);
+    let index = index.rem_euclid(layer * layers.len() as i32);
     let cell = index % layer;
-    [pos[0] + cell % side - radius, pos[1] + [0, -1, 1][(index / layer) as usize], pos[2] + cell / side - radius]
+    [pos[0] + cell % side - radius, pos[1] + layers[(index / layer) as usize], pos[2] + cell / side - radius]
 }
 
 fn get_list(entity: &ModBlockEntity, key: &str) -> Option<Vec<[i32; 3]>> {
@@ -692,11 +700,13 @@ pub(super) fn scan_named(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     }
     let (scan, partial) = (format!("{key}Scan"), format!("{key}Found"));
     let side = radius * 2 + 1;
-    let area = side * side * 3;
+    // Sem escadas descobertas, as três camadas de sempre.
+    let layers = ladders::layers(entity);
+    let area = side * side * layers.len() as i32;
     let mut cursor = number(entity, &scan) % area;
     let mut found = get_list(entity, &partial).unwrap_or_default();
     for _ in 0..per_cycle {
-        let spot = area_position(pos, radius, cursor);
+        let spot = area_position_in(pos, radius, cursor, &layers);
         if spot != pos && found.len() < max && wanted(&host.block(spot)) {
             found.push(spot);
         }
@@ -947,6 +957,9 @@ fn publish_ration(entity: &mut ModBlockEntity) {
 
 pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64, now: u64) {
     publish_ration(entity);
+    if entity.id == HAULER_POST {
+        ladders::discover(host, pos, entity, hauler::RADIUS, now);
+    }
     if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) != 0 {
         return;
     }
@@ -1063,7 +1076,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         if let Some(spot) = destination {
             reserve(dimension, spot, pos, now);
         }
-        order(id, goal, now);
+        order(id, ladders::route(entity, pos[1], at, goal), now);
         if !near(at, goal, POST_REACH) {
             return walk(entity, None);
         }
@@ -1077,7 +1090,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         };
         arrive(host, pos, entity, spot, now);
         unreserve(dimension, pos);
-        order(id, home, now);
+        order(id, ladders::route(entity, pos[1], at, home), now);
         return 1;
     }
     if entity.id == BARRACKS {
@@ -1133,7 +1146,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 return number(entity, "Status");
             }
             let goal = block_goal(spot);
-            order(id, goal, now);
+            order(id, ladders::route(entity, pos[1], at, goal), now);
             if !near(at, goal, reach) {
                 return walk(entity, Some(spot));
             }
@@ -1152,7 +1165,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 }
                 set_carried(entity, &load, None, Carry::Product, 0);
                 finish_task(entity);
-                order(id, home, now);
+                order(id, ladders::route(entity, pos[1], at, home), now);
             }
             1
         }
@@ -1163,7 +1176,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 return number(entity, "Status");
             }
             // Pega no posto: precisa estar ao lado dele.
-            order(id, home, now);
+            order(id, ladders::route(entity, pos[1], at, home), now);
             if !near(at, home, POST_REACH) {
                 return walk(entity, Some(to));
             }
@@ -1179,7 +1192,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             if entity.id == HAULER_POST { super::onboarding::worker_pickup(host, pos, pos, &item, taken); }
             set_carried(entity, &[(item, taken)], Some(to), kind, into);
             set_number(entity, "Walk", 0);
-            order(id, block_goal(to), now);
+            order(id, ladders::route(entity, pos[1], at, block_goal(to)), now);
             WALKING
         }
         Plan::Fetch { desk, task, from, slot, item, count, to, into } => {
@@ -1189,7 +1202,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 return number(entity, "Status");
             }
             let goal = block_goal(from);
-            order(id, goal, now);
+            order(id, ladders::route(entity, pos[1], at, goal), now);
             if !near(at, goal, POST_REACH) {
                 return walk(entity, Some(from));
             }
@@ -1212,7 +1225,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             if entity.id == HAULER_POST { super::onboarding::worker_pickup(host, pos, from, &item, taken); }
             set_carried(entity, &[(item, taken)], Some(to), Carry::Supply, into);
             set_number(entity, "Walk", 0);
-            order(id, block_goal(to), now);
+            order(id, ladders::route(entity, pos[1], at, block_goal(to)), now);
             WALKING
         }
     }

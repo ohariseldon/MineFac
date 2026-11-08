@@ -4,6 +4,7 @@
   "items": [
     "veio:belt",
     "veio:fast_belt",
+    "veio:cargo_lift",
     "veio:splitter",
     "veio:merger",
     "veio:inserter",
