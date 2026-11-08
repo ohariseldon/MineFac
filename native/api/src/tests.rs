@@ -49,7 +49,7 @@ fn integrator_waits_for_both_inputs_and_preserves_them_when_output_is_full() {
     assert_eq!(integrator.items, blocked);
     assert_eq!(number(&integrator, "Status"), 3);
     integrator.items[2] = None;
-    run(&mut integrator, 60);
+    run(&mut integrator, 80);
     assert_eq!(integrator.items[0].as_ref().unwrap().count, 1);
     assert_eq!(integrator.items[1].as_ref().unwrap().count, 2);
     assert_eq!(integrator.items[2], Some(ItemStack::new(MODULE, 1)));

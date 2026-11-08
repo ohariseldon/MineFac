@@ -106,7 +106,7 @@ As linhas de produção usam estas transformações.
 
 - Prensa. Um cobre bruto vira uma chapa de cobre, um ferro bruto vira uma chapa de ferro e um ouro bruto vira um lingote de ouro.
 - Montador. Duas chapas de cobre viram uma engrenagem.
-- Cortadora. Uma chapa de ferro vira uma moldura. Uma chapa de cobre vira uma fiação de cobre.
+- Cortadora. Uma chapa de ferro vira uma moldura. Uma chapa de cobre vira duas fiações de cobre.
 - Integrador. Uma moldura e uma engrenagem viram um módulo mecânico.
 - Triturador. Um quartzo vira uma pastilha de silício. Um osso vira quatro farinhas de osso. Pedregulho vira cascalho e cascalho vira areia.
 - Forno de ligas. Duas chapas de ferro e um carvão ou carvão vegetal viram uma chapa de aço.
@@ -116,12 +116,15 @@ Máquinas aguardam material, energia e espaço na saída. Os ingredientes são c
 
 ## Progressão
 
-1. Cobre abre a primeira fábrica, com extratora, prensa e esteiras.
-2. Engrenagens abrem a oficina industrial, com chave, triturador e forno de ligas.
-3. Aço libera acumuladores, geotermia, montagem eletrônica e construção em lote.
-4. Módulos mecânicos liberam a colheitadeira.
-5. Quartzo e fiação permitem produzir circuitos, que liberam solar, extração Mk.II e a torre Tesla.
-6. O pedido de oito módulos mecânicos continua liberando o lote de 32 esteiras rápidas.
+A progressão anda em fases, como no Satisfactory e no Factorio: dentro de uma fase os desbloqueios pedem uma peça; a passagem para a fase seguinte pede uma **pilha**, que só uma linha funcionando entrega em um a três minutos.
+
+1. **Cobre.** Um lingote de cobre abre extratora, prensa, esteiras, moinho e energia básica. A primeira chapa abre o montador; a primeira engrenagem abre divisor, unificador, central de projetos e cozinha.
+2. **Oficina: 32 engrenagens.** Chave, triturador, forno de ligas, kits de reparo e cata-vento. Gargalo: uma linha de engrenagens (2 extratoras, 2 prensas, 1 montador) puxa 40 FE/t, mais do que uma roda d'água dá.
+3. **Aço: 16 chapas de aço.** Acumuladores, geotermia, caldeira a vapor, poste de aço, construção em lote, silvicultura e rancho. Gargalo: carvão e energia; a linha de módulos já pede uma caldeira.
+4. **Eletrônica: 16 circuitos.** Solar, extração Mk.II, torre Tesla, módulos de velocidade e eficiência e lâmpada de cultivo. Gargalo: silício (quartzo do Nether ou areia).
+5. **Profundidade.** Um módulo instalado abre a Mk.III. Gargalo: transporte; uma Mk.III em jazida industrial passa de uma esteira rápida.
+
+Ramos paralelos (molduras, módulos, lavoura, vila operária, braços) seguem pedindo uma peça. Os oito módulos do primeiro pedido continuam liberando o lote de 32 esteiras rápidas. Razões e justificativas em [frentes/PROGRESSAO-FASES.md](frentes/PROGRESSAO-FASES.md).
 
 Os avanços entregam as receitas. Em um mundo anterior, recolha novamente os materiais do novo ramo para ativar os novos avanços.
 
@@ -212,7 +215,7 @@ Um sinal de redstone pausa a produção e preserva o progresso. A saída continu
 
 ## Produção (0.9)
 
-**Jazidas e pureza.** A extratora lê o quadrado 3x3 logo abaixo dela. Com 1 ou 2 blocos da mesma jazida, ela é impura e trabalha na metade da velocidade. De 3 a 6 blocos é normal. De 7 a 9 é pura e trabalha no dobro. Além dos minérios, há jazidas infinitas de pedra, ardósia, areia, areia vermelha, cascalho, argila, netherrack, areia das almas, pedra-negra e pedra do End. Obsidiana e ametista exigem a Mk.II; detritos ancestrais, a Mk.III. A Mk.III é quatro vezes mais rápida que a Mk.I.
+**Jazidas e pureza.** Em minérios, a extratora mede o veio conectado a partir do bloco logo abaixo dela, em 3D, pelas faces (minério comum e de ardósia contam juntos). Com 1 ou 2 blocos, ela é impura e trabalha na metade da velocidade. De 3 a 6 blocos é normal. De 7 a 15 é pura e trabalha no dobro. Com 16 ou mais, é **industrial**: quatro vezes a velocidade, com o dobro de potência. Diamante, esmeralda e detritos param na pura. Pedra, areia e demais jazidas infinitas continuam lendo o quadrado 3x3 abaixo da extratora. Além dos minérios, há jazidas infinitas de pedra, ardósia, areia, areia vermelha, cascalho, argila, netherrack, areia das almas, pedra-negra e pedra do End. Obsidiana e ametista exigem a Mk.II; detritos ancestrais, a Mk.III. A Mk.III é quatro vezes mais rápida que a Mk.I.
 
 **Receitas.** Todas as receitas de máquina estão em `tools/production.json` e aparecem no guia.
 

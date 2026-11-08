@@ -82,8 +82,8 @@ help={
  "Recebe 2 chapas de cobre.\nProduz 1 engrenagem.\nEntrada à esquerda.\nSaída à direita. Use energia.",
  "Takes 2 copper plates.\nMakes 1 gear.\nInput on the left.\nOutput on the right. Use power."),
  "cutter":(
- "Chapa de ferro vira moldura.\nChapa de cobre vira fiação.\nEntrada à esquerda.\nSaída à direita. Use energia.",
- "Iron plates make frames.\nCopper plates make wiring.\nInput on the left.\nOutput on the right. Use power."),
+ "Chapa de ferro vira moldura.\nChapa de cobre: 2 fiações.\nEntrada à esquerda.\nSaída à direita. Use energia.",
+ "Iron plates make frames.\nCopper plate: 2 wiring.\nInput on the left.\nOutput on the right. Use power."),
  "integrator":(
  "Entrada 1: moldura.\nEntrada 2: engrenagem.\nProduz módulo mecânico.\nRequer um de cada e energia.",
  "Input 1: frame.\nInput 2: gear.\nMakes a mechanical module.\nNeeds one of each and power."),
@@ -486,7 +486,7 @@ components={
  "frame":("Chapa de ferro na cortadora. Vai para módulos mecânicos.","Iron plate in a cutter. Used for mechanical modules."),
  "module":("Moldura e engrenagem no integrador. Usado na expansão.","Frame and gear in an integrator. Used for expansion."),
  "steel_plate":("Duas chapas de ferro e carvão no forno de ligas.","Two iron plates and coal in an alloy furnace."),
- "wire":("Chapa de cobre na cortadora. Usada em circuitos e cabos.","Copper plate in a cutter. Used for circuits and cables."),
+ "wire":("Chapa de cobre na cortadora rende duas. Usada em circuitos e cabos.","A copper plate in a cutter makes two. Used for circuits and cables."),
  "silicon":("Quartzo do Nether no triturador. Usado em circuitos.","Nether quartz in a crusher. Used for circuits."),
  "circuit":("Duas fiações e um silício no montador de circuitos.","Two copper wiring and one silicon in a circuit assembler."),
 }
@@ -541,8 +541,8 @@ page(
  "Farol opcional\n\nDepois do povoado, esvazie a central. Ponha 1 estrela do Nether na entrada 1 e depois 48 circuitos na 2.\n\nGanhe 1 farol e 2 extratoras Mk.II. Retire as saídas antes de exportar de novo.",
  "Optional beacon\n\nAfter the village project, empty the hub inputs. Put 1 Nether star in input 1 first, then 48 circuits in input 2.\n\nReceive 1 beacon and 2 Mk.II extractors. Clear outputs before returning to exports.")
 production=page(
- "Escada de produção\n\nCada melhoria resolve um gargalo e revela o próximo: jazida, energia, fio, poluição.\n\nVeios grandes rendem mais: a extratora lê o 3x3 abaixo dela. Jazida pura dobra a velocidade.",
- "Production ladder\n\nEach upgrade fixes one bottleneck and reveals the next: vein, power, wire, pollution.\n\nBig veins pay off: the extractor reads the 3x3 below. A pure vein doubles its speed.")
+ "Escada de produção\n\nCada fase resolve um gargalo e revela o próximo: jazida, energia, transporte.\n\nVeio conectado rende mais: 7+ blocos dobram, 16+ quadruplicam. Extratora normal = 30/min = uma prensa.",
+ "Production ladder\n\nEach phase fixes one bottleneck and reveals the next: vein, power, transport.\n\nConnected veins pay: 7+ blocks double, 16+ quadruple. Normal extractor = 30/min = one press.")
 page(
  "Energia\n\nRoda d'água e cata-vento: limpos, 8 FE/t.\nGerador e biomassa: 40 FE/t (biomassa polui menos).\nVapor: 120 FE/t, com água.\nGeotérmico e solar escalam.\nAcumuladores seguram a noite.",
  "Power\n\nWater wheel and wind: clean, 8 FE/t.\nGenerator and biomass: 40 FE/t; biomass pollutes less.\nSteam: 120 FE/t, needs water.\nGeothermal and solar scale up.\n\nBatteries carry the night.")

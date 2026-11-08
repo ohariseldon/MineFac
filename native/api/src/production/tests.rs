@@ -204,19 +204,19 @@ fn drill_reads_the_vein_and_respects_tiers() {
 }
 
 #[test]
-fn a_normal_copper_vein_wants_two_presses_and_one_assembler() {
+fn phase_progression_matches_one_press_per_normal_vein_and_two_per_assembler() {
     let ticks = |machine: &str, item: &str| {
         recipes(machine).find(|recipe| recipe.output.0 == item && !recipe.alt).unwrap().ticks
     };
     let press = ticks("veio:press", "veio:copper_plate");
     let gear = ticks("veio:assembler", "veio:gear");
     let normal = extraction::duration(40, 1, 2);
-    assert_eq!(press, normal * 2, "veio normal: duas prensas");
+    assert_eq!(press, normal, "veio normal: uma prensa");
     assert_eq!(gear, press, "duas chapas enchem um montador no ritmo das duas prensas");
-    assert_eq!(extraction::duration(40, 1, 1), press, "veio impuro: uma prensa basta");
-    assert_eq!(extraction::duration(40, 1, 3) * 4, press, "veio puro: quatro prensas");
+    assert_eq!(extraction::duration(40, 1, 1), press * 2, "veio impuro: prensa recebe metade da capacidade");
+    assert_eq!(extraction::duration(40, 1, 3) * 2, press, "veio puro: duas prensas");
     let ingot = recipes("veio:press").find(|recipe| recipe.alt && recipe.output.0 == "veio:copper_plate").unwrap().ticks;
-    assert_eq!(ingot * 2, press, "lingote pronto continua o atalho, duas vezes mais rápido que o bruto");
+    assert!(ingot < press, "lingote pronto continua o atalho mais rápido que o bruto");
 }
 
 #[test]
