@@ -1,5 +1,9 @@
 # Feedback sonoro das máquinas
 
+Registro da primeira entrega. A revisão atual de fundos, esteiras e animações
+está em [Ambiente e movimento](AMBIENTE-E-MOVIMENTO.md), que atualiza cadências,
+durações e limites descritos abaixo.
+
 Entrega na branch `codex/machine-audio`, sobre as formas de máquinas de
 `codex/machine-identity` (PR #31) e a logística de `codex/interzone-logistics`
 (PR #28). Não mescla as frentes pendentes, não incrementa versão e não altera

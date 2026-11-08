@@ -336,7 +336,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
         };
         let phase = ((event.pos[0] ^ event.pos[2]) & 1) * 4;
         let speed = if event.block == FAST_BELT { 4 } else { 8 };
-        let t = if matches!(status, 3 | 9) { 0.5 } else { ((event.draw.game_time.rem_euclid(speed) as f32
+        let t = if !matches!(status, 0 | 1) { 0.5 } else { ((event.draw.game_time.rem_euclid(speed) as f32
             + event.draw.partial - phase as f32).rem_euclid(speed as f32)) / speed as f32 };
         let path = host.block_state_property(event.state, "path").unwrap_or("straight");
         // Slats and cargo follow the same centerline as the static geometry.
@@ -356,7 +356,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
         if let Some(Tag::String(item)) = event.entity.nbt.get(&"DisplayItem".into()) {
             let name = item.to_string_lossy();
             if !name.is_empty() {
-                let u = if matches!(status, 3 | 9) { 0.5 } else { t };
+                let u = if !matches!(status, 0 | 1) { 0.5 } else { t };
                 event.draw.push();
                 let point = if logistics::is_belt(event.block) {
                     let mut point = logistics::orient(logistics::path_point(path, u), facing);

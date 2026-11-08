@@ -1,6 +1,7 @@
 mod budget;
 mod presentation;
 mod appearance;
+mod motion;
 mod soundscape;
 mod contracts;
 mod freight;
@@ -213,9 +214,13 @@ impl Hooks for Factory {
         }
         let previous = visual_signature(event.entity);
         let produced = number(event.entity, "Produced");
+        let previous_status = number(event.entity, "Status");
         tick_factory(host, event.pos, event.entity, time);
+        if event.entity.id == freight::DRONE {
+            set_number(event.entity, "FlightVisualAt", stamp(time));
+        }
         pollution::emit(host, event.pos, event.entity, time);
-        soundscape::after(host, event.pos, event.entity, produced, time);
+        soundscape::after(host, event.pos, event.entity, produced, previous_status, time);
         record_performance(event.entity, produced);
         presentation::publish(event.entity);
         if visual_signature(event.entity) != previous {
@@ -555,7 +560,7 @@ fn set_number(entity: &mut ModBlockEntity, key: &str, value: i32) {
     });
 }
 
-fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, Option<ItemStack>) {
+fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, bool, Option<ItemStack>) {
     // A carga desenhada no mundo é só de esteira, divisor e unificador; o braço anima pelo `MovedAt`.
     let cargo = if matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
         logistics::display_stack(entity).cloned()
@@ -563,7 +568,7 @@ fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, Option<ItemStack
         None
     };
     (number(entity, "Status"), number(entity, "Module"), if matches!(entity.id.as_str(), freight::DRONE | freight::caravan::ID) { number(entity, "FlightPhase") * 1_000_000 + number(entity, "Progress") / 4 }
-        else { number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }) }, cargo)
+        else { number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }) }, production::burns(&entity.id) && number(entity, "Burn") > 0, cargo)
 }
 
 fn center([x, y, z]: [i32; 3]) -> [f64; 3] {

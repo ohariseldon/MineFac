@@ -279,6 +279,18 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
     }
 }
 
+/// Extrapolate at most the four ticks between visual snapshots. Frozen states
+/// never advance and old saves lacking the cosmetic timestamp remain valid.
+fn visual_progress(entity: &ModBlockEntity, time: i64, partial: f32) -> f32 {
+    let base = number(entity, "Progress") as f32;
+    if number(entity, "Status") != 1 || number(entity, "FlightPhase") == 0 { return base; }
+    let elapsed = if entity.nbt.contains_key(nbt_key("FlightVisualAt")) {
+        let delta = (i64::from(stamp(time)) - i64::from(number(entity,"FlightVisualAt"))).rem_euclid(i64::from(i32::MAX));
+        if delta > i64::from(i32::MAX)/2 { 0.0 } else { delta.min(4) as f32 }
+    } else { 0.0 };
+    (base + elapsed + partial.clamp(0.0,1.0)).min(number(entity,"Duration").max(1) as f32)
+}
+
 /// The visible drone is an animation of the port's durable flight, not a loose
 /// entity holding a second copy of the cargo. No target or inventory is teleported.
 pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
@@ -293,7 +305,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     let phase = number(event.entity, "FlightPhase");
     let to = target(event.entity).unwrap_or(event.pos);
     let duration = number(event.entity, "Duration").max(1) as f32;
-    let progress = number(event.entity, "Progress") as f32;
+    let progress = visual_progress(event.entity, event.draw.game_time, event.draw.partial);
     let fraction = if phase == 1 { (progress / duration).min(1.0) }
         else if phase == 2 { 1.0 - (progress / duration).min(1.0) } else { 0.0 };
     let faces = [Some(CubeFace { sprite: "minecraft:block/iron_block", uv: None }); 6];
@@ -305,7 +317,13 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     ]);
     host.draw_cube(event.draw, [5.0, 17.0, 5.0], [11.0, 20.0, 11.0], faces, 0x47b9ce);
     for (x, z) in [(2.0, 2.0), (11.0, 2.0), (2.0, 11.0), (11.0, 11.0)] {
-        host.draw_cube(event.draw, [x, 20.0, z], [x + 3.0, 20.5, z + 3.0], faces, 0x454c55);
+        let rotor = [(x+1.5)/16.0, 20.25/16.0, (z+1.5)/16.0];
+        event.draw.push();
+        let rate = if phase > 0 && number(event.entity, "Status") == 1 { if x == z { 32.0 } else { -32.0 } } else { 0.0 };
+        event.draw.spin([0.0,1.0,0.0], rotor, rate, 22.5);
+        host.draw_cube(event.draw, [x-0.5,20.0,z+1.1], [x+3.5,20.5,z+1.9], faces, 0x454c55);
+        host.draw_cube(event.draw, [x+1.1,20.0,z-0.5], [x+1.9,20.5,z+3.5], faces, 0x454c55);
+        event.draw.still(); event.draw.pop();
     }
     if let Some(cargo) = event.entity.items.get(CARGO).and_then(Option::as_ref) {
         event.draw.push(); event.draw.translate([0.5, 0.95, 0.5]); event.draw.scale([0.3; 3]);

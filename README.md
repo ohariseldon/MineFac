@@ -56,7 +56,9 @@ Máquinas em trabalho têm batidas, motores, cortes e ruídos agrícolas discret
 com variações e atenuação pela distância. Ajuste pelo volume de **Blocos** nas opções
 de som; as legendas têm traduções em português e inglês. Máquinas próximas
 compartilham limites de som para reduzir a sobreposição. Os assets são gratuitos,
-CC0, de Kenney. Detalhes e validação: [áudio das máquinas](frentes/AUDIO-MAQUINAS.md).
+CC0, de Kenney. Detalhes: [áudio das máquinas](frentes/AUDIO-MAQUINAS.md). A continuação acrescenta
+esteiras suaves, fundo de moinho/motores, aviso pontual de avaria e animações
+mecânicas: [ambiente e movimento](frentes/AMBIENTE-E-MOVIMENTO.md).
 
 ## Extração e processamento
 

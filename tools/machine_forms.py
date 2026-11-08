@@ -81,6 +81,8 @@ def form(name, tier, box):
             part([12, 8, 2], [15, 12, 5], "body")
             if name == "integrator": part([1, 12, 2], [15, 14, 5], "frame")
             panel(2, 5, 14); motion, center = "Turntable", [8, 9.5, 9]
+        if family == "electronics": motion, center = "Scanner", [8, 10, 9]
+        elif family == "kitchen": motion, center = "Mixer", [5, 11, 8]
         lamp_y = 4
     elif family == "saw":
         legs(6)
@@ -103,7 +105,7 @@ def form(name, tier, box):
             part([13, 5, 4], [15, 9, 12], "wood")
             part([15, 6, 7], [16, 8, 9], "metal")
         panel(3, 5, 13)
-        motion = "Roller" if family == "crusher" else "Turntable" if family == "mill" else "None"
+        motion = "Roller" if family == "crusher" else "Mill" if family == "mill" else "Seeder"
         center, lamp_y = [8, 10, 8], 9
     elif family == "oven":
         part([1, 1.5, 2], [15, 12, 14], "frame")
@@ -112,6 +114,7 @@ def form(name, tier, box):
         panel(4, 5, 15)
         part([10, 14, 3], [13, 16, 6], "metal")
         if name == "alloy_furnace": part([3, 14, 3], [6, 16, 6], "metal")
+        motion = "Heat"
         lamp_y = 10
     elif family in ("boiler", "tanks", "cells", "silo"):
         if family == "tanks" or family == "cells":
@@ -127,6 +130,7 @@ def form(name, tier, box):
             if name == "steam_engine": part([1, 4, 4], [3, 13, 7], "metal")
             if name == "biomass_generator": part([13, 7, 9], [15, 12, 13], "wood")
         panel(5, 5, 14); lamp_y = 11
+        if family in ("boiler", "tanks"): motion, center = "Motor", [8, 8, 14.5]
     elif family in ("counter", "desk", "console", "loading", "landing", "hitch"):
         legs(7, wood=family in ("desk", "counter", "hitch"))
         part([0, 6, 0], [16, 8, 16], "wood" if family in ("desk", "counter", "hitch") else "metal")
@@ -164,15 +168,21 @@ def form(name, tier, box):
         for x in (1, 13): part([x, 6, 3], [x+2, 12, 13], "frame")
         part([1, 12, 2], [15, 14, 14], "accent")
         part([4, 6, 3], [12, 8, 11], "body")
-        if family == "harvester": motion, center = "Turntable", [8, 8, 9]
+        if family == "harvester": motion, center = "Harvester", [8, 8, 9]
+        elif name == "ranch": motion, center = "Feed", [8, 9, 9]
         panel(2, 5, 13); lamp_y = 10
     else:
         raise ValueError(family)
 
     if motion == "Roller": hits.append([4, 7.5, 5.5, 12, 12.5, 10.5])
-    elif motion == "Turntable":
+    elif motion in ("Turntable", "Mill", "Seeder"):
         x, y, z = center
         hits.append([x-4.25, y, z-4.25, x+4.25, y+1.5, z+4.25])
+
+    extra_sweeps = {"Scanner": [3,9,7,13,12,12], "Mixer": [3,9,5,8,13,11],
+                    "Heat": [5,4,15.3,11,9,15.6], "Motor": [5,5,14.3,11,11,14.7],
+                    "Harvester": [4,6.5,7,12,9.5,11], "Feed": [4,8,7,12,11,12]}
+    if motion in extra_sweeps: hits.append(extra_sweeps[motion])
 
     # One fixed north outlet and a small south-facing light keep the direction legible.
     non_output = {"generator", "biomass_generator", "steam_engine", "battery", "planter", "foreman_desk", "control_center", "barn", "silo"}

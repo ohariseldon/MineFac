@@ -921,5 +921,7 @@
   "subtitles.veio.machine.grind": "Moinho gira",
   "subtitles.veio.machine.electronics": "Circuitos trabalham",
   "subtitles.veio.machine.saw": "Serra corta madeira",
-  "subtitles.veio.machine.drone": "Drone voa"
+  "subtitles.veio.machine.drone": "Drone voa",
+  "subtitles.veio.machine.belt": "Esteira funciona",
+  "subtitles.veio.machine.repair": "Máquina precisa de reparo"
 }

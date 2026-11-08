@@ -167,5 +167,31 @@
         "attenuation_distance": 8
       }
     ]
+  },
+  "machine.belt": {
+    "subtitle": "subtitles.veio.machine.belt",
+    "sounds": [
+      {
+        "name": "veio:machines/belt_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/belt_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.repair": {
+    "subtitle": "subtitles.veio.machine.repair",
+    "sounds": [
+      {
+        "name": "veio:machines/repair_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/repair_1",
+        "attenuation_distance": 8
+      }
+    ]
   }
 }

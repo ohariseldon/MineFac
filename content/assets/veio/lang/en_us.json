@@ -921,5 +921,7 @@
   "subtitles.veio.machine.grind": "Mill grinds",
   "subtitles.veio.machine.electronics": "Circuits work",
   "subtitles.veio.machine.saw": "Saw cuts wood",
-  "subtitles.veio.machine.drone": "Drone flies"
+  "subtitles.veio.machine.drone": "Drone flies",
+  "subtitles.veio.machine.belt": "Conveyor runs",
+  "subtitles.veio.machine.repair": "Machine needs repair"
 }
