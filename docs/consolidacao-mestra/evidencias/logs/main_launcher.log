@@ -1,0 +1,11 @@
+   Compiling veio-launcher v0.10.0 (/home/user/MineFac/launcher)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.59s
+     Running unittests src/main.rs (target/debug/deps/launcher-aca043486dc8cd8f)
+
+running 2 tests
+test tests::reads_version_and_config ... ok
+test tests::install_refuses_to_replace_a_foreign_folder ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+exit=0

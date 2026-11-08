@@ -1,0 +1,16 @@
+biomass
+circuit
+copper_plate
+efficiency_module
+flour
+frame
+gear
+iron_plate
+module
+productivity_module
+repair_kit
+silicon
+speed_module
+steel_plate
+wire
+wrench

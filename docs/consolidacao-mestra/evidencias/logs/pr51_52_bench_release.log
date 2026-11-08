@@ -1,0 +1,53 @@
+pr47 run1: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 344.5 µs por tick do jogo (Veio + mundo simulado)
+pr47 run1: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 51.4 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr47 run1: test veio::workforce::tests::bench_large_village ... 
+pr47 run1: thread 'veio::workforce::tests::bench_large_village' (17764) panicked at horizon-client/src/lib.rs:475:13:
+pr47 run1:    6: <veio_check::veio::workforce::tests::bench_large_village::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+pr47 run1:     veio::workforce::tests::bench_large_village
+pr47 run1: test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 331 filtered out; finished in 2.29s
+pr47 run1: error: test failed, to rerun pass `-p veio-check --lib`
+pr47 run2: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 321.9 µs por tick do jogo (Veio + mundo simulado)
+pr47 run2: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 69.4 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr47 run2: test veio::workforce::tests::bench_large_village ... 
+pr47 run2: thread 'veio::workforce::tests::bench_large_village' (17778) panicked at horizon-client/src/lib.rs:475:13:
+pr47 run2:    6: <veio_check::veio::workforce::tests::bench_large_village::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+pr47 run2:     veio::workforce::tests::bench_large_village
+pr47 run2: test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 331 filtered out; finished in 2.41s
+pr47 run2: error: test failed, to rerun pass `-p veio-check --lib`
+pr52 run1: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 325.6 µs por tick do jogo (Veio + mundo simulado)
+pr52 run1: test veio::perf::factory::bench_factory_scale ... ESCALA {"blocos":480,"us_por_tick":359,"us_por_bloco":0.748,"tick_pct_50ms":0.72,"memoria_mb":0.7,"bytes_por_bloco":1517}
+pr52 run1: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 52.1 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr52 run1: test veio::workforce::tests::bench_large_village ... 
+pr52 run1: thread 'veio::workforce::tests::bench_large_village' (18100) panicked at horizon-client/src/lib.rs:475:13:
+pr52 run1:    6: veio_check::veio::workforce::tests::bench_large_village
+pr52 run1:    7: <veio_check::veio::workforce::tests::bench_large_village::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+pr52 run1:     veio::workforce::tests::bench_large_village
+pr52 run1: test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 333 filtered out; finished in 24.95s
+pr52 run1: error: test failed, to rerun pass `-p veio-check --lib`
+pr52 run2: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 358.4 µs por tick do jogo (Veio + mundo simulado)
+pr52 run2: test veio::perf::factory::bench_factory_scale ... ESCALA {"blocos":480,"us_por_tick":417,"us_por_bloco":0.869,"tick_pct_50ms":0.83,"memoria_mb":0.7,"bytes_por_bloco":1517}
+pr52 run2: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 78.7 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr52 run2: test veio::workforce::tests::bench_large_village ... 
+pr52 run2: thread 'veio::workforce::tests::bench_large_village' (18196) panicked at horizon-client/src/lib.rs:475:13:
+pr52 run2:    6: veio_check::veio::workforce::tests::bench_large_village
+pr52 run2:    7: <veio_check::veio::workforce::tests::bench_large_village::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+pr52 run2:     veio::workforce::tests::bench_large_village
+pr52 run2: test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 333 filtered out; finished in 25.21s
+pr52 run2: error: test failed, to rerun pass `-p veio-check --lib`
+pr51 run1: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 395.6 µs por tick do jogo (Veio + mundo simulado)
+pr51 run1: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 68.7 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr51 run1: test veio::workforce::tests::bench_large_village ... 
+pr51 run1: thread 'veio::workforce::tests::bench_large_village' (18446) panicked at horizon-client/src/lib.rs:478:13:
+pr51 run1:    6: <veio_check::veio::workforce::tests::bench_large_village::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+pr51 run1:     veio::workforce::tests::bench_large_village
+pr51 run1: test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 340 filtered out; finished in 2.64s
+pr51 run1: error: test failed, to rerun pass `-p veio-check --lib`
+pr51 run2: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 260.6 µs por tick do jogo (Veio + mundo simulado)
+pr51 run2: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 64.5 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr51 run2: test veio::workforce::tests::bench_large_village ... 
+pr51 run2: thread 'veio::workforce::tests::bench_large_village' (18460) panicked at horizon-client/src/lib.rs:478:13:
+pr51 run2:    6: <veio_check::veio::workforce::tests::bench_large_village::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+pr51 run2:     veio::workforce::tests::bench_large_village
+pr51 run2: test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 340 filtered out; finished in 2.06s
+pr51 run2: error: test failed, to rerun pass `-p veio-check --lib`
+FIM

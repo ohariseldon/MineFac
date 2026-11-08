@@ -1,0 +1,41 @@
+main r1: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 279.4 µs por tick do jogo (Veio + mundo simulado)
+main r1: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 45.0 µs por quadro (Veio), 251 desenhados de novo, 0 alocações, 1255 cubos, 60.5 itens, 4 quads
+pr47 r1: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 366.5 µs por tick do jogo (Veio + mundo simulado)
+pr47 r1: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 71.5 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr52 r1: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 363.5 µs por tick do jogo (Veio + mundo simulado)
+pr52 r1: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 66.0 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr51 r1: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 342.5 µs por tick do jogo (Veio + mundo simulado)
+pr51 r1: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 78.2 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+main r2: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 288.5 µs por tick do jogo (Veio + mundo simulado)
+main r2: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 45.2 µs por quadro (Veio), 251 desenhados de novo, 0 alocações, 1255 cubos, 60.5 itens, 4 quads
+pr47 r2: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 325.1 µs por tick do jogo (Veio + mundo simulado)
+pr47 r2: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 71.4 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr52 r2: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 352.5 µs por tick do jogo (Veio + mundo simulado)
+pr52 r2: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 53.5 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr51 r2: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 344.0 µs por tick do jogo (Veio + mundo simulado)
+pr51 r2: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 68.7 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+main r3: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 268.7 µs por tick do jogo (Veio + mundo simulado)
+main r3: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 48.9 µs por quadro (Veio), 251 desenhados de novo, 0 alocações, 1255 cubos, 60.5 itens, 4 quads
+pr47 r3: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 364.8 µs por tick do jogo (Veio + mundo simulado)
+pr47 r3: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 64.7 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr52 r3: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 372.9 µs por tick do jogo (Veio + mundo simulado)
+pr52 r3: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 78.1 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr51 r3: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 348.1 µs por tick do jogo (Veio + mundo simulado)
+pr51 r3: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 66.5 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+main r4: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 249.3 µs por tick do jogo (Veio + mundo simulado)
+main r4: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 48.3 µs por quadro (Veio), 251 desenhados de novo, 0 alocações, 1255 cubos, 60.5 itens, 4 quads
+pr47 r4: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 420.5 µs por tick do jogo (Veio + mundo simulado)
+pr47 r4: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 76.7 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr52 r4: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 336.3 µs por tick do jogo (Veio + mundo simulado)
+pr52 r4: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 50.8 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr51 r4: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 357.0 µs por tick do jogo (Veio + mundo simulado)
+pr51 r4: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 63.1 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+main r5: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 243.4 µs por tick do jogo (Veio + mundo simulado)
+main r5: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 39.2 µs por quadro (Veio), 251 desenhados de novo, 0 alocações, 1255 cubos, 60.5 itens, 4 quads
+pr47 r5: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 349.7 µs por tick do jogo (Veio + mundo simulado)
+pr47 r5: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 68.6 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr52 r5: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 368.6 µs por tick do jogo (Veio + mundo simulado)
+pr52 r5: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 75.0 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+pr51 r5: test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 347.1 µs por tick do jogo (Veio + mundo simulado)
+pr51 r5: test veio::perf::factory::bench_frame ... quadro: 480 blocos: 72.7 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+FIM
