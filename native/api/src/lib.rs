@@ -218,6 +218,12 @@ impl Hooks for Factory {
         workforce::spawn::logged_in(event.player, event.name, defense::clock());
     }
 
+    fn trade_with_villager(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::TradeWithVillagerEvent<'_>) {
+        if event.kind == "minecraft:villager" {
+            workforce::society::traded(host, event.merchant, event.offer);
+        }
+    }
+
     fn player_respawned(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
         workforce::spawn::respawned(host, event.name);
     }
@@ -613,7 +619,7 @@ fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {
 /// `Status`, `Module` e `Info` para `data[0]`, `data[11]` e `data[12]`, sem novas buscas no NBT.
 /// Quem publica outra coisa nessas posições (ou não publica) relê o NBT.
 fn published_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {
-    let standard = !matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE | TESLA | workforce::CONTROL_CENTER)
+    let standard = !matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE | TESLA | workforce::CONTROL_CENTER | workforce::TOWN_HALL)
         && !inserters::is_arm(&entity.id) && !workforce::zones::is_marker(&entity.id);
     match entity.data.as_slice() {
         [status, .., module, info] if standard && entity.data.len() == presentation::DATA_SLOTS => (*status, *module, *info),

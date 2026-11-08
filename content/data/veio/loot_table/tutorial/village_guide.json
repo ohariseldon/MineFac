@@ -156,7 +156,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 13
+                              "page": 15
                             }
                           },
                           {
@@ -168,7 +168,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 12
+                              "page": 16
                             }
                           },
                           {
@@ -180,7 +180,55 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 15
+                              "page": 17
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.village.contents.13",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 18
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.village.contents.14",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 13
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.village.contents.15",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 12
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.village.contents.16",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 20
                             }
                           },
                           {
@@ -256,6 +304,31 @@
                     },
                     {
                       "raw": {
+                        "translate": "veio.village.page.15"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.village.page.16"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.village.page.17"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.village.page.18"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.village.page.19"
+                      }
+                    },
+                    {
+                      "raw": {
                         "text": "",
                         "extra": [
                           {
@@ -271,7 +344,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 16
+                              "page": 21
                             }
                           },
                           {
@@ -283,7 +356,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 17
+                              "page": 22
                             }
                           },
                           {
@@ -295,7 +368,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 18
+                              "page": 23
                             }
                           },
                           {
@@ -307,7 +380,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 19
+                              "page": 24
                             }
                           },
                           {
@@ -319,7 +392,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 20
+                              "page": 25
                             }
                           },
                           {
@@ -331,7 +404,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 21
+                              "page": 26
                             }
                           },
                           {
@@ -343,7 +416,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 22
+                              "page": 27
                             }
                           },
                           {
@@ -355,7 +428,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 23
+                              "page": 28
                             }
                           },
                           {
@@ -367,7 +440,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 24
+                              "page": 29
                             }
                           },
                           {
@@ -379,7 +452,55 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 25
+                              "page": 30
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.house",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 31
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.shop",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 32
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.town_hall",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 33
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.well",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 34
                             }
                           },
                           {
@@ -730,6 +851,146 @@
                           },
                           {
                             "translate": "veio.guide.craft.barracks",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.house",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.house"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.house",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.shop",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.shop"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.shop",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.town_hall",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.town_hall"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.town_hall",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.well",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.well"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.well",
                             "color": "dark_gray"
                           },
                           {

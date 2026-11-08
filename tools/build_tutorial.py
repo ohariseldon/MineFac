@@ -24,6 +24,8 @@ vanilla={
  "shears":("Tesoura","Shears"),"hay_block":("Fardo de feno","Hay bale"),"glowstone":("Pedra luminosa","Glowstone"),
  "diamond":("Diamante","Diamond"),"emerald":("Esmeralda","Emerald"),
  "hopper":("Funil","Hopper"),"lectern":("Atril","Lectern"),"bell":("Sino","Bell"),"lead":("Laço","Lead"),"oak_fence":("Cerca de carvalho","Oak fence"),"wheat_seeds":("Sementes de trigo","Wheat seeds"),
+ "oak_planks":("Tábuas de carvalho","Oak planks"),"oak_door":("Porta de carvalho","Oak door"),"glass_pane":("Painel de vidro","Glass pane"),
+ "stone_bricks":("Tijolos de pedra","Stone bricks"),"cobblestone":("Pedregulho","Cobblestone"),
 }
 def item_name(item,code):
  ns,name=item.split(":")
@@ -215,6 +217,19 @@ help["foreman_desk"] = (
 help["barracks"] = (
  "Esmeralda: contrata o aldeão.\nAgachar com esmeralda troca\na classe: milícia, guarda,\narqueiro ou mago. Treinar\ngasta a esmeralda do slot.\nComida: cada golpe é uma tarefa.",
  "Emerald: hires the villager.\nSneak with an emerald to\ncycle militia, guard, archer\nor mage. Training spends the\nemerald in the slot.\nFood: each blow is one task.")
+# Sociedade (0.18): casas, lojas, prefeitura e poço.
+help["house"] = (
+ "Lar de até 4 aldeões a até 10\nblocos. Recebe o salário dos\nque trabalham, come da\ndespensa e compra na loja.\nO prefeito dá o alvará.",
+ "Home for up to 4 villagers\nwithin 10 blocks. Gets the\nworkers' wages, eats from the\npantry and buys at the shop.\nThe mayor grants the permit.")
+help["shop"] = (
+ "Esmeralda: contrata o\ncomerciante. Estoque: comida\ne bens. Vende às casas e a\nvocê (troque com ele). Caixa:\n60 moedas = 1 esmeralda.",
+ "Emerald: hires the merchant.\nStock: food and goods. Sells\nto homes and to you (trade\nwith them). Till: 60 coins\n= 1 emerald.")
+help["town_hall"] = (
+ "Esmeralda: contrata o\nprefeito. Esmeraldas no cofre\npagam salários. Mede IDH, PIB,\nemprego e libera as fases.\nLivro: relatório.",
+ "Emerald: hires the mayor.\nEmeralds in the vault pay\nwages. Measures HDI, GDP and\njobs and unlocks phases.\nBook: report.")
+help["well"] = (
+ "Saneamento das casas a até\n24 blocos. Balde vazio no\nslot vira balde d'água.",
+ "Sanitation for homes within\n24 blocks. An empty bucket\nin the slot fills with water.")
 help["farm_post"] = (
  "Esmeralda: contrata o aldeão\nadulto livre mais próximo.\nEle colhe o 9x9 e traz ao posto.\nCome 2 pontos por colheita.\nAgachar + chave: dispensa.",
  "Emerald: hires the nearest\nfree adult villager.\nHarvests the 9x9, brings it back.\nEats 2 points per harvest.\nSneak + wrench: dismiss.")
@@ -316,6 +331,65 @@ for key, pt, en in [
  ("advancement.veio.coordination.description", "Um capataz alimenta e recontrata os trabalhadores dos postos.", "A foreman feeds and rehires the workers of your posts."),
 ]:
  label(key, pt, en)
+for key, pt, en in [
+ ('block.veio.house', 'Casa', 'House'),
+ ('block.veio.shop', 'Loja', 'Shop'),
+ ('block.veio.town_hall', 'Prefeitura', 'Town Hall'),
+ ('block.veio.well', 'Poço', 'Well'),
+ ('veio.status.housed', 'Família morando', 'Family living'),
+ ('veio.status.no_permit', 'Sem alvará', 'No permit'),
+ ('veio.status.empty_home', 'Casa vazia', 'Empty house'),
+ ('veio.house.residents', 'Moradores: %s de %s · IDH %s', 'Residents: %s of %s · HDI %s'),
+ ('veio.house.wallet', 'Carteira: %s moedas · despensa: %s', 'Wallet: %s coins · pantry: %s'),
+ ('veio.house.need0', 'Tudo em ordem', 'All good'),
+ ('veio.house.need1', 'Fome: abasteça uma loja perto com comida', 'Hunger: stock a nearby shop with food'),
+ ('veio.house.need2', 'Renda baixa: emprego ou cofre vazio', 'Low income: jobs or empty vault'),
+ ('veio.house.need3', 'Falta saneamento: poço a até 24 blocos', 'No sanitation: a well within 24 blocks'),
+ ('veio.house.need4', 'Falta energia: poste a até 12 blocos', 'No power: a pole within 12 blocks'),
+ ('veio.house.need5', 'Falta comércio: loja a até 40 blocos', 'No commerce: a shop within 40 blocks'),
+ ('veio.house.need6', 'Ar poluído: fábrica perto demais', 'Polluted air: factory too close'),
+ ('veio.house.need7', 'Apertada: espalhe o bairro', 'Crowded: spread the district'),
+ ('veio.house.need8', 'Sem alvará do prefeito', 'No permit from the mayor'),
+ ('veio.house.need9', 'Sem prefeitura: ninguém paga salário', 'No town hall: nobody pays wages'),
+ ('veio.shop.sales', 'Vendas hoje: %s · caixa: %s moedas', 'Sales today: %s · till: %s coins'),
+ ('veio.shop.stock', 'Estoque: %s itens', 'Stock: %s items'),
+ ('veio.hint.shop', 'Troque com o comerciante para comprar', 'Trade with the merchant to buy'),
+ ('veio.hint.well', 'Saneamento a até 24 blocos', 'Sanitation within 24 blocks'),
+ ('veio.mayor.phase_name1', 'Fase 1: Povoado', 'Phase 1: Hamlet'),
+ ('veio.mayor.phase_name2', 'Fase 2: Vila', 'Phase 2: Village'),
+ ('veio.mayor.phase_name3', 'Fase 3: Cidade', 'Phase 3: Town'),
+ ('veio.mayor.phase_name4', 'Fase 4: Metrópole', 'Phase 4: City'),
+ ('veio.mayor.phase2', 'O prefeito declarou: agora somos uma Vila!', 'The mayor declares: we are now a Village!'),
+ ('veio.mayor.phase3', 'O prefeito declarou: agora somos uma Cidade!', 'The mayor declares: we are now a Town!'),
+ ('veio.mayor.phase4', 'O prefeito declarou: agora somos uma Metrópole!', 'The mayor declares: we are now a City!'),
+ ('veio.mayor.population', 'Pop. %s · adultos %s · crianças %s · famílias %s', 'Pop. %s · adults %s · kids %s · families %s'),
+ ('veio.mayor.employment', 'Emprego: %s%% dos adultos', 'Employment: %s%% of adults'),
+ ('veio.mayor.idh', 'IDH %s · Gini %s', 'HDI %s · Gini %s'),
+ ('veio.mayor.gdp', 'PIB: %s/dia · cofre: %s moedas', 'GDP: %s/day · vault: %s coins'),
+ ('veio.mayor.suspended', 'Licenças suspensas: o bem-estar caiu', 'Permits suspended: well-being dropped'),
+ ('veio.mayor.request0', 'O prefeito está satisfeito', 'The mayor is satisfied'),
+ ('veio.mayor.request1', 'Cofre vazio: salários atrasados', 'Empty vault: wages overdue'),
+ ('veio.mayor.request2', '%s famílias passam fome', '%s families are hungry'),
+ ('veio.mayor.request3', '%s aldeões sem casa', '%s villagers without a home'),
+ ('veio.mayor.request4', '%s casas sem saneamento (poço)', '%s homes without sanitation (well)'),
+ ('veio.mayor.request5', '%s casas sem loja perto', '%s homes without a shop nearby'),
+ ('veio.mayor.request6', '%s casas sem energia (poste)', '%s homes without power (pole)'),
+ ('veio.mayor.request7', '%s adultos sem emprego', '%s adults without a job'),
+ ('veio.mayor.request8', '%s casas com ar poluído', '%s homes with polluted air'),
+ ('veio.mayor.request9', '%s casas apertadas: crie bairros', '%s crowded homes: build districts'),
+ ('veio.mayor.request10', 'Meta: chegar à fase %s (livro: relatório)', 'Goal: reach phase %s (book: report)'),
+ ('veio.mayor.need_mayor', 'Contrate um prefeito na prefeitura para ver o relatório.', 'Hire a mayor at the town hall to see the report.'),
+ ('veio.mayor.report.people', 'População %s: %s adultos, %s crianças, %s famílias, %s sem casa.', 'Population %s: %s adults, %s kids, %s families, %s homeless.'),
+ ('veio.mayor.report.economy', 'PIB %s/dia (produção %s, comércio %s) · cofre %s moedas · emprego %s%%.', 'GDP %s/day (production %s, commerce %s) · vault %s coins · employment %s%%.'),
+ ('veio.mayor.report.idh', 'IDH %s · Gini %s', 'HDI %s · Gini %s'),
+ ('veio.mayor.report.district', 'Bairro %s (%s): %s moradores, IDH %s', 'District %s (%s): %s residents, HDI %s'),
+ ('veio.mayor.report.next', 'Fase %s pede: %s moradores, %s famílias, IDH %s, PIB %s, emprego %s%%, Gini até %s, %s bairros.', 'Phase %s needs: %s residents, %s families, HDI %s, GDP %s, employment %s%%, Gini up to %s, %s districts.'),
+ ('veio.mayor.report.global', 'Global: %s prefeituras, %s pessoas, PIB %s/dia, IDH %s', 'Global: %s town halls, %s people, GDP %s/day, HDI %s'),
+ ('veio.zone.need_mayor', 'O plano diretor não permite: suba a fase da vila na prefeitura.', 'The master plan forbids it: raise the village phase at the town hall.'),
+ ('veio.zone.suspended', 'Licenças suspensas pelo prefeito: melhore o bem-estar da vila.', "Permits suspended by the mayor: improve the village's well-being."),
+ ('veio.guide.role.output', 'Saída', 'Output'),
+]:
+ label(key, pt, en)
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
@@ -325,7 +399,7 @@ categories=[
 ]
 order=[name for _,_,names in categories for name in names]
 # Blocos da vila operária: consulta no Guia da Vila Operária (fim deste arquivo).
-village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center","barracks"]
+village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center","barracks","house","shop","town_hall","well"]
 assert set(order)|set(village_order)==set(help), (set(order)|set(village_order))^set(help)
 for name,(pt,en) in help.items():
  label(f"veio.help.{name}",pt,en)
@@ -363,6 +437,10 @@ slothelp={
  "pen_marker":["Ração deste cercado (vazio: qualquer uma)."],
  "barn":["Estoque."]*27,
  "silo":["Grãos, sementes, ração ou comida."]*18,
+ "house":["Despensa: comida que a família comprou (ou que você doa).","Despensa.","Despensa."],
+ "shop":["Comida do comerciante.","Estoque à venda: comida e bens.","Estoque à venda.","Estoque à venda.","Estoque à venda.","Estoque à venda.","Estoque à venda.","Caixa: esmeraldas das vendas."],
+ "town_hall":["Comida do prefeito.","Cofre: esmeraldas para os salários (60 moedas cada)."],
+ "well":["Balde vazio: sai cheio de água."],
  "control_center":["Comida do administrador.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar."],
  "foreman_desk":["Comida do capataz e dos postos.","Comida do capataz e dos postos.","Comida do capataz e dos postos.","Esmeraldas para recontratar."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
@@ -400,6 +478,10 @@ slot_en={
  "pen_marker":["Feed for this pen (empty: any)."],
  "barn":["Stock."]*27,
  "silo":["Grain, seeds, feed or food."]*18,
+ "house":["Pantry: food the family bought (or you donate).","Pantry.","Pantry."],
+ "shop":["Merchant food.","Stock for sale: food and goods.","Stock for sale.","Stock for sale.","Stock for sale.","Stock for sale.","Stock for sale.","Till: emeralds from sales."],
+ "town_hall":["Mayor food.","Vault: emeralds for wages (60 coins each)."],
+ "well":["Empty bucket: comes out full of water."],
  "control_center":["Administrator food.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store."],
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
@@ -668,7 +750,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.17.2"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.18.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -758,8 +840,8 @@ v_expand=vpage(
  "Expandir as zonas\n\nEsmeralda no marco libera o próximo nível:\n13x13: 8 esm., 32 tarefas, 6 aldeões\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nA chave escolhe o tamanho entre os liberados.",
  "Grow the zones\n\nEmerald on the marker unlocks the next level:\n13x13: 8 emer., 32 tasks, 6 villagers\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nThe wrench picks the size among unlocked ones.")
 v_grow=vpage(
- "A vila cresce\n\nAldeões têm filhos até o teto da vila: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle. Máximo 150.\n\nVárias fábricas espalhadas: cada uma com sua vila.",
- "The village grows\n\nVillagers have children up to the village cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center. Max 150.\n\nSeveral spread factories: each has its own village.")
+ "A vila cresce\n\nAldeões têm filhos até o teto da vila: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle. Máximo 150.\n\nO prefeito limita: 30 sem prefeitura, depois 60, 100 e 150 pelas fases. Com prefeito, bebê só nasce com vaga em casa.",
+ "The village grows\n\nVillagers have children up to the village cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center. Max 150.\n\nThe mayor limits it: 30 without a town hall, then 60, 100 and 150 by phase. With a mayor, babies need a free home.")
 v_trouble=vpage(
  "Quando um aldeão para\n\nNoite: ele dorme e volta de manhã.\nSem comida: ponha pão.\nAusente: traga-o ou dispense (agachar + chave).\nCaminho obstruído: abra passagem.\nSaída cheia: esvazie ou use um celeiro.\nCursor no estado: dicas.",
  "When a villager stops\n\nNight: they sleep and return in the morning.\nNo food: add bread.\nMissing: bring them back or dismiss (sneak + wrench).\nPath blocked: clear the way.\nOutput full: empty it or use a barn.\nHover the status for tips.")
@@ -769,6 +851,21 @@ v_barracks=vpage(
 v_food=vpage(
  "Comida\n\nCada tarefa gasta 2 pontos. Trigo vale 1, batata e cenoura 1, pão 6 (3 tarefas), carne assada 8 (4 tarefas), torta 10.\n\nComida pronta rende mais: monte moinho e cozinha cedo.",
  "Food\n\nEach task costs 2 points. Wheat is worth 1, potato and carrot 1, bread 6 (3 tasks), cooked meat 8 (4 tasks), pie 10.\n\nCooked food goes further: build a mill and kitchen early.")
+v_society=vpage(
+ "8. Casas e famílias\n\nCasa: até 4 aldeões a até 10 blocos. Os que trabalham ganham salário; a família come da despensa e compra na loja.\n\nSem comida, sem serviços ou sem renda, o IDH cai. Espalhe bairros: casa apertada vive pior.",
+ "8. Homes and families\n\nHouse: up to 4 villagers within 10 blocks. Workers earn wages; the family eats from the pantry and buys at the shop.\n\nWithout food, services or income, HDI drops. Spread districts: crowded homes live worse.")
+v_shop=vpage(
+ "9. Loja e comércio\n\nContrate um comerciante e ponha comida e bens no estoque (à mão, funil ou carregador).\n\nAs casas compram de dia. Você compra trocando com ele. A cada 60 moedas, uma esmeralda no caixa.",
+ "9. Shop and trade\n\nHire a merchant and put food and goods in the stock (by hand, hopper or hauler).\n\nHomes buy during the day. You buy by trading with them. Every 60 coins, one emerald in the till.")
+v_mayor=vpage(
+ "10. Prefeito\n\nA prefeitura paga os salários com as esmeraldas do cofre (2 moedas por turno por trabalhador) e mede a vila.\n\nEle não é inimigo: cuida do bem-estar e por isso limita zonas, nascimentos e alvarás de casa.",
+ "10. Mayor\n\nThe town hall pays wages from the vault's emeralds (2 coins per turn per worker) and measures the village.\n\nNot an enemy: they care for well-being, so they limit zones, births and house permits.")
+v_phases=vpage(
+ "Fases\n\n1 Povoado: zona nível 2, 30 aldeões, 4 casas.\n2 Vila: 12 moradores, 3 famílias, IDH 0,40.\n3 Cidade: 36, 9, IDH 0,55, PIB 400, emprego 60%.\n4 Metrópole: 80, 20, IDH 0,70, Gini 0,45, 3 bairros.\n\nCasas pedem poço (fase 2), poste (3) e loja (4).",
+ "Phases\n\n1 Hamlet: zone level 2, 30 villagers, 4 homes.\n2 Village: 12 residents, 3 families, HDI 0.40.\n3 Town: 36, 9, HDI 0.55, GDP 400, jobs 60%.\n4 City: 80, 20, HDI 0.70, Gini 0.45, 3 districts.\n\nHomes need a well (phase 2), pole (3) and shop (4).")
+v_numbers=vpage(
+ "Indicadores\n\nIDH: comida, moradia, serviços e renda de cada família (0 a 1).\nGini: desigualdade da renda.\nPIB: tarefas feitas e vendas do último dia.\nEmprego: adultos com posto.\n\nLivro na prefeitura: relatório com bairros e pedidos.",
+ "Indicators\n\nHDI: food, housing, services and income of each family (0 to 1).\nGini: income inequality.\nGDP: tasks done and sales in the last day.\nEmployment: adults with a post.\n\nBook on the town hall: report with districts and requests.")
 v_blocks=len(vpages)+1;vpages.append(None)
 vrefs={}
 for name in village_order:
@@ -787,7 +884,8 @@ vpages[v_blocks-1]={"text":"","extra":extra}
 vlinks=[("Começar","Start here",v_intro),("1. Trabalhador","1. Worker",v_hire),("2. Lavoura","2. Field",v_field),
  ("3. Cercados","3. Pens",v_pen),("4. Armazéns","4. Storage",v_store),("5. Carregadores","5. Haulers",v_haul),
  ("6. Capataz","6. Foreman",v_foreman),("7. Centro","7. Center",v_center),("Expandir zonas","Grow zones",v_expand),
- ("A vila cresce","Village growth",v_grow),("Quartel","Barracks",v_barracks),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
+ ("A vila cresce","Village growth",v_grow),("8. Casas","8. Homes",v_society),("9. Loja","9. Shop",v_shop),
+ ("10. Prefeito","10. Mayor",v_mayor),("Fases e indicadores","Phases and indicators",v_phases),("Quartel","Barracks",v_barracks),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
 label("veio.village.title","Guia da Vila Operária","Worker Village Guide")
 extra=[{"translate":"veio.village.title","bold":True},{"text":"\n"}]
 for n,(pt,en,target) in enumerate(vlinks):
@@ -826,6 +924,9 @@ vstages=[
  ("haul","veio:hauler_post","5. Carregador","5. Hauler","Um aldeão abastece máquinas e recolhe produtos.","A villager feeds machines and collects products."),
  ("foreman","veio:foreman_desk","6. Capataz","6. Foreman","A mesa alimenta, recontrata e monta a fila de entregas.","The desk feeds, rehires and queues deliveries."),
  ("center","veio:control_center","7. Centro de controle","7. Control center","Painel, metas e relatório. O spawn vai para o centro.","Panel, goals and report. Spawn moves to the center."),
+ ("home","veio:house","8. Casa","8. House","Uma família mora, ganha salário e compra comida.","A family lives, earns wages and buys food."),
+ ("market","veio:shop","9. Loja","9. Shop","Um comerciante vende comida e bens às casas e a você.","A merchant sells food and goods to homes and to you."),
+ ("mayor","veio:town_hall","10. Prefeitura","10. Town hall","O prefeito paga salários, mede o IDH e libera as fases.","The mayor pays wages, measures HDI and unlocks phases."),
 ]
 vparent="veio:village/root"
 for name,item,pt,en,pdesc,edesc in vstages:

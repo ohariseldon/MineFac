@@ -16,13 +16,15 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 29] = [
+pub(super) const STATUS_KEYS: [&str; 32] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
     "no_worker", "absent", "no_task", "no_food", "path", "walking", "idle_work", "no_wage",
     // Zonas e armazéns.
     "zone", "storing", "rest",
+    // Casas (`workforce::society`).
+    "housed", "no_permit", "empty_home",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
@@ -133,6 +135,10 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         workforce::center::draw_screen(host, event);
         return;
     }
+    if event.block == workforce::TOWN_HALL {
+        workforce::society::draw_screen(host, event);
+        return;
+    }
     let status = read(0).clamp(0, STATUS_KEYS.len() as i32 - 1) as usize;
     let status_text = Text::tr(&format!("veio.status.{}", STATUS_KEYS[status]), &[]).plain();
     lamp_icon(host, event, [9.0, 24.0], status);
@@ -225,6 +231,8 @@ pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
     logistics_controls::publish(entity);
     let values = if entity.id == workforce::CONTROL_CENTER {
         workforce::center::data(entity)
+    } else if entity.id == workforce::TOWN_HALL {
+        workforce::society::hall_data(entity)
     } else if workforce::zones::is_marker(&entity.id) {
         workforce::zones::data(entity)
     } else {
@@ -291,8 +299,8 @@ pub(super) fn lamp_color(status: usize) -> u32 {
 /// Cor do texto de estado sobre o painel cinza.
 pub(super) fn text_color(status: usize) -> u32 {
     match status {
-        1 | 23 => 0x1e7a1e,
-        3 | 22 => 0x9a5a00,
+        1 | 23 | 29 => 0x1e7a1e,
+        3 | 22 | 30 => 0x9a5a00,
         2 | 10 | 11 | 16 | 17 | 18 | 20 | 21 | 24 | 25 => 0x6b5a00,
         4..=6 | 12..=15 | 19 => 0xaa1f1f,
         7 => 0x7a6420,

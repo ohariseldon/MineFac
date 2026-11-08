@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/home",
+  "display": {
+    "icon": {
+      "id": "veio:shop"
+    },
+    "title": {
+      "translate": "veio.village.stage.market.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.market.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:shop"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -23,6 +23,10 @@
     "veio:biomass",
     "veio:tesla",
     "veio:barracks",
+    "veio:house",
+    "veio:shop",
+    "veio:town_hall",
+    "veio:well",
     "veio:repair_kit",
     "minecraft:bone_meal"
   ]

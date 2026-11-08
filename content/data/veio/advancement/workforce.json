@@ -35,7 +35,11 @@
       "veio:field_marker",
       "veio:pen_marker",
       "veio:barn",
-      "veio:silo"
+      "veio:silo",
+      "veio:house",
+      "veio:well",
+      "veio:shop",
+      "veio:town_hall"
     ]
   }
 }

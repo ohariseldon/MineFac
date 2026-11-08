@@ -47,6 +47,10 @@
     "veio:silo",
     "veio:control_center",
     "veio:barracks",
+    "veio:house",
+    "veio:shop",
+    "veio:town_hall",
+    "veio:well",
     "veio:solar",
     "veio:battery"
   ]
