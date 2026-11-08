@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:circuit",
+    "minecraft:glass_pane",
+    "veio:iron_plate",
+    "veio:iron_plate",
+    "minecraft:redstone"
+  ],
+  "result": {
+    "id": "veio:factory_monitor",
+    "count": 1
+  }
+}

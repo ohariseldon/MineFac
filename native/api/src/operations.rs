@@ -36,15 +36,15 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
     if freight::owns(block) { return Some(Profile { sector: Sector::Logistics, kind: StationKind::Transport }); }
     let sector = match block {
         DRILL | DRILL_MK2 | DRILL_MK3 => Sector::Extraction,
-        PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE
+        PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE | FABRICATOR
             | workforce::HAULER_POST => Sector::Industry,
         workforce::FOREMAN_DESK | workforce::CONTROL_CENTER | workforce::SHOP | workforce::TOWN_HALL | workforce::SITE => Sector::Workforce,
         _ if workforce::society::is_society_block(block) => Sector::Workforce,
         HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH | workforce::FARM_POST | workforce::SHEPHERD_POST => Sector::Farming,
         MILL | KITCHEN | PANTRY => Sector::Food,
-        HUB => Sector::Projects,
+        HUB | research::LAB => Sector::Projects,
         TESLA | workforce::BARRACKS => Sector::Defense,
-        BELT | FAST_BELT | SPLITTER | MERGER | inserters::ID | inserters::FAST | inserters::LONG => Sector::Logistics,
+        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL | inserters::ID | inserters::FAST | inserters::LONG => Sector::Logistics,
         _ if workforce::storage::is_store(block) => return Some(Profile { sector: Sector::Logistics, kind: StationKind::Storage }),
         _ if is_power_block(block) || power::tier(block).is_some() => Sector::Power,
         _ => return None,

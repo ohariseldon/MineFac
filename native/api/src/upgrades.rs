@@ -6,6 +6,10 @@ pub(super) const SPEED: &str = "veio:speed_module";
 pub(super) const EFFICIENCY: &str = "veio:efficiency_module";
 pub(super) const PRODUCTIVITY: &str = "veio:productivity_module";
 pub(super) const MODULES: [&str; 3] = [SPEED, EFFICIENCY, PRODUCTIVITY];
+/// Kit Mk.II: troca o motor de uma máquina de receita ou extratora. Fica ao lado do módulo.
+pub(super) const MK2_KIT: &str = "veio:mk2_kit";
+/// No painel (slot 11), somado ao número do módulo quando a máquina é Mk.II.
+pub(super) const MK2_FLAG: i32 = 16;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct Effect {
@@ -34,7 +38,14 @@ pub(super) fn effect_of(module: i32) -> Effect {
 }
 
 pub(super) fn effect(entity: &ModBlockEntity) -> Effect {
-    effect_of(number(entity, "Module"))
+    with_tier(effect_of(number(entity, "Module")), number(entity, "Tier"))
+}
+
+/// Mk.II: ciclo na metade com o dobro de energia por tick (a mesma energia por produto) e
+/// 25% mais poluição. Soma-se ao módulo: uma máquina rende o que duas rendiam.
+pub(super) fn with_tier(effect: Effect, tier: i32) -> Effect {
+    if tier < 2 { return effect; }
+    Effect { time: effect.time * 0.5, power: effect.power * 2.0, pollution: effect.pollution * 1.25, ..effect }
 }
 
 pub(super) fn index(item: &str) -> Option<i32> {

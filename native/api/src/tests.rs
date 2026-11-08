@@ -273,15 +273,39 @@ fn tesla_picks_the_closest_hostile_in_range() {
 #[test]
 fn contract_hub_keeps_exporting_after_the_last_project() {
     let mut hub = entity(HUB, 4);
-    set_number(&mut hub, "ContractStage", contracts::CONTRACTS.len() as i32);
+    let export = contracts::CONTRACTS.len() + contracts::PHASES.len();
+    set_number(&mut hub, "ContractStage", export as i32);
     hub.items[0] = Some(ItemStack::new(CIRCUIT, 8));
     hub.items[1] = Some(ItemStack::new(STEEL, 8));
     contracts::tick(&mut hub);
     contracts::tick(&mut hub);
-    assert_eq!(number(&hub, "ContractStage") as usize, contracts::CONTRACTS.len());
+    assert_eq!(number(&hub, "ContractStage") as usize, export);
     assert_eq!(number(&hub, "Total"), 2);
     assert_eq!(hub.items[2], Some(ItemStack::new("minecraft:emerald", 8)));
     assert!(hub.items[0].is_none() && hub.items[1].is_none());
+}
+
+#[test]
+fn grand_project_collects_slowly_and_pays_each_phase() {
+    let mut hub = entity(HUB, 4);
+    set_number(&mut hub, "ContractStage", contracts::CONTRACTS.len() as i32);
+    hub.items[0] = Some(ItemStack::new(STEEL, 64));
+    hub.items[1] = Some(ItemStack::new(MODULE, 3));
+    assert!(!contracts::tick(&mut hub));
+    assert_eq!((number(&hub, "Total"), number(&hub, "Info")), (4, 3), "4 por tick, o que houver");
+    set_number(&mut hub, "Total", 199);
+    set_number(&mut hub, "Info", 100);
+    assert!(!contracts::tick(&mut hub));
+    assert_eq!(number(&hub, "ContractStage") as usize, contracts::CONTRACTS.len() + 1, "fase 1 fechada");
+    assert_eq!(hub.items[0].as_ref().map(|stack| stack.count), Some(59), "não leva além da meta");
+    assert_eq!(hub.items[2], Some(ItemStack::new("minecraft:emerald", 32)));
+    assert_eq!(number(&hub, "Total"), 0);
+    set_number(&mut hub, "ContractStage", (contracts::CONTRACTS.len() + 3) as i32);
+    hub.items = vec![Some(ItemStack::new("veio:automation_core", 1)), Some(ItemStack::new("veio:mk2_kit", 1)), None, None];
+    set_number(&mut hub, "Total", 199);
+    set_number(&mut hub, "Info", 49);
+    assert!(contracts::tick(&mut hub), "a última fase concede o avanço");
+    assert!(contracts::valid_input(0, &ItemStack::new("veio:processor", 1)));
 }
 
 #[test]

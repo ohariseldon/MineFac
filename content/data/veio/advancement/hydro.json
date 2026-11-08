@@ -1,0 +1,26 @@
+{
+  "parent": "veio:clean_energy",
+  "display": {
+    "icon": {
+      "id": "veio:hydro_turbine"
+    },
+    "title": {
+      "translate": "advancement.veio.hydro.title"
+    },
+    "description": {
+      "translate": "advancement.veio.hydro.description"
+    }
+  },
+  "criteria": {
+    "get": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:hydro_turbine"
+          }
+        ]
+      }
+    }
+  }
+}

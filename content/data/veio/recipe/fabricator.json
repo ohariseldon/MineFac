@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:motor",
+    "veio:processor",
+    "veio:integrator"
+  ],
+  "result": {
+    "id": "veio:fabricator",
+    "count": 1
+  }
+}

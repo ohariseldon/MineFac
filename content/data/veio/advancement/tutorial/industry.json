@@ -1,0 +1,24 @@
+{
+  "parent": "veio:steel",
+  "criteria": {
+    "steel": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:steel_plate"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "loot": [
+      "veio:tutorial/industry_guide"
+    ],
+    "recipes": [
+      "veio:industry_guide"
+    ],
+    "function": "veio:tutorial/industry_welcome"
+  }
+}

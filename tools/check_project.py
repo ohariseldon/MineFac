@@ -24,6 +24,7 @@ def main():
     pages = check_book(languages, "guide")
     check_book(languages, "village_guide")
     check_book(languages, "transport_guide")
+    check_book(languages, "industry_guide")
     textures = check_assets(languages)
     from check_machine_audio import check as check_audio
     check_audio()
@@ -58,7 +59,7 @@ def check_book(languages, name):
     loot = read_json(CONTENT / f"data/veio/loot_table/tutorial/{name}.json")
     assert loot["pools"][0]["entries"][0]["functions"][0]["components"] == components, f"{name}: livro entregue e fabricado devem ser iguais"
     for language in languages:
-        assert all(language[key] for key in language if key.startswith(("veio.guide.", "veio.village."))), "Texto vazio no guia"
+        assert all(language[key] for key in language if key.startswith(("veio.guide.", "veio.village.", "veio.industry."))), "Texto vazio no guia"
     return pages
 
 

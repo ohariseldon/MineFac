@@ -49,10 +49,5 @@
       "get_1",
       "get_2"
     ]
-  ],
-  "rewards": {
-    "recipes": [
-      "veio:drill_mk3"
-    ]
-  }
+  ]
 }

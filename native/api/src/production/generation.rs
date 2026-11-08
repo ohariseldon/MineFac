@@ -67,6 +67,7 @@ fn power_id(id: &str) -> &'static str {
         SOLAR => SOLAR,
         WATER_WHEEL => WATER_WHEEL,
         WIND_TURBINE => WIND_TURBINE,
+        HYDRO_TURBINE => HYDRO_TURBINE,
         _ => "",
     }
 }
@@ -100,7 +101,9 @@ pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
             if id == STEAM_ENGINE && sense {
                 set_number(entity, "Info", water_sides(host, pos, false));
             }
-            let has_water = id != STEAM_ENGINE || number(entity, "Info") > 0;
+            // A caldeira usa a água parada encostada ou, sem ela, a que chega pelo cano.
+            let piped = id == STEAM_ENGINE && number(entity, "Info") == 0;
+            let has_water = id != STEAM_ENGINE || !piped || number(entity, "Water") >= water::STEAM_WATER;
             if energy > limit - rate || !has_water {
                 return energy;
             }
@@ -115,13 +118,25 @@ pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
             if burn > 0 {
                 energy += rate;
                 set_number(entity, "Burn", burn - 1);
+                if piped {
+                    set_number(entity, "Water", number(entity, "Water") - water::STEAM_WATER);
+                }
             }
+        }
+        HYDRO_TURBINE => {
+            energy = water::turbine(host, pos, entity, energy, limit);
         }
         GEOTHERMAL if energy <= limit - 80 => {
             let mut burn = number(entity, "Burn");
             let bucket_room = entity.items[1].as_ref().is_none_or(|stack|
                 is_plain(stack, "minecraft:bucket") && stack.count < 16);
-            if burn == 0 && bucket_room
+            let piped = number(entity, "Water");
+            if burn == 0 && piped >= water::LAVA_BUCKET && water::is_lava(entity) {
+                // Lava encanada antes dos baldes: não sobram baldes vazios.
+                set_number(entity, "Water", piped - water::LAVA_BUCKET);
+                burn = 800;
+                set_number(entity, "BurnTotal", burn);
+            } else if burn == 0 && bucket_room
                 && entity.items[0].as_ref().is_some_and(|s| is_plain(s, "minecraft:lava_bucket"))
             {
                 consume(&mut entity.items[0], 1);
@@ -167,7 +182,8 @@ pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
 /// Estado de uma fonte sem nenhuma energia guardada.
 pub(crate) fn empty_status(entity: &ModBlockEntity) -> i32 {
     match entity.id.as_str() {
-        STEAM_ENGINE if number(entity, "Info") == 0 => NO_WATER,
+        STEAM_ENGINE if number(entity, "Info") == 0 && number(entity, "Water") < water::STEAM_WATER => NO_WATER,
+        HYDRO_TURBINE => NO_WATER,
         GENERATOR | GEOTHERMAL | BIOMASS_GENERATOR | STEAM_ENGINE if number(entity, "Burn") == 0 => 6,
         SOLAR => 7,
         WATER_WHEEL => NO_WATER,
