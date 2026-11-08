@@ -98,3 +98,17 @@ fn explicit_launch_choice_wins_over_saved_choice_and_invalid_choice_fails_early(
     assert!(choose(&["--visual".into()], &mut config).is_err());
     assert_eq!(choose(&[], &mut config).unwrap().profile, Profile::Light);
 }
+
+#[test]
+fn reinstalling_drops_shader_files_left_by_an_older_pack() {
+    let fixture = Fixture::new();
+    let dir = fixture.instance();
+    let installed = dir.join("shaderpacks").join(PACK_FOLDER);
+    fs::create_dir_all(&installed).unwrap();
+    fs::write(installed.join("ao.wgsl"), "old").unwrap();
+    fs::write(dir.join("shaderpacks").join("veio-industrial.txt"), "quality=Alto\n").unwrap();
+    install(&fixture.0, &dir, selection(Profile::Realism)).unwrap();
+    assert!(!installed.join("ao.wgsl").exists(), "arquivo antigo faria o Horizon recusar o pacote");
+    assert!(installed.join("material.wgsl").is_file());
+    assert_eq!(fs::read_to_string(dir.join("shaderpacks").join("veio-industrial.txt")).unwrap(), "quality=Alto\n");
+}

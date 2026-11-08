@@ -106,7 +106,13 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
         if !source.join("horizon-shaders.toml").is_file() {
             return Err("o pacote visual veio-industrial está faltando. Extraia o ZIP completo, ou abra Jogar-Leve.cmd.".into());
         }
-        super::copy_dir(&source, &instance.join("shaderpacks").join(PACK_FOLDER))?;
+        // O Horizon recusa o pacote se sobrar um .wgsl que o manifesto não cita: a pasta
+        // instalada é só nossa e é refeita do zero. As opções ficam ao lado, em veio-industrial.txt.
+        let target = instance.join("shaderpacks").join(PACK_FOLDER);
+        if target.exists() {
+            fs::remove_dir_all(&target).map_err(|error| format!("{}: {error}", target.display()))?;
+        }
+        super::copy_dir(&source, &target)?;
     }
     let marker = format!("{}:{PRESET_REVISION}", selection.profile.id());
     if !selection.reset && fs::read_to_string(instance.join(MARKER)).unwrap_or_default().trim() == marker {
