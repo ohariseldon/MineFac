@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "minecraft:barrel",
+    "minecraft:oak_planks",
+    "minecraft:oak_planks",
+    "minecraft:emerald"
+  ],
+  "result": {
+    "id": "veio:shop",
+    "count": 1
+  }
+}

@@ -41,6 +41,9 @@ def add_labels(langs):
         "no_wage": ("Coloque esmeraldas na mesa para recontratar trabalhadores.", "Put emeralds in the desk to rehire workers."),
         "zone": ("Postos perto da borda trabalham nesta zona.", "Posts near the border work in this zone."),
         "rest": ("Noite: o trabalhador dorme e volta de manhã.", "Night: the worker sleeps and returns in the morning."),
+        "housed": ("A família mora aqui. Veja a dica do painel para o que falta.", "A family lives here. The panel hint shows what is missing."),
+        "no_permit": ("Sem alvará: o prefeito exige saneamento, energia ou comércio, ou acabaram os alvarás da fase.", "No permit: the mayor requires sanitation, power or commerce, or the phase ran out of permits."),
+        "empty_home": ("Casa vazia: aldeões a até 10 blocos viram moradores.", "Empty house: villagers within 10 blocks move in."),
         "storing": ("A fila do capataz guarda e retira itens daqui.", "The foreman's queue stores and takes items here."),
         "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
     }

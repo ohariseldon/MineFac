@@ -659,6 +659,32 @@ pub mod mod_api {
         pub chunk: [i32; 2],
         pub new: bool,
     }
+    /// `merchant::ItemCost` (Horizon 66f3981): o Veio só lê `stack`.
+    #[derive(Clone, Debug)]
+    pub struct ItemCost {
+        pub stack: ItemStack,
+    }
+    /// `merchant::MerchantOffer` (Horizon 66f3981), reexportado em `mod_api`.
+    #[derive(Clone, Debug)]
+    pub struct MerchantOffer {
+        pub base_cost_a: ItemCost,
+        pub cost_b: Option<ItemCost>,
+        pub result: ItemStack,
+        pub uses: i32,
+        pub max_uses: i32,
+        pub reward_exp: bool,
+        pub special_price_diff: i32,
+        pub demand: i32,
+        pub price_multiplier: f32,
+        pub xp: i32,
+    }
+    /// `trade_with_villager` (API 310): só escuta; a troca já foi feita.
+    #[non_exhaustive]
+    pub struct TradeWithVillagerEvent<'a> {
+        pub merchant: u32,
+        pub kind: &'a str,
+        pub offer: &'a MerchantOffer,
+    }
     #[non_exhaustive]
     pub struct PlayerRespawnedEvent<'a> {
         pub player: u128,
@@ -722,6 +748,7 @@ pub mod mod_api {
         fn chunk_load(&self, host: &mut dyn Host, event: &mut ChunkLoadEvent<'_>) {}
         fn player_logged_in(&self, host: &mut dyn Host, event: &mut PlayerLoggedInEvent<'_>) {}
         fn player_respawned(&self, host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {}
+        fn trade_with_villager(&self, host: &mut dyn Host, event: &mut TradeWithVillagerEvent<'_>) {}
         fn register_goals(&self, event: &mut RegisterGoalsEvent<'_>) {}
         fn block_entity_render_bounding_box(
             &self,
@@ -933,4 +960,9 @@ pub mod mobs {
             }
         }
     }
+}
+
+/// `horizon_client::merchant` (Horizon 66f3981): o tipo do custo de uma oferta.
+pub mod merchant {
+    pub use crate::mod_api::{ItemCost, MerchantOffer};
 }

@@ -1470,3 +1470,125 @@ fn barracks_guard_heals_and_stays_on_duty_at_night() {
     assert!(village.animals.contains_key(&77031), "um golpe de guarda não mata");
     assert_eq!(barracks::after_blow(None, 77031, 5.0), 10.0, "o contador lembra os golpes");
 }
+
+// ---------- Sociedade ----------
+
+fn society_town(dimension: &'static str, seed: i32) -> (Village, ModBlockEntity, ModBlockEntity) {
+    const SHOP_POS: [i32; 3] = [20, 64, 0];
+    const HALL_POS: [i32; 3] = [60, 64, 0];
+    let mut village = Village::new(dimension);
+    village.day = 1000;
+    // Três moradores perto da casa (um deles vira o comerciante) e o prefeito longe dela.
+    village.villager(18001, [16.5, 64.0, 1.5], [180, seed, 0, 1]);
+    village.villager(18002, [17.5, 64.0, 0.5], [180, seed, 0, 2]);
+    village.villager(18003, [15.5, 64.0, -1.5], [180, seed, 0, 3]);
+    village.villager(18004, [60.5, 64.0, 1.5], [180, seed, 0, 4]);
+    let mut shop = block(SHOP);
+    assert!(hire_at(&mut village, &mut shop, SHOP_POS, 0));
+    let mut hall = block(TOWN_HALL);
+    assert!(hire_at(&mut village, &mut hall, HALL_POS, 0));
+    hall.items[1] = Some(ItemStack::new(WAGE, 2));
+    society::hall_cycle(&mut village, HALL_POS, &mut hall, 0);
+    shop.items[1] = Some(ItemStack::new("minecraft:bread", 10));
+    set_number(&mut shop, "Status", 1);
+    set_number(&mut shop, "Present", 1);
+    society::shop_cycle(&mut village, SHOP_POS, &mut shop, 0);
+    village.stations.insert(SHOP_POS, shop.clone());
+    (village, shop, hall)
+}
+
+#[test]
+fn a_family_earns_wages_buys_food_at_the_shop_and_the_till_fills() {
+    const HOUSE_POS: [i32; 3] = [16, 64, 0];
+    let (mut village, _, mut hall) = society_town("veio:test_society_family", 1);
+    assert_eq!(number(&hall, "Treasury"), 2 * society::COINS_PER_EMERALD, "duas esmeraldas no cofre");
+    let mut house = block(society::HOUSE);
+    set_number(&mut house, "Wallet", 100);
+    society::house_turn(&mut village, HOUSE_POS, &mut house, 1000);
+    assert_eq!(number(&house, "Rate"), 3, "três moradores");
+    assert_eq!(number(&house, "Status"), society::HOUSED);
+    let pantry: u32 = house.items.iter().flatten().filter(|stack| stack.item.as_ref() == "minecraft:bread").map(|stack| stack.count).sum();
+    assert_eq!(pantry, 10, "a família comprou todo o pão da loja");
+    // 100 + 2 de salário (o comerciante mora aqui) - 60 do pão.
+    assert_eq!(number(&house, "Wallet"), 42);
+    let shop = village.stations.get(&[20, 64, 0]).unwrap();
+    assert!(shop.items[1].is_none(), "o estoque saiu da loja");
+    assert_eq!(shop.items[7].as_ref().map(|stack| stack.count), Some(1), "60 moedas viram uma esmeralda no caixa");
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 10);
+    assert_eq!(number(&hall, "Treasury"), 118, "o cofre pagou o salário");
+    // Um morador sem emprego anda até a loja.
+    let walkers = [18001, 18003].iter().filter(|id| order_for(**id, 1).is_some()).count();
+    assert_eq!(walkers, 1, "um morador vai às compras");
+    assert!(number(&house, "Info") > 0, "a casa publica o IDH");
+    let (made, sold) = society::output(village.dimension, [60, 64, 0], society::HALL_RADIUS, 1000);
+    assert_eq!((made, sold), (0, 60), "o comércio entra no PIB");
+}
+
+#[test]
+fn the_merchant_offers_the_stock_and_a_player_trade_moves_it_to_the_till() {
+    let (mut village, shop, _) = society_town("veio:test_society_trade", 2);
+    let merchant = worker(&shop).and_then(cached_entity).unwrap();
+    let offers = village.villager_nbt.get(&merchant).and_then(|nbt| nbt.get(&"Offers".into()).cloned());
+    let Some(Tag::Compound(offers)) = offers else { panic!("o comerciante não recebeu ofertas") };
+    let Some(Tag::List(recipes)) = offers.get(&"Recipes".into()) else { panic!("sem receitas") };
+    assert_eq!(recipes.len(), 1, "uma oferta por item");
+    assert_eq!(society::bundle("minecraft:bread"), Some((10, 1)), "10 pães por esmeralda");
+    let offer = horizon_client::mod_api::MerchantOffer {
+        base_cost_a: horizon_client::merchant::ItemCost { stack: ItemStack::new(WAGE, 1) },
+        cost_b: None, result: ItemStack::new("minecraft:bread", 10), uses: 1, max_uses: 1, reward_exp: false,
+        special_price_diff: 0, demand: 0, price_multiplier: 0.0, xp: 0,
+    };
+    society::traded(&mut village, merchant, &offer);
+    let shop = village.stations.get(&[20, 64, 0]).unwrap();
+    assert!(shop.items[1].is_none(), "os pães saíram do estoque");
+    assert_eq!(shop.items[7].as_ref().map(|stack| stack.count), Some(1), "a esmeralda do jogador está no caixa");
+}
+
+#[test]
+fn indicators_measure_families_inequality_and_districts() {
+    let home = |x: i32, residents: i32, income: i32| society::Home {
+        dimension: "d".into(), pos: [x, 64, 0], built: 0, licensed: true, residents, adults: residents, kids: 0,
+        employed: residents / 2, income, hungry: false, sanitation: true, power: true, commerce: true, crowded: false,
+        smog: false, food: 100, housing: 100, services: 100, wealth: 100, seen: 0,
+    };
+    assert_eq!(home(0, 4, 0).idh(), 100);
+    let equal = [home(0, 4, 120), home(10, 4, 120)];
+    assert_eq!(society::measure(&equal, 0).gini, 0, "renda igual: Gini zero");
+    let unequal = [home(0, 4, 400), home(100, 4, 0)];
+    let numbers = society::measure(&unequal, 2);
+    assert!(numbers.gini > 40, "renda concentrada: Gini alto ({})", numbers.gini);
+    assert_eq!(numbers.districts, 2, "casas a 100 blocos: dois bairros");
+    assert_eq!(numbers.population, 10, "oito moradores e dois sem-teto");
+    assert!(numbers.idh < 100, "os sem-teto puxam o IDH para baixo");
+    assert_eq!(society::request(&numbers, false, 1), (3, 2), "o prefeito pede casa para os sem-teto");
+    assert_eq!(society::request(&numbers, true, 1).0, 1, "salário atrasado vem antes");
+    let town: Vec<society::Home> = (0..3).map(|index| home(index * 5, 4, 120)).collect();
+    let numbers = society::measure(&town, 0);
+    assert_eq!(society::next_phase(1, &numbers, 0), 2, "12 moradores, 3 famílias e IDH alto: vira vila");
+    assert_eq!(society::next_phase(2, &numbers, 0), 2, "cidade pede mais gente");
+}
+
+#[test]
+fn without_a_mayor_zones_stop_at_level_two_and_the_village_at_thirty() {
+    let dimension = "veio:test_society_gates";
+    assert_eq!(society::zone_cap(dimension, [0, 64, 0], 0), (2, false));
+    assert!(society::birth_allowed(dimension, [0, 64, 0], 29, 0));
+    assert!(!society::birth_allowed(dimension, [0, 64, 0], 30, 0), "o povoado para em 30");
+    assert_eq!(society::zone_limit(4), 4);
+    assert_eq!(society::population_limit(4), 150);
+}
+
+#[test]
+fn the_mayor_phase_sets_the_zone_limit_and_house_permits_need_a_well() {
+    let (mut village, _, mut hall) = society_town("veio:test_society_phase", 3);
+    let dimension = village.dimension;
+    assert_eq!(society::zone_cap(dimension, [30, 64, 0], 1), (2, false), "fase 1 com prefeito");
+    set_number(&mut hall, "Phase", 3);
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 0);
+    assert_eq!(society::zone_cap(dimension, [30, 64, 0], 1).0, 4, "a cidade libera o nível 4");
+    // Na fase 3, casa sem poço e sem poste não ganha alvará.
+    let mut house = block(society::HOUSE);
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    assert_eq!(number(&house, "Status"), society::NO_PERMIT);
+    assert_eq!(number(&house, "Rate"), 0, "sem alvará, ninguém se muda");
+}

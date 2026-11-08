@@ -78,6 +78,11 @@ BLOCKS = {
     "silo": ("machine", "iron", 18, [], 2.0),
     "control_center": ("machine", "steel", 4, [], 2.0),
     "barracks": ("machine", "iron", 2, [], 2.0),
+    # Sociedade (0.18): casas, lojas, prefeitura e saneamento.
+    "house": ("machine", "wood", 3, [], 1.5),
+    "shop": ("machine", "wood", 8, [7], 1.5),
+    "town_hall": ("machine", "steel", 2, [], 2.0),
+    "well": ("machine", "iron", 1, [0], 1.5),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
     # Água (0.18): bomba, cano, aspersor e turbina hidrelétrica.
@@ -119,7 +124,7 @@ TABS = {
     "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench"]),
     "world": ("veio:harvester", ["harvester", "planter", "sprinkler", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
-        "pantry", "flour", "biomass", "tesla", "barracks", "repair_kit", "minecraft:bone_meal"]),
+        "pantry", "flour", "biomass", "tesla", "barracks", "house", "shop", "town_hall", "well", "repair_kit", "minecraft:bone_meal"]),
 }
 
 FACES = ("down", "up", "north", "south", "west", "east")

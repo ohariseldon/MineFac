@@ -39,6 +39,7 @@ pub(super) mod storage;
 pub(super) mod spawn;
 pub(super) mod village;
 pub(super) mod zones;
+pub(super) mod society;
 
 pub(super) const FARM_POST: &str = "veio:farm_post";
 pub(super) const HAULER_POST: &str = "veio:hauler_post";
@@ -46,6 +47,8 @@ pub(super) const FOREMAN_DESK: &str = "veio:foreman_desk";
 pub(super) const SHEPHERD_POST: &str = "veio:shepherd_post";
 pub(super) const CONTROL_CENTER: &str = center::CONTROL_CENTER;
 pub(super) const BARRACKS: &str = barracks::BARRACKS;
+pub(super) const SHOP: &str = society::SHOP;
+pub(super) const TOWN_HALL: &str = society::TOWN_HALL;
 pub(super) use zones::{FIELD_MARKER, PEN_MARKER};
 pub(super) const VILLAGER: &str = "minecraft:villager";
 /// Contratar custa uma esmeralda, paga só quando a contratação dá certo.
@@ -110,12 +113,12 @@ pub(super) type Uuid = [i32; 4];
 
 /// Blocos com trabalhador contratado.
 pub(super) fn is_post(block: &str) -> bool {
-    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST | CONTROL_CENTER | BARRACKS)
+    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST | CONTROL_CENTER | BARRACKS | SHOP | TOWN_HALL)
 }
 
 /// Todos os blocos deste módulo: postos, marcos de zona e armazéns.
 pub(super) fn owns(block: &str) -> bool {
-    is_post(block) || zones::is_marker(block) || storage::is_store(block)
+    is_post(block) || zones::is_marker(block) || storage::is_store(block) || society::is_society_block(block)
 }
 
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
@@ -131,7 +134,7 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         // Comida do administrador; três metas (sem automação).
         CONTROL_CENTER => (4, vec![0], vec![]),
         BARRACKS => (2, vec![0, 1], vec![]),
-        _ => return zones::layout(block).or_else(|| storage::layout(block)),
+        _ => return zones::layout(block).or_else(|| storage::layout(block)).or_else(|| society::layout(block)),
     })
 }
 
@@ -178,6 +181,7 @@ pub(super) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (BARRACKS, 1) => stack.item.as_ref() == WAGE,
         _ if zones::is_marker(block) => zones::accepts(block, slot, stack),
         _ if storage::is_store(block) => storage::accepts(block, slot, stack),
+        _ if society::layout(block).is_some() => society::accepts(block, slot, stack),
         _ => false,
     }
 }
@@ -226,6 +230,13 @@ pub(super) fn release(uuid: Uuid, dimension: &str, post: [i32; 3]) {
     if let Ok(mut claims) = CLAIMS.lock() {
         claims.retain(|(id, claim)| !(*id == uuid && claim.dimension == dimension && claim.post == post));
     }
+}
+
+/// Ids de entidade dos trabalhadores contratados agora (para o emprego da sociedade).
+pub(super) fn employed_entities(now: u64) -> Vec<u32> {
+    CLAIMS.lock().map(|claims| claims.iter()
+        .filter(|(_, claim)| now.saturating_sub(claim.seen) <= CLAIM_STALE)
+        .filter_map(|(_, claim)| claim.entity).collect()).unwrap_or_default()
 }
 
 fn cached_entity(uuid: Uuid) -> Option<u32> {
@@ -780,6 +791,9 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
     if block == CONTROL_CENTER && held == "minecraft:book" {
         return center::report_to_chat(host, pos);
     }
+    if block == TOWN_HALL && held == "minecraft:book" {
+        return society::report_to_chat(host, pos);
+    }
     if block == BARRACKS && host.sneaking() && held == WAGE {
         return barracks::cycle(host, pos);
     }
@@ -909,6 +923,9 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     if storage::is_store(&entity.id) {
         return storage::tick(host, pos, entity, time);
     }
+    if society::is_society_block(&entity.id) {
+        return society::tick_block(host, pos, entity, time);
+    }
     let now = defense::clock();
     step(host, pos, entity, time, now);
     if entity.id == FOREMAN_DESK && number(entity, "PlanningPending") != 0
@@ -927,6 +944,11 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             set_number(entity, "Admin", 0);
         }
         center::report(host.dimension(), pos, entity, now);
+        match entity.id.as_str() {
+            SHOP => society::shop_cycle(host, pos, entity, time),
+            TOWN_HALL => society::hall_cycle(host, pos, entity, time),
+            _ => {}
+        }
     }
 }
 
@@ -981,7 +1003,13 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     if entity.id == FOREMAN_DESK {
         foreman::organize(host, pos, entity, now);
     }
+    let before = number(entity, "Total");
     let status = work(host, pos, entity, id, at, now);
+    // Cada tarefa concluída entra no PIB da vila.
+    let done = number(entity, "Total") - before;
+    if done > 0 {
+        society::record(dimension, pos, time, done * society::TASK_VALUE, false);
+    }
     show_load(host, entity, id, true);
     set_number(entity, "Status", status);
     publish_ration(entity);
@@ -1082,6 +1110,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         FOREMAN_DESK => foreman::plan(host, pos, entity, now),
         SHEPHERD_POST => shepherd::plan(host, pos, entity, now),
         CONTROL_CENTER => center::plan(host, pos, entity, now),
+        SHOP | TOWN_HALL => society::plan(pos),
         _ => Err(NO_TASK),
     };
     let plan = match plan {
@@ -1113,6 +1142,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 HAULER_POST => hauler::perform(host, spot, entity),
                 SHEPHERD_POST => shepherd::perform(host, spot, entity, now),
                 CONTROL_CENTER => center::perform(host, spot, entity, now),
+                SHOP | TOWN_HALL => society::perform(entity),
                 _ => None,
             };
             set_target(entity, None);
@@ -1302,6 +1332,9 @@ pub(super) fn eat(entity: &mut ModBlockEntity) -> bool {
 pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
     let read = |index: usize| data.get(index).copied().unwrap_or(0);
     let tr = |key: &str, args: &[&dyn std::fmt::Display]| Text::tr(key, args).plain();
+    if let Some(lines) = society::panel_lines(block, data) {
+        return Some(lines);
+    }
     let (first, hint) = match block {
         FARM_POST => (tr("veio.metric.tasks", &[&read(9)]), "veio.hint.farm_post"),
         HAULER_POST => (tr("veio.metric.trips", &[&read(9)]), "veio.hint.hauler_post"),
@@ -1324,7 +1357,7 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         CONTROL_CENTER => center::screen_slots(),
         BARRACKS => vec![Some([44.0, 45.0]), Some([134.0, 45.0])],
         FIELD_MARKER | PEN_MARKER => vec![Some([89.0, 45.0])],
-        _ => return storage::screen_slots(block),
+        _ => return storage::screen_slots(block).or_else(|| society::screen_slots(block)),
     })
 }
 
@@ -1339,7 +1372,7 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         FIELD_MARKER => &["seeds"],
         PEN_MARKER => &["feed"],
         _ if storage::is_store(block) => &[],
-        _ => return None,
+        _ => return society::roles(block),
     })
 }
 
