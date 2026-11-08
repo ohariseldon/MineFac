@@ -757,7 +757,24 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
         if !staffed {
             return None;
         }
-        host.change_mod_block_entity(pos, &mut |entity| { dismiss(dimension, pos, entity); });
+        // Esvazia a mão antes de soltar o aldeão.
+        let mut hand = None;
+        host.change_mod_block_entity(pos, &mut |entity| {
+            hand = worker(entity).and_then(cached_entity);
+        });
+        if let Some(id) = hand {
+            let mut post = None;
+            host.change_mod_block_entity(pos, &mut |entity| post = Some(entity.nbt.contains_key(&"Held".into())));
+            if post == Some(true)
+                && let Some(living) = host.entity(id).and_then(|handle| host.living(handle))
+            {
+                host.living_set_equipment(living, horizon_client::mod_api::EquipmentSlot::MainHand, None);
+            }
+        }
+        host.change_mod_block_entity(pos, &mut |entity| {
+            entity.nbt.remove(&"Held".into());
+            dismiss(dimension, pos, entity);
+        });
         notify(host, pos, "veio.worker.dismissed");
         host.play_sound("minecraft:entity.villager.no", center(pos), 4, 0.6, 1.0);
         return Some(Flow::Cancel);
@@ -901,6 +918,7 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     set_number(entity, "Absent", 0);
     if night(host) {
         // A carga e o alvo ficam guardados: o trabalho continua de manhã.
+        show_load(host, entity, id, false);
         cancel(id);
         unreserve(dimension, pos);
         set_number(entity, "Status", RESTING);
@@ -911,8 +929,38 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         foreman::organize(host, pos, entity, now);
     }
     let status = work(host, pos, entity, id, at, now);
+    show_load(host, entity, id, true);
     set_number(entity, "Status", status);
     publish_ration(entity);
+}
+
+/// O trabalhador segura na mão o primeiro item da carga (só visual: a carga fica no NBT do
+/// posto). Chama o jogo só quando o item muda; o último item mostrado fica em `Held`.
+fn show_load(host: &mut dyn Host, entity: &mut ModBlockEntity, id: u32, show: bool) {
+    use horizon_client::mod_api::EquipmentSlot;
+    let want = if show { carried(entity).into_iter().next().map(|(item, _)| item) } else { None }.unwrap_or_default();
+    // Sem `Held`, a mão é desconhecida (aldeão vindo de outro posto, save antigo): acerta uma vez.
+    let held = match entity.nbt.get(&"Held".into()) {
+        Some(Tag::String(item)) => Some(item.to_string_lossy()),
+        _ => None,
+    };
+    if held.as_deref() == Some(want.as_str()) {
+        return;
+    }
+    let Some(handle) = host.entity(id) else { return };
+    let Some(living) = host.living(handle) else { return };
+    let stack = (!want.is_empty()).then(|| ItemStack::new(&want, 1));
+    if !host.living_set_equipment(living, EquipmentSlot::MainHand, stack) {
+        return;
+    }
+    if held.as_deref().is_none_or(str::is_empty) && !want.is_empty() {
+        // O item da mão nunca cai na morte: a carga de verdade está no posto (sem duplicar).
+        host.entity_merge_nbt(handle, Compound::from([(
+            "HandDropChances".into(),
+            Tag::List(vec![Tag::Float(0f32.to_bits()), Tag::Float(0f32.to_bits())]),
+        )]));
+    }
+    entity.nbt.insert("Held".into(), Tag::String(want.as_str().into()));
 }
 
 /// Tarefa escolhida por um adaptador de setor.
