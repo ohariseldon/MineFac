@@ -22,6 +22,10 @@ simulação. Nenhuma mudança de arte, receita, custo de energia ou geração.
 - Descoberta de alvos dos trabalhadores: 512 células por tick no conjunto dos
   postos. `scan_named` reserva o tamanho da sua etapa; se adiada, devolve a última
   lista completa e mantém o cursor.
+- Busca dos carregadores por mesas/tarefas: 1.024 unidades por tick, em lotes
+  de até 32. Usa cadastro por região e cursores; detalhes em
+  [CARREGADORES-INCREMENTAIS.md](CARREGADORES-INCREMENTAIS.md). Renovar uma tarefa
+  já assumida usa uma consulta direta limitada e não disputa essa cota de descoberta.
 
 Cada categoria tem reserva própria. Um campo enorme não toma a cota dos fios ou
 dos trabalhadores. As cotas valem para todos os blocos e dimensões que usam a
