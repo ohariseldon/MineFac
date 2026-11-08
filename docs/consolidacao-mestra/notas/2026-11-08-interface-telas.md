@@ -1,7 +1,7 @@
 # 2026-11-08 · Interface · Telas no padrão vanilla
 
 **Frente:** interface (SIS-UI e telas dos blocos de todos os sistemas)
-**Branch:** `claude/project-thread-j8sy4o` (base `claude/project-thread-l94frq`)
+**Branch:** `claude/project-thread-j8sy4o` (base `claude/project-thread-l94frq`) · **PR:** #57
 **Pedido:** Luiz achou a UI feia e difícil de entender ("Entrada 1, Entrada 2, Saída", o porto com "0 itens, líquido, 0 moedas", o celeiro parecendo uma bancada). Referência dada por ele: a mesa de ferraria e a mesa de encantamento do Minecraft.
 
 ## O que mudou
