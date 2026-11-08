@@ -62,13 +62,13 @@ pub(crate) enum Blockage { None, Input, Output, Power, Fuel, Resource, Environme
 
 pub(crate) fn blockage(status: i32) -> Blockage {
     match status {
-        0 | 1 | 8 | 11 | 23 | 24 | 26 | 27 | 28 | 32 | 34 | 35 => Blockage::None,
+        0 | 1 | 8 | 11 | 23 | 24 | 26 | 27 | 28 | 33 | 35 | 36 => Blockage::None,
         2 | 16 | 21 | 25 => Blockage::Input,
         3 => Blockage::Output,
         4 | 12 => Blockage::Resource,
         5 => Blockage::Power,
         6 => Blockage::Fuel,
-        7 | 10 | 14 | 15 | 17 | 20 | 22 | 33 => Blockage::Environment,
+        7 | 10 | 14 | 15 | 17 | 20 | 22 | 34 => Blockage::Environment,
         18 | 19 => Blockage::Worker,
         9 => Blockage::Control,
         13 => Blockage::Damage,

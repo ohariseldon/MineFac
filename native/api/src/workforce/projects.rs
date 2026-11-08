@@ -65,9 +65,9 @@ pub(crate) const fn research_bit(tech: u32) -> u32 {
 }
 
 /// Slot de obra (materiais e entregas) no centro de controle.
-pub(crate) const SITE: usize = 5;
+pub(crate) const SITE: usize = 6;
 /// Slot do decreto.
-pub(crate) const DECREE: usize = 6;
+pub(crate) const DECREE: usize = 7;
 /// Uma entrada do registro vence nesse tempo sem o centro republicar (a cada 10 ticks).
 const STALE: u64 = 400;
 

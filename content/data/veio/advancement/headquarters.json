@@ -30,7 +30,8 @@
   ],
   "rewards": {
     "recipes": [
-      "veio:site"
+      "veio:site",
+      "veio:export_dock"
     ]
   }
 }

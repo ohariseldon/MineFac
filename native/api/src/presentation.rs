@@ -16,7 +16,7 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 36] = [
+pub(super) const STATUS_KEYS: [&str; 37] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
@@ -25,6 +25,8 @@ pub(super) const STATUS_KEYS: [&str; 36] = [
     "zone", "storing", "rest",
     // Casas (`workforce::society`).
     "housed", "no_permit", "empty_home",
+    // Porto de exportação sem conta da companhia.
+    "no_company",
     // Canteiro de obras (`workforce::site`).
     "site_plan", "site_blocked", "site_building", "site_done",
 ];

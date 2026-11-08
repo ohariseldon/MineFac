@@ -17,6 +17,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 pub(crate) mod ledger;
 pub(crate) mod market;
 pub(crate) mod mayor;
+pub(crate) mod export;
 
 pub(crate) use ledger::company_cycle;
 pub(crate) use market::{shop_cycle, traded};
@@ -39,8 +40,6 @@ pub(crate) const DAY: i64 = 24000;
 pub(crate) const COINS_PER_EMERALD: i32 = 60;
 /// Salário por turno de cada morador empregado.
 pub(crate) const WAGE_PER_TURN: i32 = 2;
-/// Valor de produção de cada tarefa concluída por um trabalhador (PIB).
-pub(crate) const TASK_VALUE: i32 = 2;
 /// Comida por morador por turno (20 pontos por dia: pouco mais de 3 pães).
 pub(crate) const FOOD_PER_TURN: i32 = 1;
 /// Conforto gasto por morador por turno; bens repõem.
@@ -62,8 +61,6 @@ pub(crate) const CROWD_RADIUS: i32 = 16;
 pub(crate) const CROWD_LIMIT: usize = 6;
 /// Casas a até `DISTRICT_RADIUS` blocos formam um bairro.
 pub(crate) const DISTRICT_RADIUS: i32 = 24;
-/// A companhia é uma só: paga de qualquer distância (o cofre mais próximo primeiro).
-const ANYWHERE: i32 = i32::MAX / 4;
 /// Um recado de compra mantém o morador indo à loja por este tempo (relógio do mod).
 const ERRAND: u64 = 400;
 pub(crate) const STALE: u64 = 3000;
@@ -77,7 +74,7 @@ pub(crate) const GOODS: [(&str, i32, i32); 12] = [
 ];
 
 pub(crate) fn is_society_block(block: &str) -> bool {
-    matches!(block, HOUSE | WELL)
+    matches!(block, HOUSE | WELL | export::DOCK)
 }
 
 pub(crate) fn goods(item: &str) -> Option<(i32, i32)> {
@@ -92,8 +89,10 @@ pub(crate) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
     Some(match block {
         HOUSE => (PANTRY_SLOTS, (0..PANTRY_SLOTS).collect(), vec![]),
         WELL => (1, vec![0], vec![0]),
-        SHOP => (8, (0..7).collect(), vec![market::TILL]),
+        // Comida do comerciante; estoque; antigo caixa (só retirar).
+        SHOP => (8, (0..7).collect(), vec![]),
         TOWN_HALL => (2, vec![0, 1], vec![]),
+        export::DOCK => (export::DOCK_SLOTS, (0..export::DOCK_SLOTS).collect(), vec![]),
         _ => return None,
     })
 }
@@ -106,6 +105,7 @@ pub(crate) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (SHOP, 1..7) => market::base_price(&stack.item).is_some(),
         (TOWN_HALL, 0) => is_food(&stack.item),
         (TOWN_HALL, 1) => stack.item.as_ref() == WAGE,
+        (export::DOCK, 0..export::DOCK_SLOTS) => export::exportable(&stack.item),
         _ => false,
     }
 }
@@ -129,6 +129,8 @@ pub(crate) struct Home {
     pub hungry: bool,
     /// A companhia está devendo salário a esta família.
     pub owed: bool,
+    /// Carteira da família, em moedas (para a identidade contábil).
+    pub wallet: i32,
     pub sanitation: bool,
     pub power: bool,
     pub commerce: bool,
@@ -159,6 +161,8 @@ pub(crate) struct Shop {
     pub open: bool,
     /// Índice de preços da comida, em %.
     pub prices: i32,
+    /// Caixa do comerciante, em moedas.
+    pub cash: i32,
     pub seen: u64,
 }
 
@@ -171,8 +175,6 @@ pub(crate) struct Hall {
     pub staffed: bool,
     /// O prefeito (funcionário público: salário da conta pública).
     pub mayor: Option<u32>,
-    /// A prefeitura pagou a manutenção dos poços neste turno.
-    pub maintained: bool,
     pub seen: u64,
 }
 
@@ -235,11 +237,6 @@ fn well_near(dimension: &str, at: [i32; 3], now: u64) -> bool {
         && now.saturating_sub(*seen) <= STALE && within(*pos, at, WELL_RADIUS)))
 }
 
-pub(crate) fn wells_near(dimension: &str, at: [i32; 3], radius: i32, now: u64) -> i32 {
-    WELLS.lock().map(|wells| wells.iter().filter(|(dim, pos, seen)| dim == dimension
-        && now.saturating_sub(*seen) <= STALE && within(*pos, at, radius)).count() as i32).unwrap_or(0)
-}
-
 /// A prefeitura que governa `at`: a mais próxima com prefeito, a até `HALL_RADIUS` blocos.
 pub(crate) fn governing(dimension: &str, at: [i32; 3], now: u64) -> Option<Hall> {
     if !ACTIVE.load(Ordering::Acquire) {
@@ -258,11 +255,6 @@ fn public_servants(dimension: &str, now: u64) -> Vec<u32> {
     HALLS.lock().map(|halls| halls.iter()
         .filter(|hall| hall.dimension == dimension && now.saturating_sub(hall.seen) <= STALE)
         .filter_map(|hall| hall.mayor).collect()).unwrap_or_default()
-}
-
-/// Produção ou vendas em `at` (PIB e base do imposto da prefeitura que governa o lugar).
-pub(crate) fn record(dimension: &str, at: [i32; 3], coins: i32, commerce: bool, now: u64) {
-    ledger::record(dimension, at, coins, commerce, now);
 }
 
 /// Reivindica o aldeão como morador desta casa. `false` se ele já mora em outra.
@@ -411,6 +403,7 @@ fn worst_need(home: &Home, governed: bool) -> i32 {
 pub(crate) fn tick_block(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let phase = (time + i64::from((pos[0] ^ pos[2]) & 63)).rem_euclid(TURN);
     match entity.id.as_str() {
+        export::DOCK => export::tick(host, pos, entity, time),
         WELL => {
             if phase % 20 == 0 {
                 let dimension = host.dimension().to_owned();
@@ -439,28 +432,52 @@ pub(crate) fn tick_block(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     }
 }
 
-/// Salários do turno. Prefeito: conta pública; os demais: conta da companhia. O que não for pago
-/// fica devendo (até um dia). Devolve (pago, a companhia deve).
+/// Salários do turno, cada um pago por quem emprega: o prefeito pela prefeitura, o comerciante
+/// pela própria loja e os demais pela companhia (custo lançado na empresa do posto). O que a
+/// companhia não pagar fica devendo (até um dia). Devolve (pago, a companhia deve).
 fn wages(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, residents: &[u32], hall: Option<&Hall>, now: u64) -> (i32, bool) {
-    let employed = employed_entities(now);
+    use ledger::Book;
+    let employers = employers(dimension, now);
     let servants = public_servants(dimension, now);
-    let (mut public_jobs, mut company_jobs) = (0, 0);
+    let merchants = merchants(dimension, now);
+    let mut paid = 0;
+    let mut public_jobs = 0;
+    let mut company: Vec<u8> = Vec::new();
+    let mut employed = 0;
     for id in residents {
         if servants.contains(id) {
             public_jobs += 1;
-        } else if employed.contains(id) {
-            company_jobs += 1;
+        } else if let Some((_, shop)) = merchants.iter().find(|(merchant, _)| merchant == id) {
+            employed += 1;
+            paid += ledger::take(Book::Shop, dimension, *shop, 0, WAGE_PER_TURN, ledger::WAGES, now);
+        } else if let Some((_, post)) = employers.iter().find(|(worker, _)| worker == id) {
+            company.push(super::super::holding::division_at(dimension, *post));
         }
     }
     let cap = WAGE_PER_TURN * TURNS_PER_DAY as i32;
-    let company_due = company_jobs * WAGE_PER_TURN + number(entity, "Owed");
-    let company_paid = ledger::pay(false, dimension, pos, ANYWHERE, company_due, ledger::WAGES, now);
-    set_number(entity, "Owed", (company_due - company_paid).min(company_jobs * cap));
+    let jobs = company.len() as i32;
+    let company_due = jobs * WAGE_PER_TURN + number(entity, "Owed");
+    let company_paid = ledger::take(Book::Company, dimension, pos, ledger::ANYWHERE, company_due, ledger::WAGES, now);
+    // O custo vai para a empresa de cada trabalhador; o atrasado, para a primeira.
+    let mut left = company_paid;
+    for (index, division) in company.iter().enumerate() {
+        let share = if index + 1 == company.len() { left } else { left.min(WAGE_PER_TURN) };
+        super::super::holding::book(dimension, *division, 0, share);
+        left -= share;
+    }
+    set_number(entity, "Owed", (company_due - company_paid).min(jobs * cap));
     let public_due = public_jobs * WAGE_PER_TURN + number(entity, "OwedPublic");
-    let public_paid = hall.map_or(0, |hall| ledger::pay(true, dimension, hall.pos, 0, public_due, ledger::WAGES, now));
+    let public_paid = hall.map_or(0, |hall| ledger::take(Book::Public, dimension, hall.pos, 0, public_due, ledger::WAGES, now));
     set_number(entity, "OwedPublic", (public_due - public_paid).min(public_jobs * cap));
-    set_number(entity, "Employed", public_jobs + company_jobs);
-    (company_paid + public_paid, company_due > company_paid)
+    set_number(entity, "Employed", employed + public_jobs + jobs);
+    (paid + company_paid + public_paid, company_due > company_paid)
+}
+
+/// Comerciantes e a loja de cada um.
+fn merchants(dimension: &str, now: u64) -> Vec<(u32, [i32; 3])> {
+    SHOPS.lock().map(|shops| shops.iter()
+        .filter(|shop| shop.dimension == dimension && now.saturating_sub(shop.seen) <= STALE)
+        .filter_map(|shop| shop.merchant.map(|id| (id, shop.pos))).collect()).unwrap_or_default()
 }
 
 /// Um turno da família.
@@ -471,8 +488,8 @@ pub(crate) fn house_turn(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     let at = center(pos);
     let hall = governing(&dimension, pos, now);
     let phase = hall.as_ref().map_or(1, |hall| hall.phase);
-    // Serviços em volta. Poço sem manutenção da prefeitura não conta.
-    let sanitation = well_near(&dimension, pos, now) && hall.as_ref().is_none_or(|hall| hall.maintained);
+    // Serviços em volta.
+    let sanitation = well_near(&dimension, pos, now);
     let power = power::pole_near(&dimension, pos, POWER_RADIUS);
     let shops = shops_near(&dimension, pos, SHOP_RADIUS, now);
     let commerce = !shops.is_empty();
@@ -514,9 +531,9 @@ pub(crate) fn house_turn(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     // Assistência pública às famílias pobres, se o cofre da prefeitura tiver folga.
     if let Some(hall) = &hall
         && people > 0 && number(entity, "Wealth") < 40
-        && ledger::balance(true, &dimension, hall.pos).is_some_and(|coins| coins > ASSIST_RESERVE)
+        && ledger::balance(ledger::Book::Public, &dimension, hall.pos).is_some_and(|coins| coins > ASSIST_RESERVE)
     {
-        wallet += ledger::pay(true, &dimension, hall.pos, 0, people, ledger::ASSIST, now);
+        wallet += ledger::take(ledger::Book::Public, &dimension, hall.pos, 0, people, ledger::ASSIST, now);
     }
     let income = ledger::daily(number(entity, "Income"), wallet - number(entity, "Wallet"));
     set_number(entity, "Income", income);
@@ -555,8 +572,8 @@ pub(crate) fn house_turn(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     set_number(entity, "Wallet", wallet.max(0));
     // Um morador sem emprego vai até a loja (só visual: a compra já foi feita).
     if let Some(shop) = errand {
-        let employed_now = employed_entities(now);
-        if let Some(id) = residents.iter().find(|id| !employed_now.contains(id) && order_for(**id, now).is_none()) {
+        let employed_now = employers(&dimension, now);
+        if let Some(id) = residents.iter().find(|id| !employed_now.iter().any(|(known, _)| known == *id) && order_for(**id, now).is_none()) {
             order(*id, post_center(shop), now + ERRAND);
         }
     }
@@ -575,7 +592,7 @@ pub(crate) fn house_turn(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     set_number(entity, "Wealth", wealth.clamp(0, 100));
     let home = Home {
         dimension: dimension.clone(), pos, built, licensed, residents: people, adults, kids, employed, income, hungry,
-        owed, sanitation, power, commerce, crowded, smog, food: food_index.clamp(0, 100), housing, services,
+        owed, wallet: wallet.max(0), sanitation, power, commerce, crowded, smog, food: food_index.clamp(0, 100), housing, services,
         wealth: wealth.clamp(0, 100), seen: now,
     };
     let need = worst_need(&home, hall.is_some());
@@ -623,9 +640,14 @@ pub(crate) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         SHOP => Some(vec![
             tr("veio.shop.sales", &[&read(9), &read(12)]),
             tr("veio.shop.stock", &[&read(6), &read(7)]),
-            tr("veio.hint.shop", &[]),
+            if read(2) > 1 { tr("veio.shop.owes", &[&read(2)]) } else { tr("veio.hint.shop", &[]) },
         ]),
         WELL => Some(vec![tr("veio.hint.well", &[])]),
+        export::DOCK => Some(vec![
+            tr("veio.dock.today", &[&read(6), &read(9)]),
+            tr("veio.dock.next", &[&read(12)]),
+            tr("veio.hint.export_dock", &[]),
+        ]),
         _ => None,
     }
 }
@@ -637,6 +659,7 @@ pub(crate) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         SHOP => vec![Some([17.0, 45.0]), Some([44.0, 45.0]), Some([62.0, 45.0]), Some([80.0, 45.0]),
             Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([160.0, 45.0])],
         TOWN_HALL => vec![Some([170.0, 104.0]), Some([170.0, 122.0])],
+        export::DOCK => (0..export::DOCK_SLOTS).map(|index| Some([17.0 + index as f32 * 18.0, 45.0])).collect(),
         _ => return None,
     })
 }
@@ -645,8 +668,9 @@ pub(crate) fn roles(block: &str) -> Option<&'static [&'static str]> {
     Some(match block {
         HOUSE => &["food", "", ""],
         WELL => &[""],
-        SHOP => &["food", "supply", "", "", "", "", "", "output"],
+        SHOP => &["food", "supply", "", "", "", "", "", ""],
         TOWN_HALL => &["food", "wage"],
+        export::DOCK => &["", "", "", "", "", "", "", "", ""],
         _ => return None,
     })
 }

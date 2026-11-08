@@ -8,13 +8,22 @@
 //! e não acharam (`Short`) empurram a comida para cima. Como a procura é a das casas em volta,
 //! cada vila tem os seus preços.
 //!
+//! **O comerciante é independente.** O que entra no estoque (à mão, funil, carregador) é a
+//! indústria vendendo no atacado: a loja deve `WHOLESALE`% do preço local à companhia (`Payable`,
+//! por divisão) e paga com o caixa, primeiro o mais antigo. Sem caixa, fica fiado. Cada venda
+//! (varejo e atacado) tem o imposto da fase retido na fonte para a prefeitura. O comerciante
+//! recebe o salário do caixa da própria loja.
+//!
 //! O jogador compra trocando com o comerciante: as ofertas saem do estoque com o preço local e
-//! são reescritas só quando o estoque ou os preços mudam.
+//! são reescritas só quando o estoque ou os preços mudam. As esmeraldas que ele paga entram na
+//! economia (borda) e vão para o caixa da loja.
 use super::*;
 use horizon_client::mod_api::MerchantOffer;
+use ledger::Book;
 
 pub(crate) const STOCK_SLOTS: std::ops::Range<usize> = 1..7;
-pub(crate) const TILL: usize = 7;
+/// Preço de atacado, em % do preço local.
+pub(crate) const WHOLESALE: i32 = 70;
 const FLOOR: i32 = 50;
 const CEILING: i32 = 200;
 const IDLE_FLOOR: i32 = 70;
@@ -133,18 +142,89 @@ pub(crate) fn stock(entity: &ModBlockEntity) -> Vec<(String, u32)> {
     items
 }
 
-/// Moedas no caixa; a cada `COINS_PER_EMERALD`, uma esmeralda no espaço do caixa.
-pub(crate) fn credit_till(entity: &mut ModBlockEntity, coins: i32) {
-    let mut till = number(entity, "Till").saturating_add(coins);
-    while till >= COINS_PER_EMERALD && can_add(&entity.items[TILL], WAGE, 1) {
-        add(&mut entity.items[TILL], WAGE, 1);
-        till -= COINS_PER_EMERALD;
+/// O que a loja deve à companhia, por divisão da holding.
+fn payable(entity: &ModBlockEntity) -> [i32; holding_tabs()] {
+    let mut out = [0; holding_tabs()];
+    if let Some(Tag::IntArray(values)) = entity.nbt.get(nbt_key("Payable")) {
+        for (slot, value) in out.iter_mut().zip(values) {
+            *slot = (*value).max(0);
+        }
     }
-    set_number(entity, "Till", till);
+    out
+}
+
+const fn holding_tabs() -> usize {
+    super::super::super::holding::TABS as usize
+}
+
+fn set_payable(entity: &mut ModBlockEntity, values: &[i32; holding_tabs()]) {
+    entity.nbt.insert("Payable".into(), Tag::IntArray(values.to_vec()));
+}
+
+/// Unidades que saíram do estoque por venda (não contam como entrega nova no próximo ciclo).
+fn forget_units(entity: &mut ModBlockEntity, item: &str, units: u32) {
+    let mut known = int_map(entity, "Known");
+    bump(&mut known, item, -(units as i32));
+    known.retain(|(_, count)| *count > 0);
+    set_int_map(entity, "Known", &known);
+}
+
+/// Entregas novas no estoque viram dívida de atacado com a companhia.
+fn receive_deliveries(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
+    let goods = stock(entity);
+    let known = int_map(entity, "Known");
+    let mut owed = payable(entity);
+    let mut delivered = 0;
+    for (item, count) in &goods {
+        let new = *count as i32 - read(&known, item).unwrap_or(0);
+        if new > 0 && let Some(price) = local_price(entity, item) {
+            let value = price * WHOLESALE / 100 * new;
+            let division = super::super::super::holding::item_division(item) as usize;
+            owed[division] = owed[division].saturating_add(value);
+            delivered += value;
+        }
+    }
+    set_int_map(entity, "Known", &goods.iter().map(|(item, count)| (item.clone(), *count as i32)).collect::<Vec<_>>());
+    set_payable(entity, &owed);
+    ledger::record(dimension, pos, delivered, ledger::MADE, now);
+}
+
+/// Paga o atacado com o caixa: imposto retido na fonte, o resto para a companhia. Sem conta da
+/// companhia, nada sai do caixa.
+fn settle(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
+    let mut owed = payable(entity);
+    for division in 0..owed.len() {
+        if owed[division] == 0 {
+            continue;
+        }
+        let cash = ledger::balance(Book::Shop, dimension, pos).unwrap_or(0);
+        let amount = owed[division].min(cash);
+        if amount <= 0 {
+            break;
+        }
+        // Sem conta da companhia, nada sai do caixa: dinheiro nunca some no caminho.
+        if !ledger::company_open(dimension, now) {
+            break;
+        }
+        let paid = ledger::take(Book::Shop, dimension, pos, 0, amount, ledger::WAGES, now);
+        let tax = ledger::withhold(dimension, pos, paid, now);
+        ledger::put(Book::Company, dimension, pos, ledger::ANYWHERE, paid - tax, ledger::RECEIVED, now);
+        super::super::super::holding::book(dimension, division as u8, paid, tax);
+        owed[division] -= paid;
+    }
+    set_payable(entity, &owed);
+}
+
+/// Recebe uma venda no varejo: imposto retido na fonte, o resto no caixa da loja.
+fn receive_sale(dimension: &str, pos: [i32; 3], amount: i32, now: u64) {
+    let tax = ledger::withhold(dimension, pos, amount, now);
+    ledger::put(Book::Shop, dimension, pos, 0, amount - tax, ledger::SOLD, now);
+    ledger::record(dimension, pos, amount, ledger::SOLD, now);
 }
 
 /// Uma família compra na loja em `shop`, a preço local, até `budget` moedas e `max_units` unidades.
-/// Devolve (item, unidades, custo). `wanted_units` a mais do que conseguiu vira falta na loja.
+/// Devolve (item, unidades, custo); a família tira o custo da carteira. `wanted_units` a mais do que
+/// conseguiu vira falta na loja.
 pub(crate) fn buy(host: &mut dyn Host, shop: [i32; 3], wanted: fn(&str) -> bool, budget: i32, max_units: u32,
     wanted_units: u32, now: u64) -> Vec<(String, u32, i32)>
 {
@@ -181,18 +261,20 @@ pub(crate) fn buy(host: &mut dyn Host, shop: [i32; 3], wanted: fn(&str) -> bool,
                 }
             }
         }
+        for (item, count, _) in &bought {
+            forget_units(entity, item, *count);
+        }
         set_int_map(entity, "Sold", &sold);
         if wanted_units > units {
             set_number(entity, "Short", number(entity, "Short").saturating_add((wanted_units - units) as i32));
         }
-        if spent > 0 {
-            credit_till(entity, spent);
-            set_number(entity, "SoldToday", number(entity, "SoldToday").saturating_add(spent));
-        }
+        set_number(entity, "SoldToday", number(entity, "SoldToday").saturating_add(spent));
     });
     let spent: i32 = bought.iter().map(|(_, _, cost)| cost).sum();
-    let dimension = host.dimension().to_owned();
-    ledger::record(&dimension, shop, spent, true, now);
+    if spent > 0 {
+        let dimension = host.dimension().to_owned();
+        receive_sale(&dimension, shop, spent, now);
+    }
     bought
 }
 
@@ -238,15 +320,19 @@ fn signature(entity: &ModBlockEntity, open: bool) -> i32 {
     (hash & 0x3fff_ffff) as i32
 }
 
-/// Ciclo da loja: preços (uma vez por turno), ofertas do comerciante, painel e registro.
+/// Ciclo da loja: caixa, entregas e atacado, preços (uma vez por turno), ofertas do comerciante,
+/// painel e registro.
 pub(crate) fn shop_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let now = defense::clock();
-    let dimension = host.dimension().to_owned();
+    let dimension: &'static str = host.dimension();
     let merchant = worker(entity).and_then(cached_entity);
     let open = merchant.is_some() && number(entity, "Status") == 1 && number(entity, "Present") == 1;
     if !matches!(number(entity, "Status"), 1 | WALKING) {
         set_number(entity, "Present", 0);
     }
+    ledger::open(Book::Shop, dimension, pos, number(entity, "Cash"), now, false);
+    receive_deliveries(dimension, pos, entity, now);
+    settle(dimension, pos, entity, now);
     if !entity.nbt.contains_key(nbt_key("Prices")) {
         set_int_map(entity, "Prices", &[]);
     } else if ledger::turn_edge(pos, time) {
@@ -262,24 +348,26 @@ pub(crate) fn shop_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     if let Some(id) = merchant
         && (sign != number(entity, "OfferSig") || number(entity, "OfferFor") as u32 != id)
         && let Some(handle) = host.entity(id)
+        && (host.entity_merge_nbt(handle, Compound::from([("Offers".into(), offers(entity, open))])) || !open)
     {
-        if host.entity_merge_nbt(handle, Compound::from([("Offers".into(), offers(entity, open))])) || !open {
-            set_number(entity, "OfferSig", sign);
-            set_number(entity, "OfferFor", id as i32);
-        }
+        set_number(entity, "OfferSig", sign);
+        set_number(entity, "OfferFor", id as i32);
     }
+    let cash = ledger::balance(Book::Shop, dimension, pos).unwrap_or(0);
+    set_number(entity, "Cash", cash);
     let goods = stock(entity);
     let index = food_index(entity);
     set_number(entity, "Rate", goods.iter().map(|(_, count)| *count as i32).sum());
     set_number(entity, "Utilization", index);
     set_number(entity, "Total", number(entity, "SoldToday"));
-    set_number(entity, "Info", number(entity, "Till"));
-    upsert(&SHOPS, Shop { dimension: dimension.clone(), pos, merchant, open, prices: index, seen: now },
+    set_number(entity, "Info", cash);
+    set_number(entity, "Duration", payable(entity).iter().sum());
+    upsert(&SHOPS, Shop { dimension: dimension.to_owned(), pos, merchant, open, prices: index, cash, seen: now },
         |known| known.dimension == dimension && known.pos == pos, |known| now.saturating_sub(known.seen) <= STALE);
 }
 
 /// O jogador trocou com um aldeão. Se for um comerciante do Veio, o item sai do estoque, a venda
-/// conta como procura e as esmeraldas entram no caixa.
+/// conta como procura, e as esmeraldas pagas entram na economia, no caixa da loja.
 pub(crate) fn traded(host: &mut dyn Host, merchant: u32, offer: &MerchantOffer) {
     let now = defense::clock();
     let dimension = host.dimension().to_owned();
@@ -305,16 +393,17 @@ pub(crate) fn traded(host: &mut dyn Host, merchant: u32, offer: &MerchantOffer) 
                 left -= taken;
             }
         }
+        forget_units(entity, &item, count - left);
         let mut sold = int_map(entity, "Sold");
         bump(&mut sold, &item, count as i32);
         set_int_map(entity, "Sold", &sold);
-        credit_till(entity, paid);
         set_number(entity, "SoldToday", number(entity, "SoldToday").saturating_add(paid));
         // Força a atualização das ofertas no próximo ciclo.
         set_number(entity, "OfferSig", -1);
         moved = true;
     });
     if moved {
-        ledger::record(&dimension, shop, paid, true, now);
+        ledger::border(&dimension, paid);
+        receive_sale(&dimension, shop, paid, now);
     }
 }

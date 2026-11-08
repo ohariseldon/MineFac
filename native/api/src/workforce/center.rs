@@ -45,6 +45,7 @@ pub(crate) fn accepts(slot: usize, stack: &ItemStack) -> bool {
         projects::SITE => projects::material(&stack.item) || requests::wanted(&stack.item),
         projects::DECREE => projects::decree_of(&stack.item).is_some(),
         society::ledger::COMPANY_VAULT => stack.item.as_ref() == WAGE,
+        society::ledger::COMPANY_CASHOUT => false,
         _ => GOAL_SLOTS.contains(&slot),
     }
 }
@@ -246,10 +247,11 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     }
     let (earned, finished) = requests::deliver(entity, perks);
     if finished > 0 {
-        add_coins(dimension, pos, entity, earned as i32 * society::COINS_PER_EMERALD);
+        // Recompensa paga pela prefeitura (economia fechada); sem caixa público, só o prestígio.
+        let paid = reward(dimension, pos, entity, earned as i32 * society::COINS_PER_EMERALD) / society::COINS_PER_EMERALD;
         set_number(entity, "ReqToday", number(entity, "ReqToday") + finished);
         let up = projects::gain(entity, requests::PRESTIGE * finished);
-        celebrate(host, pos, Text::tr("veio.request.done", &[&finished, &earned]), up, entity);
+        celebrate(host, pos, Text::tr("veio.request.done", &[&finished, &paid]), up, entity);
     }
     let mut built = projects::deliver(entity, day);
     if let Some(stack) = entity.items.get(projects::SITE).and_then(Option::as_ref).filter(|stack| plain(stack) && is_plain(stack, WAGE)) {
@@ -303,7 +305,7 @@ fn morning(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, day:
     let growth = villagers - number(entity, "PopAt");
     let served = number(entity, "ReqToday");
     let interest = projects::interest(perks, (coins(entity) / society::COINS_PER_EMERALD) as u32);
-    add_coins(dimension, pos, entity, interest as i32 * society::COINS_PER_EMERALD);
+    let interest = reward(dimension, pos, entity, interest as i32 * society::COINS_PER_EMERALD) / society::COINS_PER_EMERALD;
     let calm = issues(dimension, pos, now).is_empty();
     let mut up = false;
     if calm {
@@ -395,7 +397,7 @@ pub(crate) fn take_treasury(host: &mut dyn Host, pos: [i32; 3], count: u32) -> u
     let mut taken = 0;
     host.change_mod_block_entity(pos, &mut |entity| {
         if entity.id == CONTROL_CENTER {
-            let have = society::ledger::balance(false, dimension, pos).unwrap_or_else(|| coins(entity));
+            let have = society::ledger::balance(society::ledger::Book::Company, dimension, pos).unwrap_or_else(|| coins(entity));
             let emeralds = ((have / society::COINS_PER_EMERALD).max(0) as u32).min(count);
             add_coins(dimension, pos, entity, -(emeralds as i32) * society::COINS_PER_EMERALD);
             taken = emeralds;
@@ -474,8 +476,9 @@ pub(crate) fn refresh(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntit
     let overview = [
         pair(workers, working), pair(waiting, hungry),
         pair(zones.iter().filter(|zone| zone.kind == zones::Kind::Field).count(), zones.iter().filter(|zone| zone.kind == zones::Kind::Pen).count()),
-        ready as i32, if total == 0 { -1 } else { (used * 100 / total) as i32 },
-        posts.iter().map(|post| post.queued).sum(), pair(villagers, cap), (food / TASK_COST as u32).min(99_999) as i32,
+        ready as i32,
+        pair(posts.iter().map(|post| post.queued as usize).sum(), if total == 0 { 0 } else { (used * 100 / total) as usize + 1 }),
+        super::super::holding::exports_day(dimension), pair(villagers, cap), (food / TASK_COST as u32).min(99_999) as i32,
         progress[0], progress[1], progress[2],
     ];
     let mut attention = [0; 11];
@@ -570,7 +573,7 @@ pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
     if tab > 0 {
         let holding = super::super::holding::data(entity);
         return std::array::from_fn(|index| match index {
-            0 => status, 1..=9 => holding[index - 1], 12 => number(entity, "Company"), _ => 0,
+            0 => status, 1..=11 => holding[index - 1], 12 => number(entity, "Company"), _ => 0,
         });
     }
     std::array::from_fn(|index| match index {
@@ -583,13 +586,37 @@ pub(crate) fn coins(entity: &ModBlockEntity) -> i32 {
     number(entity, "Company")
 }
 
-/// Soma (ou tira) moedas do caixa da companhia, no NBT e na conta em memória da sociedade.
+/// Esmeraldas de verdade entram (`delta > 0`) ou saem (`delta < 0`) do caixa da companhia: é uma
+/// borda da economia fechada (`society::ledger::border`). Devolve quanto mudou.
 pub(crate) fn add_coins(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, delta: i32) -> i32 {
-    let before = society::ledger::balance(false, dimension, pos).unwrap_or_else(|| coins(entity));
-    let after = before.saturating_add(delta).max(0);
-    society::ledger::touch(false, dimension, pos, after, defense::clock(), false);
-    set_number(entity, "Company", after);
-    after - before
+    use society::ledger::{self, Book};
+    let now = defense::clock();
+    ledger::open(Book::Company, dimension, pos, coins(entity), now, false);
+    let changed = if delta >= 0 {
+        if ledger::put(Book::Company, dimension, pos, 0, delta, ledger::REDEEM, now) { delta } else { 0 }
+    } else {
+        -ledger::take(Book::Company, dimension, pos, 0, -delta, ledger::REDEEM, now)
+    };
+    ledger::border(dimension, changed);
+    set_number(entity, "Company", ledger::balance(Book::Company, dimension, pos).unwrap_or_else(|| coins(entity)));
+    changed
+}
+
+/// Recompensa da vila (pedidos, rendimento da Prefeitura): sai do caixa público da prefeitura que
+/// governa o centro e entra na companhia. Sem prefeitura ou sem saldo, paga o que houver (ou nada).
+/// Devolve as moedas pagas.
+pub(crate) fn reward(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, coins_wanted: i32) -> i32 {
+    use society::ledger::{self, Book};
+    let now = defense::clock();
+    let Some(hall) = society::governing(dimension, pos, now) else { return 0 };
+    ledger::open(Book::Company, dimension, pos, coins(entity), now, false);
+    let paid = ledger::take(Book::Public, dimension, hall.pos, 0, coins_wanted, ledger::ASSIST, now);
+    if paid > 0 && !ledger::put(Book::Company, dimension, pos, 0, paid, ledger::RECEIVED, now) {
+        ledger::put(Book::Public, dimension, hall.pos, 0, paid, ledger::RECEIVED, now);
+        return 0;
+    }
+    set_number(entity, "Company", ledger::balance(Book::Company, dimension, pos).unwrap_or_else(|| coins(entity)));
+    paid
 }
 
 const BAR: u32 = 0xff2b2b2b;
@@ -711,9 +738,10 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
     if tab > 0 {
         let stopped = read(5).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
         let lines = [
-            (tr("veio.holding.units", &[&read(1), &read(2)]), presentation::INK),
-            (tr("veio.holding.workers", &[&read(3), &(read(3) * society::WAGE_PER_TURN * society::TURNS_PER_DAY as i32)]), presentation::INK),
-            (tr(&format!("veio.holding.made{tab}"), &[&read(4)]), GOOD),
+            (tr("veio.holding.units", &[&read(1), &read(2), &read(3)]), presentation::INK),
+            (tr(&format!("veio.holding.made{tab}"), &[&read(4)]), presentation::INK),
+            (tr("veio.holding.profit", &[&read(10), &read(11), &(read(10) - read(11))]),
+                if read(10) >= read(11) { GOOD } else { 0xaa1f1f }),
             (if read(6) > 0 {
                 tr("veio.holding.stopped", &[&tr(&format!("veio.status.{}", presentation::STATUS_KEYS[stopped]), &[]), &read(6)])
             } else { tr("veio.holding.all_good", &[]) }, if read(6) > 0 { WARN } else { GOOD }),
@@ -731,12 +759,15 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
             let (waiting, _hungry) = split(read(2));
             let (fields, pens) = split(read(3));
             let (villagers, cap) = split(read(7));
-            lines.push((tr("veio.center.population", &[&villagers, &cap]), presentation::INK));
+            let (queued, filled) = split(read(5));
+            let storage = filled - 1;
+            lines.push((tr("veio.center.population", &[&villagers, &cap, &read(8)]), if read(8) < 16 { WARN } else { presentation::INK }));
             lines.push((tr("veio.center.crew", &[&workers, &working, &waiting]), if waiting > 0 { WARN } else { presentation::INK }));
-            lines.push((tr("veio.center.food_money", &[&read(8), &read(12)]), if read(8) < 16 { WARN } else { presentation::INK }));
+            // Linha da companhia: clicar saca uma esmeralda (`holding::click`).
+            lines.push((tr("veio.center.company", &[&read(12), &read(6)]), 0x1f4fa8));
             lines.push((tr("veio.center.zones_ready", &[&fields, &pens, &read(4)]), if read(4) > 0 { GOOD } else { presentation::INK }));
-            lines.push((if read(5) < 0 { tr("veio.center.no_storage", &[&read(6)]) } else { tr("veio.center.storage", &[&read(5), &read(6)]) },
-                if read(5) >= 90 { WARN } else { presentation::INK }));
+            lines.push((if storage < 0 { tr("veio.center.no_storage", &[&queued]) } else { tr("veio.center.storage", &[&storage, &queued]) },
+                if storage >= 90 { WARN } else { presentation::INK }));
         }
         1 => {
             let count = read(1);
@@ -822,7 +853,7 @@ pub(crate) fn tooltip(event: &mut horizon_client::mod_api::ScreenTooltipEvent<'_
     let mut lines: Vec<String> = Vec::new();
     match page {
         0 => {
-            let key = ["", "population", "workers", "food", "zones", "storage"].get(row).copied().unwrap_or("");
+            let key = ["", "population", "workers", "company", "zones", "storage"].get(row).copied().unwrap_or("");
             if key.is_empty() {
                 return false;
             }
@@ -899,7 +930,9 @@ pub(crate) fn tooltip(event: &mut horizon_client::mod_api::ScreenTooltipEvent<'_
 
 pub(crate) fn screen_slots() -> Vec<Option<[f32; 2]>> {
     vec![Some([170.0, SLOTS_Y]), Some([17.0, SLOTS_Y]), Some([17.0, SLOTS_Y + 18.0]), Some([17.0, SLOTS_Y + 36.0]),
-        Some([170.0, SLOTS_Y + 18.0]), Some([170.0, SLOTS_Y + 36.0]), Some([152.0, SLOTS_Y])]
+        // Cofre e saque lado a lado; obra embaixo; decreto ao lado da comida.
+        Some([170.0, SLOTS_Y + 18.0]), Some([152.0, SLOTS_Y + 18.0]),
+        Some([170.0, SLOTS_Y + 36.0]), Some([152.0, SLOTS_Y])]
 }
 
 /// Relatório no chat para o jogador mais próximo.
@@ -930,6 +963,22 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     }
     for line in super::super::holding::report_lines(dimension) {
         host.tell(player, line);
+    }
+    // Exportação: os itens guardados que hoje rendem mais no mercado externo (por unidade).
+    let day = host.level(dimension).and_then(|level| level.game_time(host)).unwrap_or(0).div_euclid(society::DAY);
+    let mut best: Vec<(i32, String)> = Vec::new();
+    for store in storage::stores_near(dimension, pos, RADIUS, now) {
+        for (item, _) in store.items {
+            if !best.iter().any(|(_, known)| *known == item)
+                && let Some(price) = society::export::quote(dimension, &item, day)
+            {
+                best.push((price, item));
+            }
+        }
+    }
+    best.sort_by(|a, b| b.0.cmp(&a.0));
+    for (price, item) in best.into_iter().take(3) {
+        host.tell(player, Text::tr("veio.export.best", &[&item, &price]));
     }
     for post in posts.iter().filter(|post| waiting(post.status)).take(REPORT_LINES) {
         let key = format!("veio.report.issue.{}", presentation::STATUS_KEYS.get(post.status as usize).copied().unwrap_or("idle"));

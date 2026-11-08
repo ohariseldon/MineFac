@@ -1,4 +1,4 @@
-# Sociedade da vila (0.18.0, contas e preços na 0.19.0)
+# Sociedade da vila (0.18.0; contas, preços, economia fechada e comércio exterior até a 0.22.0)
 
 A vila deixa de ser só mão de obra. Cada família mora numa **casa**, recebe **salário** dos postos onde
 seus adultos trabalham, compra **comida e bens** nas **lojas** e vive melhor ou pior conforme o que a
@@ -8,31 +8,73 @@ O objetivo é um planejador de automação com uma vila viva (Factorio/Satisfact
 Stardew Valley): o jogador continua livre para construir onde quiser, mas a geografia e o bem-estar
 viram restrições reais. Tudo é simulado por família e por bloco, nunca por aldeão a cada tick.
 
-## Duas contas que não se misturam (0.19)
+## A moeda e a economia fechada (0.21)
 
-O jogador é a **companhia**: um empresário que contrata e produz. A prefeitura é o **governo**.
+A **esmeralda é a moeda** (1 esmeralda = 60 moedas). Ela é rara no Minecraft (vem das trocas e,
+em breve, das missões dos aldeões e da praça do mercado), então a economia não fabrica dinheiro:
+ele **circula**.
 
-| | Companhia (sua) | Prefeitura (pública) |
+```
+          salários                compras (varejo)
+companhia ────────▶ famílias ────────────────▶ lojas (comerciantes independentes)
+    ▲                  ▲                          │
+    │                  │ prefeito, assistência    │ atacado (70% do preço local)
+    │                  │                          │
+    └── atacado ───────┼──────────────────────────┘
+                       │
+                  prefeitura ◀── imposto retido na fonte em cada venda (4%, 8%, 12%, 16%)
+```
+
+| Livro | Entra | Sai |
 |---|---|---|
-| Onde fica | cofre do centro de controle (sede) | cofre da prefeitura |
-| Entra | esmeraldas que você deposita; as lojas devolvem esmeraldas no caixa | impostos; verba inicial de 300 moedas; aportes voluntários |
-| Sai | salário de quem trabalha nos seus postos (lavrador, carregador, pastor, capataz, quartel, comerciante, administrador) e os impostos | salário do prefeito (funcionário público), manutenção dos poços e assistência às famílias pobres |
-| Sem dinheiro | salários atrasados (a família fica sem renda) | prefeito sem salário; poços sem manutenção deixam de contar como saneamento |
+| Companhia (cofre do centro de controle) | atacado pago pelas lojas (menos o imposto); depósitos de esmeralda | salário dos trabalhadores da companhia; saques em esmeralda |
+| Lojas (cada comerciante) | varejo das famílias e do jogador (menos o imposto) | atacado à companhia; salário do próprio comerciante |
+| Prefeitura | imposto na fonte; aportes em esmeralda | salário do prefeito; assistência às famílias pobres |
+| Famílias (carteira da casa) | salários; assistência | compras nas lojas |
 
-```
-companhia ──salários──▶ famílias ──compras──▶ lojas (caixa: esmeraldas para você)
-    │
-    └──impostos (fase: 0%, 8%, 12%, 16% da produção e das vendas)──▶ prefeitura
-                                     prefeito, poços, assistência ◀──┘
-```
+- **Identidade contábil:** todo pagamento tira de um livro e põe em outro. A soma de todos os saldos
+  só muda pelas bordas: esmeraldas que entram (depósito, aporte, compras do jogador) ou saem (saque).
+  O relatório da prefeitura mostra a moeda em circulação por livro e as bordas, e um teste confere que
+  nada aparece nem some.
+- **Imposto na fonte:** não há como deixar de pagar. Em cada venda, a parte da prefeitura sai na hora.
+- **Comerciantes independentes:** o que a indústria (você, à mão, funil ou carregador) põe no estoque
+  da loja é uma venda no atacado. A loja paga com o caixa, primeiro a empresa mais antiga; sem caixa, o
+  valor fica fiado e é pago com as vendas. O comerciante tira o salário do caixa da loja.
+- **Sem dinheiro do nada:** a verba inicial da prefeitura e a manutenção dos poços saíram (criavam ou
+  sumiam com moeda). A prefeitura começa vazia e vive do imposto.
+- **Lucro por empresa da holding:** a receita de cada empresa é o atacado dos itens que ela produz
+  (comida, lã e couro: agro; madeira: extrativismo; minério: mineração; o resto: manufatura); os gastos
+  são os salários dos trabalhadores dos postos dela e o imposto. O centro de controle mostra receita,
+  gastos e lucro do dia em cada aba.
+- **PIB:** consumo final (o varejo do dia). O atacado aparece como produção da indústria.
 
-- **Moeda:** 1 esmeralda = 60 moedas, nas duas contas.
-- **Imposto:** a cada turno, a prefeitura cobra a taxa da fase sobre a produção (tarefas x 2) e as
-  vendas da sua área, da conta da companhia. O que faltar vira **dívida**, cobrada primeiro no
-  turno seguinte. Dívida maior que um dia de imposto suspende as licenças (zonas e nascimentos).
-- **Assistência:** com mais de 200 moedas no cofre público, famílias com renda baixa recebem 1 moeda
-  por morador por turno: o imposto volta como bem-estar e reduz o Gini.
-- **Funcionário público:** o prefeito. Os demais trabalhadores são da companhia.
+## Comércio exterior (0.22)
+
+A moeda também entra **de fora**: a esmeralda é minerável (o jogador acha minério de esmeralda e
+deposita no cofre) e o **porto de exportação** vende ao mercado externo.
+
+- **Porto de exportação** (empresa de logística): 9 espaços; um navio por turno (1 min) leva tudo.
+  A venda entra na conta da companhia como moeda nova (borda de entrada, contada como exportação), com
+  o imposto da fase retido na fonte. A receita vai para a empresa da holding que faz o item.
+- **Preço mundial por complexidade:** valor base x camada: matéria-prima 1x, processado 1,5x,
+  componente 2x, avançado 3x, módulos 4x. Ex.: minério de ferro 2, chapa de ferro 6, engrenagem 14,
+  circuito 42, módulo de velocidade 160 moedas.
+- **Saturação diária:** cada item tem `ABSORB` (64; matéria-prima 32) unidades por dia a preço cheio;
+  depois o preço cai (`absorb / (absorb + vendidas hoje)`). Exportar variado e elaborado rende mais:
+  o jogo induz a subir na cadeia de valor.
+- **Indicadores:** PIB = consumo final + exportação. O relatório da prefeitura separa a entrada de
+  moeda vinda de exportações; a visão geral da holding mostra a exportação do dia; o relatório do
+  centro de controle sugere os 3 itens guardados que mais rendem lá fora hoje.
+- **Para as outras frentes:** `society::export::world_price`, `quote` e `sell` são a porta do mercado
+  externo para novos produtos (a tabela `table` recebe os itens novos com a sua camada) e para a
+  praça do mercado. Importação (comprar de fora, moeda saindo) pode usar o mesmo caminho ao contrário.
+
+### Para integrar depois
+
+- **Missões e praça do mercado (outra frente):** devem pagar em moedas pelas mesmas contas (a praça
+  comprando bens da companhia = atacado; missões pagando a companhia = entrada de esmeralda como borda).
+- **Balanceamento:** salário (2 moedas por turno), margem do atacado (70%), impostos e preços
+  ficam para uma rodada de balanceamento.
 
 ## Preços locais (oferta e procura)
 

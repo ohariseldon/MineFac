@@ -31,3 +31,13 @@ Branch `cloud/obras-planta` (base: `origin/main` 542b0a0). Testes: `python tools
    canteiros `Fixed` e em BUILDING/DONE; liberar blocos naturais (grama, terra, flores, folhas, areia,
    cascalho, neve). Publicar a área no registro `BUILDINGS` (campo novo) e só contar em `near()` os que valem.
 4. Docs (TRABALHADORES.md/README), checks (`check_project`, `check_performance`), zip consolidado.
+
+## Integração com a main 0.22.0 (feita)
+- Centro de controle com 8 espaços: 0 comida, 1-3 metas, 4 cofre, 5 saque (da 0.21), **6 obra**, **7 decreto**
+  (`projects::SITE`/`DECREE` mudaram de 5/6 para 6/7).
+- Estados do canteiro mudaram para 33-36 (`site::SITE_*`); o 32 é `no_company` do porto de exportação.
+- Resumo do centro: linha 4 é a da companhia (caixa e exportação do dia, clique saca 1 esmeralda);
+  a comida foi para a linha de aldeões. `DA5` traz (fila, ocupação+1) e `DA6` a exportação do dia (`center::refresh`).
+- Economia fechada: `center::add_coins` é borda (esmeraldas de verdade); recompensas de pedidos e o
+  rendimento da Prefeitura saem do caixa público (`center::reward`). Sem prefeitura ou sem saldo, só prestígio.
+- Ainda pendente: menu do canteiro com 3 espaços em `tools/build_content.py` (o layout já tem 3).
