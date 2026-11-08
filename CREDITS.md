@@ -21,3 +21,10 @@ Selected originals, unmodified license texts and SHA-256 provenance are in
 are trimmed, converted to mono, filtered, pitched, faded and sometimes arranged
 as repeated mechanical impacts by `tools/build_machine_audio.py`. They retain
 CC0 permissions. No Minecraft sound recordings are redistributed.
+
+## Texturas realistas (Realismo)
+
+`visuals/texturas/Veio-Texturas-JG-128x.zip` é uma adaptação de **PBR JG** 1.1.0, de Jason J. Gardner
+([Modrinth](https://modrinth.com/resourcepack/pbr-jg), [GitHub](https://github.com/jasonjgardner/jg-rtx)),
+sob [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). O Veio reduz as texturas de
+256x para 128x e tira as da água (`tools/build_realistic_textures.py`); a adaptação segue a mesma licença, para uso não comercial.

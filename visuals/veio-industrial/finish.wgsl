@@ -5,15 +5,49 @@ override sharpen: f32 = 0.35;
 // Ambient occlusion from the half-size pass, upscaled along the depth: of four nearby texels,
 // those at this pixel's distance count, so no dark halo leaks around the edges of things.
 fn veio_occlusion(uv: vec2<f32>, distance: f32) -> f32 {
-    let texel = 1.0 / vec2<f32>(textureDimensions(ao));
+    let texel = 1.0 / vec2<f32>(textureDimensions(light));
     var sum = 0.0;
     var weights = 0.0;
     for (var i = 0; i < 4; i++) {
         let offset = vec2<f32>(f32(i & 1) - 0.5, f32(i >> 1u) - 0.5) * texel * 1.5;
-        let tap = textureSampleLevel(ao, linear_sampler, uv + offset, 0.0);
+        let tap = textureSampleLevel(light, linear_sampler, uv + offset, 0.0);
         let w = 1.0 / (0.05 + abs(tap.g - distance) / max(distance * 0.04, 0.05));
         sum += tap.r * w;
         weights += w;
+    }
+    return sum / max(weights, 0.0001);
+}
+
+// The colour of the light shafts the light pass measured (its b channel).
+fn veio_rays_colour() -> vec3<f32> {
+    if !shadows || frame.has_shadow == 0u {
+        return mix(vec3<f32>(1.0, 0.94, 0.82), vec3<f32>(1.0, 0.62, 0.32), veio_low_sun());
+    }
+    return veio_key_color() * 0.8;
+}
+
+// The half-size sky and mirror target, upscaled by hand: of its four nearest texels only those
+// of the wanted kind count (clouds have alpha >= 0, reflections <= 0), so no cloud bleeds onto a
+// roof's edge and no reflection onto the sky. Returns the alpha as a positive amount.
+fn veio_sky_mirror(uv: vec2<f32>, want_reflection: bool) -> vec4<f32> {
+    let size = vec2<f32>(textureDimensions(sky_mirror));
+    let at = uv * size - 0.5;
+    let base = floor(at);
+    let f = at - base;
+    var sum = vec4<f32>(0.0);
+    var weights = 0.0;
+    // A 3 by 3 tent (bilinear widened by one texel) smooths the half-size edges of the clouds.
+    for (var i = 0; i < 16; i++) {
+        let corner = vec2<f32>(f32(i & 3), f32(i >> 2u)) - 1.0;
+        let texel = vec2<i32>(clamp(base + corner, vec2<f32>(0.0), size - 1.0));
+        let tap = textureLoad(sky_mirror, texel, 0);
+        let d = abs(corner - f);
+        let w = max(1.5 - d.x, 0.0) * max(1.5 - d.y, 0.0);
+        let kind = select(tap.a >= 0.0, tap.a <= 0.0, want_reflection);
+        if kind {
+            sum += vec4<f32>(tap.rgb, abs(tap.a)) * w;
+            weights += w;
+        }
     }
     return sum / max(weights, 0.0001);
 }
@@ -55,7 +89,7 @@ fn post(input: PostInput) -> vec4<f32> {
             color *= mix(1.0, open, ambient_occlusion);
         }
         if screen_reflections {
-            let mirrored = textureSampleLevel(ssr, linear_sampler, input.uv, 0.0);
+            let mirrored = veio_sky_mirror(input.uv, true);
             color = mix(color, mirrored.rgb, mirrored.a * 0.75);
         }
     }
@@ -87,20 +121,31 @@ fn post(input: PostInput) -> vec4<f32> {
     }
     if quality >= 1u && clouds && volumetric_clouds && frame.dimension == 0 && input.depth <= 0.000001 {
         // The cumulus pass over the sky: the light the clouds send, and the sky they hide.
-        let sky_clouds = textureSampleLevel(clouds_target, linear_sampler, input.uv, 0.0);
+        let sky_clouds = veio_sky_mirror(input.uv, false);
         color = color * (1.0 - sky_clouds.a) + sky_clouds.rgb;
     }
     if quality >= 1u {
         if overworld {
-            color += textureSampleLevel(rays, linear_sampler, input.uv, 0.0).rgb;
+            color += veio_rays_colour() * textureSampleLevel(light, linear_sampler, input.uv, 0.0).b;
         }
         let halo = textureSampleLevel(glow, linear_sampler, input.uv, 0.0).rgb;
-        color += halo * bloom * 0.55;
+        color += halo * bloom * 0.45;
     }
-    // Eye adaptation: dark interiors open up a little, bright outdoors stays as it is.
-    let indoor = 1.0 - frame.eye_light_smooth.y;
-    let lit = max(frame.eye_light_smooth.x, frame.eye_light_smooth.y * veio_daylight());
-    color *= 1.0 + 0.12 * indoor * (1.0 - lit);
+    // Eye adaptation from the light around the eye, eased over about 2 seconds by the game
+    // (eye_light_smooth), as BSL and Complementary do with eyeBrightnessSmooth: in a cave, a
+    // dark room or outdoors at night the eye opens up to about twice the light; in daylight it
+    // stays at 1. Leaving a cave into the sun the picture starts bright and settles.
+    let sky_here = frame.eye_light_smooth.y * frame.eye_light_smooth.y * mix(0.10, 1.0, veio_daylight());
+    let lamps_here = frame.eye_light_smooth.x * frame.eye_light_smooth.x * 0.55;
+    let surround = max(sky_here, lamps_here);
+    let opened = select(1.0 + 1.0 * (1.0 - smoothstep(0.02, 0.75, surround)), 1.0, frame.dimension != 0);
+    let night_out = (1.0 - veio_daylight()) * frame.eye_light_smooth.y * (1.0 - frame.eye_light_smooth.x);
+    // Exposure works on light, not on the encoded picture.
+    color = pow(max(color, vec3<f32>(0.0)), vec3<f32>(2.2)) * opened;
+    color = pow(color, vec3<f32>(1.0 / 2.2));
+    // Night vision of the eye (Purkinje): colours fade at night outdoors.
+    let grey = veio_luma(color);
+    color = mix(color, vec3<f32>(grey) * vec3<f32>(0.96, 0.99, 1.06), 0.30 * night_out);
     // Film shoulder: values above 0.8 roll off instead of clipping (the bloom adds light).
     let over = max(color - vec3<f32>(0.8), vec3<f32>(0.0));
     color = min(color, vec3<f32>(0.8)) + 0.2 * (vec3<f32>(1.0) - exp(-over / 0.2));
@@ -109,32 +154,27 @@ fn post(input: PostInput) -> vec4<f32> {
     let bounded = clamp(color, vec3<f32>(0.0), vec3<f32>(1.0));
     let luma = veio_luma(bounded);
     let curve = luma * luma * (3.0 - 2.0 * luma);
-    let target_luma = mix(luma, curve, select(0.12, 0.26, quality >= 1u) * color_strength);
+    let target_luma = mix(luma, curve, 0.10 * color_strength);
     var graded = bounded * select(1.0, target_luma / max(luma, 0.00001), luma > 0.00001);
     // Time of day: warm golden hours, cool blue nights; the seasons tint the light a little.
     if frame.dimension == 0 {
         let golden = veio_low_sun() * veio_daylight();
         let night = 1.0 - veio_daylight();
         let w = veio_season_weights();
-        let warmth = select(1.0, 2.1, quality >= 1u);
-        var tint = vec3<f32>(1.0) + vec3<f32>(0.045, 0.012, -0.040) * golden * warmth + vec3<f32>(-0.030, -0.008, 0.040) * night * warmth;
-        tint += vec3<f32>(0.010, 0.006, -0.012) * w.y + vec3<f32>(0.018, 0.004, -0.018) * w.z + vec3<f32>(-0.016, -0.004, 0.020) * w.w;
+        let warmth = 1.0;
+        var tint = vec3<f32>(1.0) + vec3<f32>(0.045, 0.012, -0.040) * golden * warmth + vec3<f32>(-0.010, -0.002, 0.012) * night * warmth;
+        tint += vec3<f32>(0.010, 0.006, -0.012) * w.y + vec3<f32>(0.018, 0.004, -0.018) * w.z + vec3<f32>(-0.006, -0.001, 0.008) * w.w;
         graded *= mix(vec3<f32>(1.0), tint, color_strength);
     }
-    graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + select(0.06, 0.16, quality >= 1u) * color_strength);
-    if quality >= 1u {
-        // Split toning, as film: shadows lean cool teal, highlights warm. Kept small so
-        // Minecraft's own colours still read.
-        let l = veio_luma(graded);
-        let shade = 1.0 - smoothstep(0.05, 0.45, l);
-        let high = smoothstep(0.55, 0.95, l);
-        graded *= mix(vec3<f32>(1.0), vec3<f32>(0.955, 1.0, 1.05), shade * 0.6 * color_strength);
-        graded *= mix(vec3<f32>(1.0), vec3<f32>(1.04, 1.0, 0.94), high * 0.6 * color_strength);
-    }
+    graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + 0.10 * color_strength);
     if vignette > 0.0 {
         let centred = input.uv - 0.5;
         let fall = dot(centred, centred) * 1.6;
         graded *= 1.0 - vignette * 0.35 * fall * fall;
     }
+    // Dither of one step of 8 bits (triangular noise): dark gradients of the night sky no longer
+    // break into visible bands.
+    let n = veio_hash2(input.pixel) + veio_hash2(input.pixel + vec2<f32>(17.0, 59.0)) - 1.0;
+    graded += vec3<f32>(n / 255.0);
     return vec4<f32>(clamp(graded, vec3<f32>(0.0), vec3<f32>(1.0)), input.color.a);
 }

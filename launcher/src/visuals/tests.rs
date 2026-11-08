@@ -31,7 +31,12 @@ fn realism_is_installed_before_launch_and_preserves_personal_options_and_origina
     let graphics = "graphicsApi:dx12\nunknownFutureOption:42\npickedShaderPack:Other.zip\n";
     fs::write(dir.join("options.txt"), original).unwrap();
     fs::write(dir.join("horizon-graphics.txt"), graphics).unwrap();
+    fs::create_dir_all(dir.join("shaderpacks/veio-industrial")).unwrap();
+    fs::write(dir.join("shaderpacks/veio-industrial/ao.wgsl"), "old").unwrap();
+    fs::write(dir.join("shaderpacks/veio-industrial/notes.txt"), "mine").unwrap();
     install(&fixture.0, &dir, selection(Profile::Realism)).unwrap();
+    assert!(!dir.join("shaderpacks/veio-industrial/ao.wgsl").exists());
+    assert!(dir.join("shaderpacks/veio-industrial/notes.txt").exists());
     let game = fs::read_to_string(dir.join("options.txt")).unwrap();
     assert!(game.contains("lang:pt_br\nkey_key.jump:key.keyboard.j\n"));
     assert!(game.contains("resourcePacks:[\"vanilla\",\"file/minha.zip\"]\n"));
@@ -39,7 +44,7 @@ fn realism_is_installed_before_launch_and_preserves_personal_options_and_origina
     assert!(game.contains("renderDistance:8\nsimulationDistance:5\n"));
     let extra = fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap();
     assert!(extra.contains("graphicsApi:dx12\nunknownFutureOption:42\n"));
-    assert!(extra.contains("pickedShaderPack:horizon:veio_industrial\n"));
+    assert!(extra.contains("pickedShaderPack:veio-industrial\n"));
     assert_eq!(fs::read_to_string(dir.join("shaderpacks/veio-industrial/material.wgsl")).unwrap(), "test-pack");
     assert_eq!(fs::read_to_string(dir.join("options.txt.antes-do-veio")).unwrap(), original);
     assert_eq!(fs::read_to_string(dir.join("horizon-graphics.txt.antes-do-veio")).unwrap(), graphics);
@@ -80,7 +85,7 @@ fn switching_both_directions_replaces_the_shader_selection_and_keeps_saves() {
     install(&fixture.0, &dir, selection(Profile::Light)).unwrap();
     assert!(fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap().contains("pickedShaderPack:\n"));
     install(&fixture.0, &dir, selection(Profile::Realism)).unwrap();
-    assert!(fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap().contains("pickedShaderPack:horizon:veio_industrial\n"));
+    assert!(fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap().contains("pickedShaderPack:veio-industrial\n"));
     assert_eq!(fs::read_to_string(dir.join("saves/MyWorld/level.dat")).unwrap(), "player-data");
 }
 
@@ -97,4 +102,30 @@ fn explicit_launch_choice_wins_over_saved_choice_and_invalid_choice_fails_early(
     assert_eq!(config, saved);
     assert!(choose(&["--visual".into()], &mut config).is_err());
     assert_eq!(choose(&[], &mut config).unwrap().profile, Profile::Light);
+}
+
+#[test]
+fn realism_installs_and_enables_the_texture_pack_and_light_removes_it() {
+    let fixture = Fixture::new();
+    let dir = fixture.instance();
+    let textures = fixture.0.join("visuals").join(TEXTURES_FOLDER);
+    fs::create_dir_all(&textures).unwrap();
+    fs::write(textures.join("Veio-Texturas-JG-128x.zip"), "zip").unwrap();
+    fs::create_dir_all(dir.join("resourcepacks")).unwrap();
+    fs::write(dir.join("resourcepacks/Veio-Texturas-JG-256x.zip"), "old").unwrap();
+    fs::write(dir.join("resourcepacks/minha.zip"), "mine").unwrap();
+    fs::write(dir.join("options.txt"), "resourcePacks:[\"vanilla\",\"file/minha.zip\",\"file/Veio-Texturas-JG-256x.zip\"]\n").unwrap();
+    install(&fixture.0, &dir, selection(Profile::Realism)).unwrap();
+    let game = fs::read_to_string(dir.join("options.txt")).unwrap();
+    assert!(game.contains("resourcePacks:[\"vanilla\",\"file/minha.zip\",\"file/Veio-Texturas-JG-128x.zip\"]\n"), "{game}");
+    assert!(game.contains("incompatibleResourcePacks:[\"file/Veio-Texturas-JG-128x.zip\"]\n"), "{game}");
+    assert!(dir.join("resourcepacks/Veio-Texturas-JG-128x.zip").is_file());
+    assert!(!dir.join("resourcepacks/Veio-Texturas-JG-256x.zip").exists());
+    assert!(dir.join("resourcepacks/minha.zip").is_file());
+    assert!(fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap().contains("textureBudgetMiB:1024\n"));
+    install(&fixture.0, &dir, Selection { profile: Profile::Light, reset: true }).unwrap();
+    let game = fs::read_to_string(dir.join("options.txt")).unwrap();
+    assert!(game.contains("resourcePacks:[\"vanilla\",\"file/minha.zip\"]\n"), "{game}");
+    assert!(game.contains("incompatibleResourcePacks:[]\n"), "{game}");
+    assert!(!dir.join("resourcepacks/Veio-Texturas-JG-128x.zip").exists());
 }

@@ -80,7 +80,12 @@ class Game:
         (directory / "horizon-mods.txt").write_text("mod.veio:true\n", encoding="utf-8")
         pack = args.source / "visuals/veio-industrial"
         if shader:
-            shutil.copytree(pack, directory / "shaderpacks/veio-industrial", dirs_exist_ok=True)
+            installed = directory / "shaderpacks/veio-industrial"
+            # O Horizon recusa o pacote se sobrar um .wgsl de versão anterior.
+            for stale in installed.glob("*.wgsl") if installed.is_dir() else ():
+                if not (pack / stale.name).is_file():
+                    stale.unlink()
+            shutil.copytree(pack, installed, dirs_exist_ok=True)
         (directory / "options.txt").write_text(
             f"renderDistance:8\nsimulationDistance:5\nmaxFps:{args.fps_cap}\nenableVsync:false\n"
             'graphicsPreset:fast\nrenderClouds:"fast"\ncloudRange:8\nparticles:1\nao:true\n'
@@ -89,9 +94,9 @@ class Game:
             "preset:custom\nlodDistance:0\ntextureBudgetMiB:256\nworkers:2\nhdr:false\n"
             f"resolutionScale:{scale}\ntaa:false\nfxaa:false\nupscaling:native\nframeGeneration:off\n"
             "caveCulling:true\nframePacing:efficient\npickedShaderPack:"
-            + ("horizon:veio_industrial" if shader else "") + "\n", encoding="utf-8")
+            + ("veio-industrial" if shader else "") + "\n", encoding="utf-8")
         if shadow_resolution or shadow_distance:
-            options = directory / "shaderpacks/.horizon-options/veio_industrial.txt"
+            options = directory / "shaderpacks/veio-industrial.txt"
             options.parent.mkdir(parents=True, exist_ok=True)
             options.write_text((f"shadow_resolution={shadow_resolution}\n" if shadow_resolution else "")
                                + (f"shadow_distance={shadow_distance}\n" if shadow_distance else ""), encoding="utf-8")

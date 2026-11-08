@@ -379,7 +379,8 @@ impl Goal for Work {
     fn tick(&mut self, m: &mut Mob, cx: &mut Cx) {
         let Some(goal) = self.target else { return };
         // Na escada de mão, a subida é física: o cérebro não planeja degraus.
-        if ladders::climb(m, goal) { return; }
+        let on_ladder = m.on_climbable(cx.w);
+        if ladders::climb(m, goal, on_ladder) { return; }
         match steer(m, goal, self.duty) {
             // O cérebro anda até o alvo: nada a fazer aqui.
             Steer::Brain => {}

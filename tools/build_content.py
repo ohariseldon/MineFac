@@ -368,7 +368,7 @@ def model(kind, name, tier):
         ]
     if kind == "pipe":
         # Cano de cobre com uma janela de vidro no meio: liga nas seis faces.
-        textures = {"pipe": "minecraft:block/cut_copper", "joint": "minecraft:block/waxed_copper_block",
+        textures = {"pipe": "minecraft:block/cut_copper", "joint": "minecraft:block/copper_block",
                     "glass": "minecraft:block/light_blue_stained_glass", "particle": "minecraft:block/cut_copper"}
         return textures, [
             box([6, 6, 0], [10, 10, 16], "#pipe"),
