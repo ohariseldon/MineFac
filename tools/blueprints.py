@@ -1263,8 +1263,8 @@ BLUEPRINTS['hall'] = {
 # ---------------------------------------------------------------- Centro de pesquisa
 BLUEPRINTS['lab'] = {
     "name": ('Centro de pesquisa', 'Research center'),
-    "about": ('Laboratório branco com acabamento de cobre: bancadas com alambiques e caldeirão, mesa de encantamento cercada de estantes, mapas, púlpito, lâmpadas e uma cúpula de vidro com para-raios.',
-              'White laboratory with copper trim: benches with brewing stands and a cauldron, an enchanting table ringed by bookshelves, maps, a lectern, lamps and a glass dome with a lightning rod.'),
+    "about": ('Laboratório branco com cobre: bancadas com alambiques, mesa de encantamento entre estantes, mapas, púlpito e cúpula de vidro com para-raios.',
+              'White lab with copper trim: benches with brewing stands, an enchanting table among bookshelves, maps, a lectern and a glass dome with a lightning rod.'),
     "staff": {"role": "scientist", "work": "BEuLM"},
     "legend": {
         'B': 'minecraft:brewing_stand',

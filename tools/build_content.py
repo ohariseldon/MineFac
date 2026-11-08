@@ -82,7 +82,7 @@ BLOCKS = {
     "field_marker": ("marker", None, 1, [], 1.0),
     "pen_marker": ("marker", None, 1, [], 1.0),
     # Canteiro de obras: estaca com a planta azul; o prédio cresce em volta.
-    "site": ("marker", None, 1, [], 1.0),
+    "site": ("marker", None, 3, [2], 1.0),
     "barn": ("machine", "wood", 27, [], 2.0),
     "silo": ("machine", "iron", 18, [], 2.0),
     "control_center": ("machine", "steel", 8, [5], 2.0),

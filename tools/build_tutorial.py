@@ -910,7 +910,7 @@ slothelp={
  "export_dock":["Carga do navio: produtos para exportar."]*9,
  "freight_station":["Carga do trem: produtos para exportar."]*9,
  "control_center":["Comida do administrador.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Cofre da companhia: esmeraldas viram moedas (60 cada).","Saque: clique na linha da companhia no painel (1 esmeralda).","Obra: entregas dos pedidos, materiais das obras; esmeraldas vão para o caixa.","Decreto: sino (convocação), papel (racionamento) ou fardo de feno (fartura)."],
- "site":["Comida do mestre de obras: cada leva de blocos custa uma tarefa."],
+ "site":["Comida do mestre de obras: cada leva de blocos custa uma tarefa; depois, do funcionário.","Entrada do funcionário: carne crua, chapas de ferro, papel, materiais da pesquisa ou módulos.","Produto do funcionário: comida pronta, kits de reparo, livros."],
  "home":["Lenha: carvão, carvão vegetal, biomassa, troncos ou tábuas.","Despensa: comida para as refeições em casa.","Despensa: comida para as refeições em casa.","Despensa: comida para as refeições em casa.","Obra: materiais da próxima melhoria da casa."],
  "foreman_desk":["Comida do capataz e dos postos.","Comida do capataz e dos postos.","Comida do capataz e dos postos.","Esmeraldas para recontratar."],
  "cargo_lift":["Itens a caminho. Entram por qualquer lado."],
@@ -958,7 +958,7 @@ slot_en={
  "export_dock":["Ship cargo: goods to export."]*9,
  "freight_station":["Train cargo: goods to export."]*9,
  "control_center":["Administrator food.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Company vault: emeralds become coins (60 each).","Cash out: click the company line on the panel (1 emerald).","Build: request deliveries, project materials; emeralds go to the treasury.","Decree: bell (call-up), paper (rationing) or hay bale (plenty)."],
- "site":["Master builder food: each batch of blocks costs one task."],
+ "site":["Master builder food: each batch of blocks costs one task; later, the staff's.","Staff input: raw meat, iron plates, paper, research materials or modules.","Staff product: cooked food, repair kits, books."],
  "home":["Fuel: coal, charcoal, biomass, logs or planks.","Pantry: food for meals at home.","Pantry: food for meals at home.","Pantry: food for meals at home.","Build: materials for the next house upgrade."],
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
  "cargo_lift":["Items on the way. They enter from any side."],
@@ -1043,6 +1043,34 @@ for key, pt, en in [
  ("veio.center.project.paid", "%s: paga · faça o canteiro", "%s: paid · set up a site"),
  ("veio.project.building", "Paga, a obra vira prédio num canteiro de obras.", "Once paid, it becomes a building at a construction site."),
  ("veio.center.kind.10", "Canteiro", "Site"),
+ # Prédios prontos: funcionário, centro de pesquisa e ruínas (workforce/staff.rs, ruins.rs).
+ ("veio.site.no_staff", "Este prédio não tem funcionário: complete os lugares que piscam.", "This building has no staff: fill the blinking spots."),
+ ("veio.site.next.cook", "Contrate uma cozinheira (esmeralda) e dê comida: carne, peixe e batata crus na entrada saem prontos.", "Hire a cook (emerald) and feed her: raw meat, fish and potatoes in the input come out cooked."),
+ ("veio.site.next.teacher", "Contrate um professor (esmeralda) e dê comida: na hora da aula as crianças vêm às carteiras e crescem mais rápido.", "Hire a teacher (emerald) and feed him: at class time children come to the desks and grow faster."),
+ ("veio.site.next.smith", "Contrate um ferreiro (esmeralda) e dê comida: 2 chapas de ferro na entrada viram 2 kits de reparo.", "Hire a smith (emerald) and feed him: 2 iron plates in the input become 2 repair kits."),
+ ("veio.site.next.librarian", "Contrate um bibliotecário (esmeralda) e dê comida: 3 papéis na entrada viram 1 livro.", "Hire a librarian (emerald) and feed him: 3 paper in the input become 1 book."),
+ ("veio.site.next.postman", "Contrate um carteiro (esmeralda) e dê comida: ele faz a ronda pelas casas e postos.", "Hire a postman (emerald) and feed him: he makes rounds of the homes and posts."),
+ ("veio.site.next.innkeeper", "Contrate um estalajadeiro (esmeralda) e dê comida: à noitinha os hóspedes vêm às mesas.", "Hire an innkeeper (emerald) and feed him: at dusk guests come to the tables."),
+ ("veio.site.next.scientist", "Contrate um cientista (esmeralda) e dê comida; entregue os materiais da pesquisa na entrada.", "Hire a scientist (emerald) and feed him; deliver the research materials in the input."),
+ ("veio.site.next.market", "Ponha lojas nos lugares que piscam: com 2 lojas a praça funciona.", "Place shops at the blinking spots: with 2 shops the square works."),
+ ("veio.site.next.council", "Ponha o bloco da prefeitura no lugar que pisca: o prefeito assume.", "Place the town hall block at the blinking spot: the mayor takes over."),
+ ("veio.center.project.idle", "%s: de pé · parado", "%s: standing · idle"),
+ ("veio.project.lab.name", "Centro de pesquisa", "Research center"),
+ ("veio.project.lab.effect", "Um cientista pesquisa melhorias para a vila.", "A scientist researches upgrades for the village."),
+ ("veio.research.lab_done", "Pesquisa da vila concluída: %s. %s", "Village research complete: %s. %s"),
+ ("veio.research.agronomy.name", "Agronomia", "Agronomy"),
+ ("veio.research.agronomy.effect", "Zonas ganham +1 de trabalho por tarefa.", "Zones gain +1 work per task."),
+ ("veio.research.cargo.name", "Logística", "Logistics"),
+ ("veio.research.cargo.effect", "Carregadores levam 8 itens a mais por viagem.", "Haulers carry 8 more items per trip."),
+ ("veio.research.nutrition.name", "Nutrição", "Nutrition"),
+ ("veio.research.nutrition.effect", "Tarefas gastam 1 ponto de comida a menos.", "Tasks cost 1 less food point."),
+ ("veio.research.pedagogy.name", "Pedagogia", "Pedagogy"),
+ ("veio.research.pedagogy.effect", "Na escola, os alunos crescem o dobro por aula.", "At school, students grow twice as much per class."),
+ ("veio.research.engineering.name", "Engenharia", "Engineering"),
+ ("veio.research.engineering.effect", "Módulo na entrada: o cientista instala em máquinas a até 12 blocos.", "Module in the input: the scientist installs it in machines within 12 blocks."),
+ ("veio.site.ruin", "Ruína: a planta é fixa. Pague a obra no centro e reconstrua.", "Ruin: the blueprint is fixed. Pay at the center and rebuild."),
+ ("veio.site.protected", "Território da obra: só o mestre de obras mexe aqui.", "Building grounds: only the builders change this."),
+ ("veio.spawn.ruins", "Há ruínas de prédios em volta da vila: pague a obra no centro e reconstrua.", "There are building ruins around the village: pay at the center and rebuild."),
 ]:
  label(key, pt, en)
 
@@ -1480,8 +1508,23 @@ import blueprints as _plans
 v_site=vpage(
  "Canteiro de obras\n\nPaga a obra no centro, ponha o canteiro onde quer o prédio: a borda azul mostra o tamanho e a seta, a entrada.\n\nChave troca a planta. Contrate um mestre de obras e dê comida: ele ergue o prédio.",
  "Construction site\n\nPay at the center, then place the site where you want the building: the blue border shows its size, the arrow the door.\n\nWrench switches blueprint. Hire a master builder and feed him: he raises it.")
+v_staff=vpage(
+ "Funcionários\n\nPrédio de pé: esmeralda no canteiro contrata; comida no slot da esquerda.\n\nEntrada: o que ele usa. Produto: o que faz.\n\nSó vale funcionando; parado, o centro avisa.",
+ "Staff\n\nBuilding standing: an emerald on the site hires; food in the left slot.\n\nInput: what they use. Product: what they make.\n\nOnly counts while working; when idle, the center warns.")
+v_roles=vpage(
+ "Quem trabalha\n\nCozinheira: assa\nProfessor: dá aula\nFerreiro: kits de reparo\nBibliotecário: livros\nCarteiro: ronda\nEstalajadeiro: hóspedes\nCientista: pesquisa\nPraça: 2 lojas\nPrefeitura: o bloco",
+ "Who works\n\nCook: cooks\nTeacher: teaches\nSmith: repair kits\nLibrarian: books\nPostman: rounds\nInnkeeper: guests\nScientist: research\nMarket: 2 shops\nTown hall: its block")
+v_lab=vpage(
+ "Centro de pesquisa\n\nO cientista pesquisa em ordem. Ponha os materiais na entrada; depois ele trabalha 24 tarefas.\n\nAgronomia: zonas +1\nLogística: carga +8\nNutrição: -1 de comida\nPedagogia: aula em dobro\nEngenharia: módulos",
+ "Research center\n\nThe scientist researches in order. Put the materials in the input; then he works 24 tasks.\n\nAgronomy: zones +1\nLogistics: cargo +8\nNutrition: -1 food\nPedagogy: double class\nEngineering: modules")
+v_engineering=vpage(
+ "Engenharia\n\nCom Engenharia pronta, módulo na entrada do centro de pesquisa: o cientista anda até uma máquina do Veio a até 12 blocos sem módulo e instala.\n\nAs pesquisas valem para a vila do centro de controle.",
+ "Engineering\n\nWith Engineering done, a module in the research center input: the scientist walks to a Veio machine within 12 blocks without one and installs it.\n\nResearch applies to the control center's village.")
+v_ruins=vpage(
+ "Ruínas e território\n\nNa chegada, ruínas cercam a vila. A planta delas é fixa: pague a obra no centro e o mestre de obras reconstrói.\n\nRuínas e obras em andamento ou de pé são protegidas; terra, grama e folhas ficam livres.",
+ "Ruins and grounds\n\nOn arrival, ruins ring the village. Their blueprint is fixed: pay at the center and the master builder rebuilds.\n\nRuins and buildings in progress or standing are protected; dirt, grass and leaves stay free.")
 v_plans={}
-for _key in ["canteen","school","smithy","market","library","post_office","inn","hall"]:
+for _key in ["canteen","school","smithy","market","library","post_office","inn","hall","lab"]:
  _p=_plans.BLUEPRINTS[_key]; _l=_p["layers"]
  _size=(len(_l[0][0]),len(_l[0]),len(_l))
  _res=("\n\nLugares para: "+{"veio:shop":"loja","veio:town_hall":"prefeitura (bloco)"}[_p["reserved"]]) if "reserved" in _p else ""
@@ -1501,6 +1544,7 @@ v_blocks=len(vpages)+1;vpages.append(None)
 v_manage=len(vpages)+1;vpages.append(None)
 v_reference=len(vpages)+1;vpages.append(None)
 v_planlist=len(vpages)+1;vpages.append(None)
+v_planpages=len(vpages)+1;vpages.append(None)
 vrefs={}
 for name in village_order:
  reference_labels(name)
@@ -1529,8 +1573,11 @@ REFERENCE=[("Expandir zonas","Grow zones",v_expand),("A vila cresce","Village gr
  ("Casa do fundador","Founder's house",v_house),("Refeições fora","Meals away",v_meals),("Na mesma rede","On your network",v_lan),
  ("Atalhos da fábrica","Factory shortcuts",v_shortcuts),("Blocos","Blocks",v_blocks)]
 MANAGE.append(("Plantas das obras","Project blueprints",v_planlist))
-subindex(v_planlist,"veio.village.plans","Plantas das obras","Project blueprints",[("Canteiro de obras","Construction site",v_site)]+
- [(_plans.BLUEPRINTS[k]["name"][0],_plans.BLUEPRINTS[k]["name"][1],v_plans[k]) for k in ["canteen","school","smithy","market","library","post_office","inn","hall"]])
+subindex(v_planlist,"veio.village.plans","Plantas das obras","Project blueprints",[("Canteiro de obras","Construction site",v_site),
+ ("Ruínas e território","Ruins and grounds",v_ruins),("Funcionários","Staff",v_staff),("Quem trabalha","Who works",v_roles),
+ ("Centro de pesquisa","Research center",v_lab),("Engenharia","Engineering",v_engineering),("Plantas","Blueprints",v_planpages)])
+subindex(v_planpages,"veio.village.planpages","Plantas","Blueprints",
+ [(_plans.BLUEPRINTS[k]["name"][0],_plans.BLUEPRINTS[k]["name"][1],v_plans[k]) for k in ["canteen","school","smithy","market","library","post_office","inn","hall","lab"]])
 subindex(v_manage,"veio.village.manage","Gestão da vila","Running the village",MANAGE)
 subindex(v_reference,"veio.village.reference","Consulta","Reference",REFERENCE)
 vlinks=[("1. Trabalhador","1. Worker",v_hire),("2. Lavoura","2. Field",v_field),

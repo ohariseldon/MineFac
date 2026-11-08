@@ -200,6 +200,62 @@ Partindo do que o Grok fez (ondas e quartel), o inimigo ficou mais justo e mais 
 - API: `Host::living` e `Host::living_set_equipment(living, EquipmentSlot::MainHand, stack)`, com `LivingRef` e `EquipmentSlot` (`horizon_world::player_inventory`), conferidos no Horizon `66f3981` (`game/native_living_refs.rs`) e acrescentados ao substituto offline.
 - Teste: `worker_holds_what_it_carries_and_empties_the_hand_after_delivery`.
 
+## Décima entrega: funcionários, centro de pesquisa, ruínas e território
+
+### Funcionários e pesquisa
+
+Com o prédio de pé, o canteiro vira o posto do prédio (`staff.rs`): esmeralda contrata o funcionário e a comida vai no slot da esquerda. O canteiro tem **3 slots**: comida, entrada do funcionário e produto.
+
+| Prédio | Funcionário | O que faz |
+| --- | --- | --- |
+| Refeitório | cozinheira | Carne, peixe e batata crus da entrada saem prontos |
+| Escola | professor | Na hora da aula as crianças vão às carteiras e crescem mais rápido |
+| Ferraria | ferreiro | 2 chapas de ferro viram 2 kits de reparo |
+| Biblioteca | bibliotecário | 3 papéis viram 1 livro |
+| Correio | carteiro | Ronda pelas casas e postos |
+| Estalagem | estalajadeiro | À noitinha os hóspedes vêm às mesas |
+| Centro de pesquisa | cientista | Pesquisa melhorias para a vila |
+
+A praça funciona com 2 lojas nos lugares reservados e a prefeitura com o bloco dela. O efeito da obra só vale com o prédio **funcionando**; de pé e parado, o centro mostra "de pé · parado".
+
+**Centro de pesquisa** (obra `lab`, nível Vila): o cientista pesquisa em ordem, com os materiais entregues na entrada e 24 tarefas cada: **Agronomia** (zonas +1 de trabalho por tarefa), **Logística** (carregadores +8 itens por viagem), **Nutrição** (tarefas gastam 1 ponto de comida a menos), **Pedagogia** (aula em dobro na escola) e **Engenharia** (módulo na entrada: o cientista instala em máquinas do Veio a até 12 blocos). A mensagem de pesquisa concluída usa `veio.research.lab_done` (a chave `veio.research.done` é da pesquisa da grande indústria).
+
+### Ruínas da vila
+
+Na primeira chegada a um mundo novo (até o fim do primeiro dia), quando o centro da vila é achado, o Veio põe até **3 ruínas** de obras sem exigência de prestígio (refeitório, escola, ferraria, praça) em volta do centro (`ruins.rs`):
+
+- lugares a 50, 56 ou 62 blocos do centro, em 16 direções (o anel de 48–80 blocos, limitado a 62 para o centro de controle no meio da vila alcançar a obra a até 64 blocos);
+- terreno firme e plano sob toda a planta: `MotionBlockingNoLeaves` igual a `OceanFloor` (sem água nem lavoura irrigada) e desnível de até 3 blocos (casas e árvores ficam de fora); sem sobrepor outra ruína, com 3 blocos de folga;
+- o canteiro (`veio:site`, virado para o centro) só entra onde o bloco é substituível (`execute if block ... #minecraft:replaceable run setblock`);
+- no primeiro tick, o canteiro pega a planta escolhida e fica com a **planta fixa** (`Fixed`; a chave não troca) e carimba a ruína: as 4 camadas de baixo, um subconjunto que depende só do lugar (90%, 70%, 45% e 20% por camada), sem móveis, sem blocos com propriedades e sem tocar em blocos protegidos que já estejam ali.
+
+O jogador paga a obra no centro e o mestre de obras reconstrói por cima da ruína. `<mundo>/veio/ruins.txt` guarda que as ruínas já foram postas e quais canteiros ainda não pegaram a planta (chunk descarregado ou mundo fechado no meio): reabrir o mundo ou outro jogador chegar não repete nada. Mundos que já existiam não ganham ruínas.
+
+### Território das obras
+
+Ruínas e obras em construção ou de pé protegem o **território**: a planta mais 3 blocos em todos os eixos (`territory.rs`, ganchos `destroy_block`, `left_click_block`, `use_item_on` e `explosion_detonate`).
+
+- Livre: terra, grama, flores, folhas, areia, cascalho, neve e plantas naturais; jogadores no criativo passam em tudo.
+- Quebrar: recusado no resto. O canteiro do jogador pode sair (o prédio deixa de valer na hora); o da ruína, não. Numa ruína ainda à espera da obra, os blocos que o mestre de obras não derruba (baús, camas, máquinas) podem sair, para a conferência do terreno não parar para sempre.
+- Usar item num bloco: comida, esmeralda, chave, livros, bússola, armas e outros itens de uso passam; o bloco do lugar reservado (loja na praça, bloco da prefeitura) pode ser posto; abrir portas, baús e blocos do Veio sem agachar passa. Pôr blocos, baldes, isqueiro, machado, enxada e afins são recusados (barra de ação: "Território da obra").
+- Explosões não levam os blocos protegidos (o chão natural ainda voa).
+
+O registro `BUILDINGS` ganhou a área, a planta fixa e se a entrada **conta** em `site::near()`: a ruína à espera publica só o território, sem ocupar a obra na vila; as obras em andamento e de pé contam como antes.
+
+### Contratos tocados
+
+- Substituto do Horizon: `DestroyBlockEvent`, `LeftClickBlockEvent`, `UseItemOnEvent<'_>`, `ExplosionDetonateEvent<'_>` e os quatro ganchos, com as assinaturas do handoff (a compilação pelo launcher confere).
+- `lib.rs`: os quatro ganchos chamam `workforce::territory`; `server_about_to_start` zera as ruínas; chave NBT `Fixed` na tabela rápida.
+- Centro de controle: rótulos dos slots 6 (obra) e 7 (decreto).
+- Testes: `ruins_pick_firm_flat_spots_in_the_ring_facing_the_center`, `ruin_stamp_keeps_low_layers_without_furniture_and_is_deterministic`, `ruins_are_placed_once_per_new_world_and_their_sites_keep_a_fixed_plan`, `territory_covers_the_plan_plus_margin_only_for_ruins_and_real_works`, `protection_frees_natural_ground_creative_players_and_food` e `protection_hooks_cancel_breaking_building_and_explosions_inside_the_grounds`.
+
+### A conferir no jogo
+
+- Se `run_command` com `execute if block ... run setblock` devolve `false` quando o bloco não é substituível (hoje a ruína fica pendente no arquivo, sem efeito).
+- Se os ganchos de bloco do Horizon têm exatamente as assinaturas do substituto (em especial o retorno de `explosion_detonate` e o tipo de `face`).
+- Se cancelar `use_item_on` recusa também o uso do item (por isso comida e itens de uso passam).
+- O carimbo das ruínas em chunks recém-gerados e o mestre de obras reconstruindo por cima.
+
 ## Nona entrega: plantas prontas e canteiro de obras
 
 As obras com prédio (refeitório, escola, ferraria, praça do mercado, biblioteca, correio, estalagem e prefeitura) agora têm **plantas prontas**, desenhadas em texto camada por camada em `tools/blueprints.py` (o mesmo jeito das texturas). `python tools/build_blueprints.py` confere e gera `native/api/src/workforce/blueprint_data.rs`. A festa continua sendo só festa.
@@ -231,7 +287,7 @@ O prédio vale enquanto o canteiro existir. Dois canteiros não constroem o mesm
 
 - `projects.rs`: `Built` passa a significar **paga**; o efeito usa `standing` (paga e com prédio de pé, `Standing` atualizado pelo centro a partir de `site::near`). `Village.funded` publica as obras pagas.
 - `site.rs` (novo) é um posto (`is_post`) com fases em `ContractStage`; registro em memória `BUILDINGS`. `blueprints.rs` gira plantas e propriedades (`facing`, `axis`).
-- `presentation.rs`: estados 32-35 (`site_plan`, `site_blocked`, `site_building`, `site_done`); `operations.rs`: canteiro no setor de coordenação, bloqueio "ambiente" no terreno ocupado.
+- `presentation.rs`: estados 36-39 (`site_plan`, `site_blocked`, `site_building`, `site_done`; 32-35 ficaram com as conexões externas da 0.23); `operations.rs`: canteiro no setor de coordenação, bloqueio "ambiente" no terreno ocupado.
 - Mundo: só `edit_blocks` (com o filtro `#minecraft:replaceable` no alicerce) e `set_block_property`, que já existiam.
 
 ### A conferir no jogo

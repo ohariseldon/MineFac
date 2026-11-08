@@ -46,6 +46,8 @@ pub(super) mod requests;
 pub(super) mod blueprints;
 mod blueprint_data;
 pub(super) mod site;
+pub(super) mod ruins;
+pub(super) mod territory;
 pub(super) mod staff;
 pub(super) mod focus;
 pub(super) mod home;
@@ -1549,7 +1551,7 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         HAULER_POST => &["food", "supply", "", "", "output", "", ""],
         FOREMAN_DESK => &["food", "", "", "wage"],
         SHEPHERD_POST => &["food", "feed", "output", "", ""],
-        CONTROL_CENTER => &["", "", "", "", "build", "decree"],
+        CONTROL_CENTER => &["", "", "", "", "", "", "build", "decree"],
         BARRACKS => &["food", "wage"],
         HOME => &["fuel", "pantry", "", "", "build"],
         SITE => &["food", "supply", "output"],

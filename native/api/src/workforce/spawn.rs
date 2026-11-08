@@ -8,6 +8,9 @@
 //! - **Centro de controle:** com administrador, ele vira o centro da vila: o spawn do mundo e o de
 //!   todos os jogadores passam para cima dele, e quem renasce volta para lá.
 //!
+//! Na primeira chegada a um mundo novo, as ruínas da vila aparecem em volta do centro
+//! (`ruins.rs`).
+//!
 //! Tudo por `Host::run_command` (console do servidor). Cada jogador é marcado com a tag
 //! `veio_village` depois da primeira vez; os comandos de chegada só valem para quem não tem a tag,
 //! então voltar ao mundo não muda o spawn de ninguém. Só no Overworld.
@@ -154,10 +157,16 @@ pub(crate) fn tick(host: &mut dyn Host, now: u64) {
         let found = known.or_else(|| find_village(host, player.position));
         if let Some(at) = found {
             if settle(host, &arrival.name, at) {
-                if let Ok(mut center) = CENTER.lock()
-                    && center.is_none()
-                {
-                    *center = Some((at, false));
+                let first = CENTER.lock().is_ok_and(|mut center| {
+                    let first = center.is_none();
+                    if first {
+                        *center = Some((at, false));
+                    }
+                    first
+                });
+                // Centro achado agora: num mundo novo, as ruínas aparecem em volta (uma vez).
+                if first {
+                    ruins::arrive(host, OVERWORLD, at);
                 }
                 continue;
             }

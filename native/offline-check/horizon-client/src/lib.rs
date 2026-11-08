@@ -884,6 +884,32 @@ pub mod mod_api {
     }
     #[non_exhaustive]
     pub struct PlaceBlockEvent<'a> { pub stack: &'a ItemStack, pub pos: [i32; 3], pub state: BlockStateId }
+    /// Ganchos de bloco do jogador (gerados do Horizon): quebrar, começar a quebrar, usar item num
+    /// bloco e a lista de blocos de uma explosão.
+    #[non_exhaustive]
+    pub struct DestroyBlockEvent { pub pos: [i32; 3], pub state: BlockStateId }
+    #[non_exhaustive]
+    pub struct LeftClickBlockEvent { pub pos: [i32; 3], pub face: Direction, pub state: BlockStateId }
+    #[non_exhaustive]
+    pub struct UseItemOnEvent<'a> { pub stack: &'a ItemStack, pub pos: [i32; 3], pub face: Direction }
+    #[non_exhaustive]
+    pub struct ExplosionDetonateEvent<'a> { pub dimension: &'a str, pub center: [f64; 3], pub blocks: &'a mut Vec<[i32; 3]> }
+    impl DestroyBlockEvent {
+        /// Só no substituto.
+        pub fn preview(pos: [i32; 3]) -> Self { Self { pos, state: BlockStateId::default() } }
+    }
+    impl LeftClickBlockEvent {
+        /// Só no substituto.
+        pub fn preview(pos: [i32; 3]) -> Self { Self { pos, face: Direction::Up, state: BlockStateId::default() } }
+    }
+    impl<'a> UseItemOnEvent<'a> {
+        /// Só no substituto.
+        pub fn preview(stack: &'a ItemStack, pos: [i32; 3]) -> Self { Self { stack, pos, face: Direction::Up } }
+    }
+    impl<'a> ExplosionDetonateEvent<'a> {
+        /// Só no substituto.
+        pub fn preview(dimension: &'a str, center: [f64; 3], blocks: &'a mut Vec<[i32; 3]>) -> Self { Self { dimension, center, blocks } }
+    }
     #[non_exhaustive]
     pub struct PlayerLoggedOutEvent<'a> { pub player: u128, pub name: &'a str }
     #[non_exhaustive]
@@ -898,6 +924,10 @@ pub mod mod_api {
         fn server_about_to_start(&self, host: &mut dyn Host, event: &mut ServerAboutToStartEvent) {}
         fn inventory_move_item(&self, host: &dyn Host, event: &mut InventoryMoveItemEvent<'_>) -> Flow { Flow::Continue }
         fn place_block(&self, host: &mut dyn Host, event: &mut PlaceBlockEvent<'_>) {}
+        fn destroy_block(&self, host: &mut dyn Host, event: &mut DestroyBlockEvent) -> Flow { Flow::Continue }
+        fn left_click_block(&self, host: &mut dyn Host, event: &mut LeftClickBlockEvent) -> Flow { Flow::Continue }
+        fn use_item_on(&self, host: &mut dyn Host, event: &mut UseItemOnEvent<'_>) -> Flow { Flow::Continue }
+        fn explosion_detonate(&self, host: &mut dyn Host, event: &mut ExplosionDetonateEvent<'_>) {}
         fn player_logged_out(&self, host: &mut dyn Host, event: &mut PlayerLoggedOutEvent<'_>) {}
         fn register_commands(&self, host: &mut dyn Host, event: &mut RegisterCommandsEvent<'_>) {}
         fn perform_command(&self, host: &mut dyn Host, event: &mut PerformCommandEvent<'_>) -> Flow { Flow::Continue }
