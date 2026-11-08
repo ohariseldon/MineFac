@@ -1,0 +1,26 @@
+{
+  "parent": "veio:circuits",
+  "display": {
+    "icon": {
+      "id": "veio:blueprint_designer"
+    },
+    "title": {
+      "translate": "advancement.veio.blueprints.title"
+    },
+    "description": {
+      "translate": "advancement.veio.blueprints.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:blueprint_designer"
+          }
+        ]
+      }
+    }
+  }
+}

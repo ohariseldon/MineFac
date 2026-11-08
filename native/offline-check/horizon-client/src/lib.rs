@@ -729,6 +729,9 @@ pub mod mobs {
         pub id: u32,
         pub kind: Arc<MobType>,
         pub position: Vec3,
+        /// `Mob.velocity` e `Mob.on_climbable` do Horizon: a subida por escada de mão (`workforce`).
+        pub velocity: Vec3,
+        pub on_climbable: bool,
         pub ai: Ai,
         /// No jogo, `MobExtra` tem muito mais; o Veio só chega ao aldeão por `villager::ext`.
         pub extra: MobExtra,

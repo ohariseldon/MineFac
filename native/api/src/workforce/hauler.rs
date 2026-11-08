@@ -81,7 +81,9 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         }
         return Ok(task);
     }
-    let Some(stations) = scan_blocks(host, pos, entity, RADIUS, SCAN, MAX_STATIONS, &station) else {
+    // Mais andares, mais leituras por ciclo: a volta inteira leva o mesmo tempo (até 4x).
+    let per_cycle = SCAN * (ladders::layers(entity).len() as i32 / 3).clamp(1, 4);
+    let Some(stations) = scan_blocks(host, pos, entity, RADIUS, per_cycle, MAX_STATIONS * (per_cycle / SCAN).min(2) as usize, &station) else {
         return Err(KEEP);
     };
     set_number(entity, "Rate", stations.len() as i32);

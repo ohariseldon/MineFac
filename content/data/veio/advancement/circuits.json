@@ -43,7 +43,9 @@
       "veio:tesla",
       "veio:speed_module",
       "veio:efficiency_module",
-      "veio:grow_lamp"
+      "veio:grow_lamp",
+      "veio:blueprint_designer",
+      "veio:build_marker"
     ]
   },
   "requirements": [

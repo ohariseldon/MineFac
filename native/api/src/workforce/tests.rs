@@ -1256,7 +1256,7 @@ fn bench_large_village() {
     let world = MobWorld::preview();
     let kind = Arc::new(MobType { id: VILLAGER.to_owned() });
     let mut mobs: Vec<(Mob, Work)> = (0..VILLAGERS).map(|id| (Mob {
-        id: 200_000 + id, kind: kind.clone(), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 }, ai: Ai::default(), extra: Default::default(),
+        id: 200_000 + id, kind: kind.clone(), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 }, velocity: Vec3::default(), on_climbable: false, ai: Ai::default(), extra: Default::default(),
     }, Work::default())).collect();
     // Um posto em cada sete aldeões tem ordem viva.
     for id in (0..VILLAGERS).step_by(7) {
@@ -1297,7 +1297,7 @@ fn work_goal_hands_the_order_to_the_villager_brain_and_respects_danger() {
     use std::sync::Arc;
     let world = MobWorld::preview();
     let mut mob = Mob { id: 17001, kind: Arc::new(MobType { id: VILLAGER.to_owned() }), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 },
-        ai: Ai::default(), extra: Default::default() };
+        velocity: Vec3::default(), on_climbable: false, ai: Ai::default(), extra: Default::default() };
     villager::ext_mut(&mut mob).brain = Some(Box::new(Brain::preview(Act::Idle)));
     let mut goal = Work::default();
     order(17001, [5.5, 64.0, 7.5], defense::clock());

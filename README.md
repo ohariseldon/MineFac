@@ -86,6 +86,10 @@ A progressão anda em fases, como no Satisfactory e no Factorio: dentro de uma f
 
 Ramos paralelos (molduras, módulos, lavoura, vila operária, braços) seguem pedindo uma peça. Os oito módulos do primeiro pedido continuam liberando o lote de 32 esteiras rápidas. Razões e justificativas em [frentes/PROGRESSAO-FASES.md](frentes/PROGRESSAO-FASES.md).
 
+### Megafábricas
+
+Depois dos circuitos, a **copiadora** copia a linha montada no quadrado acima dela (clique com papel) e o **marco de obra** a reconstrói em outro lugar, girada, pagando os blocos com o seu inventário: mão vazia mostra o orçamento, agachado com a chave constrói. Para fábricas em andares, o aço libera o **elevador de carga** (5 itens/s, sem energia), e os carregadores sobem e descem **escadas de mão** para atender máquinas nos outros pisos. Detalhes em [frentes/MEGAFABRICAS.md](frentes/MEGAFABRICAS.md).
+
 ### Quadro da fábrica
 
 O **Quadro da fábrica** chega com o guia. Ele mostra a fase atual, quanto falta entregar e o que ela libera. Entregue a pilha da fase na entrada, à mão ou por esteira: as fases 2 a 4 devolvem uma **licença** que libera os desbloqueios da fase, como se você juntasse a pilha. Na primeira fase, o quadro marca sozinho energia, extratora, prensa e montador quando eles aparecem por perto.

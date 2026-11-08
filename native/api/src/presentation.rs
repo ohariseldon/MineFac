@@ -27,7 +27,7 @@ pub(super) const STATUS_KEYS: [&str; 29] = [
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
     let slots = match block {
-        DRILL | DRILL_MK2 | BELT | FAST_BELT | SPLITTER | GENERATOR => vec![Some([89.0, 45.0])],
+        DRILL | DRILL_MK2 | BELT | FAST_BELT | SPLITTER | GENERATOR | lift::LIFT => vec![Some([89.0, 45.0])],
         PRESS | ASSEMBLER | CUTTER | CRUSHER | GEOTHERMAL => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
         MERGER => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
         INTEGRATOR | ALLOY | ELECTRONICS => vec![Some([35.0, 45.0]), Some([71.0, 45.0]), Some([143.0, 45.0])],
@@ -154,7 +154,7 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     }
     let limit = read(5).max(capacity(event.block)).max(1);
     let energy = read(3).clamp(0, limit);
-    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) && event.block != production::PANTRY && !post {
+    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER | lift::LIFT) && event.block != production::PANTRY && !post {
         let energy_text = Text::tr("veio.energy", &[&energy, &limit]).plain();
         host.text(event.batch, &energy_text, [x + 10.0, y + 85.0], INK, false);
         gauge(host, event, [10.0, 95.0], 174.0, energy as f32 / limit as f32, 0xffe0a020);
@@ -175,6 +175,11 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         SOLAR => vec![Text::tr("veio.hint.solar", &[]).plain()],
         BATTERY => vec![Text::tr("veio.hint.battery", &[]).plain()],
         BELT | FAST_BELT => vec![Text::tr("veio.hint.belt", &[]).plain(), Text::tr("veio.metric.rate", &[&read(6)]).plain()],
+        lift::LIFT => vec![
+            Text::tr(if read(12) == 1 { "veio.lift.down" } else { "veio.lift.up" }, &[]).plain(),
+            Text::tr("veio.hint.lift", &[]).plain(),
+            Text::tr("veio.metric.rate", &[&read(6)]).plain(),
+        ],
         TESLA => vec![
             Text::tr("veio.metric.kills", &[&read(9)]).plain(),
             Text::tr("veio.hint.tesla", &[]).plain(),
@@ -306,7 +311,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
         return power::draw(host, event);
     }
     if inserters::is_arm(event.block) { return inserters::draw(host, event); }
-    if production::draw(host, event) || workforce::zones::draw(host, event) {
+    if blueprint::draw(host, event) || production::draw(host, event) || workforce::zones::draw(host, event) {
         return;
     }
     let status = (number(event.entity, "Status") as usize).min(STATUS_KEYS.len() - 1);

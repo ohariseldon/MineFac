@@ -14,6 +14,8 @@
     "veio:electronics",
     "veio:electric_furnace",
     "veio:factory_board",
+    "veio:blueprint_designer",
+    "veio:build_marker",
     "veio:contract_hub",
     "veio:wrench",
     "veio:copper_plate",
