@@ -20,3 +20,6 @@ Fora do #47: o pacote Realismo passou para 3.0.1, com 4 saídas de pós-processa
 
 ## Adendo: volume das máquinas ×2,5
 O Luiz testou e os sons das máquinas tocam, mas baixo demais. Ele pediu cerca de 2,5 vezes: perceptível, sem incomodar. Todos os volumes de `tools/machine_audio.json` e `soundscape/data.rs` foram multiplicados por 2,5 (prensa 0,168 → 0,42; esteira 0,055 → 0,138), e o aviso de reparo foi de 0,16 para 0,4. O limite do `check_machine_audio.py` subiu de 0,3 para 0,75. A esteira vazia continua abaixo das máquinas.
+
+## Adendo: o launcher recompila quando o código muda
+A marca `.veio-native-build` só guardava a versão e o perfil. Por isso o launcher pulou a compilação com o código mudado na mesma versão, e o volume novo não entrou. Agora a marca também guarda uma impressão digital (FNV-1a) dos arquivos de `native/`, sem `target` e sem `offline-check`. Teste incluído.
