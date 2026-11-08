@@ -24,7 +24,7 @@ vanilla={
  "shears":("Tesoura","Shears"),"hay_block":("Fardo de feno","Hay bale"),"glowstone":("Pedra luminosa","Glowstone"),
  "diamond":("Diamante","Diamond"),"emerald":("Esmeralda","Emerald"),
  "hopper":("Funil","Hopper"),"lectern":("Atril","Lectern"),"bell":("Sino","Bell"),"lead":("Laço","Lead"),"oak_fence":("Cerca de carvalho","Oak fence"),"wheat_seeds":("Sementes de trigo","Wheat seeds"),
- "oak_planks":("Tábuas de carvalho","Oak planks"),"oak_door":("Porta de carvalho","Oak door"),"glass_pane":("Painel de vidro","Glass pane"),
+ "oak_planks":("Tábuas de carvalho","Oak planks"),"oak_boat":("Barco de carvalho","Oak boat"),"oak_door":("Porta de carvalho","Oak door"),"glass_pane":("Painel de vidro","Glass pane"),
  "stone_bricks":("Tijolos de pedra","Stone bricks"),"cobblestone":("Pedregulho","Cobblestone"),
 }
 def item_name(item,code):
@@ -230,6 +230,9 @@ help["town_hall"] = (
 help["well"] = (
  "Saneamento das casas a até\n24 blocos. Balde vazio no\nslot vira balde d'água.",
  "Sanitation for homes within\n24 blocks. An empty bucket\nin the slot fills with water.")
+help["export_dock"] = (
+ "Vende ao mercado externo:\num navio por minuto leva\ntudo. Mais complexo, mais\nvale (até 4x). O mesmo item\nno mesmo dia vale menos.",
+ "Sells to foreign markets:\na ship each minute takes\neverything. More complex,\nmore value (up to 4x). Same\nitem, same day: worth less.")
 help["farm_post"] = (
  "Esmeralda: contrata o aldeão\nadulto livre mais próximo.\nEle colhe o 9x9 e traz ao posto.\nCome 2 pontos por colheita.\nAgachar + chave: dispensa.",
  "Emerald: hires the nearest\nfree adult villager.\nHarvests the 9x9, brings it back.\nEats 2 points per harvest.\nSneak + wrench: dismiss.")
@@ -436,6 +439,15 @@ for key, pt, en in [
  ('veio.mayor.report.money', 'Moeda em circulação %s = companhia %s + prefeitura %s + lojas %s + famílias %s. Esmeraldas que entraram: %s; que saíram: %s.', 'Money in circulation %s = company %s + town hall %s + shops %s + families %s. Emeralds in: %s; out: %s.'),
  ('veio.shop.owes', 'Deve à indústria: %s (fiado)', 'Owes the industry: %s (credit)'),
  ('veio.hint.shop', 'Troque com o comerciante para comprar', 'Trade with the merchant to buy'),
+ ('block.veio.export_dock', 'Porto de exportação', 'Export Dock'),
+ ('veio.status.no_company', 'Sem companhia (centro de controle)', 'No company (control center)'),
+ ('veio.dock.today', 'Exportado hoje: %s itens · %s moedas', 'Exported today: %s items · %s coins'),
+ ('veio.dock.next', 'Próximo navio em %s s', 'Next ship in %s s'),
+ ('veio.hint.export_dock', 'Mais valor agregado, mais lucro', 'More added value, more profit'),
+ ('veio.export.best', 'Exportar hoje: %s rende %s moedas por unidade', 'Export today: %s pays %s coins per unit'),
+ ('veio.center.company', 'Companhia: %s · exporta %s/dia (clique: sacar)', 'Company: %s · exports %s/day (click: cash out)'),
+ ('veio.mayor.report.economy', 'PIB %s/dia = consumo %s + exportação %s · atacado da indústria %s/dia · emprego %s%% · custo de vida %s%%.', 'GDP %s/day = consumption %s + exports %s · industry wholesale %s/day · employment %s%% · cost of living %s%%.'),
+ ('veio.mayor.report.money', 'Moeda em circulação %s = companhia %s + prefeitura %s + lojas %s + famílias %s. Entrou %s (exportação %s); saiu %s.', 'Money in circulation %s = company %s + town hall %s + shops %s + families %s. In %s (exports %s); out %s.'),
  ('veio.zone.need_mayor', 'O plano diretor não permite: suba a fase da vila na prefeitura.', 'The master plan forbids it: raise the village phase at the town hall.'),
  ('veio.zone.suspended', 'Licenças suspensas pelo prefeito: melhore o bem-estar da vila.', "Permits suspended by the mayor: improve the village's well-being."),
  ('veio.guide.role.output', 'Saída', 'Output'),
@@ -450,7 +462,7 @@ categories=[
 ]
 order=[name for _,_,names in categories for name in names]
 # Blocos da vila operária: consulta no Guia da Vila Operária (fim deste arquivo).
-village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center","barracks","house","shop","town_hall","well"]
+village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center","barracks","house","shop","town_hall","well","export_dock"]
 assert set(order)|set(village_order)==set(help), (set(order)|set(village_order))^set(help)
 for name,(pt,en) in help.items():
  label(f"veio.help.{name}",pt,en)
@@ -492,6 +504,7 @@ slothelp={
  "shop":["Comida do comerciante.","Entrega da indústria: o comerciante paga 70% no atacado.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Antigo caixa (até a 0.20): retire as esmeraldas."],
  "town_hall":["Comida do prefeito.","Aporte voluntário à conta pública (60 moedas por esmeralda)."],
  "well":["Balde vazio: sai cheio de água."],
+ "export_dock":["Carga do navio: produtos para exportar."]*9,
  "control_center":["Comida do administrador.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Cofre da companhia: esmeraldas viram moedas (60 cada).","Saque: clique na linha da companhia no painel (1 esmeralda)."],
  "foreman_desk":["Comida do capataz e dos postos.","Comida do capataz e dos postos.","Comida do capataz e dos postos.","Esmeraldas para recontratar."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
@@ -533,6 +546,7 @@ slot_en={
  "shop":["Merchant food.","Industry delivery: the merchant pays 70% wholesale.","Industry delivery.","Industry delivery.","Industry delivery.","Industry delivery.","Industry delivery.","Old till (up to 0.20): take the emeralds out."],
  "town_hall":["Mayor food.","Voluntary contribution to public funds (60 coins per emerald)."],
  "well":["Empty bucket: comes out full of water."],
+ "export_dock":["Ship cargo: goods to export."]*9,
  "control_center":["Administrator food.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Company vault: emeralds become coins (60 each).","Cash out: click the company line on the panel (1 emerald)."],
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
@@ -801,7 +815,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.21.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.22.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -917,6 +931,9 @@ v_holding=vpage(
 v_money=vpage(
  "A moeda\n\nEsmeralda é a moeda: 60 moedas cada. O dinheiro só circula:\nindústria → salários → famílias → lojas → atacado → indústria.\n\nSó entra ou sai em esmeraldas de verdade: depósito, saque e suas compras. O relatório da prefeitura confere a soma.",
  "Money\n\nThe emerald is the currency: 60 coins each. Money only circulates:\nindustry → wages → families → shops → wholesale → industry.\n\nIt only enters or leaves as real emeralds: deposits, cash outs and your purchases. The town hall report checks the sum.")
+v_export=vpage(
+ "Comércio exterior\n\nO porto de exportação vende ao mercado externo: um navio por minuto. Matéria-prima 1x, processado 1,5x, componente 2x, avançado 3x, módulo 4x.\n\nO mesmo item no mesmo dia vale menos. É moeda nova na sua companhia.",
+ "Foreign trade\n\nThe export dock sells abroad: one ship per minute. Raw 1x, processed 1.5x, component 2x, advanced 3x, module 4x.\n\nThe same item on the same day pays less. It is new money in your company.")
 v_prices=vpage(
  "Preços locais\n\nCada loja tem seus preços. Muita procura e pouco estoque: até o dobro. Estoque parado: barateia até 70%. Família sem achar comida empurra o preço.\n\nCada vila tem seu mercado: abasteça onde está caro.",
  "Local prices\n\nEach shop sets its own prices. High demand and low stock: up to double. Idle stock: drops to 70%. Families who find no food push prices up.\n\nEach village has its own market: supply where it is expensive.")
@@ -945,7 +962,7 @@ vlinks=[("Começar","Start here",v_intro),("1. Trabalhador","1. Worker",v_hire),
  ("3. Cercados","3. Pens",v_pen),("4. Armazéns","4. Storage",v_store),("5. Carregadores","5. Haulers",v_haul),
  ("6. Capataz","6. Foreman",v_foreman),("7. Centro","7. Center",v_center),("Expandir zonas","Grow zones",v_expand),
  ("A vila cresce","Village growth",v_grow),("8. Casas","8. Homes",v_society),("9. Loja","9. Shop",v_shop),
- ("10. Prefeito e contas","10. Mayor and accounts",v_mayor),("A moeda","Money",v_money),("Preços","Prices",v_prices),("Holding","Holding",v_holding),("Fases e indicadores","Phases and indicators",v_phases),("Quartel","Barracks",v_barracks),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
+ ("10. Prefeito e contas","10. Mayor and accounts",v_mayor),("A moeda","Money",v_money),("Exportação","Exports",v_export),("Preços","Prices",v_prices),("Holding","Holding",v_holding),("Fases e indicadores","Phases and indicators",v_phases),("Quartel","Barracks",v_barracks),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
 label("veio.village.title","Guia da Vila Operária","Worker Village Guide")
 extra=[{"translate":"veio.village.title","bold":True},{"text":"\n"}]
 for n,(pt,en,target) in enumerate(vlinks):

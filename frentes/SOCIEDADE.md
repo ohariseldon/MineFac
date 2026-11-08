@@ -1,4 +1,4 @@
-# Sociedade da vila (0.18.0; contas, preços e economia fechada até a 0.21.0)
+# Sociedade da vila (0.18.0; contas, preços, economia fechada e comércio exterior até a 0.22.0)
 
 A vila deixa de ser só mão de obra. Cada família mora numa **casa**, recebe **salário** dos postos onde
 seus adultos trabalham, compra **comida e bens** nas **lojas** e vive melhor ou pior conforme o que a
@@ -47,6 +47,27 @@ companhia ────────▶ famílias ──────────�
   são os salários dos trabalhadores dos postos dela e o imposto. O centro de controle mostra receita,
   gastos e lucro do dia em cada aba.
 - **PIB:** consumo final (o varejo do dia). O atacado aparece como produção da indústria.
+
+## Comércio exterior (0.22)
+
+A moeda também entra **de fora**: a esmeralda é minerável (o jogador acha minério de esmeralda e
+deposita no cofre) e o **porto de exportação** vende ao mercado externo.
+
+- **Porto de exportação** (empresa de logística): 9 espaços; um navio por turno (1 min) leva tudo.
+  A venda entra na conta da companhia como moeda nova (borda de entrada, contada como exportação), com
+  o imposto da fase retido na fonte. A receita vai para a empresa da holding que faz o item.
+- **Preço mundial por complexidade:** valor base x camada: matéria-prima 1x, processado 1,5x,
+  componente 2x, avançado 3x, módulos 4x. Ex.: minério de ferro 2, chapa de ferro 6, engrenagem 14,
+  circuito 42, módulo de velocidade 160 moedas.
+- **Saturação diária:** cada item tem `ABSORB` (64; matéria-prima 32) unidades por dia a preço cheio;
+  depois o preço cai (`absorb / (absorb + vendidas hoje)`). Exportar variado e elaborado rende mais:
+  o jogo induz a subir na cadeia de valor.
+- **Indicadores:** PIB = consumo final + exportação. O relatório da prefeitura separa a entrada de
+  moeda vinda de exportações; a visão geral da holding mostra a exportação do dia; o relatório do
+  centro de controle sugere os 3 itens guardados que mais rendem lá fora hoje.
+- **Para as outras frentes:** `society::export::world_price`, `quote` e `sell` são a porta do mercado
+  externo para novos produtos (a tabela `table` recebe os itens novos com a sua camada) e para a
+  praça do mercado. Importação (comprar de fora, moeda saindo) pode usar o mesmo caminho ao contrário.
 
 ### Para integrar depois
 

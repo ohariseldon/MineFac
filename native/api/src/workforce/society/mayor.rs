@@ -178,14 +178,14 @@ pub(crate) fn hall_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     let phase = number(entity, "Phase").max(1);
     if close {
         for (key, value) in [("DMade", flow[ledger::MADE]), ("DSold", flow[ledger::SOLD]), ("DTax", flow[ledger::TAXES]),
-            ("DWages", flow[ledger::WAGES]), ("DAssist", flow[ledger::ASSIST])] {
+            ("DWages", flow[ledger::WAGES]), ("DAssist", flow[ledger::ASSIST]), ("DExport", flow[ledger::EXPORTS])] {
             set_number(entity, key, ledger::daily(number(entity, key), value));
         }
         let homes = homes_near(dimension, pos, HALL_RADIUS, now);
         let homeless = homeless_near(host, dimension, pos, now);
         let numbers = measure(&homes, homeless);
-        // PIB: consumo final (o varejo do dia).
-        let gdp = number(entity, "DSold");
+        // PIB: consumo final (o varejo do dia) mais exportações.
+        let gdp = number(entity, "DSold") + number(entity, "DExport");
         let promoted = if staffed { next_phase(phase, &numbers, gdp) } else { phase };
         if promoted > phase {
             set_number(entity, "Phase", promoted);
@@ -216,7 +216,7 @@ pub(crate) fn hall_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
 pub(crate) fn hall_data(entity: &ModBlockEntity) -> [i32; 13] {
     let phase = number(entity, "Phase").max(1);
     [number(entity, "Status"), phase, number(entity, "DPop"), number(entity, "DFamilies"), number(entity, "DEmploy"),
-        number(entity, "DIdh"), number(entity, "DGini"), number(entity, "DSold"),
+        number(entity, "DIdh"), number(entity, "DGini"), number(entity, "DSold") + number(entity, "DExport"),
         number(entity, "Public"), tax_rate(phase), number(entity, "DTax"),
         number(entity, "DRequest") * 1000 + number(entity, "DRequestN").min(999), number(entity, "DSuspended")]
 }
@@ -255,10 +255,10 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
         if entity.id == TOWN_HALL {
             state = Some((worker(entity).is_some(), number(entity, "Phase").max(1),
                 [number(entity, "Public"), number(entity, "DTax"), number(entity, "DWages"), number(entity, "DAssist")],
-                [number(entity, "DMade"), number(entity, "DSold")]));
+                [number(entity, "DMade"), number(entity, "DSold"), number(entity, "DExport")]));
         }
     });
-    let (staffed, phase, public, [made, sold]) = state?;
+    let (staffed, phase, public, [made, sold, exports]) = state?;
     let at = center(pos);
     let dimension = host.dimension().to_owned();
     let Some(player) = host.server_players().into_iter()
@@ -275,7 +275,7 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     host.tell(player, Text::tr(&format!("veio.mayor.phase_name{phase}"), &[]));
     host.tell(player, Text::tr("veio.mayor.report.people", &[&numbers.population, &numbers.adults, &numbers.kids,
         &numbers.families, &numbers.homeless]));
-    host.tell(player, Text::tr("veio.mayor.report.economy", &[&sold, &made, &numbers.employment,
+    host.tell(player, Text::tr("veio.mayor.report.economy", &[&(sold + exports), &sold, &exports, &made, &numbers.employment,
         &cost_of_living(&dimension, pos, now)]));
     host.tell(player, Text::tr("veio.mayor.report.public", &[&public[0], &tax_rate(phase), &public[1], &public[2],
         &public[3]]));
@@ -333,5 +333,5 @@ pub(crate) fn money(dimension: &str, now: u64) -> [i64; 6] {
 fn money_report(dimension: &str, now: u64) -> Text {
     let [company, public, shops, families, emitted, redeemed] = money(dimension, now);
     Text::tr("veio.mayor.report.money", &[&(company + public + shops + families), &company, &public, &shops, &families,
-        &emitted, &redeemed])
+        &emitted, &ledger::exports(dimension), &redeemed])
 }

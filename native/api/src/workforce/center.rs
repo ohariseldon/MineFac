@@ -152,7 +152,7 @@ pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
             0 => status, 1..=11 => holding[index - 1], 12 => number(entity, "Company"), _ => 0,
         });
     }
-    let keys = ["DWorkers", "DWorking", "DWaiting", "DHungry", "DFields", "DPens", "DStore", "DQueue",
+    let keys = ["DWorkers", "DWorking", "DWaiting", "DHungry", "DFields", "DPens", "DStore", "DExport",
         "DGoal1", "DGoal2", "DGoal3"];
     std::array::from_fn(|index| match index {
         0 => status, 12 => number(entity, "Company"), _ => signed(entity, keys[index - 1]),
@@ -178,7 +178,7 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
             (tr(&format!("veio.status.{}", presentation::STATUS_KEYS[status]), &[]), presentation::text_color(status)),
             (tr("veio.center.workers", &[&read(1), &read(2)]), presentation::INK),
             (tr("veio.center.waiting", &[&read(3), &read(4)]), if read(3) > 0 { 0x9a5a00 } else { presentation::INK }),
-            (tr("veio.center.company", &[&read(12)]), 0x1f4fa8),
+            (tr("veio.center.company", &[&read(12), &read(8)]), 0x1f4fa8),
             (if read(7) < 0 { tr("veio.center.no_storage", &[&read(5), &read(6)]) } else { tr("veio.center.storage", &[&read(5), &read(6), &read(7)]) },
                 presentation::INK),
         ]
@@ -252,6 +252,22 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     }
     for line in super::super::holding::report_lines(dimension) {
         host.tell(player, line);
+    }
+    // Exportação: os itens guardados que hoje rendem mais no mercado externo (por unidade).
+    let day = host.level(dimension).and_then(|level| level.game_time(host)).unwrap_or(0).div_euclid(society::DAY);
+    let mut best: Vec<(i32, String)> = Vec::new();
+    for store in storage::stores_near(dimension, pos, RADIUS, now) {
+        for (item, _) in store.items {
+            if !best.iter().any(|(_, known)| *known == item)
+                && let Some(price) = society::export::quote(dimension, &item, day)
+            {
+                best.push((price, item));
+            }
+        }
+    }
+    best.sort_by(|a, b| b.0.cmp(&a.0));
+    for (price, item) in best.into_iter().take(3) {
+        host.tell(player, Text::tr("veio.export.best", &[&item, &price]));
     }
     for post in posts.iter().filter(|post| waiting(post.status)).take(REPORT_LINES) {
         let key = format!("veio.report.issue.{}", presentation::STATUS_KEYS.get(post.status as usize).copied().unwrap_or("idle"));
