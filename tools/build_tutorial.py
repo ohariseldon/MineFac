@@ -875,5 +875,7 @@ from build_transport_guide import build as build_transport_guide
 build_transport_guide(write, langs)
 from build_operations import add_labels
 add_labels(langs)
+from build_machine_audio import add_labels as add_sound_labels
+add_sound_labels(langs)
 for code,data in langs.items():write(f"{A}/lang/{code}.json",data)
 print("Guide pages:",len(pages))

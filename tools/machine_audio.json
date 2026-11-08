@@ -1,0 +1,361 @@
+{
+  "events": {
+    "press": {
+      "pack": "impact-sounds",
+      "files": [
+        "impactMetal_medium_000.ogg",
+        "impactMetal_medium_001.ogg"
+      ],
+      "pt": "Prensa bate",
+      "en": "Press clanks",
+      "duration": 0.85,
+      "start": 0,
+      "rate": 1,
+      "beats": [
+        0,
+        0.25,
+        0.5
+      ]
+    },
+    "assembly": {
+      "pack": "impact-sounds",
+      "files": [
+        "impactMetal_light_000.ogg",
+        "impactMetal_light_001.ogg"
+      ],
+      "pt": "Mecanismo encaixa peças",
+      "en": "Mechanism assembles",
+      "duration": 0.65,
+      "start": 0,
+      "rate": 1,
+      "beats": [
+        0,
+        0.22
+      ]
+    },
+    "crush": {
+      "pack": "impact-sounds",
+      "files": [
+        "impactMetal_heavy_000.ogg",
+        "impactMetal_heavy_001.ogg"
+      ],
+      "pt": "Britador tritura",
+      "en": "Crusher crunches",
+      "duration": 0.85,
+      "start": 0,
+      "rate": 1,
+      "beats": [
+        0,
+        0.3
+      ]
+    },
+    "wood": {
+      "pack": "impact-sounds",
+      "files": [
+        "impactWood_medium_000.ogg",
+        "impactWood_medium_001.ogg"
+      ],
+      "pt": "Mecanismo de madeira gira",
+      "en": "Wooden mechanism turns",
+      "duration": 0.8,
+      "start": 0,
+      "rate": 1,
+      "beats": [
+        0,
+        0.32
+      ]
+    },
+    "harvest": {
+      "pack": "impact-sounds",
+      "files": [
+        "footstep_grass_000.ogg",
+        "footstep_grass_001.ogg"
+      ],
+      "pt": "Máquina colhe",
+      "en": "Machine harvests",
+      "duration": 0.8,
+      "start": 0,
+      "rate": 1,
+      "beats": [
+        0
+      ]
+    },
+    "rustle": {
+      "pack": "rpg-audio",
+      "files": [
+        "cloth1.ogg",
+        "cloth2.ogg"
+      ],
+      "pt": "Cultivo farfalha",
+      "en": "Crops rustle",
+      "duration": 0.7,
+      "start": 0,
+      "rate": 1,
+      "beats": [
+        0
+      ]
+    },
+    "finish": {
+      "pack": "rpg-audio",
+      "files": [
+        "metalPot1.ogg",
+        "metalPot2.ogg"
+      ],
+      "pt": "Máquina termina produto",
+      "en": "Machine finishes product",
+      "duration": 0.9,
+      "start": 0,
+      "rate": 1,
+      "beats": [
+        0
+      ]
+    },
+    "cut": {
+      "pack": "rpg-audio",
+      "files": [
+        "drawKnife1.ogg",
+        "drawKnife2.ogg"
+      ],
+      "pt": "Lâmina corta",
+      "en": "Blade cuts",
+      "duration": 0.7,
+      "start": 0,
+      "rate": 1,
+      "beats": [
+        0,
+        0.25
+      ]
+    },
+    "motor": {
+      "pack": "sci-fi-sounds",
+      "files": [
+        "engineCircular_000.ogg",
+        "engineCircular_001.ogg"
+      ],
+      "pt": "Motor trabalha",
+      "en": "Motor runs",
+      "duration": 0.9,
+      "start": 1.5,
+      "rate": 0.8,
+      "beats": [
+        0
+      ]
+    },
+    "grind": {
+      "pack": "sci-fi-sounds",
+      "files": [
+        "engineCircular_002.ogg",
+        "engineCircular_003.ogg"
+      ],
+      "pt": "Moinho gira",
+      "en": "Mill grinds",
+      "duration": 0.85,
+      "start": 1.2,
+      "rate": 0.7,
+      "beats": [
+        0
+      ]
+    },
+    "electronics": {
+      "pack": "sci-fi-sounds",
+      "files": [
+        "computerNoise_000.ogg",
+        "computerNoise_001.ogg"
+      ],
+      "pt": "Circuitos trabalham",
+      "en": "Circuits work",
+      "duration": 0.7,
+      "start": 1.4,
+      "rate": 1,
+      "beats": [
+        0
+      ]
+    },
+    "saw": {
+      "pack": "sci-fi-sounds",
+      "files": [
+        "doorOpen_000.ogg",
+        "doorOpen_001.ogg"
+      ],
+      "pt": "Serra corta madeira",
+      "en": "Saw cuts wood",
+      "duration": 0.8,
+      "start": 0,
+      "rate": 0.8,
+      "beats": [
+        0
+      ]
+    },
+    "drone": {
+      "pack": "sci-fi-sounds",
+      "files": [
+        "engineCircular_002.ogg",
+        "engineCircular_003.ogg"
+      ],
+      "pt": "Drone voa",
+      "en": "Drone flies",
+      "duration": 0.85,
+      "start": 2,
+      "rate": 1.15,
+      "beats": [
+        0
+      ]
+    }
+  },
+  "profiles": [
+    {
+      "blocks": [
+        "press"
+      ],
+      "work": "press",
+      "finish": "finish",
+      "interval": 32,
+      "volume": 0.24
+    },
+    {
+      "blocks": [
+        "assembler",
+        "integrator"
+      ],
+      "work": "assembly",
+      "finish": "finish",
+      "interval": 36,
+      "volume": 0.18
+    },
+    {
+      "blocks": [
+        "cutter"
+      ],
+      "work": "cut",
+      "finish": null,
+      "interval": 28,
+      "volume": 0.18
+    },
+    {
+      "blocks": [
+        "crusher"
+      ],
+      "work": "crush",
+      "finish": null,
+      "interval": 30,
+      "volume": 0.22
+    },
+    {
+      "blocks": [
+        "drill",
+        "drill_mk2",
+        "drill_mk3"
+      ],
+      "work": "motor",
+      "finish": null,
+      "interval": 28,
+      "volume": 0.2
+    },
+    {
+      "blocks": [
+        "alloy_furnace",
+        "electric_furnace"
+      ],
+      "work": "motor",
+      "finish": "finish",
+      "interval": 44,
+      "volume": 0.12
+    },
+    {
+      "blocks": [
+        "electronics"
+      ],
+      "work": "electronics",
+      "finish": "assembly",
+      "interval": 40,
+      "volume": 0.1
+    },
+    {
+      "blocks": [
+        "mill"
+      ],
+      "work": "grind",
+      "finish": null,
+      "interval": 30,
+      "volume": 0.18
+    },
+    {
+      "blocks": [
+        "kitchen"
+      ],
+      "work": "rustle",
+      "finish": "finish",
+      "interval": 42,
+      "volume": 0.12
+    },
+    {
+      "blocks": [
+        "harvester"
+      ],
+      "work": "harvest",
+      "finish": null,
+      "interval": 36,
+      "volume": 0.18
+    },
+    {
+      "blocks": [
+        "planter"
+      ],
+      "work": "rustle",
+      "finish": null,
+      "interval": 40,
+      "volume": 0.12
+    },
+    {
+      "blocks": [
+        "tree_farm"
+      ],
+      "work": "saw",
+      "finish": null,
+      "interval": 36,
+      "volume": 0.18
+    },
+    {
+      "blocks": [
+        "generator",
+        "biomass_generator",
+        "geothermal",
+        "steam_engine"
+      ],
+      "work": "motor",
+      "finish": null,
+      "interval": 40,
+      "volume": 0.12
+    },
+    {
+      "blocks": [
+        "water_wheel",
+        "wind_turbine"
+      ],
+      "work": "wood",
+      "finish": null,
+      "interval": 46,
+      "volume": 0.12
+    },
+    {
+      "blocks": [
+        "inserter",
+        "fast_inserter",
+        "long_inserter"
+      ],
+      "work": null,
+      "finish": "assembly",
+      "interval": 24,
+      "volume": 0.1
+    },
+    {
+      "blocks": [
+        "drone_port"
+      ],
+      "work": "drone",
+      "finish": null,
+      "interval": 28,
+      "volume": 0.12
+    }
+  ]
+}

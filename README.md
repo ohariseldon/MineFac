@@ -50,6 +50,14 @@ O começo usa receitas sem posição fixa na bancada, uma extratora diretamente 
 
 Os painéis de inspeção mostram energia, progresso e motivo de espera. Os estoques, o progresso, a carga e a queima em andamento são salvos no mundo. A energia armazenada pertence ao bloco colocado. Use a chave para mudar sua orientação.
 
+## Sons das máquinas
+
+Máquinas em trabalho têm batidas, motores, cortes e ruídos agrícolas discretos,
+com variações e atenuação pela distância. Ajuste pelo volume de **Blocos** nas opções
+de som; as legendas têm traduções em português e inglês. Máquinas próximas
+compartilham limites de som para reduzir a sobreposição. Os assets são gratuitos,
+CC0, de Kenney. Detalhes e validação: [áudio das máquinas](frentes/AUDIO-MAQUINAS.md).
+
 ## Extração e processamento
 
 As extratoras trabalham diretamente sobre as jazidas existentes do Minecraft. As jazidas permanecem disponíveis para sustentar a fábrica.

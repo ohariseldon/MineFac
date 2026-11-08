@@ -1,6 +1,7 @@
 mod budget;
 mod presentation;
 mod appearance;
+mod soundscape;
 mod contracts;
 mod freight;
 mod logistics;
@@ -214,6 +215,7 @@ impl Hooks for Factory {
         let produced = number(event.entity, "Produced");
         tick_factory(host, event.pos, event.entity, time);
         pollution::emit(host, event.pos, event.entity, time);
+        soundscape::after(host, event.pos, event.entity, produced, time);
         record_performance(event.entity, produced);
         presentation::publish(event.entity);
         if visual_signature(event.entity) != previous {
@@ -243,6 +245,7 @@ impl Hooks for Factory {
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
         defense::advance_clock();
+        soundscape::refresh(host, defense::clock());
         budget::begin_tick(defense::clock());
         power::maintenance(defense::clock());
         workforce::spawn::tick(host, defense::clock());
@@ -615,7 +618,9 @@ fn tick_power(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     let limit = capacity(&entity.id);
     let mut energy = number(entity, "energy").min(limit);
     // Geração (produção); a distribuição abaixo é da logística.
+    let stored = energy;
     energy = production::generation::produce(host, pos, entity, energy, limit);
+    soundscape::generated(host, pos, entity, energy > stored);
     // A rede só empurra. Sem carga, as seis consultas a vizinhos não movem energia.
     if energy > 0 {
         let offset = number(entity, "Port") as usize % 6;

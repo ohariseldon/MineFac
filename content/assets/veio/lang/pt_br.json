@@ -908,5 +908,18 @@
   "veio.freight.disabled": "desligada",
   "veio.freight.capacity": "Carga por viagem: até %s",
   "veio.freight.caravan_outbound": "Animal levando a carga",
-  "veio.freight.caravan_return": "Animal voltando à estação"
+  "veio.freight.caravan_return": "Animal voltando à estação",
+  "subtitles.veio.machine.press": "Prensa bate",
+  "subtitles.veio.machine.assembly": "Mecanismo encaixa peças",
+  "subtitles.veio.machine.crush": "Britador tritura",
+  "subtitles.veio.machine.wood": "Mecanismo de madeira gira",
+  "subtitles.veio.machine.harvest": "Máquina colhe",
+  "subtitles.veio.machine.rustle": "Cultivo farfalha",
+  "subtitles.veio.machine.finish": "Máquina termina produto",
+  "subtitles.veio.machine.cut": "Lâmina corta",
+  "subtitles.veio.machine.motor": "Motor trabalha",
+  "subtitles.veio.machine.grind": "Moinho gira",
+  "subtitles.veio.machine.electronics": "Circuitos trabalham",
+  "subtitles.veio.machine.saw": "Serra corta madeira",
+  "subtitles.veio.machine.drone": "Drone voa"
 }
