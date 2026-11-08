@@ -567,6 +567,29 @@ fn set_number_at(entity: &mut ModBlockEntity, key: &JavaString, value: i32) {
     }
 }
 
+/// Vários inteiros do NBT numa passada só pelo mapa, cada um como em `number`. `keys` vem em
+/// ordem crescente, a mesma do `BTreeMap`: a passada compara cada chave no máximo uma vez.
+fn numbers_sorted<const N: usize>(entity: &ModBlockEntity, keys: &[&JavaString; N]) -> [i32; N] {
+    debug_assert!(keys.is_sorted());
+    let mut values = [0; N];
+    let mut wanted = 0;
+    'entries: for (key, tag) in &entity.nbt {
+        while wanted < N {
+            match keys[wanted].cmp(key) {
+                std::cmp::Ordering::Less => wanted += 1,
+                std::cmp::Ordering::Equal => {
+                    values[wanted] = match tag { Tag::Int(value) => (*value).max(0), _ => 0 };
+                    wanted += 1;
+                    continue 'entries;
+                }
+                std::cmp::Ordering::Greater => continue 'entries,
+            }
+        }
+        break;
+    }
+    values
+}
+
 /// O que o desenho no mundo lê do NBT, além da carga (que `presentation::publish` acusa).
 /// O braço anima pelo `MovedAt`.
 fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {

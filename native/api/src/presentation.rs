@@ -228,15 +228,23 @@ pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
     } else if workforce::zones::is_marker(&entity.id) {
         workforce::zones::data(entity)
     } else {
+        // Os 14 números numa passada só pelo NBT, em vez de 12 buscas por tick.
+        static KEYS: std::sync::OnceLock<[&'static JavaString; 14]> = std::sync::OnceLock::new();
+        let keys = KEYS.get_or_init(|| {
+            let keys = [nbt_key("Burn"), nbt_key("BurnTotal"), nbt_key("ContractStage"), nbt_key("Damage"),
+                nbt_key("Duration"), nbt_key("Info"), nbt_key("LocalSmog"), nbt_key("Module"), nbt_key("Progress"),
+                nbt_key("Rate"), nbt_key("Status"), nbt_key("Total"), nbt_key("Utilization"), nbt_key("energy")];
+            assert!(keys.is_sorted(), "na ordem do mapa");
+            keys
+        });
+        let [burn, burn_total, stage, damage, duration, info, smog, module, progress, rate, status, total,
+            utilization, energy] = numbers_sorted(entity, keys);
         let (progress, duration) = match entity.id.as_str() {
-            GENERATOR | GEOTHERMAL => (number(entity, "Burn"), number(entity, "BurnTotal").max(1)),
-            _ => (number(entity, "Progress"), number(entity, "Duration").max(1)),
+            GENERATOR | GEOTHERMAL => (burn, burn_total.max(1)),
+            _ => (progress, duration.max(1)),
         };
-        [number(entity, "Status"), progress, duration,
-            number(entity, "energy"), number(entity, "Burn"), capacity(&entity.id), number(entity, "Rate"),
-            number(entity, "Utilization"), number(entity, "ContractStage"), number(entity, "Total"),
-            number(entity, "Damage"), number(entity, "Module"),
-            if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") }]
+        [status, progress, duration, energy, burn, capacity(&entity.id), rate, utilization, stage, total,
+            damage, module, if entity.id == TESLA { smog } else { info }]
     };
     debug_assert_eq!(values.len(), DATA_SLOTS);
     if entity.data.len() != DATA_SLOTS {
