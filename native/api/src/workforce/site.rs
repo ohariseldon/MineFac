@@ -17,6 +17,10 @@
 //!
 //! Um prédio só vale enquanto o canteiro existir (é o coração da obra). Tudo lido aos poucos:
 //! a conferência lê `SURVEY` blocos por ciclo pela cota de trabalhadores do orçamento global.
+//!
+//! **Ruínas e território.** Canteiros postos pela vila na chegada (`ruins.rs`) têm a planta fixa
+//! (`Fixed`). Ruínas e obras em construção ou de pé publicam o território (a planta mais
+//! `MARGIN` blocos) no registro `BUILDINGS`; `territory.rs` protege esses blocos do jogador.
 use super::*;
 use horizon_client::mod_api::{BlockEntitySubmitEvent, CubeFace, NativeBlockEdit, NativeBlockRun};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -31,6 +35,8 @@ const RECHECK: i32 = 20;
 const STALE: u64 = 400;
 /// Alcance do mestre de obras: anda até perto de cada parte do prédio.
 const BUILD_REACH: f64 = 5.0;
+/// Folga do território em volta da planta (todos os eixos).
+pub(crate) const MARGIN: i32 = 3;
 
 // Fases do canteiro (`Phase`).
 pub(crate) const PLAN: i32 = 0;
@@ -78,6 +84,13 @@ pub(crate) struct Building {
     /// Pesquisas concluídas (só o centro de pesquisa).
     pub research: u32,
     pub seen: u64,
+    /// Conta em `near()`: obra em andamento ou de pé. Uma ruína ainda na planta só publica o
+    /// território.
+    pub counts: bool,
+    /// Território protegido (cantos mínimo e máximo), para ruínas e obras em construção ou de pé.
+    pub area: Option<([i32; 3], [i32; 3])>,
+    /// Planta fixa (ruína da vila): nem o canteiro sai.
+    pub fixed: bool,
 }
 
 /// Prédios em volta de um ponto, em bits de `projects`.
@@ -121,8 +134,8 @@ pub(crate) fn near(dimension: &str, at: [i32; 3], radius: i32, now: u64, except:
         return Near::default();
     }
     BUILDINGS.lock().map(|list| list.iter()
-        .filter(|known| known.dimension == dimension && now.saturating_sub(known.seen) <= STALE && Some(known.pos) != except
-            && (0..3).all(|axis| (known.pos[axis] - at[axis]).abs() <= radius))
+        .filter(|known| known.counts && known.dimension == dimension && now.saturating_sub(known.seen) <= STALE
+            && Some(known.pos) != except && (0..3).all(|axis| (known.pos[axis] - at[axis]).abs() <= radius))
         .fold(Near::default(), |mut near, known| {
             if known.standing {
                 near.erected |= known.bit;
@@ -149,6 +162,64 @@ pub(crate) fn sites_near(dimension: &str, at: [i32; 3], radius: i32, now: u64) -
         .cloned().collect()).unwrap_or_default()
 }
 
+/// Território da obra que cobre `at`: o canteiro (coração), se a planta é fixa e o bloco que o
+/// jogador completa nos lugares reservados.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct Guard {
+    pub site: [i32; 3],
+    pub fixed: bool,
+    pub reserved: &'static str,
+}
+
+/// Algum território publicado? Leitura sem trava, para os ganchos de bloco saírem cedo.
+pub(crate) fn any_territory() -> bool {
+    PENDING.load(Ordering::Acquire)
+}
+
+/// O território protegido que contém `at`, se houver.
+pub(crate) fn guard_at(dimension: &str, at: [i32; 3], now: u64) -> Option<Guard> {
+    if !PENDING.load(Ordering::Acquire) {
+        return None;
+    }
+    let list = BUILDINGS.lock().ok()?;
+    list.iter()
+        .filter(|known| known.dimension == dimension && now.saturating_sub(known.seen) <= STALE)
+        .find(|known| known.area.is_some_and(|(low, high)| (0..3).all(|axis| low[axis] <= at[axis] && at[axis] <= high[axis])))
+        .map(|known| Guard {
+            site: known.pos,
+            fixed: known.fixed,
+            reserved: blueprints::BLUEPRINTS.iter().find(|plan| blueprints::project_bit(plan) == known.bit)
+                .map_or("", |plan| plan.reserved_block),
+        })
+}
+
+/// Territórios protegidos na dimensão (para as explosões, que tocam muitos blocos de uma vez).
+pub(crate) fn territories(dimension: &str, now: u64) -> Vec<([i32; 3], [i32; 3])> {
+    if !PENDING.load(Ordering::Acquire) {
+        return Vec::new();
+    }
+    BUILDINGS.lock().map(|list| list.iter()
+        .filter(|known| known.dimension == dimension && now.saturating_sub(known.seen) <= STALE)
+        .filter_map(|known| known.area).collect()).unwrap_or_default()
+}
+
+/// Território da planta: os cantos da planta no mundo mais `MARGIN` em todos os eixos.
+pub(crate) fn territory(plan: &blueprints::Blueprint, pos: [i32; 3], rot: i32) -> ([i32; 3], [i32; 3]) {
+    let (low, high) = blueprints::bounds(plan, pos, rot);
+    (low.map(|value| value - MARGIN), high.map(|value| value + MARGIN))
+}
+
+/// O canteiro protege o território? Ruínas (planta fixa) sempre; os do jogador, só depois da
+/// conferência do terreno (em construção ou de pé).
+pub(crate) fn guards(fixed: bool, phase: i32) -> bool {
+    fixed || phase == BUILDING || phase == DONE
+}
+
+/// O canteiro do jogador saiu do mundo: o território deixa de valer na hora.
+pub(crate) fn removed(dimension: &str, pos: [i32; 3]) {
+    forget(dimension, pos);
+}
+
 // ---------- Estado ----------
 
 pub(crate) fn plan_index(entity: &ModBlockEntity) -> usize {
@@ -171,6 +242,11 @@ fn rot(entity: &ModBlockEntity) -> i32 {
     number(entity, "Rot")
 }
 
+/// Planta fixa: ruína da vila (`ruins.rs`).
+pub(crate) fn fixed(entity: &ModBlockEntity) -> bool {
+    number(entity, "Fixed") == 1
+}
+
 /// Blocos assentados e total (para o painel).
 fn publish_progress(entity: &mut ModBlockEntity) {
     let total = plan(entity).cells.len() as i32;
@@ -186,7 +262,7 @@ pub(crate) fn cycle(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow> {
         if entity.id != SITE {
             return;
         }
-        if phase(entity) >= BUILDING {
+        if phase(entity) >= BUILDING || fixed(entity) {
             result = Some(false);
             return;
         }
@@ -200,13 +276,15 @@ pub(crate) fn cycle(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow> {
     });
     let changed = result?;
     host.block_entity_sync(pos);
+    let mut ruin = false;
+    host.change_mod_block_entity(pos, &mut |entity| ruin = fixed(entity));
     if changed {
         let mut key = String::new();
         host.change_mod_block_entity(pos, &mut |entity| key = plan(entity).key.to_owned());
         notify_name(host, pos, &key);
         host.play_sound("minecraft:item.book.page_turn", center(pos), 4, 0.6, 1.1);
     } else {
-        notify(host, pos, "veio.site.started");
+        notify(host, pos, if ruin { "veio.site.ruin" } else { "veio.site.started" });
     }
     Some(Flow::Cancel)
 }
@@ -222,14 +300,26 @@ fn notify_name(host: &mut dyn Host, pos: [i32; 3], key: &str) {
 pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64, now: u64) {
     let dimension = host.dimension();
     if !entity.nbt.contains_key(nbt_key("Rot")) {
-        set_number(entity, "Rot", blueprints::rotation(host.block_property(pos, "facing").as_deref()));
+        // Primeiro tick: um canteiro posto pela vila na chegada vira ruína com a planta fixa.
+        if let Some((index, turn)) = ruins::claim(host, dimension, pos) {
+            set_number(entity, "Rate", index as i32);
+            set_number(entity, "Rot", turn);
+            set_number(entity, "Fixed", 1);
+            set_phase(entity, PLAN);
+            ruins::stamp(host, pos, &blueprints::BLUEPRINTS[index], turn);
+        } else {
+            set_number(entity, "Rot", blueprints::rotation(host.block_property(pos, "facing").as_deref()));
+        }
     }
     publish_progress(entity);
     let blueprint = plan(entity);
     let bit = blueprints::project_bit(blueprint);
     let due = (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(10) == 0;
+    let fixed = fixed(entity);
+    let area = guards(fixed, phase(entity)).then(|| territory(blueprint, pos, rot(entity)));
     let building = |standing: bool, operating: bool, research: u32| Building {
         dimension: dimension.to_owned(), pos, bit, standing, operating, research, seen: now,
+        counts: true, area, fixed,
     };
     if phase(entity) == BUILDING {
         if due {
@@ -266,7 +356,12 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             survey(host, pos, entity);
         }
         _ => {
-            forget(dimension, pos);
+            if fixed {
+                // Ruína à espera: protege o território, mas não ocupa a obra na vila.
+                publish(Building { counts: false, ..building(false, false, 0) });
+            } else {
+                forget(dimension, pos);
+            }
             let reason = waiting_for(dimension, pos, bit, now);
             set_number(entity, "Utilization", reason);
             set_number(entity, "Status", SITE_PLAN);
@@ -477,7 +572,9 @@ fn finish(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     set_number(entity, "Status", SITE_DONE);
     let key = plan(entity).key;
     let bit = blueprints::project_bit(plan(entity));
-    publish(Building { dimension: dimension.to_owned(), pos, bit, standing: true, operating: false, research: 0, seen: defense::clock() });
+    let area = Some(territory(plan(entity), pos, rot(entity)));
+    publish(Building { dimension: dimension.to_owned(), pos, bit, standing: true, operating: false, research: 0,
+        seen: defense::clock(), counts: true, area, fixed: fixed(entity) });
     let at = center(pos);
     host.play_sound("minecraft:ui.toast.challenge_complete", at, 4, 0.9, 1.0);
     host.send_particles(&ParticleOptions::simple(ParticleType::HappyVillager), None, [at[0], at[1] + 2.0, at[2]], [3.0, 2.0, 3.0], 0.0, 60);

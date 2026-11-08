@@ -11,26 +11,30 @@ Branch `cloud/obras-planta` (base: `origin/main` 542b0a0). Testes: `python tools
   (`site::near().operating`); centro mostra "de pé · parado" (`veio.center.project.idle`, bit 26).
 - Projeto `lab` (bit 512, Vila), pesquisas nos bits 20+ dos efeitos (`projects::research_bit`).
 
+## Feito na continuação (branch `claude/project-thread-6fbc15`)
+1. **Traduções** (pt_br e en_us, em `tools/build_tutorial.py`): `veio.site.no_staff`, `veio.site.next.<role>`,
+   `veio.center.project.idle`, `veio.project.lab.name/effect`, `veio.research.<key>.name/effect`. O aviso de
+   pesquisa concluída da vila usa **`veio.research.lab_done`**: `veio.research.done` já era da pesquisa da
+   grande indústria (`research.rs`, 1 argumento). Menu do canteiro com 3 slots em `tools/build_content.py`, ajuda
+   dos slots, rótulos do centro nos slots 6 (obra) e 7 (decreto). Guia da vila: Funcionários, Quem trabalha,
+   Centro de pesquisa, Engenharia, Ruínas e território, planta do centro de pesquisa e um índice das plantas.
+2. **Ruínas** (`workforce/ruins.rs`): como no desenho acima, com estas escolhas: até 3 ruínas de obras de nível 0
+   (refeitório, escola, ferraria, praça); raios 50/56/62 (dentro do anel 48–80, para o centro de controle no meio
+   da vila alcançar a 64); só mundos novos (tempo de jogo até 24000); `execute if block ... #minecraft:replaceable
+   run setblock` no lugar do `keep` (a grama baixa da planície faria o `keep` falhar); `<mundo>/veio/ruins.txt`
+   guarda que já foi feito e os canteiros pendentes (sobrevive a reabrir o mundo). Carimbo: camadas 0-3 com
+   90/70/45/20%, sem ar, móveis (PROPS), blocos protegidos ou que se apoiam em outros.
+3. **Proteção** (`workforce/territory.rs`, ganchos em `lib.rs` e no substituto): território = planta + 3 em todos
+   os eixos, para `Fixed` e BUILDING/DONE; `Building` ganhou `area`, `fixed` e `counts` (ruína à espera só
+   publica o território; `near()` só conta `counts`). O canteiro do jogador pode ser quebrado (o prédio sai do
+   registro na hora); o da ruína não. Numa ruína à espera, blocos que o construtor não derruba podem sair.
+4. **Docs**: TRABALHADORES.md (décima entrega) e README. Checks: `check_rust`, `check_project`,
+   `check_performance` passam.
+
 ## Falta
-1. **Traduções** novas: `veio.site.no_staff`, `veio.site.next.<role>` (cook, teacher, smith, librarian,
-   postman, innkeeper, scientist, market, council), `veio.center.project.idle`,
-   `veio.research.done`, `veio.research.<key>.name/effect`, `veio.project.lab.name/effect`;
-   menu do canteiro com 3 slots em `tools/build_content.py`; páginas do guia (lab, funcionários).
-2. **Ruínas** (`workforce/ruins.rs`): na chegada (`spawn::tick`, quando `CENTER` era None) escolher lugares
-   num anel de 48–80 blocos com `surface_heights` (MotionBlockingNoLeaves == OceanFloor, desnível ≤ 3,
-   sem sobrepor + margem 3), `setblock ... veio:site[facing=..] keep`, mapa PLANNED em memória; no
-   1º tick o canteiro pega a planta, marca `Fixed=1` (`cycle` recusa trocar) e carimba ruína parcial
-   (camadas baixas, subconjunto determinístico, sem blocos com PROPS/protegidos) via `edit_blocks`.
-3. **Proteção** (lib.rs + stub `native/offline-check/horizon-client`): ganchos gerados do Horizon:
-   `destroy_block(&self, host: &mut dyn Host, event: &mut DestroyBlockEvent) -> Flow` {pos, state};
-   `left_click_block(..., &mut LeftClickBlockEvent) -> Flow` {pos, face, state};
-   `use_item_on(..., &mut UseItemOnEvent<'_>) -> Flow` {stack: &ItemStack, pos, face} (cancelar também
-   bloqueia `use` do item — liberar comida etc.); `explosion_detonate(..., &mut ExplosionDetonateEvent<'_>)`
-   {dimension: &str, center: [f64;3], blocks: &mut Vec<[i32;3]>} (tirar posições protegidas).
-   `host.acting_player()` dá o jogador (criativo pode passar). Território = bounds da planta + 3, para
-   canteiros `Fixed` e em BUILDING/DONE; liberar blocos naturais (grama, terra, flores, folhas, areia,
-   cascalho, neve). Publicar a área no registro `BUILDINGS` (campo novo) e só contar em `near()` os que valem.
-4. Docs (TRABALHADORES.md/README), checks (`check_project`, `check_performance`), zip consolidado.
+- Testar no jogo (nada foi testado no jogo): ruínas aparecendo e sendo reconstruídas, ganchos de proteção e as
+  assinaturas reais deles no Horizon (em especial o retorno de `explosion_detonate` e o tipo de `face`).
+- Zip consolidado (fora desta continuação).
 
 ## Integração com a main 0.22.0 (feita)
 - Centro de controle com 8 espaços: 0 comida, 1-3 metas, 4 cofre, 5 saque (da 0.21), **6 obra**, **7 decreto**
@@ -40,4 +44,4 @@ Branch `cloud/obras-planta` (base: `origin/main` 542b0a0). Testes: `python tools
   a comida foi para a linha de aldeões. `DA5` traz (fila, ocupação+1) e `DA6` a exportação do dia (`center::refresh`).
 - Economia fechada: `center::add_coins` é borda (esmeraldas de verdade); recompensas de pedidos e o
   rendimento da Prefeitura saem do caixa público (`center::reward`). Sem prefeitura ou sem saldo, só prestígio.
-- Ainda pendente: menu do canteiro com 3 espaços em `tools/build_content.py` (o layout já tem 3).
+- Menu do canteiro com 3 espaços em `tools/build_content.py`: feito.
