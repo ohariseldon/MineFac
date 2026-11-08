@@ -64,7 +64,7 @@ Quadro: 257 blocos redesenhados, 1223 alocações, 67 µs.
 | Quadro: µs | ~67 | ~37 |
 | Vila grande (150 + 300) | 3,2 µs/tick | 3,3 µs/tick (sem mudança; já estava barata) |
 
-`check_performance.py`: "checks identical" em todos os commits. Os 7 cenários continuam iguais ou melhores dentro do ruído; `nbt_keys` cai porque o painel lê menos chaves.
+`check_performance.py`: "checks identical" em todos os commits. Os 7 cenários (8 desde a 0.26.0, com o ambiente: veja [VISUAL-E-CLIMA.md](VISUAL-E-CLIMA.md)) continuam iguais ou melhores dentro do ruído; `nbt_keys` cai porque o painel lê menos chaves.
 
 ## Trocas
 

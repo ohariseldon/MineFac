@@ -1,18 +1,28 @@
 schema = 1
 id = "veio_industrial"
-name = "Veio — Realismo leve"
-version = "1.1.0"
+name = "Veio — Realismo"
+version = "3.0.1"
 api = "0.1"
-description = "Sol e luar, metais e pintura distintos, chuva, água com profundidade e atmosfera industrial. Sem redesenhar o cenário para reflexos."
+description = "Nuvens volumétricas, água espelhada, profundidade nas texturas, sombras suaves com penumbra e sombra das nuvens no chão, céu com atmosfera e estrelas, relevo nas texturas, sombra de cantos, luz volumétrica, reflexos em chão molhado e metal, água com refração e cáusticas, plantas em movimento, luz colorida, estações do ano e fumaça da fábrica. Três níveis de qualidade; o Leve foi pensado para PCs de 8 GB."
 authors = ["Veio"]
 license = "MIT"
 shared = ["common.wgsl"]
 
 [sky]
 file = "sky.wgsl"
+# O pacote desenha as próprias nuvens, o sol e as estrelas; a lua continua a do jogo.
+clouds = false
+sun = false
+stars = false
 
 [material]
 file = "material.wgsl"
+
+[vertex]
+file = "vertex.wgsl"
+
+[weather]
+file = "weather.wgsl"
 
 [shadow]
 resolution = 1024
@@ -21,9 +31,38 @@ option = "shadows"
 resolution_option = "shadow_resolution"
 distance_option = "shadow_distance"
 
+[reflection]
+option = "reflections"
+
+# Um pacote pode escrever no máximo 4 saídas de [[post]]. Brilho em dois passos de um quarto da
+# tela; sombra de cantos e luz no ar dividem uma saída; nuvens (céu) e reflexos (chão) outra.
+[[post]]
+file = "blur_h.wgsl"
+name = "Brilho: partes claras, desfoque horizontal"
+output = "glow_h"
+scale = 0.25
+
+[[post]]
+file = "blur_v.wgsl"
+name = "Brilho: desfoque vertical"
+output = "glow"
+scale = 0.25
+
+[[post]]
+file = "light.wgsl"
+name = "Sombra de cantos e luz no ar"
+output = "light"
+scale = 0.5
+
+[[post]]
+file = "sky_mirror.wgsl"
+name = "Nuvens volumétricas e reflexos na tela"
+output = "sky_mirror"
+scale = 0.5
+
 [[post]]
 file = "finish.wgsl"
-name = "Cor industrial e suavização"
+name = "Ar, brilho, cor e suavização"
 
 [[materials]]
 id = 1
@@ -43,11 +82,76 @@ sprites = ["block/glass", "block/tinted_glass", "block/*_stained_glass", "block/
 
 [[materials]]
 id = 5
-sprites = ["block/*_leaves", "block/short_grass", "block/tall_grass_*", "block/fern", "block/large_fern_*", "block/vine", "block/wheat_stage*", "block/carrots_stage*", "block/potatoes_stage*"]
+sprites = ["block/short_grass", "block/fern", "block/vine", "block/wheat_stage*", "block/carrots_stage*", "block/potatoes_stage*", "block/beetroots_stage*", "block/dandelion", "block/poppy", "block/allium", "block/azure_bluet", "block/*_tulip", "block/oxeye_daisy", "block/cornflower", "block/lily_of_the_valley", "block/sweet_berry_bush_stage*", "block/torchflower", "block/dead_bush", "block/*_sapling", "block/short_dry_grass", "block/tall_dry_grass", "block/bush", "block/firefly_bush"]
+
+[[materials]]
+id = 7
+sprites = ["block/*_leaves"]
+
+[[materials]]
+id = 8
+sprites = ["block/tall_grass_bottom", "block/large_fern_bottom", "block/sunflower_bottom", "block/lilac_bottom", "block/rose_bush_bottom", "block/peony_bottom"]
+
+[[materials]]
+id = 9
+sprites = ["block/tall_grass_top", "block/large_fern_top", "block/sunflower_top", "block/sunflower_front", "block/sunflower_back", "block/lilac_top", "block/rose_bush_top", "block/peony_top"]
 
 [[materials]]
 id = 6
 sprites = ["block/weathered_copper", "block/oxidized_copper", "block/weathered_cut_copper", "block/oxidized_cut_copper"]
+
+
+# Cor da luz de cada fonte. A intensidade continua a do jogo; muda só a cor.
+[[lights]]
+color = [1.25, 0.78, 0.42]
+blocks = ["torch", "wall_torch", "lantern", "campfire", "fire", "candle", "*_candle", "jack_o_lantern", "furnace", "blast_furnace", "smoker"]
+
+[[lights]]
+color = [1.45, 0.55, 0.16]
+blocks = ["lava", "magma_block", "lava_cauldron"]
+
+[[lights]]
+color = [0.35, 0.80, 1.25]
+blocks = ["soul_torch", "soul_wall_torch", "soul_lantern", "soul_campfire", "soul_fire"]
+
+[[lights]]
+color = [1.35, 0.20, 0.15]
+blocks = ["redstone_torch", "redstone_wall_torch", "redstone_lamp", "redstone_ore", "deepslate_redstone_ore"]
+
+[[lights]]
+color = [1.15, 1.00, 0.70]
+blocks = ["glowstone", "shroomlight", "ochre_froglight", "pearlescent_froglight"]
+
+[[lights]]
+color = [0.70, 1.00, 1.15]
+blocks = ["sea_lantern", "beacon", "conduit", "verdant_froglight", "end_rod"]
+
+[[lights]]
+color = [0.85, 0.45, 1.20]
+blocks = ["amethyst_cluster", "large_amethyst_bud", "crying_obsidian", "respawn_anchor"]
+
+[[particle_lights]]
+particles = ["flame", "small_flame", "lava"]
+color = [1.0, 0.55, 0.20]
+reach = 3.0
+
+[[particle_lights]]
+particles = ["soul_fire_flame"]
+color = [0.30, 0.75, 1.0]
+reach = 3.0
+
+[[particle_lights]]
+particles = ["firefly"]
+color = [0.80, 0.95, 0.40]
+reach = 2.5
+
+[[options]]
+id = "quality"
+name = "Qualidade"
+description = "Leve: pensado para PCs de 8 GB e placas integradas (sem relevo, sombra de cantos, luz no ar, reflexos, brilho, luz colorida nem plantas balançando). Equilibrado: o padrão, com tudo ligado em contas menores. Alto: mais amostras de sombra de cantos, luz no ar, reflexos e nuvens, penumbra que cresce com a distância e mais profundidade nas texturas."
+type = "choice"
+default = "Equilibrado"
+values = ["Leve (8 GB)", "Equilibrado", "Alto"]
 
 [[options]]
 id = "shadows"
@@ -61,14 +165,133 @@ id = "shadow_resolution"
 name = "Resolução das sombras"
 type = "choice"
 default = "1024"
-values = ["512", "1024"]
+values = ["512", "1024", "2048"]
 
 [[options]]
 id = "shadow_distance"
 name = "Alcance das sombras (blocos)"
 type = "choice"
 default = "48"
-values = ["32", "48", "64"]
+values = ["32", "48", "64", "96"]
+
+[[options]]
+id = "atmosphere"
+name = "Atmosfera"
+description = "Céu com dispersão da luz (azul no alto, pôr do sol quente) e perspectiva aérea: o que está longe ganha a cor do ar."
+type = "float"
+default = 0.8
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "clouds"
+name = "Nuvens"
+description = "Nuvens em camadas que andam com o vento e cobrem mais o céu na chuva e no inverno."
+type = "bool"
+default = true
+
+[[options]]
+id = "volumetric_clouds"
+name = "Nuvens volumétricas"
+description = "Cúmulos de verdade, com volume: base escura, topo iluminado pelo sol, bordas prateadas e luz dourada no fim da tarde. Equilibrado e Alto; no Leve as nuvens são planas."
+type = "bool"
+default = true
+
+[[options]]
+id = "waving"
+name = "Plantas e água em movimento"
+description = "Grama, flores, plantações e folhas balançam com o vento; a água ondula. Mais forte em tempestades. Só até 48 blocos."
+type = "bool"
+default = true
+
+[[options]]
+id = "colored_lights"
+name = "Luz colorida"
+description = "Tochas e lava quentes, tochas de alma azuis, redstone vermelha e o brilho dos fornos do Veio trabalhando."
+type = "bool"
+default = true
+
+[[options]]
+id = "bloom"
+name = "Brilho das luzes"
+description = "Lâmpadas, lava e o céu claro espalham um halo suave."
+type = "float"
+default = 0.6
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "sun_rays"
+name = "Luz no ar"
+description = "Feixes de luz de verdade entre árvores, janelas e chaminés, com neblina de manhã, no outono e na fumaça da fábrica. Usa as sombras; sem elas, só olhando para o sol."
+type = "float"
+default = 0.5
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "relief"
+name = "Relevo das texturas"
+description = "O detalhe de cada bloco vira relevo: com o sol de lado aparecem as pedras, tábuas e rebites. Usa os mapas de normal de um pacote de recursos LabPBR quando houver. Até 32 blocos."
+type = "float"
+default = 0.6
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "parallax"
+name = "Profundidade das texturas"
+description = "As frestas entre pedras, tijolos e tábuas ganham profundidade de verdade, que muda com o ângulo da câmera. Até 12 blocos no Equilibrado e 20 no Alto."
+type = "float"
+default = 0.7
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "ambient_occlusion"
+name = "Sombra de cantos"
+description = "Cantos, frestas, o pé das paredes e o chão sob as máquinas escurecem como na vida real."
+type = "float"
+default = 0.7
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "screen_reflections"
+name = "Reflexos no chão e no metal"
+description = "Chão molhado depois da chuva, metal e vidro refletem as lâmpadas, máquinas e o céu que estão na tela."
+type = "bool"
+default = true
+
+[[options]]
+id = "sharpen"
+name = "Nitidez"
+description = "Deixa as texturas nítidas sem serrilhar as bordas."
+type = "float"
+default = 0.35
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "reflections"
+name = "Reflexo do mundo na água"
+description = "A água espelha árvores, morros, casas e a fábrica como um lago parado. Desenha o mundo uma segunda vez em meia resolução: é o efeito mais caro. No Leve (8 GB), desligue também. Desligado, a água reflete só o céu."
+type = "bool"
+default = true
+
+[[options]]
+id = "seasons"
+name = "Estações do ano"
+description = "Com o mod Veio: folhas douradas e vermelhas no outono, campo opaco e frio no inverno, verde vivo na primavera, e a fumaça das fábricas no ar."
+type = "bool"
+default = true
 
 [[options]]
 id = "metal_highlights"
@@ -82,7 +305,7 @@ step = 0.05
 [[options]]
 id = "water_detail"
 name = "Detalhe da água"
-description = "Ondulação de luz próxima, transparência pela profundidade e brilho do céu. Reutiliza a profundidade já copiada pelo Horizon."
+description = "Ondulação de luz próxima, transparência pela profundidade e brilho do céu."
 type = "bool"
 default = true
 
@@ -94,16 +317,6 @@ type = "bool"
 default = true
 
 [[options]]
-id = "atmosphere"
-name = "Atmosfera"
-description = "Céu e névoa de distância discretos. Mantém interiores, água e efeitos de visão sob as regras do jogo."
-type = "float"
-default = 0.55
-min = 0.0
-max = 1.0
-step = 0.05
-
-[[options]]
 id = "edge_smoothing"
 name = "Suavizar bordas"
 type = "bool"
@@ -111,17 +324,51 @@ default = true
 
 [[options]]
 id = "color_strength"
-name = "Intensidade da cor industrial"
+name = "Cor e clima da imagem"
+description = "Hora dourada, noite azulada, o tom de cada estação e o contraste."
 type = "float"
 default = 0.65
 min = 0.0
 max = 1.0
 step = 0.05
 
+[[options]]
+id = "vignette"
+name = "Vinheta"
+type = "float"
+default = 0.35
+min = 0.0
+max = 1.0
+step = 0.05
+
 [[pages]]
 id = "main"
-name = "Realismo leve — 8 GB"
-items = ["shadows", "atmosphere", "metal_highlights", "water_detail", "wet_surfaces", "edge_smoothing", "color_strength", "page:shadow_quality"]
+name = "Veio — Realismo"
+items = ["quality", "shadows", "page:sky", "page:world", "page:light", "page:image", "page:shadow_quality"]
+
+[[pages]]
+id = "sky"
+name = "Céu e ar"
+description = "Atmosfera, nuvens e raios de sol."
+items = ["atmosphere", "clouds", "volumetric_clouds", "sun_rays"]
+
+[[pages]]
+id = "world"
+name = "Mundo vivo"
+description = "Vento, água, chuva e estações."
+items = ["waving", "seasons", "water_detail", "reflections", "wet_surfaces", "screen_reflections"]
+
+[[pages]]
+id = "light"
+name = "Luz"
+description = "Cor das fontes de luz, brilho, metais, sombra de cantos e relevo."
+items = ["colored_lights", "bloom", "metal_highlights", "ambient_occlusion", "relief", "parallax"]
+
+[[pages]]
+id = "image"
+name = "Imagem"
+description = "Cor, vinheta e suavização."
+items = ["color_strength", "vignette", "edge_smoothing", "sharpen"]
 
 [[pages]]
 id = "shadow_quality"
@@ -129,6 +376,6 @@ name = "Qualidade das sombras"
 description = "O padrão usa 1024 e 48 blocos. Reduza para 512 e 32 em placas gráficas mais limitadas."
 items = ["shadow_resolution", "shadow_distance"]
 
-# Objetivo de custo, não uma medição nem um limitador automático.
+# Objetivo de custo no Equilibrado, não uma medição nem um limitador automático.
 [budget]
-gpu_ms = 2.0
+gpu_ms = 7.0

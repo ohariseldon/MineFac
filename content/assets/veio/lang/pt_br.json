@@ -1499,7 +1499,7 @@
   "veio.industry.contents.11": "Logística nova",
   "veio.industry.contents.12": "Lava encanada",
   "veio.industry.contents.13": "Grande projeto",
-  "veio.industry.contents.14": "Blocos",
+  "veio.industry.contents.14": "Clima",
   "veio.industry.welcome": "Você recebeu o Guia da Grande Indústria: pesquisa, razões e o grande projeto.",
   "block.veio.home": "Lar",
   "veio.center.page.0": "Resumo",
@@ -1832,5 +1832,17 @@
   "veio.village.page.45": "Refeições fora de casa\n\nRefeição (assados, pão, torta): trabalho mais rápido e fábricas +5% por 5 min.\n\nBanquete (sopas, cenoura dourada): +10% por 8 min e regeneração.\n\nEm casa, coma no Lar.",
   "veio.village.reference.8": "Na mesma rede",
   "veio.village.reference.9": "Atalhos da fábrica",
-  "veio.village.reference.10": "Blocos"
+  "veio.village.reference.10": "Blocos",
+  "veio.season.0": "Primavera",
+  "veio.season.1": "Verão",
+  "veio.season.2": "Outono",
+  "veio.season.3": "Inverno",
+  "veio.climate": "%s · %s °C",
+  "veio.climate.frozen": "%s · %s °C: água congelada",
+  "veio.climate.frost": "%s · %s °C: geada, lavoura parada",
+  "veio.climate.unknown": "Medindo o clima...",
+  "veio.industry.page.16": "Clima e estações\n\nO ano tem 4 estações de 6 dias. Solar rende mais no verão, vento no inverno, rios cheios na primavera.\n\nNa geada a lavoura para e a roda d'água congela; com chuva neva e os lagos congelam. Telhado sobre a plantação vira estufa: 20 °C.",
+  "veio.industry.page.17": "Veio Realismo\n\nO pacote de shaders do jogo mostra as estações nas folhas, a fumaça das fábricas no céu e a luz colorida das máquinas quentes.\n\nPC de 8 GB: escolha Leve nas opções do pacote.",
+  "veio.industry.contents.15": "Visual",
+  "veio.industry.contents.16": "Blocos"
 }

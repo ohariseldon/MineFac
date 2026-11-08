@@ -116,6 +116,10 @@ impl Host for World {
     fn light(&self, _: [i32; 3]) -> (u8, u8) {
         (0, if self.sky { 15 } else { 0 })
     }
+    fn day_time(&self) -> i64 {
+        // Fim da primavera, meio-dia: uns 20 °C, sem geada nem calor extra.
+        4 * 24000 + 6000
+    }
     fn weather(&self) -> (f32, f32) {
         (0.0, 0.0)
     }

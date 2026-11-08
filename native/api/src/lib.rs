@@ -1,4 +1,8 @@
+mod ambience;
+mod scenery;
+mod winter;
 mod blueprint;
+pub(crate) mod climate;
 mod budget;
 mod presentation;
 mod appearance;
@@ -329,6 +333,7 @@ impl Hooks for Factory {
         // fora de ordem, as cotas zerariam no meio do tick e um passo da poluição podia ser
         // gasto no cliente (onde não há jogadores nem `summon`), perdendo a onda da noite.
         if host.window() {
+            scenery::client_tick(host);
             return;
         }
         defense::advance_clock();
@@ -341,6 +346,8 @@ impl Hooks for Factory {
         onboarding::server_tick(host);
         home::tick(host, defense::clock());
         milestones::census::tick(host, defense::clock());
+        ambience::maintain(host, defense::clock());
+        winter::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
             industry::maintain(host, time);
@@ -456,6 +463,30 @@ impl Hooks for Factory {
         presentation::draw(host, event);
     }
 
+    /// Luz colorida das máquinas quentes trabalhando, para o pacote de shaders.
+    #[allow(elided_lifetimes_in_paths)]
+    fn visuals(&self, host: &dyn Host, event: &mut horizon_client::mod_api::VisualsEvent) {
+        ambience::visuals(host, event.lights);
+    }
+
+    /// Estação, temperatura e fumaça da fábrica para o pacote de shaders (`frame.mods`).
+    #[allow(elided_lifetimes_in_paths)]
+    fn shader_params(&self, host: &dyn Host, event: &mut horizon_client::mod_api::ShaderParamsEvent) {
+        ambience::shader_params(host, event.params);
+    }
+
+    /// Grama, folhas e água de cada bioma com as cores da estação (cliente).
+    #[allow(elided_lifetimes_in_paths)]
+    fn biome_colors(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::BiomeColorsEvent) {
+        scenery::biome_colors(event.biome, event.colors);
+    }
+
+    /// Neblina das manhãs úmidas e fumaça das fábricas na névoa do jogo (cliente).
+    #[allow(elided_lifetimes_in_paths)]
+    fn render_fog(&self, host: &dyn Host, event: &mut horizon_client::mod_api::RenderFogEvent) {
+        scenery::render_fog(host, event.camera, event.fog_type, event.fog);
+    }
+
 }
 
 /// Tick de um bloco do Veio. Fora do gancho para as medições chamarem o mesmo caminho.
@@ -490,6 +521,7 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     holding::observe(host.dimension(), pos, entity, time);
     pollution::emit(host, pos, entity, time);
     soundscape::after(host, pos, entity, produced, previous_status, time);
+    ambience::observe(host, pos, entity, defense::clock());
     record_performance(entity, produced);
     let cargo = presentation::publish(entity);
     if cargo || published_signature(entity) != previous {

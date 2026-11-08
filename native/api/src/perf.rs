@@ -163,4 +163,20 @@ fn profile_scale() {
         workforce::profile_organize(&mut factory, [0; 3], &mut desk, 1);
     });
     println!("CHECK queue_tasks={} source_reads={}", number(&desk, "Queued"), factory.queries);
+
+    // Ambiente: 1.000 geradores ligados se registram como luz e fumaça (um por segundo cada) e o
+    // cliente pede as 8 luzes mais próximas a cada quadro; o clima é a conta do aspersor e do painel.
+    let mut hot = node(GENERATOR);
+    set_number(&mut hot, "Status", 1);
+    let spots: Vec<[i32; 3]> = (0..1000).map(|i| [i % 40 - 20, 64, i / 40 - 12]).collect();
+    let mut frame = 0u64;
+    measure("ambience_1000_hot_machines_second", 20, || {
+        frame += 1;
+        for pos in &spots { ambience::observe(&mut factory, *pos, black_box(&hot), frame); }
+        for _ in 0..3 {
+            black_box(ambience::lights_near("veio:performance", [0.5, 65.0, 0.5], frame, frame as f32 / 20.0));
+            black_box(climate::temperature(black_box(frame as i64 * 1200), 70, 0.0, "minecraft:overworld"));
+        }
+    });
+    println!("CHECK ambience_lights={}", ambience::lights_near("veio:performance", [0.5, 65.0, 0.5], frame, 0.0).len());
 }

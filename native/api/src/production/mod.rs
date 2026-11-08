@@ -328,11 +328,27 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
 }
 
 /// Linhas de informação no painel. `info` é o valor que a máquina publica no slot 12.
+/// Máquinas que medem a estação e a temperatura do ar (guardadas em "Climate").
+pub(crate) fn feels_weather(block: &str) -> bool {
+    matches!(block, SOLAR | WIND_TURBINE | WATER_WHEEL | HYDRO_TURBINE | SPRINKLER)
+}
+
 pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
     use horizon_client::mod_api::Text;
     let read = |index: usize| data.get(index).copied().unwrap_or(0);
     let info = read(12);
     let tr = |key: &str, args: &[&dyn std::fmt::Display]| Text::tr(key, args).plain();
+    // Estação e temperatura que a máquina mediu; 0 enquanto não mediu.
+    let climate = || -> String {
+        let packed = read(4);
+        if packed <= 0 { return tr("veio.climate.unknown", &[]); }
+        let (season, celsius) = super::climate::unpack(packed);
+        let name = tr(&format!("veio.season.{season}"), &[]);
+        let key = if block == WATER_WHEEL && (celsius as f32) < super::climate::FREEZE { "veio.climate.frozen" }
+            else if block == SPRINKLER && celsius < 3 { "veio.climate.frost" }
+            else { "veio.climate" };
+        tr(key, &[&name, &celsius])
+    };
     Some(match block {
         DRILL | DRILL_MK2 | DRILL_MK3 => vec![
             tr("veio.metric.rate", &[&read(6)]),
@@ -343,11 +359,11 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         PUMP => vec![tr("veio.metric.pumping", &[&info]),
             tr(if read(8) < 0 { "veio.metric.lava" } else { "veio.metric.water" }, &[&read(8).abs(), &water::capacity(PUMP)]),
             tr("veio.hint.pump", &[])],
-        SPRINKLER => vec![tr("veio.metric.fertility", &[&info]), tr("veio.metric.grown", &[&read(9)]), tr("veio.hint.sprinkler", &[])],
-        HYDRO_TURBINE => vec![tr("veio.metric.output", &[&info]), tr("veio.metric.head", &[&read(8)]), tr("veio.hint.hydro", &[])],
-        WATER_WHEEL => vec![tr("veio.metric.output", &[&info]), tr("veio.hint.water_wheel", &[])],
-        WIND_TURBINE => vec![tr("veio.metric.output", &[&info]), tr("veio.hint.wind", &[])],
-        SOLAR => vec![tr("veio.metric.output", &[&info]), tr("veio.hint.solar", &[])],
+        SPRINKLER => vec![tr("veio.metric.fertility", &[&info]), tr("veio.metric.grown", &[&read(9)]), climate()],
+        HYDRO_TURBINE => vec![tr("veio.metric.output", &[&info]), tr("veio.metric.head", &[&read(8)]), climate()],
+        WATER_WHEEL => vec![tr("veio.metric.output", &[&info]), climate(), tr("veio.hint.water_wheel", &[])],
+        WIND_TURBINE => vec![tr("veio.metric.output", &[&info]), climate(), tr("veio.hint.wind", &[])],
+        SOLAR => vec![tr("veio.metric.output", &[&info]), climate(), tr("veio.hint.solar", &[])],
         PLANTER => vec![tr("veio.metric.planted", &[&read(9)]), tr("veio.hint.planter", &[])],
         GROW_LAMP => vec![tr("veio.metric.grown", &[&read(9)]), tr("veio.hint.grow_lamp", &[])],
         TREE_FARM => vec![tr("veio.metric.trees", &[&read(9)]), tr("veio.hint.tree_farm", &[])],

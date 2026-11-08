@@ -8,6 +8,10 @@ struct Plot {
     blocks: HashMap<[i32; 3], (String, Vec<(String, String)>)>,
     machines: HashMap<[i32; 3], ModBlockEntity>,
     rain: f32,
+    /// Hora do mundo; sem ela, fim da primavera ao meio-dia (uns 20 °C).
+    clock: Option<i64>,
+    /// Telhado de estufa sobre a plantação (luz do céu abaixo de 15).
+    roof: bool,
 }
 
 impl Plot {
@@ -41,7 +45,8 @@ impl Host for Plot {
             None => false,
         }
     }
-    fn light(&self, _: [i32; 3]) -> (u8, u8) { (0, 15) }
+    fn light(&self, _: [i32; 3]) -> (u8, u8) { (0, if self.roof { 13 } else { 15 }) }
+    fn day_time(&self) -> i64 { self.clock.unwrap_or(4 * 24000 + 6000) }
     fn weather(&self) -> (f32, f32) { (self.rain, 0.0) }
 }
 
@@ -173,6 +178,24 @@ fn sprinkler_keeps_farmland_wet_and_fed_crops_grow_faster_than_watered_ones() {
     assert!(watered_growth > 0, "só com água também cresce, devagar");
     assert!(fed_growth > watered_growth * 2, "adubo e água: {fed_growth} contra {watered_growth}");
     assert!(fed.items[0].as_ref().unwrap().count < 64, "o adubo é consumido");
+}
+
+#[test]
+fn winter_frost_stops_open_fields_but_a_greenhouse_keeps_growing() {
+    // Madrugada do quarto dia de inverno, abaixo de zero.
+    let winter = 3 * super::super::super::climate::SEASON_DAYS * 24000 + 3 * 24000;
+    let grown = |roof: bool| {
+        let mut plot = Plot { clock: Some(winter), roof, ..Plot::default() };
+        field(&mut plot, "minecraft:wheat");
+        let mut sprinkler = entity(SPRINKLER);
+        sprinkler.items[0] = Some(ItemStack::new(BONE_MEAL, 64));
+        run_sprinkler(&mut plot, &mut sprinkler, 81 * 40, true);
+        ages(&plot)
+    };
+    assert_eq!(grown(false), 0, "geada: a lavoura a céu aberto para");
+    assert!(grown(true) > 0, "estufa com telhado segura 20 °C");
+    assert_eq!(cold_slowdown("minecraft:melon_stem", 17.0), Some(2), "melão no frio cresce devagar");
+    assert!(soil_cost(false, 36.0) > soil_cost(false, 20.0), "calor seca o solo");
 }
 
 #[test]

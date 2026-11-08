@@ -72,15 +72,24 @@ fn power_id(id: &str) -> &'static str {
     }
 }
 
-fn solar_output(host: &dyn Host, [x, y, z]: [i32; 3]) -> i32 {
-    let daylight = host.day_time().rem_euclid(24000);
+/// Clima no bloco, para o painel (`climate::pack`), relido junto com os sensores.
+fn sense_climate(host: &dyn Host, entity: &mut ModBlockEntity, y: i32) -> (i64, f32) {
+    let day_time = host.day_time();
+    let temperature = climate::temperature(day_time, y, host.weather().0, host.dimension());
+    set_number(entity, "Climate", climate::pack(day_time, temperature));
+    (day_time, temperature)
+}
+
+fn solar_output(host: &dyn Host, [x, y, z]: [i32; 3], day_time: i64, temperature: f32) -> i32 {
+    let daylight = day_time.rem_euclid(24000);
     let open_sky = host.light([x, y + 1, z]).1 == 15;
     if host.dimension() != "minecraft:overworld" || !open_sky || daylight >= 12000 {
         return 0;
     }
     let (rain, thunder) = host.weather();
     let sun = (daylight as f32 * std::f32::consts::PI / 12000.0).sin().max(0.0);
-    (16.0 * sun * (1.0 - 0.6 * rain - 0.4 * thunder).max(0.0)) as i32
+    // Estação (insolação) e calor do painel, como o silício: verão rende mais, inverno menos.
+    (16.0 * sun * (1.0 - 0.6 * rain - 0.4 * thunder).max(0.0) * climate::solar_factor(day_time, temperature)) as i32
 }
 
 pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, energy: i32, limit: i32) -> i32 {
@@ -151,13 +160,17 @@ pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
         }
         SOLAR => {
             if sense {
-                set_number(entity, "Info", solar_output(host, pos));
+                let (day_time, temperature) = sense_climate(host, entity, pos[1]);
+                set_number(entity, "Info", solar_output(host, pos, day_time, temperature));
             }
             energy = (energy + number(entity, "Info")).min(limit);
         }
         WATER_WHEEL => {
             if sense {
-                set_number(entity, "Info", WATER_FACE * water_sides(host, pos, true));
+                let (_, temperature) = sense_climate(host, entity, pos[1]);
+                // Água corrente congela no frio forte: a roda para até o degelo.
+                let frozen = temperature < climate::FREEZE;
+                set_number(entity, "Info", if frozen { 0 } else { WATER_FACE * water_sides(host, pos, true) });
             }
             energy = (energy + number(entity, "Info")).min(limit);
         }
@@ -170,7 +183,10 @@ pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
                 let (rain, thunder) = host.weather();
                 // Rajadas lentas e diferentes em cada lugar.
                 let gust = 0.85 + 0.3 * ((time as f32 / 900.0) + (x ^ z) as f32).sin().abs();
-                set_number(entity, "Info", wind_output(y, open_sky, rain, thunder, gust));
+                let (day_time, _) = sense_climate(host, entity, y);
+                // Ventos de estação: mais fortes no outono e no inverno.
+                let season = climate::wind_factor(day_time);
+                set_number(entity, "Info", wind_output(y, open_sky, rain, thunder, gust * season));
             }
             energy = (energy + number(entity, "Info")).min(limit);
         }
