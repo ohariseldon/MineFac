@@ -381,6 +381,7 @@ fn announce(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) 
     for line in 1..=DO_LINES.get(step).copied().unwrap_or(0) {
         host.tell(player.uuid, Text::tr(&format!("veio.onboarding.do.{step}.{line}"), &[]));
     }
+    if step == 0 { host.tell(player.uuid, Text::tr("veio.wiki.open", &[])); }
 }
 
 fn name_key(item: &str) -> String {

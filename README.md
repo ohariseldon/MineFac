@@ -1,4 +1,6 @@
-# Veio 0.28.1
+# Veio 0.29.0
+
+A 0.29.0 traz a **Wiki do Veio**, em dois lugares com os mesmos dados. **No jogo**, a tecla **J** abre uma tela própria, como um livro de receitas com tudo: abas da Indústria, Energia, Logística, Mundo e Sistemas; cada item tem a grade de fabricação desenhada, a máquina que o produz (tempo e energia), o que ele processa e onde é usado; clicar num ícone abre a página dele e o botão direito volta. **Escrita**, em [docs/wiki/index.html](docs/wiki/index.html): 17 artigos sobre todos os sistemas (energia, entrada e saída, jazidas, cadeias, fases, vila, sociedade, economia, comércio, agenda, defesa, clima...) com organogramas e diagramas, a tabela de todas as receitas de máquina e o catálogo de itens com os ícones do jogo. As duas são geradas por `tools/build_wiki.py` (com `tools/wiki_articles.py` e `tools/wiki_site.py`) a partir das receitas, das abas e dos avanços, então não ficam desatualizadas.
 
 A 0.28.1 refaz o **tutorial no estilo do Minecraft atual**, sem dar nada de graça: cada etapa mostra a ficha da receita (gerada das receitas do jogo: ingredientes, quantidades e onde fabricar) e de onde vem cada material; a receita da etapa é liberada no livro de receitas, onde um clique monta a grade; uma lista acima da barra de itens marca em verde o que você já tem e em vermelho o que falta, até fabricar a peça; e cada etapa concluída mostra o título na tela, toca o som de conquista e dá experiência.
 

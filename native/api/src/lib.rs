@@ -31,6 +31,7 @@ mod onboarding;
 mod upgrades;
 mod holding;
 mod workforce;
+mod wiki;
 
 use horizon_client::mod_api::{
     BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
@@ -329,6 +330,26 @@ impl Hooks for Factory {
         if let Some(player) = host.acting_player() {
             home::food::eaten(player.uuid, &player.name, &player.dimension, player.position, &event.stack.item, defense::clock());
         }
+    }
+
+    fn key(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::KeyEvent<'_>) {
+        wiki::key(host, event.key, event.pressed);
+    }
+
+    fn screen_render_post(&self, host: &dyn Host, event: &mut horizon_client::mod_api::ScreenRenderPostEvent<'_>) {
+        wiki::draw(host, event.batch, event.screen);
+    }
+
+    fn screen_mouse_button_pressed_pre(&self, host: &dyn Host,
+        event: &mut horizon_client::mod_api::ScreenMouseButtonPressedPreEvent<'_>) -> Flow
+    {
+        if wiki::click(host, event.screen, event.button) { Flow::Cancel } else { Flow::Continue }
+    }
+
+    fn screen_mouse_scrolled_pre(&self, host: &dyn Host,
+        event: &mut horizon_client::mod_api::ScreenMouseScrolledPreEvent<'_>) -> Flow
+    {
+        if wiki::scroll(host, event.screen, event.scroll[1]) { Flow::Cancel } else { Flow::Continue }
     }
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
