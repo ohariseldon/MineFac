@@ -1183,8 +1183,18 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     assert!(joined.contains("tag Steve add veio_village"));
     assert!(!joined.contains("bad name"), "nome inseguro não entra em comando");
 
-    // Longe de qualquer vila: espera os chunks, gera uma vila e só depois desiste.
+    // Quem entra longe, com a vila do anfitrião já conhecida, vai para ela e não ganha outra.
     village.commands.clear();
+    spawn::logged_in(9, "Alex", 40);
+    spawn::tick(&mut village, 60);
+    let joined = village.commands.join("\n");
+    assert!(joined.contains("tp @s 100 70 100"), "convidado da LAN vai ao centro já conhecido\n{joined}");
+    assert!(!joined.contains("place structure"), "não gera uma segunda vila");
+
+    // Sozinho e longe de tudo: espera os chunks, gera uma vila e só depois desiste.
+    spawn::reset();
+    village.commands.clear();
+    village.players = vec![player(9, "Alex", [5000.0, 64.0, 5000.0])];
     spawn::logged_in(9, "Alex", 40);
     spawn::tick(&mut village, 60);
     assert!(village.commands.is_empty(), "ainda esperando os aldeões carregarem");

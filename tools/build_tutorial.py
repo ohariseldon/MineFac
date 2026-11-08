@@ -760,6 +760,9 @@ v_expand=vpage(
 v_grow=vpage(
  "A vila cresce\n\nAldeões têm filhos até o teto da vila: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle. Máximo 150.\n\nVárias fábricas espalhadas: cada uma com sua vila.",
  "The village grows\n\nVillagers have children up to the village cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center. Max 150.\n\nSeveral spread factories: each has its own village.")
+v_lan=vpage(
+ "Jogar na mesma rede\n\nQuem hospeda: Esc, Abrir para a LAN, Iniciar mundo LAN. O mundo fica no seu computador.\n\nQuem entra: o mesmo Wi-Fi, Multijogador, o mundo aparece na lista. Instale o Veio na mesma versão.\n\nCada um usa a própria conta. As máquinas são as do anfitrião.",
+ "Play on your network\n\nHost: Esc, Open to LAN, Start LAN World. The world stays on your computer.\n\nJoin: the same Wi-Fi, Multiplayer, the world shows in the list. Install the same Veio version.\n\nEach player uses their own account. The machines are the host's.")
 v_trouble=vpage(
  "Quando um aldeão para\n\nSem comida: ponha pão.\nAusente: traga-o ou dispense (agachar + chave).\nCaminho obstruído: abra passagem.\nSaída cheia: esvazie ou use um celeiro.\nPasse o cursor no estado do painel para dicas.",
  "When a villager stops\n\nNo food: add bread.\nMissing: bring them back or dismiss (sneak + wrench).\nPath blocked: clear the way.\nOutput full: empty it or use a barn.\nHover over the panel status for tips.")
@@ -790,13 +793,23 @@ for name in village_order:
   "click_event":{"action":"change_page","page":vrefs[name]}},{"text":"\n"}])
 extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
 vpages[v_blocks-1]={"text":"","extra":extra}
-vlinks=[("Começar","Start here",v_intro),("1. Trabalhador","1. Worker",v_hire),("2. Lavoura","2. Field",v_field),
- ("3. Cercados","3. Pens",v_pen),("4. Armazéns","4. Storage",v_store),("5. Carregadores","5. Haulers",v_haul),
- ("6. Capataz","6. Foreman",v_foreman),("7. Centro","7. Center",v_center),("Expandir zonas","Grow zones",v_expand),
- ("A vila cresce","Village growth",v_grow),("Quartel","Barracks",v_barracks),("Casa e refeições","House and meals",v_home),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
+for code in langs:
+ for key in [k for k in langs[code] if k.startswith("veio.village.contents.")]: del langs[code][key]
+# Sumário: os 7 passos ficam numa linha só (números clicáveis) para caber numa página de livro.
+vsteps=[v_hire,v_field,v_pen,v_store,v_haul,v_foreman,v_center]
+vlinks=[("Começar","Start here",v_intro),None,("Expandir zonas","Grow zones",v_expand),
+ ("A vila cresce","Village growth",v_grow),("Quartel","Barracks",v_barracks),("Casa e refeições","House and meals",v_home),("Na mesma rede","On your network",v_lan),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
 label("veio.village.title","Guia da Vila Operária","Worker Village Guide")
+label("veio.village.steps","Passos:","Steps:")
 extra=[{"translate":"veio.village.title","bold":True},{"text":"\n"}]
-for n,(pt,en,target) in enumerate(vlinks):
+for n,link in enumerate(vlinks):
+ if link is None:
+  extra.append({"translate":"veio.village.steps"})
+  for step,target in enumerate(vsteps,1):
+   extra.extend([{"text":" "},{"text":str(step),"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}}])
+  extra.append({"text":"\n"})
+  continue
+ pt,en,target=link
  key=f"veio.village.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 vpages[0]={"text":"","extra":extra}
