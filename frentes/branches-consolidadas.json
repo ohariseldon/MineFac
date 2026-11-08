@@ -3,13 +3,13 @@
     "branch": "github",
     "included_by_ancestry": true,
     "unique_commits": 0,
-    "sha": "a5f0eb5579495b44278d7be71b77d08e4c93d3ce"
+    "sha": "5217b622206461f2d2a3e626b9c35a8de4ab7d3f"
   },
   {
     "branch": "github/claude/trusting-ritchie-sc9ty8",
     "included_by_ancestry": true,
     "unique_commits": 0,
-    "sha": "720832441647e629c317f1a568fc75a06924b2a7"
+    "sha": "494d3e750fc28cd2129a1a8b5dee8ec81ac39cac"
   },
   {
     "branch": "github/codex/expansion",
@@ -28,6 +28,12 @@
     "included_by_ancestry": true,
     "unique_commits": 0,
     "sha": "13758bd7859602b50bd7028377035fe005806d5d"
+  },
+  {
+    "branch": "github/codex/incremental-hauler-search",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "604369d6eede12e2a3fde191e1e5d31f243ccc88"
   },
   {
     "branch": "github/codex/incremental-topology",
@@ -159,7 +165,7 @@
     "branch": "github/main",
     "included_by_ancestry": true,
     "unique_commits": 0,
-    "sha": "a5f0eb5579495b44278d7be71b77d08e4c93d3ce"
+    "sha": "5217b622206461f2d2a3e626b9c35a8de4ab7d3f"
   },
   {
     "branch": "github/research/connected-veins",
