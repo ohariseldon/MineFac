@@ -16,6 +16,11 @@ A verificação Rust compila `native/api/src` contra `native/offline-check/horiz
 
 ## Onde alterar
 
+Antes de trabalhar em geração, limites, estruturas, recursos, spawn ou portais,
+leia [MAPA.md](MAPA.md). Ele fixa o Overworld em **15.000 × 15.000 blocos** e exige
+conteúdo completo em cada novo mundo, com geração adaptada e retorno seguro do
+Nether. Ampliar o tamanho ou aplicar apenas `worldborder` não substitui a garantia.
+
 A divisão atual é Cloud para trabalhadores, Grok para desempenho e balanceamento, e Codex para expansão e integração. Consulte [COORDENACAO.md](COORDENACAO.md) antes de alterar arquivos compartilhados. O transporte de itens está em `native/api/src/logistics.rs`; postes e fios estão em `native/api/src/power.rs`.
 
 - `native/api/src/lib.rs`: simulação, energia, inventários, transporte, combustíveis, jazidas e regras de interação.
@@ -34,6 +39,7 @@ A divisão atual é Cloud para trabalhadores, Grok para desempenho e balanceamen
 - `native/api/src/presentation.rs`: painéis no estilo vanilla e desenho animado das máquinas e esteiras.
 - `native/api/src/contracts.rs`: pedidos e recompensas da central de projetos.
 - `native/api/src/tutorial.rs`: ajuda no inventário, rótulos e dicas dos painéis.
+- `native/api/src/onboarding.rs`: objetivo atual na barra de ação, comprovação de energia/produção/fluxo/entrega e progresso por jogador na pasta do mundo. O relógio avança só no servidor; ticks da janela não podem alterar a sessão. Os observadores de braços, funis e carregadores ficam em `onboarding/transport.rs`; só entregas confirmadas podem produzir crédito, e carga em trânsito é separada dos estoques do posto.
 - `content/data/veio`: registros, receitas, avanços e tabelas de saque.
 - `tools/build_content.py`: lista única de blocos e itens. Gera modelos, blockstates, registros, menus, saques, abas criativas e a tag de picareta.
 - `tools/machine_forms.py`: formas, materiais, colisões e posições de indicadores das máquinas. O gerador também escreve `native/api/src/appearance/data.rs`. Ao mudar formas, execute `python3 tools/check_machine_forms.py`. A prévia opcional está em `tools/preview_machine_forms.py` (Pillow).
@@ -66,6 +72,8 @@ Com o jogo fechado, copie o **conteúdo** de `content/` para a pasta `horizon-mo
 No ambiente local original, launcher, instâncias e cache estão no E:, configurados por `HORIZON_LAUNCHER_LOCATION_FILE=E:\GPTmodMine\.build\location.json`. Esse arquivo pertence à instalação local e não é distribuído. Uma máquina nova deve configurar seus próprios caminhos no launcher. Os diretórios `.build/`, `.launcher/` e `.game/` são recriados localmente e não precisam ser baixados do GitHub.
 
 ## Desempenho
+
+O launcher usa `native-build --profile performance` nas entregas jogáveis; `dev` fica para desenvolvimento. O visual opcional está isolado em `visuals/veio-industrial` (WGSL original, API 0.1), e a escolha anterior à partida em `launcher/src/visuals.rs`. Não mova o shader para ganchos do mod que o reativem depois de o usuário escolher Leve. Valide alterações WGSL com o `horizon-shader check` da versão do Horizon usada pela entrega. Testes de instalação e preservação das opções estão no próprio launcher (`cargo test` em `launcher/`).
 
 Nada de varrer blocos ou entidades a cada tick. Guarde listas em NBT ou em registros em memória e recalcule em intervalos escalonados pela posição. Use `draw.keep()` quando o desenho não depende do tempo e `draw.spin()` para peças que giram em velocidade constante.
 

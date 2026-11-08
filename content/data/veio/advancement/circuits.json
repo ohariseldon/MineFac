@@ -17,7 +17,20 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:circuit"
+            "items": "veio:circuit",
+            "count": {
+              "min": 16
+            }
+          }
+        ]
+      }
+    },
+    "permit": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:permit_electronics"
           }
         ]
       }
@@ -25,7 +38,15 @@
   },
   "rewards": {
     "recipes": [
-      "veio:barracks"
+      "veio:barracks",
+      "veio:blueprint_designer",
+      "veio:build_marker"
     ]
-  }
+  },
+  "requirements": [
+    [
+      "stock",
+      "permit"
+    ]
+  ]
 }

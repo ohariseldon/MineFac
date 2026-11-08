@@ -35,7 +35,7 @@ pub(super) const STATUS_KEYS: [&str; 44] = [
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
     let slots = match block {
-        DRILL | DRILL_MK2 | BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL | GENERATOR => vec![Some([89.0, 45.0])],
+        DRILL | DRILL_MK2 | BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL | GENERATOR | lift::LIFT => vec![Some([89.0, 45.0])],
         PRESS | ASSEMBLER | CUTTER | CRUSHER | GEOTHERMAL => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
         MERGER => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
         INTEGRATOR | ALLOY | ELECTRONICS => vec![Some([35.0, 45.0]), Some([71.0, 45.0]), Some([143.0, 45.0])],
@@ -46,6 +46,7 @@ pub(super) fn screen(block: &str) -> Option<NativeScreen> {
         industry::MONITOR | industry::ANCHOR => vec![None],
         stations::SENDER | stations::RECEIVER => vec![Some([53.0, 45.0]), Some([71.0, 45.0]), Some([89.0, 45.0]), Some([107.0, 45.0])],
         _ if freight::owns(block) => freight::screen_slots(block)?,
+        _ if milestones::owns(block) => milestones::screen_slots(),
         _ if workforce::owns(block) => workforce::screen_slots(block)?,
         _ => production::screen_slots(block)?,
     };
@@ -157,6 +158,10 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         workforce::home::draw_screen(host, event);
         return;
     }
+    if milestones::owns(event.block) {
+        milestones::draw_screen(host, event);
+        return;
+    }
     let status = read(0).clamp(0, STATUS_KEYS.len() as i32 - 1) as usize;
     let status_text = Text::tr(&format!("veio.status.{}", STATUS_KEYS[status]), &[]).plain();
     lamp_icon(host, event, [9.0, 24.0], status);
@@ -180,7 +185,7 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         let key = if lava { "veio.lava" } else { "veio.water" };
         host.text(event.batch, &Text::tr(key, &[&stored, &limit]).plain(), [x + 10.0, y + 85.0], INK, false);
         gauge(host, event, [10.0, 95.0], 174.0, stored as f32 / limit as f32, if lava { 0xffe0561a } else { 0xff3f76e4 });
-    } else if !matches!(event.block, BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL) && event.block != production::PANTRY && event.block != freight::RAIL && event.block != freight::caravan::ID && !post {
+    } else if !matches!(event.block, BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL | lift::LIFT) && event.block != production::PANTRY && event.block != freight::RAIL && event.block != freight::caravan::ID && !post {
         let energy_text = Text::tr("veio.energy", &[&energy, &limit]).plain();
         host.text(event.batch, &energy_text, [x + 10.0, y + 85.0], INK, false);
         gauge(host, event, [10.0, 95.0], 174.0, energy as f32 / limit as f32, 0xffe0a020);
@@ -204,6 +209,11 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         BATTERY => vec![Text::tr("veio.hint.battery", &[]).plain()],
         BELT | FAST_BELT | EXPRESS_BELT => vec![Text::tr("veio.hint.belt", &[]).plain(), Text::tr("veio.metric.rate", &[&read(6)]).plain()],
         TUNNEL => vec![Text::tr("veio.hint.tunnel", &[&logistics::TUNNEL_REACH]).plain(), Text::tr("veio.metric.rate", &[&read(6)]).plain()],
+        lift::LIFT => vec![
+            Text::tr(if read(12) == 1 { "veio.lift.down" } else { "veio.lift.up" }, &[]).plain(),
+            Text::tr("veio.hint.lift", &[]).plain(),
+            Text::tr("veio.metric.rate", &[&read(6)]).plain(),
+        ],
         TESLA => vec![
             Text::tr("veio.metric.kills", &[&read(9)]).plain(),
             Text::tr("veio.hint.tesla", &[]).plain(),
@@ -316,6 +326,8 @@ pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
         industry::monitor_data(entity)
     } else if workforce::zones::is_marker(&entity.id) {
         workforce::zones::data(entity)
+    } else if milestones::owns(&entity.id) {
+        milestones::data(entity)
     } else {
         // Os 14 números numa passada só pelo NBT, em vez de 12 buscas por tick.
         static KEYS: std::sync::OnceLock<[&'static JavaString; 14]> = std::sync::OnceLock::new();
@@ -340,7 +352,7 @@ pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
         let module = if number(entity, "Tier") >= 2 { module + upgrades::MK2_FLAG } else { module };
         let stage = if freight::owns(&entity.id) { number(entity, "FlightPhase") } else { stage };
         [status, progress, duration, energy, burn, capacity(&entity.id), rate, utilization, stage, total,
-            damage, module, if entity.id == TESLA { smog } else { info }]
+            damage, module, if entity.id == TESLA { smog } else if entity.id == HUB { i32::from(contracts::beacon_selected(entity)) } else { info }]
     };
     debug_assert_eq!(values.len(), DATA_SLOTS);
     if entity.data.len() != DATA_SLOTS {
@@ -392,7 +404,7 @@ pub(super) fn text_color(status: usize) -> u32 {
         2 | 10 | 11 | 16 | 17 | 18 | 20 | 21 | 24 | 25 => 0x6b5a00,
         4..=6 | 12..=15 | 19 => 0xaa1f1f,
         7 => 0x7a6420,
-        8 => 0x1f4fa8,
+        8 | 28 => 0x1f4fa8,
         9 => 0x7a2fa0,
         _ => INK,
     }
@@ -422,6 +434,26 @@ pub(super) fn with_drawn_item(name: &JavaString, draw: impl FnOnce(&ItemStack)) 
 
 const FLAT: [Option<CubeFace<'static>>; 6] = [Some(CubeFace { sprite: "veio:gui/material", uv: None }); 6];
 
+fn machine_accent(block: &str) -> u32 {
+    match block {
+        PRESS | production::ELECTRIC_FURNACE => 0xc46a32,
+        ASSEMBLER | ELECTRONICS => 0x3f8f9a,
+        CUTTER | CRUSHER => 0xc0c4c8,
+        INTEGRATOR | ALLOY => 0xd8a04a,
+        GENERATOR | production::STEAM_ENGINE => 0x6a4030,
+        _ => 0x8d93a0,
+    }
+}
+
+fn output_mark(facing: &str) -> ([f32; 3], [f32; 3]) {
+    match facing {
+        "north" => ([6.0, 16.0, 0.0], [10.0, 16.7, 1.6]),
+        "west" => ([0.0, 16.0, 6.0], [1.6, 16.7, 10.0]),
+        "east" => ([14.4, 16.0, 6.0], [16.0, 16.7, 10.0]),
+        _ => ([6.0, 16.0, 14.4], [10.0, 16.7, 16.0]),
+    }
+}
+
 pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     if !is_factory_block(event.block) {
         return;
@@ -431,6 +463,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
         return power::draw(host, event);
     }
     if inserters::is_arm(event.block) { return inserters::draw(host, event); }
+    if blueprint::draw(host, event) { return; }
     if freight::owns(event.block) { freight::draw(host, event); return; }
     if workforce::site::draw(host, event) {
         return;
@@ -529,11 +562,19 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
                 event.draw.pop();
             }
             event.draw.still();
-        } else if status == 1 && needs_power(event.block) && event.block != production::GROW_LAMP {
-            // Rotor no teto: gira enquanto a máquina trabalha.
-            event.draw.spin([0.0, 1.0, 0.0], [0.5, 1.0, 0.5], 6.0, 0.0);
-            host.draw_cube(event.draw, [4.0, 16.0, 7.25], [12.0, 16.5, 8.75], FLAT, 0x9a9a9a);
+        } else if needs_power(event.block) && event.block != production::GROW_LAMP {
+            // Cruz no teto: parada quando ociosa, girando enquanto trabalha. A marca na borda
+            // aponta a saída, para a linha se ler de cima.
+            let working = status == 1;
+            let color = machine_accent(event.block);
+            event.draw.spin([0.0, 1.0, 0.0], [0.5, 1.0, 0.5], if working { 8.0 } else { 0.0 }, 0.0);
+            host.draw_cube(event.draw, [6.4, 16.0, 6.4], [9.6, 17.4, 9.6], FLAT, 0x2e2e2e);
+            host.draw_cube(event.draw, [1.5, 16.5, 7.15], [14.5, 17.15, 8.85], FLAT, color);
+            host.draw_cube(event.draw, [7.15, 16.5, 1.5], [8.85, 17.15, 14.5], FLAT, color);
             event.draw.still();
+            let facing = host.block_state_property(event.state, "facing").unwrap_or("south");
+            let (from, to) = output_mark(facing);
+            host.draw_cube(event.draw, from, to, FLAT, if working { color } else { 0x6a6a6a });
         }
         let module = number(event.entity, "Module");
         if module > 0 {

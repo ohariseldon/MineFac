@@ -42,7 +42,7 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
         _ if workforce::society::is_society_block(block) => Sector::Workforce,
         HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH | workforce::FARM_POST | workforce::SHEPHERD_POST => Sector::Farming,
         MILL | KITCHEN | PANTRY => Sector::Food,
-        HUB | research::LAB => Sector::Projects,
+        HUB | research::LAB | milestones::BOARD => Sector::Projects,
         TESLA | workforce::BARRACKS => Sector::Defense,
         BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL | inserters::ID | inserters::FAST | inserters::LONG => Sector::Logistics,
         _ if workforce::storage::is_store(block) => return Some(Profile { sector: Sector::Logistics, kind: StationKind::Storage }),
@@ -139,6 +139,7 @@ pub(crate) fn inspect(entity: &ModBlockEntity) -> Option<StationView<'_>> {
 pub(crate) fn accepts_material(entity: &ModBlockEntity, slot: usize, stack: &ItemStack) -> bool {
     let compatible = if freight::owns(&entity.id) { freight::accepts_plan(entity, slot, stack) }
         else if entity.id == HUB { contracts::accepts(entity, slot, stack) }
+        else if milestones::owns(&entity.id) { milestones::accepts(entity, slot, stack) }
         else { accepts(&entity.id, slot, stack) };
     if !compatible { return false; }
     // Preserve the slot fence, allocating its layout only for accepted candidates.

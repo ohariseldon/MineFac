@@ -36,6 +36,7 @@ def item_name(item,code):
   if key in langs[code]: return langs[code][key]
  return name
 
+label("veio.contract.optional_beacon", "Farol: estrela no slot 1", "Beacon: star in slot 1")
 label("advancement.veio.freight.title", "Entre zonas", "Between zones")
 label("advancement.veio.freight.description", "Defina carga e retorno em um terminal de transporte.", "Define dispatch and return cargo at a freight terminal.")
 label("advancement.veio.drone_transport.title", "Entrega aérea", "Air delivery")
@@ -81,14 +82,14 @@ help={
  "Extrai duas vezes mais rápido.\nPrecisa do dobro de potência.\nSó ela extrai diamante e\nesmeralda, bem devagar.",
  "Extracts twice as fast.\nNeeds twice the power.\nOnly it mines diamond and\nemerald, very slowly."),
  "press":(
- "Cobre/ferro bruto vira chapa.\nOuro bruto vira lingote.\nEntrada no slot esquerdo.\nSaída no direito. Use energia.",
- "Raw copper/iron makes plates.\nRaw gold makes ingots.\nInput in the left slot.\nOutput on the right. Use power."),
+ "Cobre/ferro bruto vira chapa.\nUma extratora normal pede duas.\nOuro bruto vira lingote.\nEntrada à esquerda. Use energia.",
+ "Raw copper/iron makes plates.\nA normal extractor wants two.\nRaw gold makes ingots.\nInput on the left. Use power."),
  "assembler":(
  "Recebe 2 chapas de cobre.\nProduz 1 engrenagem.\nEntrada à esquerda.\nSaída à direita. Use energia.",
  "Takes 2 copper plates.\nMakes 1 gear.\nInput on the left.\nOutput on the right. Use power."),
  "cutter":(
- "Chapa de ferro vira moldura.\nChapa de cobre vira fiação.\nEntrada à esquerda.\nSaída à direita. Use energia.",
- "Iron plates make frames.\nCopper plates make wiring.\nInput on the left.\nOutput on the right. Use power."),
+ "Chapa de ferro vira moldura.\nChapa de cobre: 2 fiações.\nEntrada à esquerda.\nSaída à direita. Use energia.",
+ "Iron plates make frames.\nCopper plate: 2 wiring.\nInput on the left.\nOutput on the right. Use power."),
  "integrator":(
  "Entrada 1: moldura.\nEntrada 2: engrenagem.\nProduz módulo mecânico.\nRequer um de cada e energia.",
  "Input 1: frame.\nInput 2: gear.\nMakes a mechanical module.\nNeeds one of each and power."),
@@ -122,6 +123,18 @@ help={
  "splitter":(
  "Divide entre saídas laterais.\nAlterna se ambas estão livres.\nDesvia se um lado encher.\nUse a chave para orientar.",
  "Splits into the side outputs.\nAlternates when both are free.\nDiverts if one side fills.\nOrient it with the wrench."),
+ "cargo_lift":(
+ "Empilhe para subir itens.\nO último entrega pela frente.\n5 itens/s, sem energia.\nAgache + chave: sobe/desce.\nChave: gira a saída.",
+ "Stack them to lift items.\nThe last one outputs forward.\n5 items/s, no power.\nSneak + wrench: up/down.\nWrench: turns the outlet."),
+ "blueprint_designer":(
+ "Prancheta: o quadrado acima.\nPapel: copia a obra.\nAgache + chave: tamanho.\nCopia blocos e ajustes,\nnunca inventários.",
+ "Its board: the square above.\nPaper: copies the build.\nSneak + wrench: size.\nCopies blocks and settings,\nnever inventories."),
+ "build_marker":(
+ "Onde a cópia vai nascer.\nMão vazia: orçamento.\nAgache + chave: constrói\ncom o seu inventário.\nChave: gira a obra.",
+ "Where the copy will rise.\nEmpty hand: materials list.\nSneak + wrench: builds from\nyour inventory.\nWrench: turns the build."),
+ "factory_board":(
+ "Mostra a fase, o que falta\ne o que ela libera.\nEntregue a pilha da fase ou\no pedido do dia na entrada.\nAvisa máquinas paradas.",
+ "Shows the phase, what is left\nand what it unlocks.\nDeliver the phase stack or\nthe daily order to the input.\nFlags stalled machines."),
  "contract_hub":(
  "Entradas 1 e 2 à esquerda.\nRecompensas 1 e 2 à direita.\nEntregue o pedido exibido.\nRetire sobras ao mudar pedido.",
  "Inputs 1 and 2 on the left.\nRewards 1 and 2 on the right.\nDeliver the displayed order.\nClear leftovers for the next."),
@@ -187,23 +200,23 @@ label("veio.hint.merger", "Duas laterais > uma frente", "Two sides > one front")
 label("veio.hint.water_wheel", "8 FE/t por lado com água corrente", "8 FE/t per side with flowing water")
 label("veio.hint.wind", "8 FE/t no nível do mar; mais alto e na chuva", "8 FE/t at sea level; more up high and in rain")
 label("veio.tutorial.merger.title", "Duas linhas, uma saída", "Two lines, one outlet")
-label("veio.tutorial.merger.description", "Conecte as entradas A e B pelas laterais. Você recebeu o guia atualizado.", "Connect inputs A and B from the sides. You received the updated guide.")
+label("veio.tutorial.merger.description", "Conecte as entradas A e B pelas laterais. Consulte Logística no guia.", "Connect inputs A and B from the sides. See Logistics in the guide.")
 label("block.veio.inserter", "Braço de transferência", "Transfer Arm")
 label("veio.hint.inserter", "Traseira > frente: 40 FE/item", "Rear > front: 40 FE/item")
 label("veio.hint.inserter_wait", "Confira origem e destino", "Check source and target")
 label("veio.hint.fast_inserter", "Traseira > frente: 64 FE/item", "Rear > front: 64 FE/item")
 label("veio.hint.long_inserter", "Alcance 2; 60 FE/item", "Reach 2; 60 FE/item")
 help["inserter"] = (
- "Puxa de trás, entrega à frente.\nBaús, esteiras e máquinas.\nAté 1 item/s; 40 FE por item.\nLigue um cabo ou poste.\nRedstone pausa; chave gira.",
- "Takes from rear, sends ahead.\nChests, belts and machines.\nUp to 1 item/s; 40 FE/item.\nConnect a cable or pole.\nRedstone pauses; wrench turns.")
+ "Puxa de trás, entrega à frente: baús, esteiras e máquinas.\nAté 1 item/s; 40 FE por item.\nCabo ou poste. Redstone pausa; chave gira.",
+ "Takes from rear, sends ahead: chests, belts and machines.\nUp to 1 item/s; 40 FE/item.\nCable or pole. Redstone pauses; wrench turns.")
 label("block.veio.fast_inserter", "Braço rápido", "Fast Transfer Arm")
 label("block.veio.long_inserter", "Braço longo", "Long Transfer Arm")
 help["fast_inserter"] = (
- "Até 2,5 itens/s; 64 FE/item.\nPuxa atrás, entrega à frente.\nAlcance de 1 bloco por lado.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
+ "Até 2,5 itens/s; 64 FE/item.\nDe trás para a frente, 1 bloco.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
  "Up to 2.5 items/s; 64 FE/item.\nRear to front, 1-block reach.\nSneak + item: set filter.\nSneak + empty hand: clear.")
 help["long_inserter"] = (
- "Até 1 item/s; 60 FE/item.\nAlcance de 2 blocos por lado.\nIgnora inventário intermediário.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
- "Up to 1 item/s; 60 FE/item.\nReaches 2 blocks on each side.\nSkips intermediate inventory.\nSneak + item: set filter.\nSneak + empty hand: clear.")
+ "Até 1 item/s; 60 FE/item.\nAlcance 2, pula o bloco do meio.\nAgachar + item: filtro.\nAgachar + mão vazia: limpar.",
+ "Up to 1 item/s; 60 FE/item.\nReach 2, skips the middle block.\nSneak + item: set filter.\nSneak + empty hand: clear.")
 for key, pt, en in [
  ("balanced", "Distribuição equilibrada", "Balanced routing"),
  ("left", "Prioridade: esquerda / A", "Priority: left / A"),
@@ -231,8 +244,8 @@ help["shepherd_post"] = (
  "Esmeralda: contrata aldeão.\nRecolhe ovos, penas e lã,\ntosquia ovelhas e dá ração\naos pares, a até 6 blocos.\nNão ordenha nem abate.",
  "Emerald: hires a villager.\nPicks up eggs, feathers and\nwool, shears sheep and feeds\npairs within 6 blocks.\nNo milking or culling.")
 help["field_marker"] = (
- "Centro da lavoura: 9x9 no\nnível 1, até 21x21. Lavradores\nperto aram, plantam e colhem.\nSemente no slot: só ela.\nEsmeralda expande; chave escolhe.",
- "Field center: 9x9 at level 1,\nup to 21x21. Nearby farmhands\ntill, plant and harvest.\nSeed in the slot: only that.\nEmerald expands; wrench sizes.")
+ "Centro da lavoura: 9x9 no nível 1, até 21x21. Lavradores perto aram, plantam e colhem.\nSemente no slot: só ela.\nEsmeralda expande; chave escolhe.",
+ "Field center: 9x9 at level 1, up to 21x21. Nearby farmhands till, plant and harvest.\nSeed in the slot: only that.\nEmerald expands; wrench sizes.")
 help["pen_marker"] = (
  "Centro do cercado: 9x9 a\n21x21. O pastor perto cuida\ndos animais dentro dele.\nRação no slot: só ela e as\nespécies que a comem.",
  "Pen center: 9x9 to 21x21.\nA nearby shepherd tends the\nanimals inside it.\nFeed in the slot: only that\nand the kinds that eat it.")
@@ -277,8 +290,8 @@ help["freight_station"] = (
  "Conexão externa na fronteira\n(96 blocos da sede). Trem a\ncada minuto, 6 pilhas, frete\nmais caro. Exporta e importa.\nAba Comércio exterior.",
  "Outside connection at the\nfrontier (96 blocks away).\nA train every minute, 6\nstacks, pricier freight.\nForeign trade tab.")
 help["farm_post"] = (
- "Esmeralda: contrata o aldeão\nadulto livre mais próximo.\nEle colhe o 9x9 e traz ao posto.\nCome 2 pontos por colheita.\nAgachar + chave: dispensa.",
- "Emerald: hires the nearest\nfree adult villager.\nHarvests the 9x9, brings it back.\nEats 2 points per harvest.\nSneak + wrench: dismiss.")
+ "Esmeralda: contrata um aldeão adulto livre por perto.\nEle colhe o 9x9 e traz ao posto; 2 pontos de comida por colheita.\nAgachar + chave: dispensa.",
+ "Emerald: hires a free adult villager nearby.\nHarvests the 9x9 and brings it back; 2 food points per harvest.\nSneak + wrench: dismiss.")
 for key, pt, en in [
  ("veio.status.no_worker", "Sem trabalhador", "No worker"),
  ("veio.status.absent", "Trabalhador ausente", "Worker missing"),
@@ -315,7 +328,7 @@ for key, pt, en in [
  ("block.veio.field_marker", "Marco de lavoura", "Field Marker"),
  ("veio.status.zone", "Zona ativa", "Zone active"),
  ("veio.status.storing", "Guardando", "Storing"),
- ("veio.status.rest", "Descansando (noite)", "Resting (night)"),
+ ("veio.status.resting", "Descansando (noite)", "Resting (night)"),
  ("block.veio.pen_marker", "Marco de cercado", "Pen Marker"),
  ("block.veio.barn", "Celeiro", "Barn"),
  ("block.veio.silo", "Silo", "Silo"),
@@ -384,7 +397,7 @@ help["rail_terminal"] = (
  "Corante igual liga a rota.\nAgachar + item: envio.\nItem sem agachar: recebimento.\nFunis ligam os vagões.",
  "Match terminal dye colors.\nSneak + item: outgoing filter.\nItem without sneak: receive.\nHoppers connect minecarts.")
 help["drone_port"] = (
- "Corante igual liga portos.\nAté 64 blocos, 16 itens/voo.\nPrecisa energia e caminho livre.\nAgachar + chave: chama de volta.",
+ "Ligue com corantes iguais.\n64 blocos; 16 itens/voo.\nEnergia e trajeto livre.",
  "Match port dye colors.\n64-block range, 16 items/flight.\nNeeds power and a clear path.\nSneak + wrench: recall.")
 # Água (0.18): bomba, cano, aspersor, turbina hidrelétrica e rios das nascentes.
 help.update({
@@ -762,13 +775,84 @@ help.update({
 })
 # Terminais de transporte: consulta no livro Transportes (build_transport_guide.py).
 transport_order=["rail_terminal","drone_port","caravan_station"]
-industry_order=["research_lab","fabricator","factory_monitor","cargo_station","unloading_station","chunk_anchor","express_belt","belt_tunnel"]
+industry_order=["research_lab","fabricator","factory_monitor","cargo_station","unloading_station","chunk_anchor","express_belt","belt_tunnel","blueprint_designer","build_marker"]
+
+# Quadro da fábrica (milestones/): fases, pedido do dia, censo de gargalos e ritmo do dia.
+for key, pt, en in [
+ ("block.veio.factory_board", "Quadro da fábrica", "Factory board"),
+ ("item.veio.permit_workshop", "Licença da oficina", "Workshop permit"),
+ ("item.veio.permit_steel", "Licença do aço", "Steel permit"),
+ ("item.veio.permit_electronics", "Licença da eletrônica", "Electronics permit"),
+ ("veio.componenthelp.permit_workshop", "Dada pelo quadro: abre a chave, o triturador e o forno de ligas.", "From the board: unlocks the wrench, crusher and alloy furnace."),
+ ("veio.componenthelp.permit_steel", "Dada pelo quadro: abre a caldeira, os acumuladores e a geotermia.", "From the board: unlocks steam, batteries and geothermal."),
+ ("veio.componenthelp.permit_electronics", "Dada pelo quadro: abre a Mk.II, o solar e a torre Tesla.", "From the board: unlocks Mk.II mining, solar and the Tesla tower."),
+ ("veio.board.phase", "Fase %s de %s: %s", "Phase %s of %s: %s"),
+ ("veio.board.phase.first", "Primeira fábrica", "First factory"),
+ ("veio.board.phase.workshop", "Oficina", "Workshop"),
+ ("veio.board.phase.steel", "Aço", "Steel"),
+ ("veio.board.phase.electronics", "Eletrônica", "Electronics"),
+ ("veio.board.phase.depth", "Profundidade", "Depth"),
+ ("veio.board.deliver", "%s/%s %s", "%s/%s %s"),
+ ("veio.board.reward", "Recompensa: %sx %s", "Reward: %sx %s"),
+ ("veio.board.unlocks", "Libera: %s", "Unlocks: %s"),
+ ("veio.board.next", "Depois: %s", "Next: %s"),
+ ("veio.board.setup.power", "Energia", "Power"),
+ ("veio.board.setup.drill", "Extratora", "Extractor"),
+ ("veio.board.setup.press", "Prensa", "Press"),
+ ("veio.board.setup.assembler", "Montador", "Assembler"),
+ ("veio.board.hint.workshop", "Próximo gargalo: energia. Uma linha de 30 engrenagens por minuto pede um gerador inteiro.", "Next bottleneck: power. A 30 gears a minute line needs a whole generator."),
+ ("veio.board.hint.steel", "Próximo gargalo: carvão. Cada forno de ligas queima 15 por minuto.", "Next bottleneck: coal. Each alloy furnace burns 15 a minute."),
+ ("veio.board.hint.electronics", "Próximo gargalo: silício. Quartzo do Nether, ou areia no forno de ligas.", "Next bottleneck: silicon. Nether quartz, or sand in the alloy furnace."),
+ ("veio.board.hint.depth", "Próximo gargalo: transporte. Uma Mk.III num veio de 16+ blocos passa de uma esteira rápida.", "Next bottleneck: transport. A Mk.III on a 16+ block vein outruns a fast belt."),
+ ("veio.board.done", "Fases concluídas. A vila segue com pedidos.", "All phases done. The village keeps ordering."),
+ ("veio.board.order", "Dia %s: %s/%s %s", "Day %s: %s/%s %s"),
+ ("veio.board.order_reward", "Pedido da vila: %s esmeraldas até amanhecer.", "Village order: %s emeralds until dawn."),
+ ("veio.board.order_paid", "Pedido da vila pago. Outro amanhã.", "Village order paid. A new one tomorrow."),
+ ("veio.board.order_elsewhere", "Pedido de hoje já pago em outro quadro.", "Today's order was paid at another board."),
+ ("veio.board.no_machines", "Nenhuma máquina perto do quadro.", "No machines near the board."),
+ ("veio.board.ok", "%s de %s máquinas trabalhando.", "%s of %s machines working."),
+ ("veio.board.issues", "Paradas: %s energia, %s cheias, %s danificadas", "Stalled: %s power, %s full, %s damaged"),
+ ("veio.board.complete", "Fase concluída: %s! Retire a recompensa no quadro.", "Phase complete: %s! Take the reward from the board."),
+ ("veio.board.order_complete", "Pedido do dia entregue: %s esmeraldas no quadro.", "Daily order delivered: %s emeralds on the board."),
+ ("veio.alert.near", "Máquinas paradas perto: %s sem energia, %s sem combustível, %s com saída cheia, %s danificadas", "Stalled nearby: %s no power, %s no fuel, %s output full, %s damaged"),
+ ("veio.day.dawn", "Dia %s. Pedido da vila no quadro: %s %s, paga %s esmeraldas até o próximo amanhecer.", "Day %s. Village order at the board: %s %s, pays %s emeralds until next dawn."),
+ ("veio.day.dusk", "Fim do dia %s: a fábrica produziu %s itens.", "End of day %s: the factory made %s items."),
+ ("veio.day.dusk_order", "Pedido da vila: %s/%s %s. Termina ao amanhecer.", "Village order: %s/%s %s. Ends at dawn."),
+ ("veio.day.dusk_paid", "Pedido da vila: pago.", "Village order: paid."),
+ ("veio.day.dusk_issue", "Para amanhã: %s máquinas sem energia, %s com saída cheia, %s danificadas.", "For tomorrow: %s machines without power, %s with full output, %s damaged."),
+]: label(key, pt, en)
+
+# Megafábricas: copiadora, marco de obra, elevador de carga e andares por escada.
+for key, pt, en in [
+ ("block.veio.cargo_lift", "Elevador de carga", "Cargo lift"),
+ ("block.veio.blueprint_designer", "Copiadora", "Blueprint copier"),
+ ("block.veio.build_marker", "Marco de obra", "Build marker"),
+ ("advancement.veio.vertical.title", "Para cima", "Going up"),
+ ("advancement.veio.vertical.description", "Leve itens entre andares com um elevador de carga.", "Move items between floors with a cargo lift."),
+ ("advancement.veio.blueprints.title", "Copiar e colar", "Copy and paste"),
+ ("advancement.veio.blueprints.description", "Fabrique uma copiadora e multiplique suas linhas.", "Build a copier and multiply your lines."),
+ ("veio.lift.up", "Sentido: subindo", "Direction: up"),
+ ("veio.lift.down", "Sentido: descendo", "Direction: down"),
+ ("veio.hint.lift", "Agache com a chave para inverter.", "Sneak with the wrench to reverse."),
+ ("veio.blueprint.copied", "Projeto copiado: %s blocos de %s materiais, prancheta de %s de lado e %s de altura.", "Design copied: %s blocks of %s materials, a %s-wide board, %s high."),
+ ("veio.blueprint.skipped", "%s blocos ficaram de fora: minério, fluido, portal ou acima do limite.", "%s blocks left out: ores, fluids, portals or over the limit."),
+ ("veio.blueprint.size", "Prancheta: %s de lado, até %s de altura.", "Board: %s wide, up to %s high."),
+ ("veio.blueprint.designer", "Copiadora: prancheta de %s de lado e até %s de altura. Projeto guardado: %s blocos. Clique com papel para copiar.", "Copier: a %s-wide board up to %s high. Stored design: %s blocks. Click with paper to copy."),
+ ("veio.blueprint.no_design", "Nenhuma copiadora com projeto a até %s blocos.", "No copier with a design within %s blocks."),
+ ("veio.blueprint.budget", "Projeto da copiadora em %s: %s blocos, %s de lado, %s de altura, girado %s graus.", "Design from the copier at %s: %s blocks, %s wide, %s high, turned %s degrees."),
+ ("veio.blueprint.cost", "  %sx %s", "  %sx %s"),
+ ("veio.blueprint.more", "  e mais %s materiais.", "  and %s more materials."),
+ ("veio.blueprint.blocked", "Obra bloqueada em %s. Libere o espaço.", "Build blocked at %s. Clear the space."),
+ ("veio.blueprint.clear", "Espaço livre. Agache com a chave para construir.", "Space is clear. Sneak with the wrench to build."),
+ ("veio.blueprint.built", "Obra concluída: %s blocos.", "Build complete: %s blocks."),
+ ("veio.blueprint.missing", "Faltam: %s. Nada foi cobrado.", "Missing: %s. Nothing was charged."),
+]: label(key, pt, en)
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","sprinkler","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
  ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery","hydro_turbine","pump","pipe"]),
- ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","wrench"]),
- ("Projetos e defesa","Projects and defense",["contract_hub","tesla"]),
+ ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cargo_lift","cable","pole","steel_pole","wrench"]),
+ ("Projetos e defesa","Projects and defense",["factory_board","contract_hub","tesla"]),
 ]
 order=[name for _,_,names in categories for name in names]
 # Blocos da vila operária: consulta no Guia da Vila Operária (fim deste arquivo).
@@ -821,6 +905,8 @@ slothelp={
  "site":["Comida do mestre de obras: cada leva de blocos custa uma tarefa."],
  "home":["Lenha: carvão, carvão vegetal, biomassa, troncos ou tábuas.","Despensa: comida para as refeições em casa.","Despensa: comida para as refeições em casa.","Despensa: comida para as refeições em casa.","Obra: materiais da próxima melhoria da casa."],
  "foreman_desk":["Comida do capataz e dos postos.","Comida do capataz e dos postos.","Comida do capataz e dos postos.","Esmeraldas para recontratar."],
+ "cargo_lift":["Itens a caminho. Entram por qualquer lado."],
+ "factory_board":["Entrega: pilha da fase ou pedido do dia. Aceita esteira.","Recompensas: licenças, esteiras, esmeraldas."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
 }
 slot_en={
@@ -867,6 +953,8 @@ slot_en={
  "site":["Master builder food: each batch of blocks costs one task."],
  "home":["Fuel: coal, charcoal, biomass, logs or planks.","Pantry: food for meals at home.","Pantry: food for meals at home.","Pantry: food for meals at home.","Build: materials for the next house upgrade."],
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
+ "cargo_lift":["Items on the way. They enter from any side."],
+ "factory_board":["Delivery: the phase stack or the daily order. Belts welcome.","Rewards: permits, belts, emeralds."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
 for name in ("rail_terminal", "drone_port", "caravan_station"):
@@ -904,8 +992,12 @@ label("veio.guide.title","Guia do Veio","Veio Field Guide")
 label("veio.guide.help","Ajuda ?","Help ?")
 label("veio.guide.open","Selecione o guia e use o botão direito.","Select the guide and right-click.")
 label("veio.guide.tip","Passe o cursor no ? dos painéis.","Hover over ? in machine panels.")
-label("veio.guide.welcome","Você recebeu o Guia do Veio. Selecione o livro e abra com o botão direito.","You received the Veio Field Guide. Select it and right-click to begin.")
+label("veio.guide.welcome","A vila precisa de uma oficina. Siga o objetivo acima da barra de itens. O caderno recebido é uma consulta opcional; o progresso do tutorial acompanha máquinas funcionando.","The village needs a workshop. Follow the objective above the hotbar. The workbook is an optional reference; tutorial progress follows working machines.")
 label("veio.guide.back","Sumário","Contents")
+def back_mark():
+ """Volta ao sumário na mesma linha do título: poupa a última linha da página."""
+ return {"text":"  «","color":"dark_blue","click_event":{"action":"change_page","page":1},
+  "hover_event":{"action":"show_text","value":{"translate":"veio.guide.back"}}}
 label("veio.guide.recipe_link","Receita","Recipe")
 label("veio.guide.role.input","Entrada","Input")
 label("veio.guide.role.output","Saída","Output")
@@ -954,7 +1046,7 @@ components={
  "frame":("Chapa de ferro na cortadora. Vai para módulos mecânicos.","Iron plate in a cutter. Used for mechanical modules."),
  "module":("Moldura e engrenagem no integrador. Usado na expansão.","Frame and gear in an integrator. Used for expansion."),
  "steel_plate":("Duas chapas de ferro e carvão no forno de ligas.","Two iron plates and coal in an alloy furnace."),
- "wire":("Chapa de cobre na cortadora. Usada em circuitos e cabos.","Copper plate in a cutter. Used for circuits and cables."),
+ "wire":("Chapa de cobre na cortadora rende duas. Usada em circuitos e cabos.","A copper plate in a cutter makes two. Used for circuits and cables."),
  "silicon":("Quartzo do Nether no triturador. Usado em circuitos.","Nether quartz in a crusher. Used for circuits."),
  "circuit":("Duas fiações e um silício no montador de circuitos.","Two copper wiring and one silicon in a circuit assembler."),
 }
@@ -963,9 +1055,9 @@ components.update({
  "flour":("Trigo no moinho. Vai para pão, biscoito e bolo na cozinha.","Wheat in the mill. Used for bread, cookies and cake."),
  "biomass":("Plantas ou troncos no moinho. Combustível do gerador a biomassa.","Plants or logs in the mill. Fuel for the biomass generator."),
  "repair_kit":("Botão direito numa máquina danificada: recupera 50% da integridade.","Right-click a damaged machine: restores 50% integrity."),
- "speed_module":("Botão direito numa máquina: 40% mais rápida, mais energia e poluição.","Right-click a machine: 40% faster, more power and pollution."),
+ "speed_module":("Botão direito numa máquina: ciclo 40% mais curto, mais energia e poluição.","Right-click a machine: 40% shorter cycle, more power and pollution."),
  "efficiency_module":("Botão direito numa máquina: 40% menos energia e metade da poluição.","Right-click a machine: 40% less power and half the pollution."),
- "productivity_module":("Botão direito numa máquina: +10% de produtos, ciclo mais lento.","Right-click a machine: +10% products, slower cycle."),
+ "productivity_module":("Botão direito numa máquina: +20% de produtos, ciclo mais lento.","Right-click a machine: +20% products, slower cycle."),
 })
 for name,texts in components.items():label(f"veio.componenthelp.{name}",*texts)
 
@@ -976,32 +1068,8 @@ def page(pt,en):
  pages.append({"translate":key})
  return len(pages)
 intro=page(
- "Primeira fábrica\n\nA meta é obter uma engrenagem.\nVocê vai extrair cobre, fazer chapas e montar peças.\n\nAvance uma página por vez. O restante fica como consulta.",
- "First factory\n\nYour goal is one gear.\nExtract copper, press plates and assemble parts.\n\nFollow one page at a time. Later pages are a reference.")
-materials=page(
- "Prepare os materiais\n\n6 lingotes de cobre\n3 lingotes de ferro\n3 pistões\n1 bancada extra\n1 fornalha\n1 pedra lisa\n3 gravetos\n1 baú e carvão\n\nSão peças já prontas.",
- "Gather the parts\n\n6 copper ingots\n3 iron ingots\n3 pistons\n1 spare crafting table\n1 furnace\n1 smooth stone\n3 sticks\n1 chest and coal\n\nThese are finished parts.")
-page(
- "Como fabricar\n\nUse uma bancada. As receitas do Veio aceitam os ingredientes em qualquer posição.\n\nO livro verde da bancada mostra as receitas liberadas.\nAs páginas de consulta mostram os ingredientes.",
- "How to craft\n\nUse a crafting table. Veio recipes accept ingredients in any arrangement.\n\nThe green recipe book lists unlocked recipes.\nReference pages list ingredients.")
-page(
- "1. Prepare energia\n\nFabrique um gerador e postes de madeira. Abra o gerador e coloque carvão ou madeira.\n\nPonha um poste a até 2 blocos do gerador e das máquinas. Postes se ligam sozinhos por fios.",
- "1. Prepare power\n\nCraft a generator and wooden poles. Open the generator and add coal or wood.\n\nPlace a pole within 2 blocks of the generator and machines. Poles wire themselves together.")
-page(
- "2. Ache uma jazida\n\nEncontre minério de cobre no mundo. Coloque a extratora diretamente SOBRE ele.\n\nEncoste um cabo energizado na extratora.\n\nO painel deve mostrar atividade.",
- "2. Find a vein\n\nFind copper ore in the world. Put the extractor directly ON TOP of it.\n\nTouch it with a powered cable.\n\nThe panel should show activity.")
-layout=page(
- "3. Monte a linha\n\nExtratora > esteira > prensa > baú\n\nColoque tudo na mesma altura. Olhe para o destino ao colocar os blocos.\n\nO bocal indica a saída. Faça um ramo de cabos até a prensa.",
- "3. Build the line\n\nExtractor > belt > press > chest\n\nPlace all endpoints at the same height. Face the destination when placing blocks.\n\nThe port is the output. Branch cables to the press.")
-page(
- "4. Veja a primeira chapa\n\nA prensa recebe cobre BRUTO à esquerda. A chapa sai à direita.\n\nPode colocar cobre à mão.\n\nRetire uma chapa no painel ou no baú.",
- "4. Your first plate\n\nThe press takes RAW COPPER in the left slot. The plate appears on the right.\n\nTry inserting raw copper by hand.\n\nTake a plate from the panel or chest.")
-page(
- "5. Faça engrenagens\n\nFabrique um montador. Ligue energia e leve chapas até ele.\n\nCada engrenagem usa DUAS chapas de cobre.\n\nColoque um baú na saída e recolha a primeira peça.",
- "5. Make gears\n\nCraft an assembler. Connect power and feed it copper plates.\n\nEach gear uses TWO copper plates.\n\nPut a chest at the output and take your first gear.")
-page(
- "6. Seu próximo passo\n\nFabrique a chave para girar blocos com botão direito.\n\nDepois monte a linha de ferro: prensa > cortadora > moldura.\n\nNo integrador, moldura + engrenagem viram módulo.",
- "6. Next steps\n\nCraft the wrench to turn blocks with right-click.\n\nBuild an iron line: press > cutter > frame.\n\nThe integrator turns a frame and gear into a module.")
+ "Manual de consulta\n\nPara aprender automação, use Sua primeira oficina: livro + pedregulho.\n\nO Quadro da fábrica acompanha fases e entregas. Aqui ficam máquinas, energia, logística e receitas.",
+ "Technical reference\n\nTo learn automation, use Your first workshop: book + cobblestone.\n\nThe Factory board tracks phases and deliveries. Find machines, power, logistics and recipes here.")
 troubleshoot=page(
  "Se a máquina parar\n\nSem energia: confira carvão e cabos.\n\nSem jazida: confira o bloco abaixo.\n\nFalta material: veja os slots.\n\nSaída cheia: libere espaço no destino.",
  "When a machine stops\n\nNo power: check fuel and cables.\n\nNo ore: check the block underneath.\n\nMissing material: inspect the slots.\n\nOutput full: make room downstream.")
@@ -1009,44 +1077,47 @@ page(
  "Controles e ajuda\n\nBotão direito abre o painel.\n\nChave + botão direito gira.\n\nPasse o cursor no ? ou slot vazio para ajuda.\n\nRedstone pausa a produção.",
  "Controls and help\n\nEmpty hand + right-click opens the panel.\n\nWrench + right-click turns it.\n\nHover over ? or an empty slot for help.\n\nPowered redstone pauses production.")
 page(
- "Seu roteiro\n\nAbra Avanços > Primeira fábrica. Os marcos contam materiais obtidos.\n\nRecolha os produtos para marcar progresso.\n\nO painel de cada máquina confirma seu funcionamento.",
- "Your checklist\n\nOpen Advancements and find First Factory. Milestones track obtained materials.\n\nPick up products to mark progress.\n\nInspect machine panels to confirm operation.")
+ "Seu roteiro\n\nAbra Avanços > Primeiros pedidos. Os marcos contam materiais obtidos.\n\nRecolha os produtos para marcar progresso.\n\nO painel de cada máquina confirma seu funcionamento.",
+ "Your checklist\n\nOpen Advancements and find First requests. Milestones track obtained materials.\n\nPick up products to mark progress.\n\nInspect machine panels to confirm operation.")
 wiring=page(
- "Postes e fios\n\nCada poste alimenta as máquinas a até 2 blocos (aço: 3) e se liga aos postes vizinhos.\n\nMadeira: fios de 8 blocos, 120 FE/t.\nAço: 16 blocos, 400 FE/t.\n\nQuando faltar energia longe do gerador, o fio é o gargalo.",
- "Poles and wires\n\nEach pole powers machines within 2 blocks (steel: 3) and links to nearby poles.\n\nWood: 8-block wires, 120 FE/t.\nSteel: 16 blocks, 400 FE/t.\n\nIf far machines starve, the wire is the bottleneck.")
+ "Postes e fios\n\nCada poste alimenta máquinas a até 2 blocos (aço: 3) e liga aos vizinhos.\n\nMadeira: fio de 8, 120 FE/t.\nAço: fio de 16, 400 FE/t.\n\nSem energia longe? O fio é o gargalo.",
+ "Poles and wires\n\nEach pole powers machines within 2 blocks (steel: 3) and links to nearby poles.\n\nWood: 8-block wire, 120 FE/t.\nSteel: 16-block wire, 400 FE/t.\n\nStarving far away? The wire is the limit.")
 smog=page(
  "Poluição\n\nMáquinas trabalhando poluem o chunk; o painel mostra quanto por minuto. A poluição se espalha e some aos poucos.\n\nLavouras colhidas a absorvem. Módulos de eficiência cortam pela metade.",
  "Pollution\n\nWorking machines pollute their chunk; the panel shows how much per minute. It spreads and slowly fades.\n\nHarvested crops absorb it. Efficiency modules halve it.")
 page(
- "Saqueadores\n\nO chat avisa um dia antes. Na noite seguinte uma onda chega por um lado, com som de invasão. Cada noite vem maior: da 3ª vêm esqueletos, da 5ª o Bruto, que quebra máquinas rápido.\n\nAranhas e esqueletos caçam aldeões. Quartel, muros e torre Tesla.",
- "Raiders\n\nChat warns a day ahead. The next night a wave comes from one side with a raid horn. Each night is bigger: skeletons from the 3rd, the Brute from the 5th, who wrecks machines fast.\n\nSpiders and skeletons hunt villagers. Barracks, walls and Tesla towers.")
+ "Saqueadores\n\nO chat avisa um dia antes. Na noite seguinte vêm com som de invasão, atrás de você e dos aldeões.\n\nQuatro golpes param uma máquina ou matam um aldeão. Muros, espada, quartel e torre Tesla.",
+ "Raiders\n\nChat warns a day ahead. The next night they come with a raid horn, for you and the villagers.\n\nFour hits stop a machine or kill a villager. Walls, a sword, barracks and Tesla towers.")
 upgrades=page(
- "Módulos\n\nBotão direito numa máquina instala um. Chave agachado retira.\n\nVelocidade: mais produção, mais energia e poluição.\nEficiência: menos energia e poluição.\nProdutividade: +10% de produtos.",
- "Modules\n\nRight-click a machine to install one. Sneak with the wrench to remove it.\n\nSpeed: more output, power and pollution.\nEfficiency: less power and pollution.\nProductivity: +10% products.")
+ "Módulos\n\nBotão direito numa máquina instala um. Chave agachado retira.\n\nVelocidade: mais produção, mais energia e poluição.\nEficiência: menos energia e poluição.\nProdutividade: +20% de produtos.",
+ "Modules\n\nRight-click a machine to install one. Sneak with the wrench to remove it.\n\nSpeed: more output, power and pollution.\nEfficiency: less power and pollution.\nProductivity: +20% products.")
 world=page(
  "Fábrica e mundo\n\nColheitadeira: plante ao redor dela e ligue uma esteira.\n\nTorre Tesla: protege a base à noite. Junte acumuladores ao solar.\n\nOssos dos monstros viram farinha no triturador.",
  "Factory and world\n\nHarvester: build the farm around it and belt the crops away.\n\nTesla tower: guards the base at night. Pair solar with batteries.\n\nMonster bones become bone meal in the crusher.")
 page(
- "Comércio\n\nDepois dos quatro projetos, a central exporta sem fim: 4 circuitos e 4 chapas de aço viram 4 esmeraldas e frascos de experiência.\n\nUse as esmeraldas com os aldeões da sua vila.",
- "Trade\n\nAfter the four projects, the hub keeps exporting: 4 circuits and 4 steel plates become 4 emeralds and experience bottles.\n\nSpend emeralds with your villagers.")
+ "Comércio\n\nDepois do projeto do povoado, a central exporta sem fim: 4 circuitos e 4 chapas de aço viram 4 esmeraldas e 2 frascos de experiência.",
+ "Trade\n\nAfter the village project, the hub keeps exporting: 4 circuits and 4 steel plates become 4 emeralds and 2 experience bottles.")
 production=page(
- "Escada de produção\n\nCada melhoria resolve um gargalo e revela o próximo: jazida, energia, fio, poluição.\n\nVeios grandes rendem mais: a extratora lê o 3x3 abaixo dela. Jazida pura dobra a velocidade.",
- "Production ladder\n\nEach upgrade fixes one bottleneck and reveals the next: vein, power, wire, pollution.\n\nBig veins pay off: the extractor reads the 3x3 below. A pure vein doubles its speed.")
+ "Escada de produção\n\nCada melhoria resolve um gargalo e revela o próximo: jazida, energia, fio, poluição.\n\nVeio conectado rende mais: 7+ blocos de minério ligados dobram a velocidade, 16+ quadruplicam.",
+ "Production ladder\n\nEach upgrade fixes one bottleneck and reveals the next: vein, power, wire, pollution.\n\nConnected veins pay off: 7+ linked ore blocks double the speed, 16+ quadruple it.")
 page(
- "Energia\n\nRoda d'água e cata-vento: grátis e limpos; 8 FE/t por face ou no nível do mar.\nGerador e biomassa: 40 FE/t; biomassa polui menos.\nVapor: 120 FE/t, precisa de água.\nGeotérmico e solar: escalam.\n\nAcumuladores seguram a noite.",
- "Power\n\nWater wheel and wind: free and clean; 8 FE/t per face or at sea level.\nGenerator and biomass: 40 FE/t; biomass pollutes less.\nSteam: 120 FE/t, needs water.\nGeothermal and solar: scale up.\n\nBatteries carry the night.")
+ "Farol opcional\n\nDepois do povoado, esvazie a central. Ponha 1 estrela do Nether na entrada 1 e depois 48 circuitos na 2.\n\nGanhe 1 farol e 2 extratoras Mk.II. Retire as saídas: depois vem o grande projeto.",
+ "Optional beacon\n\nAfter the village project, empty the hub inputs. Put 1 Nether star in input 1 first, then 48 circuits in input 2.\n\nReceive 1 beacon and 2 Mk.II extractors. Clear the outputs: the grand project comes next.")
+page(
+ "Energia\n\nRoda d'água e cata-vento: limpos, 8 FE/t.\nGerador e biomassa: 40 FE/t (biomassa polui menos).\nVapor: 120 FE/t, com água.\nGeotérmico e solar escalam.\nAcumuladores seguram a noite.",
+ "Power\n\nWater wheel and wind: clean, 8 FE/t.\nGenerator and biomass: 40 FE/t; biomass pollutes less.\nSteam: 120 FE/t, needs water.\nGeothermal and solar scale up.\n\nBatteries carry the night.")
 water=page(
- "Água e irrigação\n\nA bomba, encostada em água parada, enche os canos. Os canos levam a água ao aspersor e ao motor a vapor.\n\nCada planta bebe por estágio: cenoura pouco, batata mais, beterraba muito. Sem água a lavoura cresce como sempre, devagar.",
+ "Água e irrigação\n\nBomba ao lado de água parada enche os canos; eles levam a água ao aspersor e ao vapor.\n\nCada planta bebe por estágio: cenoura pouco, beterraba muito. Sem água, a lavoura cresce devagar.",
  "Water and irrigation\n\nA pump by still water fills the pipes. Pipes carry water to sprinklers and steam engines.\n\nEach crop drinks per stage: carrots little, potatoes more, beetroot a lot. Without water, crops grow as usual, slowly.")
 page(
- "Rios e represas\n\nNo mundo novo, nascentes no alto de montanhas formam rios que descem até o mar, se juntam e engrossam, com quedas pelo caminho.\n\nFeche um vale e ponha a turbina na parede: queda maior e lago largo rendem mais. Rio volumoso também.",
+ "Rios e represas\n\nNo mundo novo, nascentes nas montanhas formam rios que descem ao mar, engrossam e caem.\n\nFeche um vale e ponha a turbina na parede: mais queda, lago largo ou rio grande rendem mais.",
  "Rivers and dams\n\nIn new terrain, springs high in the mountains form rivers that run to the sea, join and grow, with falls on the way.\n\nClose a valley and set the turbine in the wall: a higher drop and a wider lake pay more. So does a big river.")
 food=page(
  "Comida e povoado\n\nTrigo > moinho > farinha > cozinha > pão.\nCarnes do rancho > fornalha elétrica.\n\nO armazém paga esmeraldas pela comida, mais por comida pronta, e 50% a mais com aldeões perto.",
  "Food and village\n\nWheat > mill > flour > kitchen > bread.\nRanch meat > electric furnace.\n\nThe pantry pays emeralds for food, more for cooked food, and 50% more with villagers near.")
 page(
- "A vila operária\n\nAldeões contratados trabalham por você: lavoura, animais, máquinas, armazéns e um centro de controle.\n\nTudo isso está no Guia da Vila Operária, entregue no começo. Livro + trigo fabricam outro.",
- "The worker village\n\nHired villagers work for you: fields, animals, machines, storage and a control center.\n\nIt is all in the Worker Village Guide, given at the start. Book + wheat craft another.")
+ "A vila operária\n\nAldeões contratados trabalham por você: lavoura, animais, máquinas, armazéns e um centro de controle.\n\nTudo isso está no Guia da Vila Operária, entregue ao obter um posto. Livro + trigo fabricam outro.",
+ "The worker village\n\nHired villagers work for you: fields, animals, machines, storage and a control center.\n\nIt is all in the Worker Village Guide, given when you obtain a post. Book + wheat craft another.")
 help["belt"] = (
  "Curvas e rampas automáticas.\nConecte esteiras vizinhas.\nRampas vencem 1 bloco.\nChave fixa a direção.\nAgachar + chave: automático.",
  "Automatic turns and ramps.\nConnect neighboring belts.\nRamps span one block up.\nWrench locks the direction.\nSneak + wrench: automatic.")
@@ -1073,6 +1144,9 @@ page(
  "Rede de logística\n\nEsteiras levam itens longe. Braços ligam baús e máquinas. Unificadores juntam; divisores distribuem.\n\nUse rápidas depois de juntar linhas.",
  "Logistics network\n\nBelts carry over distance. Arms link chests and machines. Mergers join; splitters distribute.\n\nUse fast belts after merging.")
 page(
+ "Megafábricas\n\nCopiadora: monte a linha no quadrado acima dela e clique com papel.\nMarco de obra: mão vazia mostra o orçamento; agachado com a chave, constrói.\n\nAndares: escada de mão até o piso de cima, ou elevador de carga.",
+ "Megafactories\n\nCopier: build a line on the square above it and click with paper.\nBuild marker: empty hand lists materials; sneak with the wrench to build.\n\nFloors: a ladder up to the next floor, or a cargo lift.")
+page(
  "Configurar filtros\n\nAgache e use um item no braço ou divisor: ele vira filtro sem gastar a amostra.\n\nAgache com mão vazia para limpar. O ícone fica no bloco.",
  "Set a filter\n\nSneak and use an item on an arm or splitter to copy its filter. The sample is kept.\n\nSneak with an empty hand to clear. See the icon on the block.")
 page(
@@ -1082,8 +1156,13 @@ page(
  "Parar e medir\n\nRedstone pausa braços e esteiras. Esteiras reagem em até 8 ticks.\n\nPainéis mostram itens/min. Divisor filtrado: iguais à esquerda, outros à direita.",
  "Stop and measure\n\nRedstone pauses arms and belts. Belts respond within 8 ticks.\n\nPanels show items/min. A sorting splitter sends matching left, other right.")
 category_pages=[]
-for _ in categories:
- category_pages.append(len(pages)+1);pages.append(None)
+category_parts=[]
+for _,_,members in categories:
+ parts=[]
+ for start in range(0,len(members),10):
+  parts.append((len(pages)+1,members[start:start+10]));pages.append(None)
+ category_parts.append(parts);category_pages.append(parts[0][0])
+label("veio.guide.more","Mais >","More >")
 recipe_index=len(pages)+1;pages.append(None)
 references={}
 def reference_labels(name):
@@ -1121,21 +1200,22 @@ for name in order:
   parts=", ".join(f"{count} {item_name(item,code)}" for item,count in ingredients.items())
   langs[code][craft_key]=("Fabricar: " if pt else "Craft: ")+parts+(f" ({made})" if made>1 else "")
  references[name]=len(pages)+1
- pages.append({"text":"","extra":[{"translate":f"{kind}.veio.{name}","bold":True},{"text":"\n"},
-  {"translate":usage_key},{"text":"\n"},{"translate":craft_key,"color":"dark_gray"},{"text":"\n"},
-  {"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}}]})
+ pages.append({"text":"","extra":[{"translate":f"{kind}.veio.{name}","bold":True},back_mark(),{"text":"\n"},
+  {"translate":usage_key},{"text":"\n"},{"translate":craft_key,"color":"dark_gray"}]})
 for g,(pt,en,members) in enumerate(categories):
  key=f"veio.guide.category.{g}"
  label(key,pt,en)
- extra=[{"translate":key,"bold":True},{"text":"\n"}]
- for name in members:
-  kind="item" if name=="wrench" else "block"
-  short_key=f"veio.guide.short.{name}"
-  title_key=short_key if short_key in langs["pt_br"] else f"{kind}.veio.{name}"
-  extra.extend([{"translate":title_key,"color":"dark_blue","underlined":True,
-                 "click_event":{"action":"change_page","page":references[name]}},{"text":"\n"}])
- extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
- pages[category_pages[g]-1]={"text":"","extra":extra}
+ for part,(target,chunk) in enumerate(category_parts[g]):
+  extra=[{"translate":key,"bold":True},back_mark(),{"text":"\n"}]
+  for name in chunk:
+   kind="item" if name=="wrench" else "block"
+   short_key=f"veio.guide.short.{name}"
+   title_key=short_key if short_key in langs["pt_br"] else f"{kind}.veio.{name}"
+   extra.extend([{"translate":title_key,"color":"dark_blue","underlined":True,
+                  "click_event":{"action":"change_page","page":references[name]}},{"text":"\n"}])
+  if part+1<len(category_parts[g]):
+   extra.append({"translate":"veio.guide.more","color":"dark_blue","click_event":{"action":"change_page","page":category_parts[g][part+1][0]}})
+  pages[target-1]={"text":"","extra":extra}
 
 # Receitas das máquinas, geradas de tools/production.json. Os nomes vanilla usam as chaves do
 # próprio jogo, então aparecem no idioma do jogador.
@@ -1161,9 +1241,11 @@ machines=[]
 for recipe in production_data["recipes"]:
  if recipe["machine"] not in machines: machines.append(recipe["machine"])
 recipe_pages={}
-PER_PAGE=4
+# Receitas por página: 4, menos onde os nomes longos quebram linha (14 linhas por página).
+RECIPES_PER_PAGE={"electronics":2,"kitchen":3}
 for machine in machines:
  entries=[r for r in production_data["recipes"] if r["machine"]==machine]
+ PER_PAGE=RECIPES_PER_PAGE.get(machine.split(":")[-1],4)
  for start in range(0,len(entries),PER_PAGE):
   chunk=entries[start:start+PER_PAGE]
   extra=[{"translate":f"block.veio.{machine}","bold":True}]
@@ -1195,7 +1277,7 @@ for machine in machines:
   "click_event":{"action":"change_page","page":recipe_pages[machine]}},{"text":"\n"}])
 extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
 pages[recipe_index-1]={"text":"","extra":extra}
-# O sumário cabe numa página: 12 entradas. "Resolver falhas" e "Fábrica e mundo" seguem na leitura.
+# O sumário cabe numa página: 13 entradas. "Resolver falhas" e "Fábrica e mundo" seguem na leitura.
 links=[
  ("Começar","Start here",intro),
  ("Escada de produção","Production ladder",production),("Comida e povoado","Food and village",food),
@@ -1216,20 +1298,23 @@ write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
 write(f"{D}/recipe/guide.json",{"type":"minecraft:crafting_shapeless","category":"misc",
  "ingredients":["minecraft:book","minecraft:paper"],
  "result":{"id":"minecraft:written_book","count":1,"components":book}})
-label("veio.tutorial.title","Primeira fábrica","First Factory")
-label("veio.tutorial.start","Abra o Guia do Veio no inventário e siga a primeira linha de cobre.","Open the Veio Field Guide in your inventory and follow the copper line.")
+from build_first_steps import build as build_first_steps
+build_first_steps(label, read, write, A, D)
+label("veio.tutorial.title","Primeiros pedidos","First requests")
+label("veio.tutorial.start","A oficina precisa de 4 chapas. Abra Sua primeira oficina e monte seu primeiro ciclo.","The workshop needs 4 plates. Open Your first workshop and build your first cycle.")
 start={"display":{"icon":{"id":"minecraft:written_book"},"title":{"translate":"veio.tutorial.title"},
  "description":{"translate":"veio.tutorial.start"},"background":"minecraft:gui/advancements/backgrounds/stone",
  "announce_to_chat":False},
  "criteria":{"welcome":{"trigger":"minecraft:tick"}},
- "rewards":{"loot":["veio:tutorial/guide"],"recipes":["veio:guide","veio:generator","veio:cable","veio:drill","veio:belt","veio:press"],
+ "rewards":{"loot":["veio:tutorial/first_steps","veio:tutorial/board"],"recipes":["veio:first_steps","veio:guide","veio:generator","veio:cable","veio:drill","veio:belt","veio:press","veio:factory_board"],
  "function":"veio:tutorial/welcome"}}
 write(f"{D}/advancement/tutorial/start.json",start)
-label("veio.guide.path_welcome", "Guia atualizado: esteiras agora fazem curvas e rampas. Consulte as páginas antes das categorias.", "Updated guide: belts now turn and climb. Read the pages before the categories.")
+label("veio.guide.path_welcome", "Esteiras são uma opção: extratora > esteira > prensa na mesma altura. Braços, funis e carregadores também contam no tutorial.", "Belts are one option: extractor > belt > press at one height. Arms, hoppers and haulers also count in the tutorial.")
+write(f"{D}/loot_table/tutorial/board.json",{"type":"minecraft:generic","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"veio:factory_board"}]}]})
 write(f"{D}/advancement/tutorial/belt_paths.json", {
  "parent":"veio:tutorial/start",
  "criteria":{"obtain":{"trigger":"minecraft:inventory_changed","conditions":{"items":[{"items":"veio:belt"}]}}},
- "rewards":{"loot":["veio:tutorial/guide"],"function":"veio:tutorial/path_welcome"}})
+ "rewards":{"function":"veio:tutorial/path_welcome"}})
 p=root/D/"function/tutorial/path_welcome.mcfunction"
 p.parent.mkdir(parents=True,exist_ok=True)
 p.write_text('tellraw @s {"translate":"veio.guide.path_welcome","color":"gold"}\n',encoding="utf-8")
@@ -1238,27 +1323,45 @@ write(f"{D}/advancement/tutorial/merger.json", {
  "display":{"icon":{"id":"veio:merger"},"title":{"translate":"veio.tutorial.merger.title"},
  "description":{"translate":"veio.tutorial.merger.description"},"announce_to_chat":False},
  "criteria":{"obtain":{"trigger":"minecraft:inventory_changed","conditions":{"items":[{"items":"veio:merger"}]}}},
- "rewards":{"loot":["veio:tutorial/guide"]}})
+ "rewards":{}})
 p=root/D/"function/tutorial/welcome.mcfunction";p.parent.mkdir(parents=True,exist_ok=True)
 p.write_text('tellraw @s {"translate":"veio.guide.welcome","color":"gold"}\n',encoding="utf-8")
 stages=[
- ("generator","veio:generator","1. Gerador em mãos","1. Get a generator","Coloque combustível e um poste perto das máquinas.","Add fuel and place a pole near the machines."),
- ("drill","veio:drill","2. Preparar extração","2. Prepare extraction","Coloque a extratora sobre cobre e dê energia.","Place the extractor on copper ore and supply power."),
- ("plates","veio:copper_plate","3. Recolher uma chapa","3. Collect a plate","A prensa usa cobre bruto. Recolha sua primeira chapa.","The press uses raw copper. Pick up your first plate."),
- ("gears","veio:gear","4. Primeira engrenagem","4. Your first gear","Leve duas chapas ao montador e recolha uma engrenagem.","Feed two plates to the assembler and collect a gear."),
- ("frames","veio:frame","5. Produzir molduras","5. Make frames","Na linha de ferro, a cortadora transforma chapas em molduras.","On the iron line, the cutter turns plates into frames."),
- ("modules","veio:module","6. Juntar as linhas","6. Join the lines","Entregue moldura e engrenagem ao integrador.","Supply a frame and gear to the integrator."),
- ("hub","veio:contract_hub","7. Escolher um projeto","7. Start a project","Consulte o pedido da central. O guia tem suas receitas.","Read the hub order. The guide contains its recipes."),
- ("repair","veio:repair_kit","8. Preparar reparos","8. Prepare repairs","A poluição atrai Saqueadores. Tenha kits de reparo à mão.","Pollution draws Raiders. Keep repair kits at hand."),
- ("defense","veio:tesla","9. Defender a fábrica","9. Defend the factory","Uma torre Tesla abastecida protege a fábrica à noite.","A powered Tesla tower guards the factory at night."),
+ ("bread","minecraft:bread",3,"Opcional: reserva de comida","Optional: food reserve","Junte 3 pães; replante o trigo. A reserva continua com você.","Gather 3 bread; replant the wheat. Keep your reserve."),
+ ("generator","veio:generator",1,"1. Energia para a oficina","1. Workshop power","Abasteça o gerador e ligue uma prensa com cabos.","Fuel the generator and connect a press with cables."),
+ ("press","veio:press",1,"2. Monte o teste","2. Build the test","Gerador > cabo > prensa. Confirme energia; depois coloque cobre bruto.","Generator > cable > press. Confirm power; then add raw copper."),
+ ("plates","veio:copper_plate",4,"3. Quatro chapas","3. Four plates","Coloque cobre bruto na prensa e recolha 4 chapas. Leve à mão.","Put raw copper in the press and collect 4 plates. Carry them by hand."),
+ ("gears","veio:gear",1,"4. Primeira engrenagem","4. First gear","Duas chapas no montador energizado fazem uma engrenagem.","Two plates in a powered assembler make a gear."),
+ ("hub","veio:contract_hub",1,"5. A encomenda da oficina","5. The workshop order","Abra a central: 24 chapas e 8 engrenagens. Esteiras podem poupar viagens.","Open the hub: 24 plates and 8 gears. Belts can save trips."),
+ ("drill","veio:drill",1,"6. Uma tarefa a menos","6. One less chore","Coloque sobre cobre, ligue energia e confira a saída antes de conectar esteiras.","Place on copper, connect power and check its output before adding belts."),
+ ("stock","veio:copper_plate",24,"7. Reserva da oficina","7. Workshop stock","Tenha também 8 engrenagens. Entregue na central para receber esteiras e cabos.","Also hold 8 gears. Deliver to the hub to receive belts and cables."),
+ ("frames","veio:frame",1,"8. Produzir molduras","8. Make frames","A cortadora transforma chapas de ferro em molduras.","A cutter turns iron plates into frames."),
+ ("modules","veio:module",1,"9. Juntar as linhas","9. Join the lines","Moldura e engrenagem no integrador: expanda no seu ritmo.","Frame and gear in the integrator: expand at your pace."),
+ ("repair","veio:repair_kit",1,"Preparar reparos","Prepare repairs","A poluição atrai Saqueadores. Tenha kits de reparo à mão.","Pollution draws Raiders. Keep repair kits at hand."),
+ ("defense","veio:tesla",1,"Defender a fábrica","Defend the factory","Uma torre Tesla abastecida protege a fábrica à noite.","A powered Tesla tower guards the factory at night."),
 ]
+next_hints={
+ "bread":("Reserva de comida pronta. Guarde para explorar ou alimentar trabalhadores; o pedido da oficina continua no seu caderno.","Food reserve ready. Keep it for exploring or workers; the workshop request is in your workbook."),
+ "generator":("Teste de energia: coloque gerador > cabo > prensa encostados e carvão no gerador. Abra a prensa e confirme a energia subindo. Cabo transporta energia; esteira transporta itens.","Power test: place generator > cable > press touching and fuel the generator. Open the press and confirm rising energy. Cables carry power; belts carry items."),
+ "press":("Teste da prensa: ponha 4 cobres brutos na entrada esquerda. Veja o progresso e recolha 4 chapas à direita. Se parar, leia o estado: energia, material ou saída cheia.","Press test: put 4 raw copper in the left input. Watch progress and collect 4 plates on the right. If it stops, read its status: power, material or full output."),
+ "drill":("Teste da extração: coloque SOBRE minério de cobre e ligue energia. Confira cobre saindo sozinho. Depois ligue extratora > esteira > prensa e veja o cobre chegar sem sua ajuda.","Extraction test: place ON copper ore and supply power. Check that copper appears on its own. Then connect extractor > belt > press and watch copper arrive without your help."),
+ "hub":("Encomenda: 24 chapas + 8 engrenagens. Isso exige 40 chapas ao todo, além das peças de construção. Sua primeira oficina ensina a automatizar coleta, transporte e armazenamento antes da entrega.","Order: 24 plates + 8 gears. That needs 40 plates in total, besides construction parts. Your first workshop teaches automated extraction, transport and storage before delivery."),
+ "plates":("Chapas prontas! Faça um montador com 2 chapas, pistão e bancada. Mais 2 chapas na máquina energizada fazem sua primeira engrenagem.","Plates ready! Craft an assembler with 2 plates, a piston and crafting table. Feed it 2 more plates and power for your first gear."),
+ "gears":("A oficina precisa de um lote: 24 chapas e 8 engrenagens. Abra uma central de projetos. Experimente automatizar uma viagem de cada vez.","The workshop needs a batch: 24 plates and 8 gears. Open a project hub. Try automating one trip at a time."),
+ "stock":("Reserva reunida. A central recebe chapas na entrada 1 e engrenagens na 2. A entrega consome os itens; retire esteiras e cabos das saídas.","Stock gathered. The hub takes plates in input 1 and gears in input 2. Delivery consumes the items; collect belts and cables from its outputs."),
+}
 parent="veio:tutorial/start"
-for name,item,pt,en,pdesc,edesc in stages:
+for name,item,count,pt,en,pdesc,edesc in stages:
  key="veio.tutorial."+name;label(key+".title",pt,en);label(key+".description",pdesc,edesc)
- obj={"parent":parent,"display":{"icon":{"id":item},"title":{"translate":key+".title"},
+ items=[{"items":item,"count":{"min":count}}]
+ if name=="stock": items.append({"items":"veio:gear","count":{"min":8}})
+ obj={"parent":"veio:tutorial/start" if name=="bread" else parent,"display":{"icon":{"id":item},"title":{"translate":key+".title"},
  "description":{"translate":key+".description"},"announce_to_chat":False,"show_toast":False},
- "criteria":{"obtain":{"trigger":"minecraft:inventory_changed","conditions":{"items":[{"items":item}]}}}}
- write(f"{D}/advancement/tutorial/{name}.json",obj);parent="veio:tutorial/"+name
+ "criteria":{"obtain":{"trigger":"minecraft:inventory_changed","conditions":{"items":items}}}}
+ if name in next_hints:
+  label(key+".next",*next_hints[name])
+ write(f"{D}/advancement/tutorial/{name}.json",obj)
+ if name!="bread": parent="veio:tutorial/"+name
 
 # ---------- Guia da Vila Operária ----------
 # Segundo livro: o guia principal está perto do limite de 100 páginas. Roteiro da vila, problemas,
@@ -1273,8 +1376,8 @@ v_intro=vpage(
  "A vila operária\n\nVocê começa no centro de uma vila. Os aldeões passam a trabalhar por você, e a vila cresce com a fábrica.\n\nSiga os passos em ordem. A aba de avanços Vila operária marca o progresso.",
  "The worker village\n\nYou start at the center of a village. Villagers start working for you, and the village grows with the factory.\n\nFollow the steps in order. The Worker Village advancement tab tracks progress.")
 v_hire=vpage(
- "1. Primeiro trabalhador\n\nColoque um posto do lavrador perto da plantação e de aldeões.\n\nPonha pão no slot da esquerda e clique no posto com uma esmeralda.\n\nO aldeão colhe e traz a colheita ao posto.",
- "1. First worker\n\nPlace a farmhand post near crops and villagers.\n\nPut bread in the left slot and click the post with an emerald.\n\nThe villager harvests and brings the crop back.")
+ "1. Primeiro trabalhador\n\nPosto do lavrador perto da plantação e de aldeões.\n\nPão no slot da esquerda; clique no posto com uma esmeralda.\n\nO aldeão colhe e traz a colheita.",
+ "1. First worker\n\nFarmhand post near crops and villagers.\n\nBread in the left slot; click the post with an emerald.\n\nThe villager harvests and brings the crop back.")
 v_field=vpage(
  "2. Demarque a lavoura\n\nColoque o marco de lavoura no centro do campo, com água perto.\n\nPostos a até 3 blocos da borda trabalham na área toda: aram, plantam e colhem.\n\nSemente no marco: só ela é plantada.",
  "2. Mark the field\n\nPlace the field marker at the center of the field, with water nearby.\n\nPosts within 3 blocks of the border work the whole area: till, plant and harvest.\n\nSeed in the marker: only that is planted.")
@@ -1321,11 +1424,14 @@ v_expand=vpage(
  "Expandir as zonas\n\nEsmeralda no marco libera o próximo nível:\n13x13: 8 esm., 32 tarefas, 6 aldeões\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nA chave escolhe o tamanho entre os liberados.",
  "Grow the zones\n\nEmerald on the marker unlocks the next level:\n13x13: 8 emer., 32 tasks, 6 villagers\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nThe wrench picks the size among unlocked ones.")
 v_grow=vpage(
- "A vila cresce\n\nFilhos até o teto: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle.\n\nO prefeito limita: 30 sem prefeitura, depois 60, 100 e 150. Com ele, bebê só nasce com vaga em casa.",
- "The village grows\n\nChildren up to the cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center.\n\nThe mayor limits it: 30 without a town hall, then 60, 100 and 150. With a mayor, babies need a free home.")
+ "A vila cresce\n\nFilhos até o teto: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle.\n\nO prefeito limita: 30 sem prefeitura, depois 60, 100 e 150. Sem cama livre ninguém nasce; com prefeito, também é preciso vaga em casa.",
+ "The village grows\n\nChildren up to the cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center.\n\nThe mayor limits it: 30 without a town hall, then 60, 100 and 150. No free bed, no birth; with a mayor, a free home too.")
+v_lan=vpage(
+ "Na mesma rede\n\nAnfitrião: Esc, Abrir para a LAN, Iniciar mundo LAN.\n\nQuem entra: mesmo Wi-Fi, Multijogador; o mundo aparece na lista. Mesma versão do Veio.\n\nAs máquinas são as do anfitrião.",
+ "On your network\n\nHost: Esc, Open to LAN, Start LAN World.\n\nJoin: same Wi-Fi, Multiplayer; the world shows in the list. Same Veio version.\n\nThe machines are the host's.")
 v_trouble=vpage(
- "Quando um aldeão para\n\nNoite: ele dorme e volta de manhã.\nSem comida: ponha pão.\nAusente: traga-o ou dispense (agachar + chave).\nCaminho obstruído: abra passagem.\nSaída cheia: esvazie ou use um celeiro.\nCursor no estado: dicas.",
- "When a villager stops\n\nNight: they sleep and return in the morning.\nNo food: add bread.\nMissing: bring them back or dismiss (sneak + wrench).\nPath blocked: clear the way.\nOutput full: empty it or use a barn.\nHover the status for tips.")
+ "Quando um aldeão para\n\nSem comida: ponha pão.\nAusente: traga-o ou dispense (agachar + chave).\nCaminho obstruído: abra passagem.\nSaída cheia: esvazie ou use um celeiro.\nPasse o cursor no estado do painel para dicas.",
+ "When a villager stops\n\nNo food: add bread.\nMissing: bring them back or dismiss (sneak + wrench).\nPath blocked: clear the way.\nOutput full: empty it or use a barn.\nHover over the panel status for tips.")
 v_barracks=vpage(
  "Quartel\n\nEsmeralda contrata. Agachar com esmeralda troca a classe (com soldado, gasta a do slot).\n\nMilícia: 7 de dano.\nGuarda: tanque, se cura.\nArqueiro: atira de longe.\nMago: 10 e fere outro.\n\nPlantão à noite, sem fugir. Cada golpe come uma tarefa.",
  "Barracks\n\nAn emerald hires. Sneak with an emerald to change class (with a soldier, spends the slot one).\n\nMilitia: 7 damage.\nGuard: tank, heals.\nArcher: shoots from afar.\nMage: 10 and hits another.\n\nNight duty, never flees. Each blow eats one task.")
@@ -1377,6 +1483,12 @@ for _key in ["canteen","school","smithy","market","library","post_office","inn",
 v_shortcuts=vpage(
  "Atalhos da fábrica\n\n3 chapas de ferro: balde\n4 chapas + baú: funil\nchapa + tocha: lanternas\n3 chapas de cobre: para-raios\ncircuito + chapa: bússola\ncircuito + ouro: relógio\naço + graveto: 16 trilhos",
  "Factory shortcuts\n\n3 iron plates: bucket\n4 plates + chest: hopper\nplate + torch: lanterns\n3 copper plates: lightning rod\ncircuit + plate: compass\ncircuit + gold: clock\nsteel + stick: 16 rails")
+v_house=vpage(
+ "Casa do fundador\n\nA vila já vem com ela: painel, o Lar no lugar da lareira, sofá, cama e mural.\n\nO Lar dá a refeição e os bônus de casa.\n\nA primeira cama é a da casa; fora, só mais uma.",
+ "Founder's house\n\nThe village comes with it: panel, the Hearth as the fireplace, sofa, bed and mural.\n\nThe Hearth gives home meals and bonuses.\n\nYour first bed is the one at home; outside, just one more.")
+v_meals=vpage(
+ "Refeições fora de casa\n\nRefeição (assados, pão, torta): trabalho mais rápido e fábricas +5% por 5 min.\n\nBanquete (sopas, cenoura dourada): +10% por 8 min e regeneração.\n\nEm casa, coma no Lar.",
+ "Meals away from home\n\nMeal (roasts, bread, pie): faster work, factories +5% for 5 min.\n\nFeast (stews, soups, golden carrot): +10% for 8 min, regeneration.\n\nAt home, eat at the Hearth.")
 v_blocks=len(vpages)+1;vpages.append(None)
 v_manage=len(vpages)+1;vpages.append(None)
 v_reference=len(vpages)+1;vpages.append(None)
@@ -1385,15 +1497,13 @@ vrefs={}
 for name in village_order:
  reference_labels(name)
  vrefs[name]=len(vpages)+1
- vpages.append({"text":"","extra":[{"translate":f"block.veio.{name}","bold":True},{"text":"\n"},
-  {"translate":f"veio.guide.use.{name}"},{"text":"\n"},{"translate":f"veio.guide.craft.{name}","color":"dark_gray"},{"text":"\n"},
-  {"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}}]})
+ vpages.append({"text":"","extra":[{"translate":f"block.veio.{name}","bold":True},back_mark(),{"text":"\n"},
+  {"translate":f"veio.guide.use.{name}"},{"text":"\n"},{"translate":f"veio.guide.craft.{name}","color":"dark_gray"}]})
 label("veio.village.blocks","Blocos da vila","Village blocks")
-extra=[{"translate":"veio.village.blocks","bold":True},{"text":"\n"}]
+extra=[{"translate":"veio.village.blocks","bold":True},back_mark(),{"text":"\n"}]
 for name in village_order:
  extra.extend([{"translate":f"block.veio.{name}","color":"dark_blue","underlined":True,
   "click_event":{"action":"change_page","page":vrefs[name]}},{"text":"\n"}])
-extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
 vpages[v_blocks-1]={"text":"","extra":extra}
 def subindex(page,key,pt,en,links):
  label(key,pt,en)
@@ -1408,6 +1518,7 @@ MANAGE=[("Começar","Start here",v_intro),("Holding","Holding",v_holding),("A mo
  ("Obras maiores","Bigger projects",v_projects2),("Fases e indicadores","Phases and indicators",v_phases)]
 REFERENCE=[("Expandir zonas","Grow zones",v_expand),("A vila cresce","Village growth",v_grow),("Quartel","Barracks",v_barracks),
  ("Uma casa de verdade","A real house",v_home2),("Banquete","Banquet",v_banquet),("Problemas e comida","Problems and food",v_trouble),
+ ("Casa do fundador","Founder's house",v_house),("Refeições fora","Meals away",v_meals),("Na mesma rede","On your network",v_lan),
  ("Atalhos da fábrica","Factory shortcuts",v_shortcuts),("Blocos","Blocks",v_blocks)]
 MANAGE.append(("Plantas das obras","Project blueprints",v_planlist))
 subindex(v_planlist,"veio.village.plans","Plantas das obras","Project blueprints",[("Canteiro de obras","Construction site",v_site)]+
@@ -1420,8 +1531,16 @@ vlinks=[("1. Trabalhador","1. Worker",v_hire),("2. Lavoura","2. Field",v_field),
  ("9. Loja","9. Shop",v_shop),("10. Prefeito e contas","10. Mayor and accounts",v_mayor),("11. Seu lar","11. Your home",v_home),
  ("Gestão da vila","Running the village",v_manage),("Consulta","Reference",v_reference)]
 label("veio.village.title","Guia da Vila Operária","Worker Village Guide")
+label("veio.village.steps","Passos:","Steps:")
 extra=[{"translate":"veio.village.title","bold":True},{"text":"\n"}]
-for n,(pt,en,target) in enumerate(vlinks):
+for n,link in enumerate(vlinks):
+ if link is None:
+  extra.append({"translate":"veio.village.steps"})
+  for step,target in enumerate(vsteps,1):
+   extra.extend([{"text":" "},{"text":str(step),"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}}])
+  extra.append({"text":"\n"})
+  continue
+ pt,en,target=link
  key=f"veio.village.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 vpages[0]={"text":"","extra":extra}
@@ -1439,8 +1558,23 @@ write(f"{D}/recipe/village_guide.json",{"type":"minecraft:crafting_shapeless","c
 label("veio.village.tab","Vila operária","Worker Village")
 label("veio.village.tab.description","Abra o Guia da Vila Operária e contrate seu primeiro aldeão.","Open the Worker Village Guide and hire your first villager.")
 label("veio.village.welcome","Você recebeu o Guia da Vila Operária: aldeões podem trabalhar por você.","You received the Worker Village Guide: villagers can work for you.")
+label("veio.village.need_houses","%s aldeões e %s camas. Construa mais casas.","%s villagers and %s beds. Build more houses.")
 label("veio.spawn.village","Você está no centro da vila. Ela vai crescer com a sua fábrica.","You are at the village center. It will grow with your factory.")
 label("veio.spawn.none","Nenhuma vila encontrada por perto. Construa um centro de controle para fixar o centro da sua vila.","No village found nearby. Build a control center to set your village center.")
+label("veio.world.requires_normal","O mapa completo do Veio precisa de geração Normal e estruturas ativadas.","Veio's complete world requires Normal generation with structures enabled.")
+label("veio.world.generation_failed","Não foi possível preparar um mundo com todo o conteúdo. Tente criar outro mundo.","Could not prepare a world with all required content. Please try creating another world.")
+label("veio.world.portal_blocked","Nenhuma saída segura encontrada. Você permaneceu na origem.","No safe portal exit was found. You stayed at the origin.")
+label("veio.world.outside","Esse destino fica além da muralha do mapa.","That destination is beyond the world wall.")
+label("veio.home.built","Sua casa está pronta, com o painel em %s: lareira, sofá, cama e o mural com o mapa. Durma lá primeiro.","Your house is ready, with the panel at %s: fireplace, sofa, bed and the map mural. Sleep there first.")
+label("veio.home.inside","Em casa, com o painel: as fábricas rendem 15% mais.","At home with the panel: factories produce 15% more.")
+label("veio.home.left","Fora de casa: as fábricas voltam ao ritmo normal.","Away from home: factories are back to normal pace.")
+label("veio.home.bed_first","Sua primeira cama é a da casa, ao lado do painel. Durma nela antes.","Your first bed is the one at home, next to the panel. Sleep there first.")
+label("veio.home.bed_limit","Você já tem duas camas: a da casa e uma fora. Quebre a de fora para usar esta.","You already have two beds: the one at home and one outside. Break the outside one to use this.")
+label("veio.home.bed_home","Cama da casa: você renasce aqui.","Home bed: you respawn here.")
+label("veio.home.bed_away","Segunda cama marcada. Você tem a da casa e esta.","Second bed set. You have the one at home and this one.")
+label("veio.food.meal","Refeição: você trabalha mais rápido e as fábricas rendem 5%% mais por %s min.","Meal: you work faster and factories produce 5%% more for %s min.")
+label("veio.food.feast","Banquete: fábricas +10%%, trabalho mais rápido e regeneração por %s min.","Feast: factories +10%%, faster work and regeneration for %s min.")
+label("veio.food.home","Em casa, coma no Lar: tigela na mão e clique nele.","At home, eat at the Hearth: hold a bowl and click it.")
 write(f"{D}/advancement/village/root.json",{
  "display":{"icon":{"id":"minecraft:bell"},"title":{"translate":"veio.village.tab"},
  "description":{"translate":"veio.village.tab.description"},"background":"minecraft:gui/advancements/backgrounds/husbandry",
@@ -1638,5 +1772,7 @@ from build_operations import add_labels
 add_labels(langs)
 from build_machine_audio import add_labels as add_sound_labels
 add_sound_labels(langs)
+from build_onboarding import add_labels as add_onboarding_labels
+add_onboarding_labels(label)
 for code,data in langs.items():write(f"{A}/lang/{code}.json",data)
 print("Guide pages:",len(pages))

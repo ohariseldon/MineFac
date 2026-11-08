@@ -7,7 +7,7 @@ Primeira etapa da ordem em [frentes/CLOUD.md](frentes/CLOUD.md): um aldeão cont
 1. Obtenha a colheitadeira. O avanço **Lavoura mecanizada** passa a liberar a receita do **Posto do lavrador** (composteira, enxada de ferro, esmeralda e barril, em qualquer posição).
 2. Coloque o posto no meio de uma lavoura de até 9x9, como a colheitadeira. A camada do posto, a de baixo e a de cima são lidas.
 3. Ponha comida no slot da esquerda. O valor é o do armazém, e cada tarefa gasta **2 pontos**: um trigo não paga a colheita; duas cenouras ou batatas pagam uma; pão (6) paga 3; carne assada (8) paga 4.
-4. Com uma **esmeralda** na mão, clique com o botão direito no posto. O aldeão adulto livre mais próximo, a até 8 blocos, é contratado e a esmeralda é gasta. Sem candidato, a esmeralda fica com o jogador.
+4. Com uma **esmeralda** na mão, clique com o botão direito no posto. Um aldeão adulto livre a até 8 blocos é contratado e a esmeralda é gasta: primeiro os sem profissão e os nitwits, depois comerciantes de nível 1, e os experientes só se não houver outro; no empate, o mais próximo. Sem candidato, a esmeralda fica com o jogador.
 5. O trabalhador anda até uma planta madura, colhe (a planta fica replantada no estágio inicial, como na colheitadeira) e leva o produto de volta ao posto. Retire pelos três slots da direita ou ligue uma esteira no bocal.
 6. **Agachar + chave** no posto dispensa o trabalhador. Ele volta ao comportamento normal de aldeão.
 
@@ -99,6 +99,91 @@ Casas e famílias, salário, consumo, lojas, prefeito, fases e indicadores. Regr
 - **Limites indiretos:** `zones::right_click` consulta `society::zone_cap`; `village::observe` consulta `society::birth_allowed`.
 - **Integração pendente:** a frente de obras da vila (outro agente: prestígio, prefeitura como obra, escola, mercado, refeitório) deve se juntar a esta prefeitura e somar serviços ao IDH.
 
+## Sétima entrega: revisão de aldeões e mobs (com o quartel do Grok)
+
+Revisão feita sobre a main `cf37004` com a casa do fundador (sexta entrega) e a branch `cursor/grok-quartel-c7d9` integrada (mobs caçando aldeões, saqueadores atrás do jogador, quartel). Só ajustes; nada foi reescrito.
+
+### Correções
+
+- **Relógio do mod em dobro no jogo de um jogador só.** O gancho `tick` roda no servidor interno e também na janela (o Horizon chama os mods dos dois lados). O Veio avançava o relógio duas vezes por tick, em threads diferentes: tudo medido nele (espera do spawn, ausência do trabalhador, ordens, reservas, natalidade, bônus da casa e da comida) corria no dobro da velocidade, e metade dos aldeões nunca tinha filhos (o sorteio `(relógio + id) % 6000` só cai em números pares). As cotas do orçamento global também eram zeradas no meio do tick do servidor, e um passo da poluição podia ser gasto na janela, onde não há jogadores nem `summon`: a onda daquela noite se perdia. Agora o gancho sai logo quando `Host::window()` é verdadeiro. Os tempos documentados (5 min, 30 s...) passam a valer de fato; no servidor dedicado nada muda.
+- **Renascer no centro da vila não funcionava.** `run_command` falha dentro de `player_respawned` (o estado do jogador está trocado). O teleporte vai para uma fila e sai no tick seguinte.
+- **Onda sem saqueadores.** Se nenhum saqueador cabe (chunks em volta descarregados), a noite não conta, nada é anunciado e o passo seguinte tenta de novo. Eles nascem no chão, não em cima de árvores, e o som de invasão só toca se alguém apareceu.
+- **Alvos de outra dimensão.** Saqueadores só miram máquinas do Overworld (antes, uma máquina do Nether com as mesmas coordenadas servia de alvo).
+- **Limpeza dos registros de mobs e animais** (`defense`, `production::ranch`): a marca de limpeza era uma só para todas as dimensões, então só uma dimensão era limpa; agora todas são limpas juntas.
+
+### Ajustes no trabalho do Grok
+
+- Zumbis, esqueletos e aranhas só caçam aldeões **à noite** (o código caçava a qualquer hora; o texto já dizia "à noite"). Saqueadores caçam sempre.
+- A presa precisa estar a até 6 blocos de altura: um monstro da caverna não tenta subir até a vila.
+- Esqueletos, strays, bogged e pillagers com o jogador a até 16 blocos continuam atirando nele em vez de largar a luta para ir atrás de aldeões (os de corpo a corpo seguem com 6 blocos).
+- Aldeões feridos se recuperam depois de 30 s sem apanhar (antes, os golpes ficavam para sempre).
+- Os registros de jogadores e aldeões dos mobs se refazem a cada 10 ticks, não a cada tick.
+- O quartel ignora monstros mais de 8 blocos acima ou abaixo dele, e o soldado corre (velocidade 0,9 em vez de 0,6) e refaz o caminho duas vezes por segundo atrás do alvo.
+
+### Aldeões
+
+- **Contratação** prefere quem não faz falta no comércio (sem profissão ou nitwit, depois nível 1, por último os experientes).
+- **Lavradores e pastores dormem à noite.** Das 13000 às 23000, depois de entregar o que carregam, a ordem é retirada e o aldeão volta à vida vanilla (ir para a cama). O painel mostra o estado novo 29, **Descansando (noite)**. Carregador, capataz, administrador e soldados seguem trabalhando. Dormir numa cama longe do posto não conta como ausência (antes, a noite de 8 min passava do limite de 5 min e o posto dispensava o trabalhador).
+
+### Contratos tocados
+
+- `lib.rs`: saída antecipada do gancho `tick` na janela; `note_players` e `harm_villagers` recebem o relógio.
+- `presentation.rs`: `STATUS_KEYS` com 30 entradas (`freight_route` do Codex em 28, `resting` em 29, cor azul).
+- `pollution.rs`: `night_at`, `is_night`; `spawn_wave` devolve quantos nasceram.
+- Substituto offline: `Host::window`.
+
+### Verificação
+
+Substituto offline: 135 testes, entre eles onda que não nasce, contratação por profissão, descanso noturno e o teste do quartel do Grok. Conteúdo conferido. Pendentes: compilação pelo launcher e teste no jogo (prioridade: confirmar que `window()` é falso no servidor interno e verdadeiro na janela, e que `host.entity` funciona no tick global, que o censo de aldeões dos mobs usa).
+
+## Sexta entrega: casa do fundador (missão de controle + casa)
+
+### Para o jogador
+
+- **A casa já vem pronta.** Uma vez por mundo, quando o centro da vila é conhecido (ou cerca de um minuto depois do primeiro jogador entrar), o Veio constrói a casa do fundador no terreno mais plano ao norte do centro, com a porta virada para a vila. Estilo das casas de planície: fundação de pedregulho, cantos de tronco, tábuas de carvalho, telhado de escadas, chaminé de tijolo.
+- **Dentro:** o centro de controle (o painel), lareira com fogueira acesa, sofá de frente para o fogo com tapete, mesa com duas cadeiras, estante, baú, cama ao lado do painel com criado-mudo e velas, duas lanternas penduradas. Meia luz.
+- **Mural:** quatro mapas (2 x 2) na parede oeste mostram 256 x 256 blocos em volta da casa. Só aparece o que já foi visto (o que está ou esteve carregado); o resto fica como papel. Máquinas do Veio em laranja, a casa em vermelho. O mural se refaz em cerca de 25 s.
+- **Em casa: +15%.** Com o jogador dentro da casa (até 9 blocos do painel, debaixo do telhado), os ciclos das máquinas ficam 13% mais curtos (1 / 0,87 = 15% mais produtos por minuto). A energia por tick não muda, então cada produto sai mais barato. A barra de ação avisa ao entrar e ao sair.
+- **Duas camas.** A primeira cama de cada jogador tem de ser uma da casa (a que vem ao lado do painel serve). Depois disso vale só mais uma fora. Para trocar a de fora, basta quebrá-la. Quem tem cama renasce nela; quem ainda não tem continua indo ao centro da vila.
+- **Comida.** Refeição (carnes e peixes assados, pão, batata assada, torta): pressa I e máquinas +5% por 5 min. Banquete (ensopados, sopas, cenoura dourada): pressa I, um pouco de regeneração e máquinas +10% por 8 min. Comer dentro de casa dobra a duração. Lanches (cru, frutas, biscoito) só matam a fome. Entre jogadores vale o maior bônus, sem somar. Junto com a casa, o máximo é 0,87 x 0,91: 26% mais produção.
+- O Guia da Vila Operária ganhou as páginas "Sua casa" e "Refeições" (25 páginas no total).
+
+### Código e contratos tocados
+
+- Novo módulo `native/api/src/home/`: `mod.rs` (construção, presença, camas), `mural.rs`, `food.rs`, `tests.rs`.
+- Nova planta `tools/build_house.py` → `content/data/veio/function/home/build.mcfunction` (251 comandos `fill`/`setblock`/`summon`, coordenadas relativas). O Rust roda a função uma vez com `execute in minecraft:overworld positioned X Y Z run function veio:home/build`. A marca `veio:home built` no armazenamento de comandos do mundo impede uma segunda casa. Um teste confere painel, cama e molduras do arquivo gerado contra as constantes do Rust.
+- `lib.rs`: `mod home`; ganchos novos `player_spawn_point_set` e `player_bed_enter` (contrato `cancel`) e `living_entity_use_item_finish` (`listen`); `home::tick` no tick global; `player_respawned` passa o UUID; chaves NBT `Home` e `HomeBeds` na tabela de chaves.
+- `upgrades::effect`: multiplica `time` por `home::time_factor`. Atômicos, sem trava no caminho das máquinas. Módulos, energia por tick e poluição não mudam.
+- `workforce/mod.rs`: o tick do centro de controle chama `home::center_tick` (só o painel da casa faz algo). `workforce/spawn.rs`: `respawned` não teleporta quem tem cama registrada.
+- O painel da casa guarda `Home = 1` e as camas em `HomeBeds` (texto curto). Nada novo no menu nem nos 13 valores do painel.
+- APIs novas, conferidas no código do Horizon `66f3981`: `Host::send_map` (API 132), `Host::acting_player` (API 21), ganchos `player_spawn_point_set` (277), `player_bed_enter` (251), `living_entity_use_item_finish` (90). Substituto offline atualizado.
+
+### Desempenho
+
+- O painel da casa lê uma linha do mural a cada 2 ticks: uma consulta de 256 alturas e 256 leituras de bloco. Custo fixo, um painel só no mundo; não entra no orçamento global (`frentes/ORCAMENTO-GLOBAL.md`) porque não cresce com a fábrica. Os 64 KiB de pixels ficam na memória.
+- Presença: a cada 20 ticks, uma consulta de altura só para os jogadores perto do painel.
+- Envio do mural: 4 mapas de 16 KiB a quem chega perto da casa e a cada 10 s para quem está nela.
+- A construção é uma chamada de função única, uma vez por mundo, e a escolha do terreno faz duas consultas de 450 colunas.
+
+### Números para revisão (Grok)
+
+`HOME_TIME 0,87`, `MEAL_TIME 0,95` por 5 min, `FEAST_TIME 0,91` por 8 min, comer em casa dobra. Todos em `home/mod.rs` e `home/food.rs`.
+
+### Limitações conhecidas
+
+- O bônus da casa vale para todas as máquinas do mundo, não só as perto da casa (o efeito do módulo não conhece a posição da máquina).
+- Quebrar o painel da casa desliga o bônus; recolocado no mesmo lugar ou perto (até 9 blocos), na mesma sessão, ele volta a ser o da casa.
+- Mundos antigos também recebem a casa (a marca no armazenamento ainda não existe neles), perto do centro de controle com administrador ou do primeiro jogador.
+- A comida dos aldeões continua a do administrador e dos postos (pontos por item); o próximo passo é a refeição em casa valer para eles também.
+- Pendente: teste no jogo de `/function` com bloco do Veio e molduras com `minecraft:map_id`, de `send_map` nas molduras e da ordem cama → ponto de renascimento.
+
+### Teste sugerido ao usuário
+
+1. Mundo novo: espere aparecer a mensagem da casa e vá até ela. Confira lareira, sofá, cama, mural.
+2. Fique dentro perto do painel: a barra de ação avisa o +15%. Saia: avisa de novo.
+3. Tente dormir numa cama fora antes da da casa: recusada. Durma na da casa, depois numa fora, depois numa terceira: a terceira é recusada até você quebrar a segunda.
+4. Coma pão fora e um ensopado em casa: veja as mensagens e a pressa.
+5. Ande pela região e volte: o mural mostra o que você viu.
 ## 0.17.0: o inimigo e o quartel
 
 Partindo do que o Grok fez (ondas e quartel), o inimigo ficou mais justo e mais leve:
@@ -395,7 +480,7 @@ O guia principal estava com 99 de 100 páginas. Os sistemas da vila foram para u
 
 ### Vilas maiores
 
-- A cada 5 minutos (fase espalhada pelo id), cada aldeão adulto tem 1 chance em 6 de ter um filho, se houver pelo menos 2 aldeões perto e menos que o teto da vila. O vanilla limita a vila pelas camas; o teto começa em 30 (o triplo de uma vila grande) e, a partir da quinta entrega, cresce com o desenvolvimento até 150. O bebê nasce no tick seguinte de um bloco do Veio na mesma dimensão.
+- A cada 5 minutos (fase espalhada pelo id), cada aldeão adulto tem 1 chance em 6 de ter um filho, se houver pelo menos 2 aldeões perto, menos que o teto da vila e uma cama livre. O teto começa em 30 e cresce com o desenvolvimento até 150. A casa é a cama do Minecraft: conta a cabeceira, não o pé. Sem cama livre, ninguém nasce e o jogador ouve “construa mais casas”. A vila gerada no começo já traz camas para quem está lá. O bebê nasce no tick seguinte de um bloco do Veio na mesma dimensão.
 
 ## Terceira entrega: fila de tarefas e pastor
 

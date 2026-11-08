@@ -35,3 +35,7 @@ A base comum de consulta de postos e validação de entregas está em [INTERFACE
 Um jogador consegue atribuir e dispensar um aldeão; ele realiza uma tarefa agrícola concreta; o painel informa sua atividade e impedimentos; salvar e reabrir preserva a atribuição; falta de insumo ou destino cheio não perde nem duplica itens. Aldeões não atribuídos continuam com o comportamento vanilla.
 
 Inclua verificações de atribuição exclusiva, conservação de itens, interrupção e restauração. Confira assinaturas novas contra a API real e atualize o substituto offline quando necessário. Registre limitações sem apresentar o substituto como teste no jogo. Termine com commits, PR e instruções curtas para teste pelo usuário.
+
+## Cidade, não só o teto
+
+O crescimento já pede cama: sem cabeceira livre, não nasce aldeão e o jogador ouve para construir mais casas. O que falta, e é desta frente, está em [VILA-CIDADE.md](VILA-CIDADE.md): casas diferentes, mercado e o movimento da vila entre 30 e 150 habitantes. Não gere a cidade inteira sozinho; o jogador constrói as casas novas.

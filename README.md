@@ -6,11 +6,25 @@ A 0.25.0 **balanceia a economia**, com um simulador (`tools/sim_economy.py`) e r
 
 **Em integração (frente Cloud):** o **lar do jogador** (lareira, despensa, refeições, conforto, descanso e melhorias com itens da fábrica), o **centro de controle executivo** (páginas Resumo/Atenção/Obras, foco com bússola que leva o jogador até cada pendência) e as **obras da vila** (refeitório, escola, ferraria, mercado e festa). A oitava entrega acrescenta **prestígio** da vila, **pedidos diários**, **caixa**, **decretos**, o **boletim da manhã**, obras maiores (biblioteca, correio, estalagem, prefeitura) e o **banquete** no lar. Detalhes em [TRABALHADORES.md](TRABALHADORES.md).
 
-A 0.15.0 foi a **build consolidada** das três frentes:
+Candidata ainda em integração, aguardando todas as frentes terminarem. Reúne a base remota 0.17.2, a 0.16.0 fornecida, todas as branches remotas conferidas, os commits `13758bd` e `fd2a446`, o tutorial interativo, o realismo opcional e os pacotes de fases e Quadro da fábrica. Registro da integração: [CONSOLIDACAO.md](CONSOLIDACAO.md).
 
-- **Cloud — vila operária:** postos do lavrador, pastor e carregador, mesa do capataz com fila de tarefas, zonas de lavoura e de cercado com níveis, celeiro e silo, centro de controle com metas, vilas que crescem até 150 aldeões, spawn no centro da vila e o Guia da Vila Operária. Detalhes em [TRABALHADORES.md](TRABALHADORES.md).
-- **Codex — logística:** [braços de transferência](frentes/CODEX-BRACOS.md) (básico, rápido e longo, com filtro), divisor e unificador com prioridades e filtro, e os controles de fluxo do [lote integrado de logística](frentes/CODEX-LOGISTICA.md).
-- **Grok — desempenho e balanceamento:** lotes 1 e 3 a 8 ([7: tick sem alocação repetida](frentes/GROK-LOTE7.md), [8: censo compartilhado](frentes/GROK-LOTE8.md)).
+- **Aprender fazendo:** um objetivo na tela por vez, cumprido por máquinas funcionando e entregas reais. Braços, funis e carregadores também comprovam automação.
+- **Progressão por fases:** 32 engrenagens abrem a oficina; 16 chapas de aço e 16 circuitos abrem as fases seguintes. Jazidas de minério são medidas por conexão em 3D, com classe industrial a partir de 16 blocos. As linhas básicas usam razões inteiras de máquinas.
+- **Megafábricas:** copiadora, marco de obra, elevador de carga e carregadores usando escadas entre andares. Projetos pagam os materiais e preservam orientação e ajustes, sem copiar inventários.
+- **Quadro da fábrica:** fases, licenças, entregas automatizáveis, pedidos diários e diagnóstico de gargalos. Os alertas respeitam o objetivo do tutorial.
+- **Aldeões:** caminhada guiada pelo cérebro vanilla, descanso dos trabalhadores civis e itens da carga visíveis na mão.
+- **Realismo 1.1:** opção de iluminação industrial leve antes de jogar, alternativa sem shaders e silhuetas próprias para as máquinas.
+- **Desempenho e continuidade:** planejamento incremental dos capatazes, busca retomável dos carregadores, leituras de painel em uma passada e menos sincronizações de esteiras e limpeza dos estados temporários ao trocar de mundo; casa do fundador e correções de respawn preservadas.
+
+**Conteúdo integrado da base 0.16.0:**
+
+- **Casa do fundador:** a vila já vem com a casa do jogador: centro de controle, lareira, sofá, cama ao lado do painel e um mural com o mapa das redondezas. Em casa, perto do painel, as fábricas rendem 15% mais; a primeira cama é a da casa e fora dela só cabe mais uma; refeições e banquetes aceleram o trabalho e as máquinas. Detalhes em [TRABALHADORES.md](TRABALHADORES.md), sexta entrega.
+- **Mobs e quartel (Grok, revisado):** saqueadores vêm atrás de quem está na fábrica; à noite, monstros caçam aldeões; o quartel treina milícia, guarda, arqueiro e mago. Lavradores e pastores dormem à noite. Sétima entrega do TRABALHADORES.md.
+- **Transporte entre zonas (Codex):** terminais ferroviários e portos de drones ([TRANSPORTES.md](TRANSPORTES.md)).
+- **Grok:** convidados da LAN vão para a vila do anfitrião, a vila só cresce com cama livre, [a primeira linha pede duas prensas](frentes/GROK-BALANCE.md), [projetos industriais e produtividade por produto](frentes/BALANCEAMENTO-MISSOES.md).
+- **Correções da revisão:** o relógio do mod andava em dobro no jogo de um jogador só (tempos, nascimentos e ondas da noite saíam errados); renascer no centro da vila não funcionava; o quartel não trocava de classe com a mão vazia; 30 páginas dos guias passavam do tamanho do livro e ficavam cortadas.
+
+A 0.15.0 foi a build consolidada anterior: vila operária completa (Cloud), braços de transferência e controles de fluxo (Codex) e os lotes 1 e 3 a 8 do Grok.
 
 Histórico: a 0.14.0 fez as vilas crescerem com a fábrica até 150 aldeões (com um censo de posições para manter o custo baixo), põe o jogador no centro da vila ao entrar e ao renascer, e leva os sistemas da vila para um segundo livro, o Guia da Vila Operária, com sua própria aba de avanços; inclui o lote 6 do Grok. A 0.13.0 trouxe zonas de lavoura e de cercado com níveis de expansão, celeiro e silo, o centro de controle (painel de gestão com metas) e vilas que crescem até 30 aldeões, além dos lotes 4 e 5 do Grok. A 0.12.0 acrescentou a fila de tarefas do capataz e o posto do pastor, e inclui o [lote 3 do Grok](frentes/GROK-LOTE3.md) (varreduras mais baratas e comida que custa 2 pontos por tarefa). A 0.11.0 trouxe o carregador e o capataz, e a 0.10.0 consolidou as três frentes da rodada sobre a 0.9.1:
 
@@ -20,7 +34,9 @@ Histórico: a 0.14.0 fez as vilas crescerem com a fábrica até 150 aldeões (co
 
 **Para jogar no Windows:** depois de clonar, abra `launcher.exe` na raiz do repositório (ou extraia `release/Veio-0.25.0.zip` em qualquer pasta e abra o `launcher.exe` de dentro). Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Se a instância não existir, ele a cria (`horizon-launcher instance create Veio`) e depois abre o jogo direto. Antes, instale o Horizon Launcher, entre com a conta e faça o Prepare uma vez. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo. Para gerar de novo: `python tools/package.py`.
 
-A integração passou na conferência de conteúdo e nos testes offline (135 regras do mod e 2 do launcher). A compilação nativa pelo Horizon Launcher e o teste dentro do jogo ainda precisam ser feitos na máquina do usuário; o `launcher.exe` executa essa compilação. Ordens das frentes: [Cloud](frentes/CLOUD.md), [Grok](frentes/GROK.md) e [Codex](frentes/CODEX.md); acordo em [COORDENACAO.md](COORDENACAO.md).
+**Na mesma rede:** quem hospeda abre o mundo, aperta Esc, escolhe **Abrir para a LAN** e **Iniciar mundo LAN**. O mundo continua no computador dele. Quem entra, no mesmo Wi-Fi, abre **Multijogador**: o mundo aparece na lista. Cada pessoa usa a própria conta do Minecraft e a mesma versão do Veio. As máquinas, a vila e os itens são os do anfitrião. Quem chega pela primeira vez vai para a vila que já existe, em vez de ganhar outra.
+
+As verificações de conteúdo, regras, transportes, retomada do tutorial e tipos da API real estão registradas em [CONSOLIDACAO.md](CONSOLIDACAO.md). A experiência em partida ainda requer teste manual.
 
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 
@@ -34,15 +50,40 @@ A integração de [terminais, drones e caravanas](TRANSPORTES.md) permite ligar 
 
 ## Tutorial dentro do jogo
 
-Ao entrar no mundo, cada jogador recebe uma vez o **Guia do Veio**. Selecione o livro na barra e abra com o botão direito. O sumário é clicável. Comece pela primeira fábrica de cobre e siga até a primeira engrenagem. As páginas finais servem de consulta para uso e fabricação das máquinas.
+O tutorial principal acontece **na tela, acima da barra de itens**, com um objetivo por vez. Você conhece Minecraft; a vila ensina a transformar uma oficina operada à mão numa linha que trabalha sozinha. Os livros ficam como consulta opcional.
 
-- Abra **Avanços > Primeira fábrica** para acompanhar materiais obtidos. Recolha os produtos no inventário para registrar os marcos.
-- Abra uma máquina com botão direito. Os rótulos mostram entradas e saídas. Passe o cursor sobre um slot vazio para saber qual material colocar.
-- Passe o cursor no **?** do painel para consultar funcionamento e receita. No inventário, máquinas e componentes também mostram sua função.
-- Perdeu o guia? Junte **um livro e um papel** na bancada para fabricar outro.
-- O guia acompanha o idioma do jogo, com português brasileiro e inglês. As opções de idioma ficam nas configurações do Horizon.
+A sequência avança automaticamente quando o servidor observa o resultado:
 
-O começo usa receitas sem posição fixa na bancada, uma extratora diretamente sobre minério de cobre, gerador com carvão e cabos encostando em cada máquina. Monte `extratora > esteira > prensa > baú` na mesma altura. A prensa usa **cobre bruto**, e o montador transforma **duas chapas de cobre** em uma engrenagem.
+1. **Colocar um gerador** na oficina.
+2. **Energizar uma prensa**: confirmar energia armazenada ou consumida num ciclo real.
+3. **Produzir 4 chapas novas**, colocando cobre bruto na prensa.
+4. **Produzir uma engrenagem nova**, usando o montador.
+5. **Extrair cobre de verdade**, com extratora sobre uma jazida.
+6. **Abastecer a prensa automaticamente**: pelo menos 2 cobres realmente entregues por algum transporte e pelo menos uma chapa produzida com essa alimentação. O estoque de entrada pode ter sido abastecido à mão.
+7. **Guardar 4 chapas automaticamente**: só contam chapas produzidas com abastecimento automático e efetivamente aceitas num estoque. Baú, barril, funil, celeiro, silo e estoque do posto do carregador são destinos válidos.
+8. **Concluir a primeira encomenda da central**: 24 chapas + 8 engrenagens. A transação real consome o pedido e entrega 64 esteiras + 32 cabos.
+
+Cada etapa mostra uma orientação de montagem no chat, incluindo as receitas necessárias, sem exigir abrir um livro. Falta de energia, saída cheia e pausa por redstone também têm avisos, limitados para evitar repetição constante. A faixa do objetivo é renovada uma vez por segundo; a conclusão encerra a faixa e apresenta o próximo caminho pela vila.
+
+Colocar uma máquina seleciona essa máquina para o tutorial. Para usar uma instalação que já existe, **abra a máquina correspondente**. Não é preciso desmontar a fábrica. Só produção nova, enquanto a etapa está ativa, conta; possuir a máquina ou o produto no inventário não completa esses exercícios. Para o último objetivo, use a primeira encomenda de uma central ainda não concluída.
+
+A detecção aceita **esteiras, braços básicos/rápidos/longos, funis e carregadores**, inclusive em rotas mistas. Você pode automatizar um trecho por vez: abastecer o baú ou o posto à mão e deixar que o transporte alimente a prensa é válido. Colocar cobre diretamente na prensa não comprova alimentação automática; chapas antigas colocadas no estoque não completam o objetivo.
+
+- Esteiras continuam informando só as quantidades aceitas pelo destino.
+- Braços preservam filtros, alcance, energia e a movimentação original. A detecção confere o item que realmente mudou de inventário, inclusive nos braços sem filtro.
+- Funis anunciam uma tentativa antes de mover o item. O tutorial espera a mudança real na prensa, antes da produção seguinte ou da próxima operação de transporte. Tentativas recusadas, inventários ausentes e leituras antigas não geram crédito. Um funil recebendo a saída da prensa já funciona como estoque intermediário válido.
+- Nos carregadores, a coleta guarda uma prova separada da carga em trânsito. Só a quantidade efetivamente entregue conta; saída cheia mantém a carga e sua prova para a tentativa seguinte. O caminho inclui a coleta normal, o estoque do posto e a fila do capataz. Sobras podem voltar ao posto sem contar duas vezes.
+
+
+- `/veiotutorial ocultar`: esconde o objetivo sem pausar a fábrica ou apagar o progresso.
+- `/veiotutorial mostrar`: volta a exibir a etapa atual.
+- `/veiotutorial reiniciar`: refaz os exercícios sem alterar receitas liberadas, máquinas ou estoques.
+
+O progresso é individual e fica em `<pasta do mundo>/veio/tutorial/<UUID>.txt`, junto do mundo para acompanhar seus backups. Etapas, contagens e máquinas selecionadas são salvas a cada cinco segundos e na saída; créditos de transporte em trânsito são recomeçados após uma recarga. As contagens e etapas existentes da 0.15.1 continuam válidas; não é necessário reiniciar o tutorial. Trocar de mundo não reutiliza o progresso do anterior. Recolocar a prensa ou a extratora invalida a prova de fluxo ainda em andamento. O sistema observa eventos existentes e mantém rastros limitados; não varre o terreno por tick.
+
+**Consulta opcional:** Sua primeira oficina usa **livro + pedregulho**; o Guia do Veio completo usa **livro + papel**; o Guia da Vila Operária usa **livro + trigo**. Livros antigos não se reescrevem. O guia da vila continua sendo apresentado quando seus postos e zonas entram em uso. Os marcos em Avanços > Primeiros pedidos são uma consulta de materiais, silenciosa e independente do objetivo real da tela.
+
+A **0.16.1 muda código nativo**, portanto o launcher recompila na primeira abertura desta versão. O pacote único é `release/Veio-0.16.1.zip`. O rascunho de mapa finito permanece preservado em `work-in-progress/finite-world`, desativado: esta versão usa a geração atual do Minecraft e não promete um mapa finito com recursos garantidos.
 
 ## Energia
 
@@ -84,7 +125,7 @@ As linhas de produção usam estas transformações.
 
 - Prensa. Um cobre bruto vira uma chapa de cobre, um ferro bruto vira uma chapa de ferro e um ouro bruto vira um lingote de ouro.
 - Montador. Duas chapas de cobre viram uma engrenagem.
-- Cortadora. Uma chapa de ferro vira uma moldura. Uma chapa de cobre vira uma fiação de cobre.
+- Cortadora. Uma chapa de ferro vira uma moldura. Uma chapa de cobre vira duas fiações de cobre.
 - Integrador. Uma moldura e uma engrenagem viram um módulo mecânico.
 - Triturador. Um quartzo vira uma pastilha de silício. Um osso vira quatro farinhas de osso. Pedregulho vira cascalho e cascalho vira areia.
 - Forno de ligas. Duas chapas de ferro e um carvão ou carvão vegetal viram uma chapa de aço.
@@ -94,12 +135,15 @@ Máquinas aguardam material, energia e espaço na saída. Os ingredientes são c
 
 ## Progressão
 
-1. Cobre abre a primeira fábrica, com extratora, prensa e esteiras.
-2. Engrenagens abrem a oficina industrial, com chave, triturador e forno de ligas.
-3. Aço libera acumuladores, geotermia, montagem eletrônica e construção em lote.
-4. Módulos mecânicos liberam a colheitadeira.
-5. Quartzo e fiação permitem produzir circuitos, que liberam solar, extração Mk.II e a torre Tesla.
-6. O pedido de oito módulos mecânicos continua liberando o lote de 32 esteiras rápidas.
+A progressão anda em fases, como no Satisfactory e no Factorio: dentro de uma fase os desbloqueios pedem uma peça; a passagem para a fase seguinte pede uma **pilha**, que só uma linha funcionando entrega em um a três minutos.
+
+1. **Cobre.** Um lingote de cobre abre extratora, prensa, esteiras, moinho e energia básica. A primeira chapa abre o montador; a primeira engrenagem abre divisor, unificador, central de projetos e cozinha.
+2. **Oficina: 32 engrenagens.** Chave, triturador, forno de ligas, kits de reparo e cata-vento. Gargalo: uma linha de engrenagens (2 extratoras, 2 prensas, 1 montador) puxa 40 FE/t, mais do que uma roda d'água dá.
+3. **Aço: 16 chapas de aço.** Acumuladores, geotermia, caldeira a vapor, poste de aço, construção em lote, silvicultura e rancho. Gargalo: carvão e energia; a linha de módulos já pede uma caldeira.
+4. **Eletrônica: 16 circuitos.** Solar, extração Mk.II, torre Tesla, módulos de velocidade e eficiência e lâmpada de cultivo. Gargalo: silício (quartzo do Nether ou areia).
+5. **Profundidade.** Um módulo instalado abre a Mk.III. Gargalo: transporte; uma Mk.III em jazida industrial passa de uma esteira rápida.
+
+Ramos paralelos (molduras, módulos, lavoura, vila operária, braços) seguem pedindo uma peça. Os oito módulos do primeiro pedido continuam liberando o lote de 32 esteiras rápidas. Razões e justificativas em [frentes/PROGRESSAO-FASES.md](frentes/PROGRESSAO-FASES.md).
 
 Os avanços entregam as receitas. Em um mundo anterior, recolha novamente os materiais do novo ramo para ativar os novos avanços.
 
@@ -121,7 +165,33 @@ Os painéis seguem as telas de baú e fornalha: fundo cinza em relevo, slots reb
 
 Todas as texturas próprias são desenhadas em texto em `tools/build_textures.py`, e os modelos saem de `tools/build_content.py`, com as formas definidas em `tools/machine_forms.py`. As referências a texturas do Minecraft são resolvidas pela instalação do jogador. Créditos em [CREDITS.md](CREDITS.md).
 
+## Realismo leve opcional
+
+**Atualização visual 1.1:** [Veio-Realismo-1.1-atualizacao.zip](release/Veio-Realismo-1.1-atualizacao.zip). Extraia sobre a pasta do Veio que já contém `launcher.exe`, mantendo `visuals/` ao lado de `content/` e `native/`. Abra o launcher e escolha Realismo leve. A atualização contém somente o visual, podendo acompanhar uma versão mais recente do jogo sem substituir seu código ou dados. A versão do pacote visual é independente da versão de conteúdo do Veio.
+
+O launcher agora oferece a escolha **antes de abrir o jogo**, sem precisar carregar shaders para chegar às opções:
+
+- **Realismo leve — 8 GB (padrão):** sol e luar, sombras próximas de 1024 × 1024 até 48 blocos, céu e névoa suaves, brilho diferente para metal, pintura e vidro, superfícies molhadas e água com transparência pela profundidade. A ondulação de luz diminui à distância; cobre oxidado mantém o aspecto fosco. Usa as texturas e modelos existentes, com um único pós-processamento para cor, atmosfera e suavização. A direção visual industrial é inspirada em Satisfactory.
+- **Leve — sem shaders:** abre pelo caminho normal do Horizon, com menos distância de visão e sem carregar o pacote visual. Abra `Jogar-Leve.cmd` para escolher esse modo diretamente, inclusive na primeira partida.
+
+Abra `Escolher-Visual.cmd` para mudar ou restaurar um dos perfis. A escolha fica salva em `launcher.ini`. Também pode desligar o pacote em Opções > Vídeo > Shaders; alterações feitas no jogo continuam valendo nas próximas aberturas normais. O launcher guarda as opções originais da instância em `options.txt.antes-do-veio` e `horizon-graphics.txt.antes-do-veio`, sem alterar mundos, controles ou pacotes de recursos.
+
+O perfil Realismo começa com visão de 8 chunks, simulação de 5, até 60 FPS, resolução interna de 85%, dois trabalhadores de preparação de terreno e orçamento de texturas de 256 MiB. Leve começa com visão de 6 chunks, resolução interna de 75%, partículas mínimas e nuvens desligadas. A resolução interna é uma porcentagem da janela; ambos permitem ajustes posteriores. As compilações jogáveis agora usam o perfil otimizado `performance`, e a marca de compilação distingue esse perfil de uma compilação antiga de desenvolvimento.
+
+O shader é original e opcional, em `visuals/veio-industrial`, sob MIT. Não acrescenta trabalho à simulação, luzes dinâmicas ou texturas de recursos. A água e a névoa reutilizam a profundidade já disponibilizada pelo Horizon. Não usa reflexos de cena, bloom, SSAO, luz volumétrica, traçado de raios ou geometria extra. Sombras, metais, água, chuva, atmosfera e suavização podem ser ajustados nas opções do próprio pacote; placas mais limitadas podem reduzir as sombras para 512 e 32 blocos. O tratamento de materiais é uma aproximação econômica, sem carregar mapas PBR adicionais.
+
+**8 GB é a meta para o computador inteiro, não uma reserva de memória para o jogo nem uma garantia em qualquer placa gráfica.** O orçamento de 2 ms declarado pelo shader é um objetivo; FPS, consumo total e comportamento em fábricas grandes precisam ser medidos no Horizon real. Mais detalhes em [visuals/veio-industrial/README.md](visuals/veio-industrial/README.md).
+
+A revisão visual 1.1 foi implementada sem retomar o teste da fábrica grande ou executar o jogo, conforme solicitado; os resultados parciais anteriores não validam o desempenho desta revisão.
+
 ## Desempenho
+
+**Restrição de projeto para novos mundos:** Overworld de **15.000 × 15.000 blocos**,
+muralha de bedrock e todos os biomas e recursos de sobrevivência garantidos por
+geração adaptada. O Nether deve respeitar a escala 8:1 e nunca devolver o jogador
+para fora da muralha. O contrato e os critérios de aceite estão em [MAPA.md](MAPA.md).
+Essa geração ainda não está implementada; mundos atuais não são alterados por essa
+decisão. O limite contém o crescimento do mundo, mas não garante ganho de FPS.
 
 O código evita trabalho por tick:
 
@@ -151,10 +221,12 @@ A versão 0.5 acrescenta uma central de contratos, indicadores de produção e c
 A central é fabricada com um baú, uma engrenagem, um lingote de ferro e um de cobre. Tem duas entradas à esquerda e duas saídas à direita. Os contratos são concluídos quando os ingredientes e o espaço para todas as recompensas estão disponíveis.
 
 1. Oficina. Entregue 24 chapas de cobre e oito engrenagens para receber 64 esteiras e 32 cabos.
-2. Entrepostos. Entregue 16 chapas de aço e oito módulos mecânicos para receber 64 trilhos e 16 trilhos elétricos.
-3. Povoado. Entregue 12 circuitos e 24 molduras para receber oito funis e oito esmeraldas.
-4. Farol industrial. Entregue uma estrela do Nether e 32 circuitos para receber um farol e duas extratoras Mk.II. É um projeto opcional depois da infraestrutura.
-5. Exportação contínua. Depois dos projetos, a central aceita sem fim quatro circuitos e quatro chapas de aço, e entrega quatro esmeraldas e dois frascos de experiência por remessa. O painel conta as entregas.
+2. Entrepostos. Entregue 24 chapas de aço e 12 módulos mecânicos para receber 64 trilhos e 16 trilhos elétricos.
+3. Povoado. Entregue 24 circuitos e 32 molduras para receber oito funis e oito esmeraldas.
+4. Farol industrial. Entregue uma estrela do Nether e 48 circuitos para receber um farol e duas extratoras Mk.II. É um projeto opcional depois da infraestrutura.
+5. Exportação contínua. Depois do projeto do povoado, sem exigir o farol, a central aceita sem fim quatro circuitos e quatro chapas de aço, e entrega quatro esmeraldas e dois frascos de experiência por remessa. O painel conta as entregas.
+
+Para selecionar o farol opcional, esvazie as duas entradas e coloque primeiro a estrela na entrada 1; depois, os 48 circuitos na entrada 2. Sem a estrela, a central exibe e aceita exportações. Retire recompensas anteriores antes de trocar. Após concluir o farol, a central continua exportando.
 
 O progresso é salvo na central colocada. Sua desmontagem inicia uma central nova. A chave permite reorientá-la mantendo o progresso. Ao mudar de contrato, retire sobras das entradas e direcione os materiais do projeto seguinte. As recompensas podem sair por funis ou pelo bocal frontal.
 
@@ -164,7 +236,7 @@ Um sinal de redstone pausa a produção e preserva o progresso. A saída continu
 
 ## Produção (0.9)
 
-**Jazidas e pureza.** A extratora lê o quadrado 3x3 logo abaixo dela. Com 1 ou 2 blocos da mesma jazida, ela é impura e trabalha na metade da velocidade. De 3 a 6 blocos é normal. De 7 a 9 é pura e trabalha no dobro. Além dos minérios, há jazidas infinitas de pedra, ardósia, areia, areia vermelha, cascalho, argila, netherrack, areia das almas, pedra-negra e pedra do End. Obsidiana e ametista exigem a Mk.II; detritos ancestrais, a Mk.III. A Mk.III é quatro vezes mais rápida que a Mk.I.
+**Jazidas e pureza.** Em minérios, a extratora mede o veio conectado a partir do bloco logo abaixo dela, em 3D, pelas faces (minério comum e de ardósia contam juntos). Com 1 ou 2 blocos, ela é impura e trabalha na metade da velocidade. De 3 a 6 blocos é normal. De 7 a 15 é pura e trabalha no dobro. Com 16 ou mais, é **industrial**: quatro vezes a velocidade, com o dobro de potência. Diamante, esmeralda e detritos param na pura. Pedra, areia e demais jazidas infinitas continuam lendo o quadrado 3x3 abaixo da extratora. Além dos minérios, há jazidas infinitas de pedra, ardósia, areia, areia vermelha, cascalho, argila, netherrack, areia das almas, pedra-negra e pedra do End. Obsidiana e ametista exigem a Mk.II; detritos ancestrais, a Mk.III. A Mk.III é quatro vezes mais rápida que a Mk.I.
 
 **Receitas.** Todas as receitas de máquina estão em `tools/production.json` e aparecem no guia.
 
@@ -208,7 +280,9 @@ Os **módulos** entram com o botão direito numa máquina de receita ou extrator
 |---|---|---|---|---|
 | Velocidade | 60% | 180% | 150% | Mais produção por máquina, 8% mais energia por produto |
 | Eficiência | 100% | 60% | 50% | Menos energia e metade da poluição |
-| Produtividade | 115% | 140% | 120% | Um produto extra a cada dez ciclos |
+| Produtividade | 115% | 140% | 120% | Um lote extra a cada cinco ciclos (+20%) |
+
+Produtividade reserva espaço para o lote extra antes de trabalhar: saída cheia pausa sem perder o bônus. A fração pertence ao produto e reinicia ao concluir uma receita de outro produto. O painel conta itens produzidos, incluindo lotes e bônus; o contador interno de ciclos permanece separado.
 
 O painel mostra o módulo, a poluição emitida por minuto e a integridade. Uma placa colorida no suporte frontal indica o módulo instalado.
 
@@ -230,8 +304,8 @@ Máquinas trabalhando poluem o chunk onde estão: gerador 6 por segundo, forno d
 
 1. Quando um chunk passa de 400, o chat avisa os jogadores próximos e explica o que fazer.
 2. Ataques só acontecem um dia inteiro depois desse aviso, só à noite e só se o chunk mais poluído passar de 1.200. Ao anoitecer, a barra de ação avisa.
-3. A onda chega por um lado da fábrica, num arco a 26 blocos da máquina mais poluída (o lado muda a cada noite), com o som de invasão: quatro **Saqueadores** na primeira noite, crescendo com a poluição e com as noites, até doze. Da 3ª noite de ataque, um quarto da onda são **esqueletos arqueiros**; da 5ª, vem pelo menos um **Bruto** (40 de vida, lento, bate 6 e quase não é empurrado). É no máximo uma onda por noite.
-4. O combate é o do Minecraft, com dano de verdade: Saqueadores e Brutos atacam jogadores, aldeões e golens como zumbis e enxergam a 40 blocos. Sem ninguém por perto, o Saqueador golpeia a máquina poluidora (quatro golpes param a máquina); o Bruto vai primeiro às máquinas e para uma em dois golpes. Esqueletos, aranhas e seus primos da noite também caçam aldeões. Aldeão trabalhador morto deixa o posto parado até outra contratação. Eles queimam ao sol.
+3. A onda surge na cara de quem está a até 64 blocos da fábrica (ou a 18 blocos da máquina, se não houver ninguém): quatro **Saqueadores** na primeira noite, crescendo com a poluição e com as noites, até doze. É no máximo uma onda por noite. O som é o de invasão.
+4. Eles correm até o jogador e batem como zumbi. Sem luta corpo a corpo, vão aos defensores do quartel (o guarda primeiro) e, sem soldado por perto, aos outros aldeões: quatro golpes matam um trabalhador, o guarda aguenta oito, e o posto fica parado até outra contratação. Sem jogador nem aldeão a 28 blocos, golpeiam a máquina no mesmo ritmo. À noite, zumbis, esqueletos e aranhas também caçam aldeões na mesma altura (os da caverna não sobem atrás deles), e um aldeão que passa 30 s sem apanhar se recupera. Esqueletos com o jogador a até 16 blocos continuam atirando nele. Lavradores e pastores dormem em casa à noite e voltam ao amanhecer. Eles queimam ao sol.
 5. Máquina com integridade zerada para, sem perder estoque. Um **kit de reparo**, com o botão direito, recupera 50%.
 
 Muros vanilla barram o caminho, a torre Tesla abate Saqueadores, o **quartel** treina milícia, guarda, arqueiro e mago (troca de classe: agachar com uma esmeralda; os golpes tiram vida de verdade, o guarda se cura, e o soldado fica de plantão à noite sem fugir), e lavouras e módulos de eficiência reduzem a poluição. No modo pacífico não há ataques. A poluição fica em memória e recomeça ao reabrir o mundo.

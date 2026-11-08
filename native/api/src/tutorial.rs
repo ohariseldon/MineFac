@@ -10,10 +10,10 @@ pub(super) fn draw_labels(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     host.fill(event.batch, [x + 178.0, y + 5.0, 1.0, 9.0], 0xffffffff);
     host.text(event.batch, "?", [x + 181.0, y + 6.0], presentation::INK, false);
     let Some(layout) = presentation::screen(event.block) else { return; };
-    let roles: &[&str] = if let Some(roles) = production::roles(event.block).or_else(|| workforce::roles(event.block)).or_else(|| freight::roles(event.block)) { roles } else { match event.block {
+    let roles: &[&str] = if let Some(roles) = production::roles(event.block).or_else(|| workforce::roles(event.block)).or_else(|| freight::roles(event.block)).or_else(|| milestones::owns(event.block).then(milestones::roles)) { roles } else { match event.block {
         DRILL | DRILL_MK2 => &["output"],
         GENERATOR => &["fuel"],
-        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL => &[],
+        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL | lift::LIFT => &[],
         MERGER => &["left", "right"],
         INTEGRATOR | ALLOY | ELECTRONICS => &["input1", "input2", "output"],
         HUB => &["input1", "input2", "output1", "output2"],
@@ -46,7 +46,7 @@ pub(super) fn screen_tooltip(event: &mut ScreenTooltipEvent<'_>) {
     let Some(name) = event.block.strip_prefix("veio:") else { return; };
     let Some(layout) = presentation::screen(event.block) else { return; };
     let [x, y] = event.at;
-    if (8.0..186.0).contains(&x) && (23.0..34.0).contains(&y) && event.block != HUB {
+    if (8.0..186.0).contains(&x) && (23.0..34.0).contains(&y) && event.block != HUB && !milestones::owns(event.block) {
         // O centro de controle guarda a aba nos milhares do estado.
         let status = event.data.first().copied().unwrap_or(0) % 1000;
         event.lines.push(Text::tr(&operations::advice_key(status), &[]).plain());

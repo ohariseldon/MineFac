@@ -32,6 +32,7 @@ use std::sync::Mutex;
 pub(super) mod farmhand;
 pub(super) mod foreman;
 pub(super) mod hauler;
+pub(super) mod ladders;
 pub(super) mod shepherd;
 pub(super) mod barracks;
 pub(super) mod center;
@@ -360,8 +361,11 @@ impl Goal for Work {
         self.wait = ORDER_POLL - 1;
         let now = defense::clock();
         let next = order_for(m.id, now);
-        // Destino novo: refaz o caminho já, sem esperar o intervalo.
-        if self.target != next { self.cooldown = 0; }
+        // Destino novo: solta a vaga antiga e refaz o caminho já, sem esperar o intervalo.
+        if self.target != next {
+            if let Some(old) = self.target { release_walk(m, old); }
+            self.cooldown = 0;
+        }
         self.target = next;
         self.duty = self.target.is_some() && on_duty(m.id, now);
         self.target.is_some()
@@ -372,6 +376,8 @@ impl Goal for Work {
     }
     fn tick(&mut self, m: &mut Mob, cx: &mut Cx) {
         let Some(goal) = self.target else { return };
+        // Na escada de mão, a subida é física: o cérebro não planeja degraus.
+        if ladders::climb(m, goal) { return; }
         match steer(m, goal, self.duty) {
             // O cérebro anda até o alvo: nada a fazer aqui.
             Steer::Brain => {}
@@ -383,8 +389,9 @@ impl Goal for Work {
                     && (m.position.y - goal[1]).abs() < 2.0;
                 // A ordem pode mudar de alvo; refaz o caminho quando ele termina ou a cada segundo.
                 if !close && (m.ai.nav.is_done() || self.cooldown <= 0) {
-                    m.nav_move_to(cx.w, goal, 0.6);
-                    self.cooldown = 20;
+                    let soldier = self.duty;
+                    m.nav_move_to(cx.w, goal, if soldier { 0.9 } else { 0.6 });
+                    self.cooldown = if soldier { 10 } else { 20 };
                 }
             }
         }
@@ -397,6 +404,8 @@ impl Goal for Work {
         // E para o caminho da navegação, para não seguir até um alvo cancelado.
         m.ai.nav.stop();
         self.cooldown = 0;
+        self.wait = 0;
+        self.duty = false;
     }
     fn box_clone(&self) -> Box<dyn Goal> {
         Box::new(self.clone())
@@ -443,7 +452,7 @@ fn steer(m: &mut Mob, goal: [f64; 3], duty: bool) -> Steer {
     } else if busy {
         return Steer::Busy;
     }
-    let target = WalkTarget { target: Tracker::Block(walk_block(goal)), speed: 0.6, close: 1 };
+    let target = WalkTarget { target: Tracker::Block(walk_block(goal)), speed: if duty { 0.9 } else { 0.6 }, close: 1 };
     if brain.mem.walk_target.get() != Some(&target) {
         brain.mem.walk_target.set(target);
     }
@@ -663,6 +672,20 @@ pub(super) fn deliver(entity: &mut ModBlockEntity) -> bool {
     true
 }
 
+// Observe only accepted unloads; an output-full retry retains both cargo and evidence.
+fn deliver_tracked(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity) -> bool {
+    if entity.id != HAULER_POST || !super::onboarding::tracks_flow() || !has_load(entity) { return deliver(entity); }
+    let load = carried(entity);
+    let accepted = deliver(entity);
+    if accepted { super::onboarding::worker_unload(dimension, pos, &load); }
+    accepted
+}
+
+fn deliver_observed(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) -> bool {
+    if entity.id != HAULER_POST || !super::onboarding::tracks_flow() { return deliver(entity); }
+    deliver_tracked(host.dimension(), pos, entity)
+}
+
 fn uuid_of(nbt: &Compound) -> Option<Uuid> {
     match nbt.get(nbt_key("UUID")) {
         Some(Tag::IntArray(values)) if values.len() == 4 => Some([values[0], values[1], values[2], values[3]]),
@@ -672,6 +695,23 @@ fn uuid_of(nbt: &Compound) -> Option<Uuid> {
 
 fn adult(nbt: &Compound) -> bool {
     !matches!(nbt.get(nbt_key("Age")), Some(Tag::Int(age)) if *age < 0)
+}
+
+/// Contratar tira o aldeão do comércio. Ordem de preferência: sem profissão ou nitwit (0),
+/// profissão ainda no nível 1 (1), comerciante experiente (2).
+pub(super) fn trade_rank(nbt: &Compound) -> u8 {
+    let Some(Tag::Compound(data)) = nbt.get(&"VillagerData".into()) else { return 0 };
+    let free = match data.get(&"profession".into()) {
+        Some(Tag::String(profession)) => java_eq(profession, "minecraft:none") || java_eq(profession, "minecraft:nitwit"),
+        _ => true,
+    };
+    if free {
+        0
+    } else if production::ranch::tag_int(data, "level") <= 1 {
+        1
+    } else {
+        2
+    }
 }
 
 fn post_center([x, y, z]: [i32; 3]) -> [f64; 3] {
@@ -686,11 +726,16 @@ pub(super) fn near(at: [f64; 3], goal: [f64; 3], reach: f64) -> bool {
 
 /// Posição `index` de uma área `(2r+1)² x 3`: a camada do posto, depois a de baixo e a de cima.
 pub(super) fn area_position(pos: [i32; 3], radius: i32, index: i32) -> [i32; 3] {
+    area_position_in(pos, radius, index, &[0, -1, 1])
+}
+
+/// Como `area_position`, com as camadas dadas (andares ligados por escadas: `ladders::layers`).
+pub(super) fn area_position_in(pos: [i32; 3], radius: i32, index: i32, layers: &[i32]) -> [i32; 3] {
     let side = radius * 2 + 1;
     let layer = side * side;
-    let index = index.rem_euclid(layer * 3);
+    let index = index.rem_euclid(layer * layers.len() as i32);
     let cell = index % layer;
-    [pos[0] + cell % side - radius, pos[1] + [0, -1, 1][(index / layer) as usize], pos[2] + cell / side - radius]
+    [pos[0] + cell % side - radius, pos[1] + layers[(index / layer) as usize], pos[2] + cell / side - radius]
 }
 
 fn get_list(entity: &ModBlockEntity, key: &str) -> Option<Vec<[i32; 3]>> {
@@ -725,11 +770,13 @@ pub(super) fn scan_named(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     }
     let (scan, partial) = (format!("{key}Scan"), format!("{key}Found"));
     let side = radius * 2 + 1;
-    let area = side * side * 3;
+    // Sem escadas descobertas, as três camadas de sempre.
+    let layers = ladders::layers(entity);
+    let area = side * side * layers.len() as i32;
     let mut cursor = number(entity, &scan) % area;
     let mut found = get_list(entity, &partial).unwrap_or_default();
     for _ in 0..per_cycle {
-        let spot = area_position(pos, radius, cursor);
+        let spot = area_position_in(pos, radius, cursor, &layers);
         if spot != pos && found.len() < max && wanted(&host.block(spot)) {
             found.push(spot);
         }
@@ -763,7 +810,8 @@ pub(super) fn rotate(entity: &mut ModBlockEntity, len: usize) {
 
 // ---------- Contratar e dispensar ----------
 
-/// Aldeão adulto e livre mais próximo do posto: (UUID, id na sessão).
+/// Aldeão adulto e livre perto do posto: (UUID, id na sessão). Entre eles, o que menos faz
+/// falta no comércio (`trade_rank`) e, no empate, o mais próximo.
 pub(super) fn candidate(host: &mut dyn Host, pos: [i32; 3], now: u64) -> Option<(Uuid, u32)> {
     let dimension = host.dimension();
     let center = post_center(pos);
@@ -775,11 +823,22 @@ pub(super) fn candidate(host: &mut dyn Host, pos: [i32; 3], now: u64) -> Option<
         .map(|(id, at)| ((at[0] - center[0]).hypot(at[2] - center[2]), id))
         .collect();
     nearby.sort_by(|a, b| a.0.total_cmp(&b.0));
-    nearby.into_iter().find_map(|(_, id)| {
-        let nbt = host.entity_nbt(host.entity(id)?)?;
-        let uuid = uuid_of(&nbt)?;
-        (adult(&nbt) && !claimed_elsewhere(uuid, dimension, pos, now)).then_some((uuid, id))
-    })
+    let mut best: Option<(u8, Uuid, u32)> = None;
+    for (_, id) in nearby {
+        let Some(nbt) = host.entity(id).and_then(|handle| host.entity_nbt(handle)) else { continue };
+        let Some(uuid) = uuid_of(&nbt) else { continue };
+        if !adult(&nbt) || claimed_elsewhere(uuid, dimension, pos, now) {
+            continue;
+        }
+        let rank = trade_rank(&nbt);
+        if best.is_none_or(|(known, _, _)| rank < known) {
+            best = Some((rank, uuid, id));
+            if rank == 0 {
+                break;
+            }
+        }
+    }
+    best.map(|(_, uuid, id)| (uuid, id))
 }
 
 /// Atribui o aldeão ao posto. `false` se outro posto o reivindicou nesse meio-tempo.
@@ -803,7 +862,7 @@ pub(super) fn dismiss(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntit
     release(uuid, dimension, pos);
     unreserve(dimension, pos);
     set_worker(entity, None);
-    deliver(entity);
+    deliver_tracked(dimension, pos, entity);
     set_number(entity, "Status", NO_WORKER);
     true
 }
@@ -983,6 +1042,9 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         }
         return;
     }
+    if entity.id == CONTROL_CENTER {
+        super::home::center_tick(host, pos, entity, time, now);
+    }
     step(host, pos, entity, time, now);
     if entity.id == FOREMAN_DESK && number(entity, "PlanningPending") != 0
         && worker(entity).is_some() && number(entity, "Absent") == 0
@@ -1041,12 +1103,15 @@ fn publish_ration(entity: &mut ModBlockEntity) {
 
 pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64, now: u64) {
     publish_ration(entity);
+    if entity.id == HAULER_POST {
+        ladders::discover(host, pos, entity, hauler::RADIUS, now);
+    }
     if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) != 0 {
         return;
     }
     let Some(uuid) = worker(entity) else {
         // Sem trabalhador, o que ficou carregado entra assim que houver espaço.
-        deliver(entity);
+        deliver_observed(host, pos, entity);
         set_number(entity, "Status", NO_WORKER);
         return;
     };
@@ -1054,17 +1119,22 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     if !claim(uuid, dimension, pos, now) {
         // Outro posto ficou com este aldeão enquanto este estava descarregado.
         set_worker(entity, None);
-        deliver(entity);
+        deliver_observed(host, pos, entity);
         set_number(entity, "Status", NO_WORKER);
         return;
     }
     let Some((id, at)) = locate(host, pos, entity, uuid) else {
+        if entity.id != BARRACKS && night(host) {
+            // Dormindo numa cama longe do posto não é sumir: a noite não conta como ausência.
+            set_number(entity, "Status", RESTING);
+            return;
+        }
         let absent = number(entity, "Absent") + EVERY as i32;
         if absent >= ABSENT_LIMIT {
             // Morto, removido ou longe demais por muito tempo: libera o posto.
             release(uuid, dimension, pos);
             set_worker(entity, None);
-            deliver(entity);
+            deliver_observed(host, pos, entity);
             set_number(entity, "Status", NO_WORKER);
         } else {
             set_number(entity, "Absent", absent);
@@ -1150,21 +1220,21 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         if let Some(spot) = destination {
             reserve(dimension, spot, pos, now);
         }
-        order(id, goal, now);
+        order(id, ladders::route(entity, pos[1], at, goal), now);
         if !near(at, goal, POST_REACH) {
             return walk(entity, None);
         }
         set_number(entity, "Walk", 0);
         let Some(spot) = destination else {
-            if !deliver(entity) {
+            if !deliver_observed(host, pos, entity) {
                 return 3;
             }
             host.play_sound("minecraft:entity.villager.work_farmer", home, 4, 0.5, 1.0);
             return 1;
         };
-        arrive(host, entity, spot, now, perks);
+        arrive(host, pos, entity, spot, now, perks);
         unreserve(dimension, pos);
-        order(id, home, now);
+        order(id, ladders::route(entity, pos[1], at, home), now);
         return 1;
     }
     if entity.id == BARRACKS {
@@ -1214,7 +1284,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 return number(entity, "Status");
             }
             let goal = block_goal(spot);
-            order(id, goal, now);
+            order(id, ladders::route(entity, pos[1], at, goal), now);
             if !near(at, goal, reach) {
                 return walk(entity, Some(spot));
             }
@@ -1230,9 +1300,12 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             set_target(entity, None);
             unreserve(dimension, pos);
             if let Some(load) = result {
+                if entity.id == HAULER_POST {
+                    for (item, count) in &load { super::onboarding::worker_pickup(host, pos, spot, item, *count); }
+                }
                 set_carried(entity, &load, None, Carry::Product, 0);
                 finish_task(entity, perks);
-                order(id, home, now);
+                order(id, ladders::route(entity, pos[1], at, home), now);
             }
             1
         }
@@ -1243,7 +1316,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 return number(entity, "Status");
             }
             // Pega no posto: precisa estar ao lado dele.
-            order(id, home, now);
+            order(id, ladders::route(entity, pos[1], at, home), now);
             if !near(at, home, POST_REACH) {
                 return walk(entity, Some(to));
             }
@@ -1256,9 +1329,10 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 return 1;
             }
             consume(&mut entity.items[from], taken);
+            if entity.id == HAULER_POST { super::onboarding::worker_pickup(host, pos, pos, &item, taken); }
             set_carried(entity, &[(item, taken)], Some(to), kind, into);
             set_number(entity, "Walk", 0);
-            order(id, block_goal(to), now);
+            order(id, ladders::route(entity, pos[1], at, block_goal(to)), now);
             WALKING
         }
         Plan::Fetch { desk, task, from, slot, item, count, to, into } => {
@@ -1268,7 +1342,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 return number(entity, "Status");
             }
             let goal = block_goal(from);
-            order(id, goal, now);
+            order(id, ladders::route(entity, pos[1], at, goal), now);
             if !near(at, goal, POST_REACH) {
                 return walk(entity, Some(from));
             }
@@ -1288,9 +1362,10 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             if taken == 0 {
                 return 1;
             }
+            if entity.id == HAULER_POST { super::onboarding::worker_pickup(host, pos, from, &item, taken); }
             set_carried(entity, &[(item, taken)], Some(to), Carry::Supply, into);
             set_number(entity, "Walk", 0);
-            order(id, block_goal(to), now);
+            order(id, ladders::route(entity, pos[1], at, block_goal(to)), now);
             WALKING
         }
     }
@@ -1319,7 +1394,7 @@ pub(super) fn day_counter(host: &dyn Host, entity: &mut ModBlockEntity) -> i32 {
 }
 
 /// O trabalhador chegou ao destino da carga. O que não for usado volta com ele ao posto.
-fn arrive(host: &mut dyn Host, entity: &mut ModBlockEntity, spot: [i32; 3], now: u64, perks: u32) {
+fn arrive(host: &mut dyn Host, post: [i32; 3], entity: &mut ModBlockEntity, spot: [i32; 3], now: u64, perks: u32) {
     let load = carried(entity);
     let kind = carry_kind(entity);
     let into = number(entity, "CarryInto") as usize;
@@ -1327,7 +1402,11 @@ fn arrive(host: &mut dyn Host, entity: &mut ModBlockEntity, spot: [i32; 3], now:
         Carry::Supply => {
             let before: u32 = load.iter().map(|(_, count)| count).sum();
             let rest: Vec<(String, u32)> = load.into_iter()
-                .map(|(item, count)| { let left = insert_into(host, spot, into, &item, count); (item, left) })
+                .map(|(item, count)| {
+                    let left = insert_into(host, spot, into, &item, count);
+                    if entity.id == HAULER_POST { super::onboarding::worker_delivery(host, post, spot, &item, count - left); }
+                    (item, left)
+                })
                 .filter(|(_, left)| *left > 0)
                 .collect();
             if rest.iter().map(|(_, count)| count).sum::<u32>() < before {

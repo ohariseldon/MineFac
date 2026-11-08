@@ -391,6 +391,30 @@
                             "text": "\n"
                           },
                           {
+                            "translate": "block.veio.blueprint_designer",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 25
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.build_marker",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 26
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
                             "translate": "veio.guide.back",
                             "color": "dark_blue",
                             "click_event": {
@@ -665,6 +689,76 @@
                           },
                           {
                             "translate": "veio.guide.craft.belt_tunnel",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.blueprint_designer",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.blueprint_designer"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.blueprint_designer",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.build_marker",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.build_marker"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.build_marker",
                             "color": "dark_gray"
                           },
                           {

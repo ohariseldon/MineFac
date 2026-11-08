@@ -244,7 +244,8 @@ pub(super) fn process(entity: &mut ModBlockEntity) {
         });
         set_number(entity, "Progress", 0);
     }
-    if !can_add(&entity.items[output_slot], item, amount) {
+    let produced = upgrades::output_amount(entity, item, amount);
+    if !can_add(&entity.items[output_slot], item, produced) {
         set_number(entity, "Status", 3);
         return;
     }
@@ -264,10 +265,10 @@ pub(super) fn process(entity: &mut ModBlockEntity) {
         consume(&mut entity.items[slot], input.count);
     }
     add(&mut entity.items[output_slot], item, amount);
-    if upgrades::bonus_ready(entity) && can_add(&entity.items[output_slot], item, amount) {
+    if upgrades::bonus_ready(entity, item) {
         add(&mut entity.items[output_slot], item, amount);
     }
-    finish_cycle(entity);
+    finish_cycle(entity, produced);
 }
 
 /// Itens por minuto de cada slot da receita `index` (1 em diante) com ciclo de `duration` ticks:
@@ -282,8 +283,8 @@ pub(super) fn rates_per_minute(block: &str, index: i32, duration: i32, bonus: i3
 }
 
 /// Contadores comuns ao terminar um ciclo de produção.
-pub(super) fn finish_cycle(entity: &mut ModBlockEntity) {
-    set_number(entity, "Produced", number(entity, "Produced").saturating_add(1));
+pub(super) fn finish_cycle(entity: &mut ModBlockEntity, produced: u32) {
+    set_number(entity, "Produced", number(entity, "Produced").saturating_add(produced as i32));
     set_number(entity, "Total", number(entity, "Total").saturating_add(1));
     set_number(entity, "Progress", 0);
 }
@@ -335,7 +336,7 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
     Some(match block {
         DRILL | DRILL_MK2 | DRILL_MK3 => vec![
             tr("veio.metric.rate", &[&read(6)]),
-            tr(&format!("veio.purity.{}", ["unknown", "impure", "normal", "pure"][info.clamp(0, 3) as usize]), &[]),
+            tr(&format!("veio.purity.{}", ["unknown", "impure", "normal", "pure", "rich"][info.clamp(0, 4) as usize]), &[]),
         ],
         BIOMASS_GENERATOR => vec![tr("veio.hint.biomass", &[])],
         STEAM_ENGINE => vec![tr("veio.metric.water", &[&read(8), &water::capacity(STEAM_ENGINE)]), tr("veio.hint.steam", &[])],
@@ -366,3 +367,5 @@ pub(super) fn draw(host: &dyn Host, event: &mut horizon_client::mod_api::BlockEn
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod balance_tests;

@@ -1,0 +1,31 @@
+{
+  "parent": "veio:tutorial/start",
+  "display": {
+    "icon": {
+      "id": "minecraft:bread"
+    },
+    "title": {
+      "translate": "veio.tutorial.bread.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.bread.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:bread",
+            "count": {
+              "min": 3
+            }
+          }
+        ]
+      }
+    }
+  }
+}

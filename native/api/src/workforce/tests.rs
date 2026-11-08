@@ -7,6 +7,26 @@ use horizon_client::mod_api::{BlockStateId, EntityRef, NativeItemEntity};
 use std::cell::Cell;
 
 #[test]
+fn active_barracks_keep_the_night_watch_while_civilians_sleep() {
+    use horizon_client::mobs::{Ai, Mob, MobType, Vec3, villager, villager_brain::{Act, Brain}};
+    let mut village = Village::new("veio:night-watch-integration");
+    village.villager(98521, [0.5, 64.0, 0.5], [98, 5, 2, 1]);
+    let mut post = block(BARRACKS);
+    set_number(&mut post, "Ration", 10);
+    assert!(hire_at(&mut village, &mut post, POST, 0));
+    village.day = 13000;
+    assert_ne!(cycle(&mut village, &mut post, 1), RESTING);
+    let mut guard = Mob { id: 98521, rider: None, extra: Default::default(),
+        kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(),
+        velocity: Vec3::default(), on_climbable: false, ai: Ai::default() };
+    villager::ext_mut(&mut guard).brain = Some(Box::new(Brain::preview(Act::Rest)));
+    let duty = on_duty(guard.id, 1);
+    assert!(matches!(steer(&mut guard, [4.0, 64.0, 0.0], duty), Steer::Brain),
+        "The active defender must retain its patrol target through the vanilla rest schedule");
+    assert!(villager::ext(&guard).unwrap().brain.as_ref().unwrap().mem.walk_target.get().is_some());
+}
+
+#[test]
 fn worker_discovery_keeps_cached_targets_and_cursor_while_globally_deferred() {
     struct Probe { reads: Cell<usize> }
     impl Host for Probe {
@@ -74,6 +94,8 @@ struct Village {
     /// Esmeraldas no inventário do jogador.
     emeralds: u32,
     summoned: Vec<[f64; 3]>,
+    parts: HashMap<[i32; 3], String>,
+    notices: Vec<String>,
     commands: Vec<String>,
     /// Hora do dia (0 = manhã).
     day: i64,
@@ -89,6 +111,7 @@ struct Village {
     told: Vec<String>,
     /// Outros itens no inventário do jogador.
     bag: HashMap<String, u32>,
+    sneak: bool,
 }
 
 impl Village {
@@ -127,7 +150,9 @@ impl Host for Village {
         true
     }
     fn block_property(&self, pos: [i32; 3], key: &str) -> Option<String> {
-        (key == "age").then(|| self.crops.get(&pos).map(|(_, age)| age.to_string())).flatten()
+        self.parts.get(&pos).cloned().or_else(|| {
+            (key == "age").then(|| self.crops.get(&pos).map(|(_, age)| age.to_string())).flatten()
+        })
     }
     fn set_block_property(&mut self, pos: [i32; 3], key: &str, value: &str) -> bool {
         if key != "age" { return self.crops.contains_key(&pos); }
@@ -230,7 +255,7 @@ impl Host for Village {
         count
     }
     fn sneaking(&self) -> bool {
-        false
+        self.sneak
     }
     fn server_players(&self) -> Vec<horizon_client::mod_api::NativeServerPlayer> {
         self.players.clone()
@@ -244,6 +269,7 @@ impl Host for Village {
         true
     }
     fn action_bar(&mut self, _: u128, line: Text) -> bool {
+        self.notices.push(line.plain());
         self.told.push(line.plain());
         true
     }
@@ -1153,6 +1179,47 @@ fn villages_grow_with_births_until_the_cap() {
 }
 
 #[test]
+fn full_houses_stop_births_and_ask_for_more() {
+    let dimension = "veio:test_work_houses";
+    let mut village = Village::new(dimension);
+    village.crops.insert([2, 64, 1], ("minecraft:red_bed".into(), 0));
+    village.crops.insert([3, 64, 1], ("minecraft:red_bed".into(), 0));
+    village.parts.insert([3, 64, 1], "foot".into());
+    village.villager(15200, [0.5, 64.0, 0.5], [52, 0, 0, 9]);
+    for now in 0..2_000 {
+        village::scan_homes(&village, dimension, 15200, now);
+        if village::homes(dimension, [0, 64, 0]).is_some() {
+            break;
+        }
+    }
+    assert_eq!(village::homes(dimension, [0, 64, 0]), Some(1), "a cabeceira conta, o pé da cama não");
+    for (index, id) in (15201..15204).enumerate() {
+        village.villager(id, [index as f64, 64.0, 0.0], [52, 0, 0, index as i32]);
+    }
+    village.players.push(player(1, "tester", [0.5, 64.0, 0.5]));
+    village.players[0].dimension = dimension.to_owned();
+    let now = (0..village::CHECK * village::CHANCE * 4)
+        .map(|step| step * village::CHECK + (village::CHECK - 15201 % village::CHECK))
+        .find(|now| {
+            village::observe(&mut village, dimension, 15201, *now);
+            !village.notices.is_empty()
+        })
+        .expect("com uma cama e três aldeões, o jogo pede casas");
+    assert_eq!(village::pending(dimension), 0, "sem cama livre, não nasce");
+    assert_eq!(village.notices[0], "veio.village.need_houses");
+    village.notices.clear();
+    // Mais uma cabeceira na volta seguinte: o aviso some e o nascimento volta a ser possível.
+    village.crops.insert([4, 64, 1], ("minecraft:white_bed".into(), 0));
+    for step in 0..2_000 {
+        village::scan_homes(&village, dimension, 15200, now + 1 + step);
+        if village::homes(dimension, [0, 64, 0]) == Some(2) {
+            break;
+        }
+    }
+    assert_eq!(village::homes(dimension, [0, 64, 0]), Some(2));
+}
+
+#[test]
 fn idle_hauler_inspects_a_few_stations_per_cycle() {
     let mut village = Village::new("veio:test_work_hauler_looks");
     village.crops.clear();
@@ -1277,8 +1344,18 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     assert!(joined.contains("tag Steve add veio_village"));
     assert!(!joined.contains("bad name"), "nome inseguro não entra em comando");
 
-    // Longe de qualquer vila: espera os chunks, gera uma vila e só depois desiste.
+    // Quem entra longe, com a vila do anfitrião já conhecida, vai para ela e não ganha outra.
     village.commands.clear();
+    spawn::logged_in(9, "Alex", 40);
+    spawn::tick(&mut village, 60);
+    let joined = village.commands.join("\n");
+    assert!(joined.contains("tp @s 100 70 100"), "convidado da LAN vai ao centro já conhecido\n{joined}");
+    assert!(!joined.contains("place structure"), "não gera uma segunda vila");
+
+    // Sozinho e longe de tudo: espera os chunks, gera uma vila e só depois desiste.
+    spawn::reset();
+    village.commands.clear();
+    village.players = vec![player(9, "Alex", [5000.0, 64.0, 5000.0])];
     spawn::logged_in(9, "Alex", 40);
     spawn::tick(&mut village, 60);
     assert!(village.commands.is_empty(), "ainda esperando os aldeões carregarem");
@@ -1297,10 +1374,26 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     let before = village.commands.len();
     spawn::control_center(&mut village, [200, 64, 200]);
     assert_eq!(village.commands.len(), before, "mesmo centro: nada a refazer");
-    spawn::respawned(&mut village, "Steve");
-    assert!(village.commands.last().is_some_and(|line| line.ends_with("tp Steve 200 65 200")));
+    spawn::respawned(7, "Steve");
+    assert_eq!(village.commands.len(), before, "nada de comando dentro do gancho de renascimento");
+    spawn::tick(&mut village, 1);
+    assert!(village.commands.last().is_some_and(|line| line.ends_with("tp Steve 200 65 200")), "vai no tick seguinte");
     spawn::reset();
 }
+
+#[test]
+fn hiring_prefers_villagers_without_a_trade() {
+    let data = |profession: &str, level: i32| Compound::from([("VillagerData".into(), Tag::Compound(Compound::from([
+        ("profession".into(), Tag::String(profession.into())), ("level".into(), Tag::Int(level)),
+    ])))]);
+    assert_eq!(trade_rank(&data("minecraft:none", 1)), 0);
+    assert_eq!(trade_rank(&data("minecraft:nitwit", 1)), 0);
+    assert_eq!(trade_rank(&data("minecraft:librarian", 1)), 1);
+    assert_eq!(trade_rank(&data("minecraft:librarian", 3)), 2);
+    assert_eq!(trade_rank(&Compound::new()), 0, "sem dados de aldeão: livre");
+}
+
+
 
 #[test]
 fn hauler_fills_a_freight_dispatch_and_uses_received_goods_at_local_machines() {
@@ -1351,12 +1444,24 @@ fn hauler_fills_a_freight_dispatch_and_uses_received_goods_at_local_machines() {
     assert_eq!(village.stations[&MILL_AT].items[0], Some(ItemStack::new("minecraft:raw_copper", 10)), "dispatch is not grabbed as received stock");
 }
 
+#[test]
+fn sneaking_with_an_emerald_on_the_barracks_switches_the_class() {
+    let mut village = Village::new("veio:test_barracks_click");
+    village.stations.insert(POST, block(BARRACKS));
+    village.sneak = true;
+    // A esmeralda distingue o treino de abrir o painel.
+    assert_eq!(right_click(&mut village, POST, WAGE), Some(Flow::Cancel));
+    assert_eq!(number(&village.stations[&POST], "Role"), 1, "sem soldado, escolher a classe é de graça");
+    village.sneak = false;
+    assert_eq!(right_click(&mut village, POST, ""), None, "sem agachar, abre o painel");
+}
+
 
 #[test]
 fn worker_orders_reset_navigation_on_cancel_and_refresh_changed_destinations() {
     use horizon_client::mobs::{Ai, Extra, Mob, MobType, MobWorld, Vec3, goals::{Cx, Goal}};
     let mut mob = Mob { id: 98001, rider: None, extra: Extra::default(),
-        kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(), ai: Ai::default() };
+        kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(), velocity: Vec3::default(), on_climbable: false, ai: Ai::default() };
     let world = MobWorld::preview(); let mut cx = Cx { w: &world };
     let mut goal = Work::default();
     order(mob.id, [1.0, 64.0, 1.0], defense::clock());
@@ -1364,7 +1469,7 @@ fn worker_orders_reset_navigation_on_cancel_and_refresh_changed_destinations() {
     goal.cooldown = 15;
     goal.wait = 0;
     order(mob.id, [10.0, 64.0, 10.0], defense::clock());
-    assert!(goal.can_use(&mut mob, &mut cx));
+    for _ in 0..ORDER_POLL { assert!(goal.can_use(&mut mob, &mut cx)); }
     assert_eq!(goal.cooldown, 0);
     assert_eq!(goal.target, Some([10.0, 64.0, 10.0]));
     mob.ai.nav.done = false;
@@ -1413,7 +1518,7 @@ fn bench_large_village() {
     let world = MobWorld::preview();
     let kind = Arc::new(MobType { id: VILLAGER.to_owned() });
     let mut mobs: Vec<(Mob, Work)> = (0..VILLAGERS).map(|id| (Mob { rider: None,
-        id: 200_000 + id, kind: kind.clone(), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 }, ai: Ai::default(), extra: Default::default(),
+        id: 200_000 + id, kind: kind.clone(), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 }, velocity: Vec3::default(), on_climbable: false, ai: Ai::default(), extra: Default::default(),
     }, Work::default())).collect();
     // Um posto em cada sete aldeões tem ordem viva.
     for id in (0..VILLAGERS).step_by(7) {
@@ -1454,7 +1559,7 @@ fn work_goal_hands_the_order_to_the_villager_brain_and_respects_danger() {
     use std::sync::Arc;
     let world = MobWorld::preview();
     let mut mob = Mob { rider: None, id: 17001, kind: Arc::new(MobType { id: VILLAGER.to_owned() }), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 },
-        ai: Ai::default(), extra: Default::default() };
+        velocity: Vec3::default(), on_climbable: false, ai: Ai::default(), extra: Default::default() };
     villager::ext_mut(&mut mob).brain = Some(Box::new(Brain::preview(Act::Idle)));
     let mut goal = Work::default();
     order(17001, [5.5, 64.0, 7.5], defense::clock());
@@ -1997,8 +2102,10 @@ fn home_hearth_meals_upgrades_rest_and_daily_order() {
     assert!(village.commands.iter().any(|line| line.starts_with("effect give Ana minecraft:speed")), "{:?}", village.commands);
     // Renascer em casa.
     village.commands.clear();
-    spawn::respawned(&mut village, "Ana");
-    assert_eq!(village.commands, vec![format!("execute in {dimension} run tp Ana 0 65 0")]);
+    spawn::respawned(1, "Ana");
+    assert!(village.commands.is_empty(), "nada de comando dentro do gancho de renascimento");
+    spawn::tick(&mut village, 1);
+    assert_eq!(village.commands.last(), Some(&format!("execute in {dimension} run tp Ana 0 65 0")));
     // Painel: oito linhas, com o que falta fazer.
     let data = home::data(&village.stations[&at]);
     assert_eq!(data[3], 2);

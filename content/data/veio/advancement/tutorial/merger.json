@@ -24,9 +24,5 @@
       }
     }
   },
-  "rewards": {
-    "loot": [
-      "veio:tutorial/guide"
-    ]
-  }
+  "rewards": {}
 }

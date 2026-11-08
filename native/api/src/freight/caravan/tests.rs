@@ -194,7 +194,7 @@ fn companion_saddles_are_recognized_in_both_supported_nbt_forms() {
 fn a_player_mounting_the_animal_takes_priority_over_the_transport_goal() {
     use horizon_client::mobs::{Ai, Extra, MobType, MobWorld, Vec3};
     let mut mob = Mob { id: 98002, rider: None, extra: Extra::default(),
-        kind: std::sync::Arc::new(MobType { id: "minecraft:horse".into() }), position: Vec3::default(), ai: Ai::default() };
+        kind: std::sync::Arc::new(MobType { id: "minecraft:horse".into() }), position: Vec3::default(), velocity: Vec3::default(), on_climbable: false, ai: Ai::default() };
     let world = MobWorld::fixture(); let mut cx = Cx { w: &world }; let mut travel = Travel::default();
     workforce::order(mob.id, [64.0, 64.0, 0.0], defense::clock());
     assert!(travel.can_use(&mut mob, &mut cx));

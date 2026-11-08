@@ -1,0 +1,26 @@
+{
+  "parent": "veio:steel",
+  "display": {
+    "icon": {
+      "id": "veio:cargo_lift"
+    },
+    "title": {
+      "translate": "advancement.veio.vertical.title"
+    },
+    "description": {
+      "translate": "advancement.veio.vertical.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:cargo_lift"
+          }
+        ]
+      }
+    }
+  }
+}

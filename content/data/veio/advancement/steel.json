@@ -17,7 +17,20 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:steel_plate"
+            "items": "veio:steel_plate",
+            "count": {
+              "min": 16
+            }
+          }
+        ]
+      }
+    },
+    "permit": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:permit_steel"
           }
         ]
       }
@@ -25,7 +38,14 @@
   },
   "rewards": {
     "recipes": [
-      "veio:electronics"
+      "veio:electronics",
+      "veio:cargo_lift"
     ]
-  }
+  },
+  "requirements": [
+    [
+      "stock",
+      "permit"
+    ]
+  ]
 }

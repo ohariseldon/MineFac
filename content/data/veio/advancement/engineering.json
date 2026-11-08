@@ -17,7 +17,20 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:gear"
+            "items": "veio:gear",
+            "count": {
+              "min": 32
+            }
+          }
+        ]
+      }
+    },
+    "permit": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:permit_workshop"
           }
         ]
       }
@@ -32,5 +45,11 @@
       "veio:wind_turbine",
       "veio:research_lab"
     ]
-  }
+  },
+  "requirements": [
+    [
+      "stock",
+      "permit"
+    ]
+  ]
 }

@@ -34,6 +34,12 @@ BLOCKS = {
     "assembler": ("machine", "copper", 2, [1], 1.5),
     "generator": ("generator", "copper", 1, [], 1.5),
     "contract_hub": ("machine", "wood", 4, [2, 3], 1.5),
+    # Quadro da fábrica: metas de fase, pedido do dia e gargalos (milestones/).
+    "factory_board": ("machine", "wood", 2, [1], 1.5),
+    # Megafábricas: copiadora e marco de obra (blueprint/), elevador de carga (lift.rs).
+    "blueprint_designer": ("machine", "steel", 0, [], 2.0),
+    "build_marker": ("marker", None, 0, [], 1.0),
+    "cargo_lift": ("lift", None, 1, [], 1.5),
     "cutter": ("machine", "iron", 2, [1], 1.5),
     "integrator": ("machine", "iron", 3, [2], 1.5),
     "crusher": ("machine", "iron", 2, [1], 1.5),
@@ -137,18 +143,22 @@ ITEMS = {
     "automation_core": ("minecraft:echo_shard", 16),
     "mk2_kit": ("minecraft:iron_ingot", 16),
     "clipboard": ("minecraft:paper", 1),
+    # Licenças de fase: o quadro entrega; o avanço da fase as aceita no lugar da pilha.
+    "permit_workshop": ("minecraft:paper", 16),
+    "permit_steel": ("minecraft:paper", 16),
+    "permit_electronics": ("minecraft:paper", 16),
 }
 
 TABS = {
     "industry": ("veio:press", ["drill", "drill_mk2", "drill_mk3", "press", "assembler", "cutter", "integrator",
-        "crusher", "alloy_furnace", "electronics", "electric_furnace", "contract_hub", "wrench", "copper_plate", "iron_plate",
+        "crusher", "alloy_furnace", "electronics", "electric_furnace", "factory_board", "blueprint_designer", "build_marker", "contract_hub", "wrench", "copper_plate", "iron_plate",
         "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module", "speed_module",
         "efficiency_module", "productivity_module", "fabricator", "research_lab", "factory_monitor", "chunk_anchor", "cargo_station", "unloading_station",
-        "motor", "processor", "automation_core", "mk2_kit"]),
+        "motor", "processor", "automation_core", "mk2_kit", "permit_workshop", "permit_steel", "permit_electronics"]),
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
         "geothermal", "hydro_turbine", "solar", "battery", "pole", "steel_pole", "cable", "pump", "pipe",
         "minecraft:coal", "minecraft:lava_bucket"]),
-    "logistics": ("veio:belt", ["belt", "fast_belt", "express_belt", "belt_tunnel", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "rail_terminal", "drone_port", "caravan_station", "route_card", "wrench", "clipboard", "minecraft:rail", "minecraft:powered_rail", "minecraft:chest_minecart", "minecraft:hopper"]),
+    "logistics": ("veio:belt", ["belt", "fast_belt", "express_belt", "belt_tunnel", "cargo_lift", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "rail_terminal", "drone_port", "caravan_station", "route_card", "wrench", "clipboard", "minecraft:rail", "minecraft:powered_rail", "minecraft:chest_minecart", "minecraft:hopper"]),
     "world": ("veio:harvester", ["harvester", "planter", "sprinkler", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "site", "home", "mill", "kitchen",
         "pantry", "flour", "biomass", "tesla", "barracks", "house", "shop", "town_hall", "well", "export_dock", "freight_station", "repair_kit", "minecraft:bone_meal"]),
@@ -269,11 +279,21 @@ def model(kind, name, tier):
                 box([0, 2, 14], [16, 5, 16], {"up": "#rail", "*": "#iron"})]
         return textures, elements
     if kind == "marker":
-        sign = {"pen_marker": "minecraft:block/brown_wool", "site": "minecraft:block/light_blue_wool"}.get(name, "minecraft:block/lime_wool")
+        sign = {"pen_marker": "minecraft:block/brown_wool", "site": "minecraft:block/light_blue_wool", "build_marker": "minecraft:block/light_blue_wool"}.get(name, "minecraft:block/lime_wool")
         textures = {"wood": "minecraft:block/stripped_oak_log", "sign": sign, "particle": "minecraft:block/stripped_oak_log"}
         return textures, [
             box([7, 0, 7], [9, 14, 9], "#wood", uv={"side": [7, 2, 9, 16], "up": [7, 7, 9, 9]}),
             box([3, 9, 7.5], [13, 15, 8.5], "#sign", uv={"side": [3, 1, 13, 7], "up": [3, 7, 13, 8]}),
+        ]
+    if kind == "lift":
+        # Quatro colunas de ferro, laterais de andaime e o bico de saída ao norte.
+        textures = {"frame": "minecraft:block/iron_block", "side": "minecraft:block/scaffolding_side",
+                    "top": "minecraft:block/scaffolding_top", "port": "veio:block/port", "particle": "minecraft:block/iron_block"}
+        posts = [box([x, 0, z], [x + 2, 16, z + 2], "#frame", uv={"side": [0, 0, 2, 16], "up": [0, 0, 2, 2]})
+                 for x in (0, 14) for z in (0, 14)]
+        return textures, posts + [
+            box([2, 0, 1], [14, 16, 15], {"up": "#top", "down": "#top", "*": "#side"}),
+            box([6, 5, 0], [10, 9, 1], {"north": "#port", "*": "#frame"}),
         ]
     if kind == "pole":
         textures = {"wood": "minecraft:block/stripped_spruce_log", "glass": "minecraft:block/copper_block",
@@ -403,6 +423,7 @@ SHAPES = {
              [0.375, 0, 0.375, 0.625, 1, 0.625]],
     "sprinkler": [[0.3125, 0, 0.3125, 0.6875, 0.625, 0.6875]],
     "tunnel": [[0, 0, 0, 1, 0.625, 1]],
+    "lift": [[0, 0, 0, 1, 1, 1]],
 }
 
 def write(path, value):

@@ -118,7 +118,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 23
+                    "page": 24
                   }
                 },
                 {
@@ -130,7 +130,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 24
+                    "page": 25
                   }
                 },
                 {
@@ -142,7 +142,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 25
+                    "page": 26
                   }
                 },
                 {
@@ -166,7 +166,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 44
+                    "page": 47
                   }
                 },
                 {
@@ -178,7 +178,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 45
+                    "page": 48
                   }
                 },
                 {
@@ -394,6 +394,21 @@
           },
           {
             "raw": {
+              "translate": "veio.village.page.43"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.44"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.45"
+            }
+          },
+          {
+            "raw": {
               "text": "",
               "extra": [
                 {
@@ -401,46 +416,24 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
                   "translate": "block.veio.farm_post",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 47
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "block.veio.field_marker",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 48
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "block.veio.shepherd_post",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 49
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "block.veio.pen_marker",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -452,7 +445,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.barn",
+                  "translate": "block.veio.field_marker",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -464,7 +457,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.silo",
+                  "translate": "block.veio.shepherd_post",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -476,7 +469,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.hauler_post",
+                  "translate": "block.veio.pen_marker",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -488,7 +481,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.foreman_desk",
+                  "translate": "block.veio.barn",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -500,7 +493,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.control_center",
+                  "translate": "block.veio.silo",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -512,7 +505,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.site",
+                  "translate": "block.veio.hauler_post",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -524,7 +517,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.barracks",
+                  "translate": "block.veio.foreman_desk",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -536,7 +529,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.house",
+                  "translate": "block.veio.control_center",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -548,7 +541,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.shop",
+                  "translate": "block.veio.site",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -560,7 +553,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.town_hall",
+                  "translate": "block.veio.barracks",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -572,7 +565,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.well",
+                  "translate": "block.veio.house",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -584,7 +577,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.export_dock",
+                  "translate": "block.veio.shop",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -596,7 +589,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.freight_station",
+                  "translate": "block.veio.town_hall",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -608,7 +601,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.home",
+                  "translate": "block.veio.well",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -620,12 +613,40 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "veio.guide.back",
+                  "translate": "block.veio.export_dock",
                   "color": "dark_blue",
+                  "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 1
+                    "page": 65
                   }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.freight_station",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 66
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.home",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 67
+                  }
+                },
+                {
+                  "text": "\n"
                 }
               ]
             }
@@ -659,7 +680,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 26
+                    "page": 27
                   }
                 },
                 {
@@ -671,7 +692,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 27
+                    "page": 28
                   }
                 },
                 {
@@ -683,7 +704,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 28
+                    "page": 29
                   }
                 },
                 {
@@ -695,7 +716,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 29
+                    "page": 30
                   }
                 },
                 {
@@ -707,7 +728,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 31
                   }
                 },
                 {
@@ -779,7 +800,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 31
+                    "page": 32
                   }
                 },
                 {
@@ -791,7 +812,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 46
+                    "page": 49
                   }
                 },
                 {
@@ -849,7 +870,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 21
+                    "page": 22
                   }
                 },
                 {
@@ -885,7 +906,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 20
+                    "page": 21
                   }
                 },
                 {
@@ -897,7 +918,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 42
+                    "page": 44
                   }
                 },
                 {
@@ -909,7 +930,43 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
+                    "page": 45
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.8",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 20
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.9",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
                     "page": 43
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.10",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 46
                   }
                 },
                 {
@@ -943,7 +1000,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 33
+                    "page": 34
                   }
                 },
                 {
@@ -955,7 +1012,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 34
+                    "page": 35
                   }
                 },
                 {
@@ -967,7 +1024,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 35
+                    "page": 36
                   }
                 },
                 {
@@ -979,7 +1036,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 36
+                    "page": 37
                   }
                 },
                 {
@@ -991,7 +1048,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 37
+                    "page": 38
                   }
                 },
                 {
@@ -1003,7 +1060,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 39
                   }
                 },
                 {
@@ -1015,7 +1072,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 39
+                    "page": 40
                   }
                 },
                 {
@@ -1027,7 +1084,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 40
+                    "page": 41
                   }
                 },
                 {
@@ -1039,7 +1096,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 41
+                    "page": 42
                   }
                 },
                 {
@@ -1065,6 +1122,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1076,17 +1147,6 @@
                 {
                   "translate": "veio.guide.craft.farm_post",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1100,6 +1160,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1111,17 +1185,6 @@
                 {
                   "translate": "veio.guide.craft.field_marker",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1135,6 +1198,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1146,17 +1223,6 @@
                 {
                   "translate": "veio.guide.craft.shepherd_post",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1170,6 +1236,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1181,17 +1261,6 @@
                 {
                   "translate": "veio.guide.craft.pen_marker",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1205,6 +1274,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1216,17 +1299,6 @@
                 {
                   "translate": "veio.guide.craft.barn",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1240,6 +1312,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1251,17 +1337,6 @@
                 {
                   "translate": "veio.guide.craft.silo",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1275,6 +1350,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1286,17 +1375,6 @@
                 {
                   "translate": "veio.guide.craft.hauler_post",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1310,6 +1388,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1321,17 +1413,6 @@
                 {
                   "translate": "veio.guide.craft.foreman_desk",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1345,6 +1426,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1356,17 +1451,6 @@
                 {
                   "translate": "veio.guide.craft.control_center",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1380,6 +1464,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1391,17 +1489,6 @@
                 {
                   "translate": "veio.guide.craft.site",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1415,6 +1502,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1426,17 +1527,6 @@
                 {
                   "translate": "veio.guide.craft.barracks",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1450,6 +1540,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1461,17 +1565,6 @@
                 {
                   "translate": "veio.guide.craft.house",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1485,6 +1578,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1496,17 +1603,6 @@
                 {
                   "translate": "veio.guide.craft.shop",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1520,6 +1616,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1531,17 +1641,6 @@
                 {
                   "translate": "veio.guide.craft.town_hall",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1555,6 +1654,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1566,17 +1679,6 @@
                 {
                   "translate": "veio.guide.craft.well",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1590,6 +1692,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1601,17 +1717,6 @@
                 {
                   "translate": "veio.guide.craft.export_dock",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1625,6 +1730,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1636,17 +1755,6 @@
                 {
                   "translate": "veio.guide.craft.freight_station",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }
@@ -1660,6 +1768,20 @@
                   "bold": true
                 },
                 {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
                   "text": "\n"
                 },
                 {
@@ -1671,17 +1793,6 @@
                 {
                   "translate": "veio.guide.craft.home",
                   "color": "dark_gray"
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.guide.back",
-                  "color": "dark_blue",
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 1
-                  }
                 }
               ]
             }

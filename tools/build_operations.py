@@ -57,6 +57,7 @@ def add_labels(langs):
         "caravan_feed": ("Cavalo/burro: trigo, maçã ou feno; porco: cenoura, batata ou beterraba.", "Horse/donkey: wheat, apple or hay; pig: carrot, potato or beetroot."),
         "caravan_busy": ("Desmonte e retire o laço do animal para liberar a viagem.", "Dismount and unleash the animal to resume its trip."),
         "freight_route": ("Use exatamente dois terminais do mesmo tipo e canal; confira filtros, distância e destino carregado.", "Use exactly two terminals of the same type and channel; check filters, range and loaded destination."),
+        "resting": ("De noite o trabalhador dorme em casa e volta ao amanhecer.", "At night the worker sleeps at home and comes back at dawn."),
         "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
     }
     for prefix, entries in (("sector", sectors), ("advice", advice)):

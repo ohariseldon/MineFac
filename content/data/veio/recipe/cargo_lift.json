@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:steel_plate",
+    "veio:belt",
+    "veio:belt",
+    "veio:gear"
+  ],
+  "result": {
+    "id": "veio:cargo_lift",
+    "count": 4
+  }
+}

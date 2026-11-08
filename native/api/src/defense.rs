@@ -62,17 +62,20 @@ pub(super) fn observe(dimension: &str, id: u32, kind: &str) {
     }
 }
 
-/// Hostis vistos há pouco nesta dimensão. Esquece os antigos no máximo uma vez a cada 40 ticks.
+/// Hostis vistos há pouco nesta dimensão. Esquece os antigos no máximo uma vez a cada 40 ticks,
+/// em todas as dimensões de uma vez (a marca da limpeza é uma só para todas).
 pub(super) fn recent(dimension: &str) -> Vec<u32> {
     let now = CLOCK.load(Ordering::Relaxed);
     let Ok(mut seen) = SEEN.lock() else { return Vec::new() };
+    let generation = now / 40;
+    if SWEEP.swap(generation, Ordering::Relaxed) != generation {
+        for (_, mobs) in seen.iter_mut() {
+            mobs.retain(|_, stamp| now.saturating_sub(*stamp) <= FORGET);
+        }
+    }
     let Some((_, mobs)) = seen.iter_mut().find(|(name, _)| name == dimension) else {
         return Vec::new();
     };
-    let generation = now / 40;
-    if SWEEP.swap(generation, Ordering::Relaxed) != generation {
-        mobs.retain(|_, stamp| now.saturating_sub(*stamp) <= FORGET);
-    }
     mobs.iter().filter(|(_, stamp)| now.saturating_sub(**stamp) <= FRESH).map(|(id, _)| *id).collect()
 }
 

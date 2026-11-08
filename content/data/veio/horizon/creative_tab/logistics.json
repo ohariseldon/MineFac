@@ -6,6 +6,7 @@
     "veio:fast_belt",
     "veio:express_belt",
     "veio:belt_tunnel",
+    "veio:cargo_lift",
     "veio:splitter",
     "veio:merger",
     "veio:inserter",

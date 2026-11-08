@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:stick",
+    "minecraft:paper",
+    "minecraft:light_blue_dye"
+  ],
+  "result": {
+    "id": "veio:build_marker",
+    "count": 4
+  }
+}

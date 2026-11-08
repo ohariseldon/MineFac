@@ -1,3 +1,4 @@
+mod blueprint;
 mod budget;
 mod presentation;
 mod appearance;
@@ -7,10 +8,13 @@ mod contracts;
 mod freight;
 mod logistics;
 mod logistics_controls;
+mod lift;
+mod milestones;
 mod inserters;
 pub(crate) mod operations;
 mod defense;
 mod farm;
+mod home;
 mod pollution;
 mod production;
 mod power;
@@ -19,6 +23,7 @@ mod research;
 mod stations;
 mod rivers;
 mod tutorial;
+mod onboarding;
 mod upgrades;
 mod holding;
 mod workforce;
@@ -30,7 +35,7 @@ use horizon_client::mod_api::{
 
 // Horizon exports Compound but not its UTF-16 key type. Derive that type from
 // the public map instead of requiring an engine patch or a second dependency.
-pub(super) trait CompoundKey { type Key; }
+pub(crate) trait CompoundKey { type Key; }
 impl<K, V> CompoundKey for std::collections::BTreeMap<K, V> { type Key = K; }
 type JavaString = <Compound as CompoundKey>::Key;
 
@@ -81,6 +86,14 @@ pub fn hooks() -> Box<dyn Hooks> {
 struct Factory;
 
 impl Hooks for Factory {
+    fn server_about_to_start(&self, _host: &mut dyn Host, _event: &mut horizon_client::mod_api::ServerAboutToStartEvent) {
+        // A casa, as camas e os bônus em memória pertencem ao mundo que abre.
+        // O painel carrega os próprios dados salvos quando começar a funcionar.
+        home::reset();
+        milestones::census::reset();
+        blueprint::reset();
+    }
+
     fn block_entity(
         &self,
         _host: &mut dyn Host,
@@ -129,16 +142,29 @@ impl Hooks for Factory {
     {
         let block = host.block(event.pos);
         if let Some(flow) = freight::right_click(host, event.pos, &block) { return flow; }
+        onboarding::select(host, event.pos, &block, true);
         if let Some(flow) = logistics_controls::right_click(host, event.pos, &block) { return flow; }
-        let Some((held, _, _)) = host.held() else { return Flow::Continue };
+        if blueprint::owns(&block) {
+            let held = host.held().map(|(item, _, _)| item);
+            if let Some(flow) = blueprint::right_click(host, event.pos, &block, held.as_deref()) { return flow; }
+        }
         if !is_factory_block(&block) {
             return Flow::Continue;
         }
-        if workforce::owns(&block)
-            && let Some(flow) = workforce::right_click(host, event.pos, &held)
+        // Mão vazia chega como `None`. O quartel usa agachar com a mão vazia, então os postos
+        // recebem "" nesse caso; o resto continua exigindo um item na mão.
+        let held = host.held().map(|(item, _, _)| item);
+        if lift::owns(&block)
+            && let Some(flow) = lift::right_click(host, event.pos, held.as_deref().unwrap_or(""))
         {
             return flow;
         }
+        if workforce::owns(&block)
+            && let Some(flow) = workforce::right_click(host, event.pos, held.as_deref().unwrap_or(""))
+        {
+            return flow;
+        }
+        let Some(held) = held else { return Flow::Continue };
         let pos = event.pos;
         let mut damage = 0;
         let mut module = 0;
@@ -252,7 +278,9 @@ impl Hooks for Factory {
             production::ranch::observe(event.dimension, event.entity, event.kind);
         }
         if event.kind == "minecraft:villager" {
-            workforce::village::observe(host, event.dimension, event.entity, defense::clock());
+            let now = defense::clock();
+            workforce::village::observe(host, event.dimension, event.entity, now);
+            workforce::village::scan_homes(host, event.dimension, event.entity, now);
         }
         Flow::Continue
     }
@@ -261,7 +289,8 @@ impl Hooks for Factory {
         rivers::chunk_loaded(event.dimension, event.chunk, event.new, defense::clock());
     }
 
-    fn player_logged_in(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
+    fn player_logged_in(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
+        onboarding::logged_in(host);
         workforce::spawn::logged_in(event.player, event.name, defense::clock());
     }
 
@@ -271,11 +300,37 @@ impl Hooks for Factory {
         }
     }
 
-    fn player_respawned(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
-        workforce::spawn::respawned(host, event.name);
+    fn player_respawned(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
+        workforce::spawn::respawned(event.player, event.name);
+    }
+
+    /// Casa do fundador: a primeira cama é a da casa, e só mais uma fora dela.
+    fn player_spawn_point_set(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerSpawnPointSetEvent<'_>) -> Flow {
+        home::spawn_point(host, event.player, event.dimension, event.pos, event.cause)
+    }
+
+    fn player_bed_enter(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerBedEnterEvent<'_>) -> Flow {
+        home::bed_enter(host, event.player, event.pos)
+    }
+
+    /// Comida do jogador: refeições e banquetes aceleram as máquinas (`home::food`).
+    fn living_entity_use_item_finish(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::LivingEntityUseItemFinishEvent<'_>) {
+        if event.entity.is_some() {
+            return;
+        }
+        if let Some(player) = host.acting_player() {
+            home::food::eaten(player.uuid, &player.name, &player.dimension, player.position, &event.stack.item, defense::clock());
+        }
     }
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
+        // No jogo de um jogador só, o gancho roda duas vezes por tick: no servidor interno e na
+        // janela (cliente). O Veio é todo do servidor; na janela, o relógio andaria em dobro e
+        // fora de ordem, as cotas zerariam no meio do tick e um passo da poluição podia ser
+        // gasto no cliente (onde não há jogadores nem `summon`), perdendo a onda da noite.
+        if host.window() {
+            return;
+        }
         defense::advance_clock();
         soundscape::refresh(host, defense::clock());
         budget::begin_tick(defense::clock());
@@ -283,11 +338,37 @@ impl Hooks for Factory {
         workforce::maintenance(defense::clock());
         workforce::world_tick(host, defense::clock());
         rivers::tick(host, defense::clock());
+        onboarding::server_tick(host);
+        home::tick(host, defense::clock());
+        milestones::census::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
             industry::maintain(host, time);
             stations::maintain(host, time);
         }
+    }
+
+    fn inventory_move_item(&self, host: &dyn Host, event: &mut horizon_client::mod_api::InventoryMoveItemEvent<'_>) -> Flow {
+        onboarding::hopper_attempt(host, event.source, event.destination, event.item);
+        Flow::Continue
+    }
+
+    fn place_block(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlaceBlockEvent<'_>) {
+        onboarding::select(host, event.pos, &host.block(event.pos), false);
+    }
+
+    fn player_logged_out(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedOutEvent<'_>) {
+        onboarding::logout(host, event.player);
+    }
+
+    fn register_commands(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::RegisterCommandsEvent<'_>) {
+        for action in ["ocultar", "mostrar", "reiniciar"] {
+            event.commands.push(horizon_client::mod_api::NativeCommand::new(&format!("veiotutorial {action}")));
+        }
+    }
+
+    fn perform_command(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PerformCommandEvent<'_>) -> Flow {
+        if onboarding::command(host, event.player, event.command) { Flow::Cancel } else { Flow::Continue }
     }
 
     fn register_goals(&self, event: &mut horizon_client::mod_api::RegisterGoalsEvent<'_>) {
@@ -305,6 +386,7 @@ impl Hooks for Factory {
         production::generation::bounds(event.block, event.bounds);
         if event.block == freight::DRONE { freight::bounds(event.entity, event.bounds); }
         if inserters::is_arm(event.block) { *event.bounds = [-1.5, 0.0, -1.5, 2.5, 1.0, 2.5]; }
+        if blueprint::owns(event.block) { blueprint::bounds(event.entity, event.bounds); }
         if workforce::zones::is_marker(event.block) {
             workforce::zones::bounds(event.entity, event.bounds);
         }
@@ -361,7 +443,11 @@ impl Hooks for Factory {
         &self,
         event: &mut horizon_client::mod_api::BlockEntityUpdateTagEvent<'_>,
     ) -> Option<Compound> {
-        is_factory_block(&event.entity.id).then(|| event.entity.nbt.clone())
+        is_factory_block(&event.entity.id).then(|| if blueprint::owns(&event.entity.id) {
+            blueprint::client_tag(event.entity)
+        } else {
+            event.entity.nbt.clone()
+        })
     }
 
     fn block_entity_submit(&self, host: &dyn Host,
@@ -387,10 +473,19 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     let previous = visual_signature(entity);
     let produced = number(entity, "Produced");
     let previous_status = number(entity, "Status");
+    let training = onboarding::tracking().then(|| {
+        onboarding::before_machine(host, pos, entity);
+        (number(entity, "Total"), if entity.id == HUB { number(entity, "ContractStage") } else { 0 })
+    });
     tick_factory(host, pos, entity, time);
     if entity.id == freight::DRONE {
         set_number(entity, "FlightVisualAt", stamp(time));
     }
+    if let Some((cycles, contract)) = training {
+        onboarding::observe_production(host.dimension(), pos, entity, produced, cycles, contract, time);
+    }
+    milestones::census::observe(host.dimension(), pos, entity, previous_status,
+        number(entity, "Produced") - produced, defense::clock());
     industry::observe(host.dimension(), pos, entity, time);
     holding::observe(host.dimension(), pos, entity, time);
     pollution::emit(host, pos, entity, time);
@@ -404,9 +499,9 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
 
 fn is_factory_block(block: &str) -> bool {
     matches!(block, DRILL | DRILL_MK2 | PRESS | ASSEMBLER | BELT | FAST_BELT | EXPRESS_BELT | TUNNEL |
-        SPLITTER | MERGER | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
+        SPLITTER | MERGER | lift::LIFT | CUTTER | INTEGRATOR | GENERATOR | CABLE | SOLAR | BATTERY |
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG)
-        || production::is_machine(block) || workforce::owns(block) || freight::owns(block)
+        || production::is_machine(block) || workforce::owns(block) || freight::owns(block) || milestones::owns(block) || blueprint::owns(block)
         || matches!(block, research::LAB | industry::MONITOR | industry::ANCHOR) || stations::is_station(block)
 }
 
@@ -442,7 +537,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         DRILL | DRILL_MK2 => (1, vec![], vec![0]),
         PRESS | ASSEMBLER | CUTTER | CRUSHER => (2, vec![0], vec![1]),
         INTEGRATOR | ALLOY | ELECTRONICS => (3, vec![0, 1], vec![2]),
-        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL => (1, vec![0], vec![0]),
+        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL | lift::LIFT => (1, vec![0], vec![0]),
         MERGER => (2, vec![0, 1], vec![0, 1]),
         GENERATOR => (1, vec![0], vec![]),
         GEOTHERMAL => (2, vec![0], vec![1]),
@@ -455,6 +550,7 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         stations::SENDER => (4, vec![0, 1, 2, 3], vec![]),
         stations::RECEIVER => (4, vec![], vec![0, 1, 2, 3]),
         _ if freight::owns(block) => return freight::layout(block),
+        _ if milestones::owns(block) => milestones::layout(),
         _ if workforce::owns(block) => return workforce::layout(block),
         _ => return production::layout(block),
     })
@@ -463,12 +559,12 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
 /// Há slot de entrada de itens? Evita alocar o `layout` só para decidir uma curva de esteira.
 fn has_item_inputs(block: &str) -> bool {
     match block {
-        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL | PRESS | ASSEMBLER | CUTTER | CRUSHER |
+        BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL | lift::LIFT | PRESS | ASSEMBLER | CUTTER | CRUSHER |
         INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER | research::LAB | stations::SENDER => true,
         DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG
             | industry::MONITOR | industry::ANCHOR | stations::RECEIVER => false,
         _ if freight::owns(block) => true,
-        _ if workforce::is_post(block) || workforce::storage::is_store(block) => true,
+        _ if workforce::is_post(block) || workforce::storage::is_store(block) || milestones::owns(block) => true,
         _ => production::has_inputs(block),
     }
 }
@@ -487,6 +583,7 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         _ if freight::owns(block) => 3..6,
         _ if production::is_machine(block) => production::outputs(block),
         _ if workforce::owns(block) => workforce::outputs(block),
+        _ if milestones::owns(block) => 1..2,
         _ => 0..1,
     }
 }
@@ -497,7 +594,8 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (research::LAB, _) => research::accepts(slot, stack),
         (stations::SENDER, 0..4) => stack.damage == 0 && stack.extra.is_none(),
         (stations::RECEIVER, _) => false,
-        (BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL, 0) => true,
+        (milestones::BOARD, _) => milestones::valid_input(slot, stack),
+        (BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL | lift::LIFT, 0) => true,
         (MERGER, 0 | 1) => true,
         _ if freight::owns(block) => (slot < 6 || block == freight::caravan::ID && slot == 7 && freight::caravan::feed(&stack.item)) && stack.damage == 0 && stack.extra.is_none(),
         _ if workforce::owns(block) => workforce::accepts(block, slot, stack),
@@ -538,6 +636,8 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Action" => key!("Action"),
         "Admin" => key!("Admin"),
         "Area" => key!("Area"),
+        "Bonus" => key!("Bonus"),
+        "BonusItem" => key!("BonusItem"),
         "Burn" => key!("Burn"),
         "BurnTotal" => key!("BurnTotal"),
         "ContractStage" => key!("ContractStage"),
@@ -561,6 +661,8 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "DisplayItem" => key!("DisplayItem"),
         "Duration" => key!("Duration"),
         "Herd" => key!("Herd"),
+        "Home" => key!("Home"),
+        "HomeBeds" => key!("HomeBeds"),
         "Info" => key!("Info"),
         "Level" => key!("Level"),
         "LogisticsFilter" => key!("LogisticsFilter"),
@@ -814,7 +916,30 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "DExport" => key!("DExport"),
         "Trade" => key!("Trade"),
         "TradeRecent" => key!("TradeRecent"),
-        "Water" => key!("Water"),
+        "BoxHeight" => key!("BoxHeight"),
+        "BoxSize" => key!("BoxSize"),
+        "CarryInto" => key!("CarryInto"),
+        "CarryKind" => key!("CarryKind"),
+        "Credit" => key!("Credit"),
+        "DesignBlocks" => key!("DesignBlocks"),
+        "DesignFacing" => key!("DesignFacing"),
+        "DesignFootprint" => key!("DesignFootprint"),
+        "DesignHeight" => key!("DesignHeight"),
+        "DesignSkipped" => key!("DesignSkipped"),
+        "Down" => key!("Down"),
+        "Gust" => key!("Gust"),
+        "Hired" => key!("Hired"),
+        "Linked" => key!("Linked"),
+        "Order" => key!("Order"),
+        "OrderDone" => key!("OrderDone"),
+        "OrderPaid" => key!("OrderPaid"),
+        "Searched" => key!("Searched"),
+        "Size" => key!("Size"),
+        "DBlocked" => key!("DBlocked"),
+        "DDamaged" => key!("DDamaged"),
+        "DPower" => key!("DPower"),
+        "DSetup" => key!("DSetup"),
+        "DTotal" => key!("DTotal"),
         _ => rare_nbt_key(name),
     }
 }
@@ -843,7 +968,7 @@ pub(super) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -
 }
 
 /// `JavaString` igual a `value`, sem montar uma `String` no meio.
-pub(super) fn java_eq(text: &JavaString, value: &str) -> bool {
+pub(crate) fn java_eq(text: &JavaString, value: &str) -> bool {
     let mut units = text.0.iter().copied();
     value.encode_utf16().all(|unit| units.next() == Some(unit)) && units.next().is_none()
 }
@@ -905,6 +1030,8 @@ fn numbers_sorted<const N: usize>(entity: &ModBlockEntity, keys: &[&JavaString; 
 fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, bool) {
     let motion = if matches!(entity.id.as_str(), freight::DRONE | freight::caravan::ID) {
         number(entity, "FlightPhase") * 1_000_000 + number(entity, "Progress") / 4
+    } else if entity.id == HUB {
+        i32::from(contracts::beacon_selected(entity))
     } else {
         number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" })
     };
@@ -920,7 +1047,8 @@ fn burning(entity: &ModBlockEntity) -> bool {
 /// Quem publica outra coisa nessas posições (ou não publica) relê o NBT.
 fn published_signature(entity: &ModBlockEntity) -> (i32, i32, i32, bool) {
     let standard = !matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE | TESLA | workforce::CONTROL_CENTER | workforce::TOWN_HALL)
-        && !inserters::is_arm(&entity.id) && !workforce::zones::is_marker(&entity.id) && !freight::owns(&entity.id);
+        && !inserters::is_arm(&entity.id) && !workforce::zones::is_marker(&entity.id)
+        && !freight::owns(&entity.id) && !milestones::owns(&entity.id);
     match entity.data.as_slice() {
         [status, .., module, info] if standard && entity.data.len() == presentation::DATA_SLOTS => (*status, *module, *info, burning(entity)),
         _ => visual_signature(entity),
@@ -965,6 +1093,8 @@ fn stamp(time: i64) -> i32 {
 fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     if freight::owns(&entity.id) { freight::tick(host, pos, entity, time); return; }
     if inserters::is_arm(&entity.id) { return inserters::tick(host, pos, entity, time); }
+    if lift::owns(&entity.id) { return lift::tick(host, pos, entity, time); }
+    if blueprint::owns(&entity.id) { return blueprint::tick(host, pos, entity); }
     logistics::transfer_outputs(host, pos, entity, time);
     if entity.id == HUB {
         if contracts::tick(entity) && industry::on_server(host) {
@@ -977,6 +1107,9 @@ fn tick_factory(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity,
     }
     if entity.id == industry::MONITOR {
         return industry::tick_monitor(host, pos, entity, time);
+    }
+    if milestones::owns(&entity.id) {
+        return milestones::tick(host, pos, entity);
     }
     if power::tier(&entity.id).is_some() {
         return;
