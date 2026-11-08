@@ -277,6 +277,10 @@ impl Hooks for Factory {
         let now = defense::clock();
         // As caravanas acompanham seus animais em todo tick (`freight::caravan`).
         freight::caravan::observe(host, event.dimension, event.entity, event.kind);
+        // Visitante que nenhum pedido da agenda conhece sai do mundo (de antes de reabrir, por exemplo).
+        if event.kind == workforce::society::agenda::VISITOR && (now + u64::from(event.entity)) % 41 == 0 {
+            workforce::society::agenda::visitor_seen(host, event.dimension, event.entity);
+        }
         if (now + u64::from(event.entity)) % OBSERVE_EVERY == 0 {
             defense::observe(event.dimension, event.entity, event.kind);
             production::ranch::observe(event.dimension, event.entity, event.kind);
@@ -419,14 +423,41 @@ impl Hooks for Factory {
         // Aba da holding; nas outras páginas da vila (Atenção, Obras, Pedidos) não há saque.
         let first = event.data.first().copied().unwrap_or(0);
         let tab = if first < 1000 && (first / 100) % 10 != 0 { -1 } else { first / 1000 };
+        if event.block == workforce::TOWN_HALL && !event.right && (3.0..17.0).contains(&event.at[1]) {
+            return if (149.0..161.0).contains(&event.at[0]) {
+                Some(workforce::society::agenda::TAB_PREVIOUS)
+            } else if (162.0..175.0).contains(&event.at[0]) {
+                Some(workforce::society::agenda::TAB_NEXT)
+            } else {
+                None
+            };
+        }
         (event.block == workforce::CONTROL_CENTER && !event.right).then(|| holding::click(event.at, tab)).flatten()
     }
 
     fn menu_button(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::MenuButtonEvent<'_>) {
+        // Prefeitura: troca entre os indicadores e a agenda.
+        if event.entity.id == workforce::TOWN_HALL
+            && matches!(event.id, workforce::society::agenda::TAB_PREVIOUS | workforce::society::agenda::TAB_NEXT)
+        {
+            set_number(event.entity, "Tab", 1 - number(event.entity, "Tab").clamp(0, 1));
+            return;
+        }
         if event.entity.id == workforce::CONTROL_CENTER {
             let time = host.level(host.dimension()).and_then(|level| level.game_time(host)).unwrap_or(0);
             holding::press(host.dimension(), event.pos, event.entity, event.id, time);
         }
+    }
+
+    fn interact_entity(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::InteractEntityEvent<'_>) -> Flow {
+        // Conversa com o visitante da agenda (em vez da tela de troca).
+        if event.kind == workforce::society::agenda::VISITOR
+            && let Ok(id) = u32::try_from(event.entity)
+            && workforce::society::agenda::talk(host, id)
+        {
+            return Flow::Cancel;
+        }
+        Flow::Continue
     }
 
     fn screen_tooltip(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::ScreenTooltipEvent<'_>) {
@@ -937,6 +968,10 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "UpkeepHalf" => key!("UpkeepHalf"),
         "Wallet" => key!("Wallet"),
         "Wealth" => key!("Wealth"),
+        "Morale" => key!("Morale"),
+        "Agenda" => key!("Agenda"),
+        "AgendaDay" => key!("AgendaDay"),
+        "HolidayToday" => key!("HolidayToday"),
         "Tier" => key!("Tier"),
         "RecipeIndex" => key!("RecipeIndex"),
         "Tab" => key!("Tab"),

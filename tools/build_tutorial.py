@@ -25,7 +25,7 @@ vanilla={
  "shears":("Tesoura","Shears"),"hay_block":("Fardo de feno","Hay bale"),"glowstone":("Pedra luminosa","Glowstone"),
  "diamond":("Diamante","Diamond"),"emerald":("Esmeralda","Emerald"),
  "hopper":("Funil","Hopper"),"lectern":("Atril","Lectern"),"bell":("Sino","Bell"),"lead":("Laço","Lead"),"oak_fence":("Cerca de carvalho","Oak fence"),"wheat_seeds":("Sementes de trigo","Wheat seeds"),
- "oak_planks":("Tábuas de carvalho","Oak planks"),"oak_boat":("Barco de carvalho","Oak boat"),"rail":("Trilho","Rail"),"minecart":("Carrinho","Minecart"),"oak_door":("Porta de carvalho","Oak door"),"glass_pane":("Painel de vidro","Glass pane"),
+ "oak_planks":("Tábuas de carvalho","Oak planks"),"oak_sapling":("Muda de carvalho","Oak sapling"),"poppy":("Papoula","Poppy"),"dandelion":("Dente-de-leão","Dandelion"),"oak_fence":("Cerca de carvalho","Oak fence"),"lantern":("Lanterna","Lantern"),"oak_stairs":("Escada de carvalho","Oak stairs"),"gold_block":("Bloco de ouro","Block of gold"),"chiseled_stone_bricks":("Tijolos de pedra talhados","Chiseled stone bricks"),"oak_boat":("Barco de carvalho","Oak boat"),"rail":("Trilho","Rail"),"minecart":("Carrinho","Minecart"),"oak_door":("Porta de carvalho","Oak door"),"glass_pane":("Painel de vidro","Glass pane"),
  "stone_bricks":("Tijolos de pedra","Stone bricks"),"cobblestone":("Pedregulho","Cobblestone"),
 }
 def item_name(item,code):
@@ -289,6 +289,15 @@ help["export_dock"] = (
 help["freight_station"] = (
  "Conexão externa na fronteira\n(96 blocos da sede). Trem a\ncada minuto, 6 pilhas, frete\nmais caro. Exporta e importa.\nAba Comércio exterior.",
  "Outside connection at the\nfrontier (96 blocks away).\nA train every minute, 6\nstacks, pricier freight.\nForeign trade tab.")
+help["park"] = (
+ "Lazer para as casas a até\n32 blocos. Os visitantes\npedem parques nos bairros\nsem lazer; o prefeito paga\na obra à companhia.",
+ "Leisure for homes within\n32 blocks. Visitors ask for\nparks in districts without\nleisure; the mayor pays the\ncompany for the work.")
+help["plaza"] = (
+ "Praça com coreto: lazer a\n32 blocos e o lugar onde a\nvila se reúne nos feriados.\nPedida pela arquiteta.",
+ "Plaza with a bandstand:\nleisure within 32 blocks and\nwhere the village gathers on\nholidays. The architect asks.")
+help["monument"] = (
+ "Monumento: lazer a 32\nblocos e mais ânimo. Pedido\npelo escultor; a prefeitura\npaga a obra mais cara.",
+ "Monument: leisure within 32\nblocks and more morale. The\nsculptor asks; the town hall\npays the priciest work.")
 help["farm_post"] = (
  "Esmeralda: contrata um aldeão adulto livre por perto.\nEle colhe o 9x9 e traz ao posto; 2 pontos de comida por colheita.\nAgachar + chave: dispensa.",
  "Emerald: hires a free adult villager nearby.\nHarvests the 9x9 and brings it back; 2 food points per harvest.\nSneak + wrench: dismiss.")
@@ -584,6 +593,93 @@ for key, pt, en in [
  ('veio.trade.news.opened4', 'Mercado aberto: módulos de melhoria.', 'Market open: upgrade modules.'),
  ('veio.trade.departed.ship', 'Navio partiu: %s itens, %s moedas líquidas', 'Ship departed: %s items, %s net coins'),
  ('veio.trade.departed.train', 'Trem partiu: %s itens, %s moedas líquidas', 'Train departed: %s items, %s net coins'),
+ ('block.veio.park', 'Parque', 'Park'),
+ ('block.veio.plaza', 'Praça', 'Plaza'),
+ ('block.veio.monument', 'Monumento', 'Monument'),
+ ('entity.veio.visitor', 'Visitante', 'Visitor'),
+ ('veio.status.holiday', 'Feriado', 'Holiday'),
+ ('veio.agenda.founding.name', 'Dia da Fundação', 'Founding Day'),
+ ('veio.agenda.founding.visitor', 'Seu Anselmo, o primeiro morador', 'Old Anselmo, the first settler'),
+ ('veio.agenda.founding.hello', 'Prefeito, lembra quando isto aqui era só um punhado de casas?', 'Mayor, remember when this was just a handful of houses?'),
+ ('veio.agenda.founding.ask', 'No Dia da Fundação a vila para. Queria bolo, pão e bandeiras para a festa.', "On Founding Day the village stops. I'd like cake, bread and banners for the party."),
+ ('veio.agenda.founding.thanks', 'Agora sim, a vila vai comemorar como merece!', 'Now the village will celebrate as it deserves!'),
+ ('veio.agenda.flowers.name', 'Festa das Flores', 'Flower Festival'),
+ ('veio.agenda.flowers.visitor', 'Dona Margarida, das floristas', 'Margarida, of the florists'),
+ ('veio.agenda.flowers.hello', 'Que dia lindo! A primavera pede flores.', 'What a lovely day! Spring calls for flowers.'),
+ ('veio.agenda.flowers.ask', 'Para a Festa das Flores preciso de papoulas, dentes-de-leão e um pouco de mel.', 'For the Flower Festival I need poppies, dandelions and some honey.'),
+ ('veio.agenda.flowers.thanks', 'Que perfume! A praça vai ficar linda.', 'What a scent! The square will look lovely.'),
+ ('veio.agenda.saint_john.name', 'Festa de São João', "Saint John's Festival"),
+ ('veio.agenda.saint_john.visitor', 'Seu Benedito, o sanfoneiro', 'Benedito, the accordion player'),
+ ('veio.agenda.saint_john.hello', 'Arraiá chegando, prefeito!', 'The festival is coming, mayor!'),
+ ('veio.agenda.saint_john.ask', 'Para o São João: batata assada, fogueiras e biscoitos para o povo.', "For Saint John's: baked potatoes, campfires and cookies for everyone."),
+ ('veio.agenda.saint_john.thanks', 'Vai ter quadrilha até o sol nascer!', "We'll dance until sunrise!"),
+ ('veio.agenda.harvest.name', 'Festa da Colheita', 'Harvest Festival'),
+ ('veio.agenda.harvest.visitor', 'Tia Ceres, dos lavradores', 'Aunt Ceres, of the farmers'),
+ ('veio.agenda.harvest.hello', 'A colheita foi boa este ano.', 'The harvest was good this year.'),
+ ('veio.agenda.harvest.ask', 'Para a Festa da Colheita: trigo, tortas de abóbora e pão.', 'For the Harvest Festival: wheat, pumpkin pies and bread.'),
+ ('veio.agenda.harvest.thanks', 'Fartura na mesa de todo mundo!', "Plenty on everyone's table!"),
+ ('veio.agenda.lights.name', 'Festa das Luzes', 'Festival of Lights'),
+ ('veio.agenda.lights.visitor', 'Mestre Lumen, o vidreiro', 'Master Lumen, the glassmaker'),
+ ('veio.agenda.lights.hello', 'O inverno escurece cedo...', 'Winter gets dark early...'),
+ ('veio.agenda.lights.ask', 'Para a Festa das Luzes: lanternas, velas e vidro para as luminárias.', 'For the Festival of Lights: lanterns, candles and glass for the lamps.'),
+ ('veio.agenda.lights.thanks', 'A vila vai brilhar no frio!', 'The village will shine in the cold!'),
+ ('veio.agenda.new_year.name', 'Virada do Ano', "New Year's Eve"),
+ ('veio.agenda.new_year.visitor', 'Pequena Aurora', 'Little Aurora'),
+ ('veio.agenda.new_year.hello', 'Moço, o ano tá acabando!', 'Hey, the year is almost over!'),
+ ('veio.agenda.new_year.ask', 'Na Virada do Ano eu quero fogos, um bolo e biscoitos!', "For New Year's Eve I want fireworks, a cake and cookies!"),
+ ('veio.agenda.new_year.thanks', 'Oba! Vai ter fogos!', 'Yay! There will be fireworks!'),
+ ('veio.agenda.fair.name', 'Feira de domingo', 'Sunday Fair'),
+ ('veio.agenda.fair.visitor', 'Dona Lia, da feira', 'Lia, of the market fair'),
+ ('veio.agenda.fair.hello', 'Domingo é dia de feira!', 'Sunday is fair day!'),
+ ('veio.agenda.fair.ask', 'Para as barracas: lã, papel e pão.', 'For the stalls: wool, paper and bread.'),
+ ('veio.agenda.fair.thanks', 'A feira vai lotar!', 'The fair will be packed!'),
+ ('veio.agenda.dance.name', 'Baile de domingo', 'Sunday Dance'),
+ ('veio.agenda.dance.visitor', 'Juca, do baile', 'Juca, of the dance hall'),
+ ('veio.agenda.dance.hello', 'E aí, prefeito, bora um baile no domingo?', 'Hey mayor, how about a dance on Sunday?'),
+ ('veio.agenda.dance.ask', 'Preciso de blocos musicais, lanternas e biscoitos.', 'I need note blocks, lanterns and cookies.'),
+ ('veio.agenda.dance.thanks', 'Vai ser o baile do ano!', "It'll be the dance of the year!"),
+ ('veio.agenda.fishing.name', 'Torneio de pesca', 'Fishing Contest'),
+ ('veio.agenda.fishing.visitor', 'Pescador Tião', 'Tião the fisherman'),
+ ('veio.agenda.fishing.hello', 'Os peixes estão mordendo, prefeito.', 'The fish are biting, mayor.'),
+ ('veio.agenda.fishing.ask', 'Para o torneio de pesca: varas, bacalhau assado e pão.', 'For the fishing contest: rods, cooked cod and bread.'),
+ ('veio.agenda.fishing.thanks', 'Que vença o melhor pescador!', 'May the best angler win!'),
+ ('veio.agenda.park.name', 'Parque', 'Park'),
+ ('veio.agenda.park.visitor', 'Guarda-parque Silvano', 'Silvano the park ranger'),
+ ('veio.agenda.park.hello', 'Este bairro não tem uma árvore para descansar.', 'This district has no tree to rest under.'),
+ ('veio.agenda.park.ask', 'Construa um parque (bloco Parque) neste bairro.', 'Build a park (Park block) in this district.'),
+ ('veio.agenda.park.thanks', 'Agora as crianças têm onde brincar.', 'Now the children have somewhere to play.'),
+ ('veio.agenda.plaza.name', 'Praça', 'Plaza'),
+ ('veio.agenda.plaza.visitor', 'Arquiteta Iara', 'Iara the architect'),
+ ('veio.agenda.plaza.hello', 'A vila precisa de um ponto de encontro.', 'The village needs a meeting point.'),
+ ('veio.agenda.plaza.ask', 'Construa uma praça (bloco Praça) neste bairro.', 'Build a plaza (Plaza block) in this district.'),
+ ('veio.agenda.plaza.thanks', 'Uma praça de verdade! A vila vai se encontrar aqui.', 'A real plaza! The village will meet here.'),
+ ('veio.agenda.monument.name', 'Monumento', 'Monument'),
+ ('veio.agenda.monument.visitor', 'Escultor Bento', 'Bento the sculptor'),
+ ('veio.agenda.monument.hello', 'Uma cidade sem monumento não tem memória.', 'A town without a monument has no memory.'),
+ ('veio.agenda.monument.ask', 'Erga um monumento (bloco Monumento) neste bairro.', 'Raise a monument (Monument block) in this district.'),
+ ('veio.agenda.monument.thanks', 'Ficará para as próximas gerações.', 'It will stand for generations.'),
+ ('veio.agenda.says', '[%s] %s', '[%s] %s'),
+ ('veio.agenda.need', 'Faltam: %s de %s %s · %s dias', 'Still needed: %s of %s %s · %s days'),
+ ('veio.agenda.need_civic', 'Construa um bloco %s no bairro (%s) · %s dias', 'Build a %s block in the district (%s) · %s days'),
+ ('veio.agenda.ready', 'Tudo pronto! Faltam %s dias para o evento.', 'All set! The event is in %s days.'),
+ ('veio.agenda.arrived', '%s chegou à prefeitura para falar com o prefeito. Clique no visitante para ouvir o pedido.', '%s arrived at the town hall to see the mayor. Click the visitor to hear the request.'),
+ ('veio.agenda.prepared', '%s: tudo pronto! A prefeitura reembolsou %s moedas à companhia.', '%s: all set! The town hall refunded %s coins to the company.'),
+ ('veio.agenda.civic_done', '%s: obra pronta! A prefeitura pagou %s moedas à companhia.', '%s: the work is done! The town hall paid %s coins to the company.'),
+ ('veio.agenda.holiday_great', 'Hoje é %s! A vila para de trabalhar para comemorar.', 'Today is %s! The village stops working to celebrate.'),
+ ('veio.agenda.holiday_poor', 'Hoje é %s, mas a festa não foi preparada. A vila para, desanimada.', 'Today is %s, but nothing was prepared. The village stops, disheartened.'),
+ ('veio.agenda.sunday_great', 'Domingo de %s! A vila se diverte.', 'Sunday %s! The village has fun.'),
+ ('veio.agenda.today', 'Hoje: %s, dia %s · %s', 'Today: %s, day %s · %s'),
+ ('veio.agenda.daykind0', 'dia útil', 'workday'),
+ ('veio.agenda.daykind1', 'domingo', 'Sunday'),
+ ('veio.agenda.daykind2', 'feriado', 'holiday'),
+ ('veio.agenda.morale', 'Ânimo da vila: %s/100', 'Village morale: %s/100'),
+ ('veio.agenda.next', 'Próximo feriado: %s, em %s dias', 'Next holiday: %s, in %s days'),
+ ('veio.agenda.line', '%s: %s/%s %s · %s d', '%s: %s/%s %s · %s d'),
+ ('veio.agenda.line_civic', '%s: construir no bairro · %s d', '%s: build in the district · %s d'),
+ ('veio.agenda.line_ready', '%s: pronto · %s d', '%s: ready · %s d'),
+ ('veio.agenda.amenity', 'Lazer para %s casas', 'Leisure for %s homes'),
+ ('veio.hint.amenity', 'Lazer para casas a até 32 blocos', 'Leisure for homes within 32 blocks'),
+ ('veio.mayor.request13', '%s casas sem lazer (parque, praça ou monumento)', '%s homes without leisure (park, plaza or monument)'),
  ('veio.zone.need_mayor', 'O plano diretor não permite: suba a fase da vila na prefeitura.', 'The master plan forbids it: raise the village phase at the town hall.'),
  ('veio.zone.suspended', 'Licenças suspensas pelo prefeito: melhore o bem-estar da vila.', "Permits suspended by the mayor: improve the village's well-being."),
  ('veio.guide.role.output', 'Saída', 'Output'),
@@ -864,7 +960,7 @@ categories=[
 ]
 order=[name for _,_,names in categories for name in names]
 # Blocos da vila operária: consulta no Guia da Vila Operária (fim deste arquivo).
-village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center","site","barracks","house","shop","town_hall","well","export_dock","freight_station","home"]
+village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center","site","barracks","house","shop","town_hall","well","park","plaza","monument","export_dock","freight_station","home"]
 assert set(order)|set(village_order)|set(industry_order)|set(transport_order)==set(help), (set(order)|set(village_order)|set(industry_order)|set(transport_order))^set(help)
 for name,(pt,en) in help.items():
  label(f"veio.help.{name}",pt,en)
@@ -905,7 +1001,10 @@ slothelp={
  "silo":["Grãos, sementes, ração ou comida."]*18,
  "house":["Despensa: comida que a família comprou (ou que você doa).","Despensa.","Despensa."],
  "shop":["Comida do comerciante.","Entrega da indústria: o comerciante paga 75% no atacado.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Antigo caixa (até a 0.20): retire as esmeraldas."],
- "town_hall":["Comida do prefeito.","Aporte voluntário à conta pública (60 moedas por esmeralda)."],
+ "town_hall":["Comida do prefeito.","Aporte voluntário à conta pública (60 moedas por esmeralda).","Agenda: materiais dos eventos pedidos pelos visitantes."],
+ "park":["Enfeite: mudas, flores ou lanterna."],
+ "plaza":["Enfeite: mudas, flores ou lanterna."],
+ "monument":["Enfeite: mudas, flores ou lanterna."],
  "well":["Balde vazio: sai cheio de água."],
  "export_dock":["Carga do navio: produtos para exportar."]*9,
  "freight_station":["Carga do trem: produtos para exportar."]*9,
@@ -953,7 +1052,10 @@ slot_en={
  "silo":["Grain, seeds, feed or food."]*18,
  "house":["Pantry: food the family bought (or you donate).","Pantry.","Pantry."],
  "shop":["Merchant food.","Industry delivery: the merchant pays 75% wholesale.","Industry delivery.","Industry delivery.","Industry delivery.","Industry delivery.","Industry delivery.","Old till (up to 0.20): take the emeralds out."],
- "town_hall":["Mayor food.","Voluntary contribution to public funds (60 coins per emerald)."],
+ "town_hall":["Mayor food.","Voluntary contribution to public funds (60 coins per emerald).","Agenda: materials for events visitors ask for."],
+ "park":["Decoration: saplings, flowers or a lantern."],
+ "plaza":["Decoration: saplings, flowers or a lantern."],
+ "monument":["Decoration: saplings, flowers or a lantern."],
  "well":["Empty bucket: comes out full of water."],
  "export_dock":["Ship cargo: goods to export."]*9,
  "freight_station":["Train cargo: goods to export."]*9,
@@ -1297,7 +1399,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.26.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.27.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -1455,6 +1557,12 @@ v_shop=vpage(
 v_mayor=vpage(
  "10. Prefeito e contas\n\nCompanhia (sua): cofre do centro. Paga seus trabalhadores; recebe o atacado.\nPrefeitura: imposto retido na fonte em cada venda (4%, 8%, 12%, 16%). Paga o prefeito e a assistência aos pobres.",
  "10. Mayor and accounts\n\nCompany (yours): center vault. Pays your workers; receives wholesale.\nTown hall: tax withheld at source on every sale (4%, 8%, 12%, 16%). Pays the mayor and assistance.")
+v_agenda=vpage(
+ "Agenda e feriados\n\nEstações de 6 dias; o 6º é domingo. Em 6 feriados por ano a vila para e se reúne na praça.\n\nDois dias antes, um visitante vem à prefeitura: clique nele e entregue o pedido no espaço Agenda.",
+ "Calendar and holidays\n\n6-day seasons; the 6th is Sunday. On 6 holidays a year the village stops and gathers at the plaza.\n\nTwo days before, a visitor comes to the town hall: click them and deliver in the Agenda slot.")
+v_civic=vpage(
+ "Ânimo e obras\n\nFesta preparada: ânimo sobe. Feriado sem festa: cai. O ânimo muda o IDH (0,9x a 1,1x).\n\nPedidos de parque, praça ou monumento: construa o bloco no bairro. A prefeitura paga.",
+ "Morale and works\n\nPrepared festival: morale up. Empty holiday: down. Morale scales HDI (0.9x to 1.1x).\n\nPark, plaza or monument requests: build the block in the district. The town hall pays.")
 v_holding=vpage(
  "Holding\n\nO centro de controle é a sede da companhia. Setas < > trocam a empresa: mineração, manufatura, energia, logística, agro, extrativismo, urbanização, comércio e gestão.\n\nCada aba: unidades, ativas, trabalhadores, produção do dia e o que está parado.",
  "Holding\n\nThe control center is the company headquarters. The < > arrows switch business: mining, manufacturing, power, logistics, agriculture, forestry, urban, retail and management.\n\nEach tab: units, active, workers, daily output and what is stopped.")
@@ -1521,7 +1629,7 @@ def subindex(page,key,pt,en,links):
   extra.extend([{"translate":k,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
  extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
  vpages[page-1]={"text":"","extra":extra}
-MANAGE=[("Começar","Start here",v_intro),("Holding","Holding",v_holding),("A moeda","Money",v_money),("Comércio exterior","Foreign trade",v_export),("Bolsa e contratos","Market and contracts",v_market),("Preços","Prices",v_prices),("Foco e obras","Focus and projects",v_focus),("Obras da vila","Village projects",v_projects),
+MANAGE=[("Começar","Start here",v_intro),("Holding","Holding",v_holding),("A moeda","Money",v_money),("Agenda e feriados","Calendar",v_agenda),("Obras cívicas","Civic works",v_civic),("Comércio exterior","Foreign trade",v_export),("Bolsa e contratos","Market and contracts",v_market),("Preços","Prices",v_prices),("Foco e obras","Focus and projects",v_focus),("Obras da vila","Village projects",v_projects),
  ("Pedidos e prestígio","Requests and prestige",v_requests),("Decretos e caixa","Decrees and treasury",v_decrees),
  ("Obras maiores","Bigger projects",v_projects2),("Fases e indicadores","Phases and indicators",v_phases)]
 REFERENCE=[("Expandir zonas","Grow zones",v_expand),("A vila cresce","Village growth",v_grow),("Quartel","Barracks",v_barracks),

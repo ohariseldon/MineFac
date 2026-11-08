@@ -231,6 +231,9 @@ impl Host for Village {
     fn kill_mob(&mut self, _: &str, id: u32) -> bool {
         self.animals.remove(&id).is_some()
     }
+    fn remove_mob(&mut self, _: &str, id: u32) -> bool {
+        self.animals.remove(&id).is_some() || self.villagers.remove(&id).is_some()
+    }
     fn edit_blocks(&mut self, _: &str, edit: &horizon_client::mod_api::NativeBlockEdit) -> Result<u64, String> {
         for run in &edit.runs {
             for dy in 0..run.height as i32 {
@@ -1695,10 +1698,13 @@ fn society_town(dimension: &'static str, seed: i32) -> (Village, ModBlockEntity,
     let mut village = Village::new(dimension);
     village.day = 1000;
     // Três moradores perto da casa (um deles vira o comerciante) e o prefeito longe dela.
-    village.villager(18001, [16.5, 64.0, 1.5], [180, seed, 0, 1]);
-    village.villager(18002, [17.5, 64.0, 0.5], [180, seed, 0, 2]);
-    village.villager(18003, [15.5, 64.0, -1.5], [180, seed, 0, 3]);
-    village.villager(18004, [60.5, 64.0, 1.5], [180, seed, 0, 4]);
+    // Ids próprios por vila: as ordens dos aldeões são globais (por id), e os testes rodam em paralelo.
+    static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(30000);
+    let base = NEXT.fetch_add(10, std::sync::atomic::Ordering::Relaxed);
+    village.villager(base + 1, [16.5, 64.0, 1.5], [180, seed, base as i32, 1]);
+    village.villager(base + 2, [17.5, 64.0, 0.5], [180, seed, base as i32, 2]);
+    village.villager(base + 3, [15.5, 64.0, -1.5], [180, seed, base as i32, 3]);
+    village.villager(base + 4, [60.5, 64.0, 1.5], [180, seed, base as i32, 4]);
     let mut shop = block(SHOP);
     assert!(hire_at(&mut village, &mut shop, SHOP_POS, 0));
     let mut hall = block(TOWN_HALL);
@@ -1843,7 +1849,7 @@ fn the_merchant_offers_the_stock_at_the_local_price() {
 fn indicators_measure_families_inequality_and_districts() {
     let home = |x: i32, residents: i32, income: i32| society::Home {
         dimension: "d".into(), pos: [x, 64, 0], built: 0, licensed: true, residents, adults: residents, kids: 0,
-        employed: residents / 2, income, hungry: false, owed: false, wallet: 0, sanitation: true, power: true, commerce: true, crowded: false,
+        employed: residents / 2, income, hungry: false, owed: false, wallet: 0, sanitation: true, leisure: true, cheer: 50, power: true, commerce: true, crowded: false,
         smog: false, food: 100, housing: 100, services: 100, wealth: 100, seen: 0,
     };
     assert_eq!(home(0, 4, 0).idh(), 100);
@@ -2760,4 +2766,125 @@ fn balance_contracts_are_a_separate_buyer_and_open_markets_stay_open() {
     assert_eq!(state(dimension).0, 0, "contratos perdidos tiram reputação");
     assert_eq!(tier_open(dimension), 2, "mercado conquistado não fecha");
     let _ = &mut village;
+}
+
+// ---------- Agenda da vila ----------
+
+const DAY_TICKS: i64 = 24_000;
+
+#[test]
+fn the_calendar_has_holidays_sundays_and_weekend_events() {
+    use society::agenda::*;
+    let key = |day: i64| scheduled(day).map(|event| EVENTS[event].key);
+    assert_eq!(key(0), Some("founding"), "primavera, dia 1: Dia da Fundação");
+    assert_eq!(key(3), Some("flowers"), "primavera, dia 4: Festa das Flores");
+    assert!(is_holiday(0) && is_holiday(3));
+    assert!(sunday(5) && !is_holiday(5), "primavera, dia 6: domingo comum");
+    assert!(matches!(key(5), Some("fair" | "dance" | "fishing")), "domingo tem evento menor");
+    assert_eq!(key(8), Some("saint_john"), "verão, dia 3: São João");
+    assert_eq!(key(15), Some("harvest"), "outono, dia 4: Festa da Colheita");
+    assert_eq!(key(20), Some("lights"), "inverno, dia 3: Festa das Luzes");
+    assert_eq!(key(23), Some("new_year"), "inverno, dia 6: Virada do Ano (feriado no lugar do domingo)");
+    assert_eq!(key(1), None, "dia útil");
+    let holidays = (0..24).filter(|day| is_holiday(*day)).count();
+    assert_eq!(holidays, 6, "seis feriados por ano");
+    assert_eq!(next_holiday(1), (1, 2), "do dia 2 da primavera, a Festa das Flores é daqui a 2 dias");
+}
+
+#[test]
+fn a_visitor_brings_a_request_and_delivering_it_prepares_the_holiday() {
+    use society::agenda::*;
+    let (mut village, _, mut hall) = society_town("veio:test_agenda_request", 21);
+    let dimension = village.dimension;
+    // Dia 2 da primavera: a Festa das Flores (dia 4) chega com 2 dias de antecedência.
+    village.day = DAY_TICKS + 1000;
+    hall.items[1] = Some(ItemStack::new(WAGE, 4));
+    // Turno da prefeitura em [60, 64, 0]: (time + 60) % 1200 < 10.
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1140);
+    let open = proposals(&hall);
+    assert_eq!(open.len(), 1);
+    assert_eq!(EVENTS[open[0].event].key, "flowers");
+    assert_eq!(open[0].due, 3);
+    assert_eq!(village.summoned.len(), 1, "a florista chegou à prefeitura");
+    // Entrega no espaço Agenda: 16 papoulas, 16 dentes-de-leão e 4 garrafas de mel.
+    let public_before = balance(PUBLIC, &village, [60, 64, 0]);
+    let company_before = balance(COMPANY, &village, [30, 64, 30]);
+    for (item, count) in [("minecraft:poppy", 16), ("minecraft:dandelion", 16), ("minecraft:honey_bottle", 4)] {
+        hall.items[AGENDA_SLOT] = Some(ItemStack::new(item, count));
+        society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1150);
+    }
+    assert!(proposals(&hall)[0].prepared, "festa preparada");
+    let paid = public_before - balance(PUBLIC, &village, [60, 64, 0]);
+    assert!(paid > 0, "a prefeitura reembolsa o que foi entregue");
+    assert_eq!(balance(COMPANY, &village, [30, 64, 30]) - company_before, paid, "o reembolso vai para a companhia");
+    // No dia da festa, o ânimo sobe e o pedido sai da lista.
+    let before = morale(&hall);
+    village.day = 3 * DAY_TICKS + 1000;
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1160);
+    // O ânimo volta 3 pontos por dia para 50 (estava abaixo: o Dia da Fundação não foi preparado).
+    assert_eq!(morale(&hall), before + 3 + EVENTS[1].cheer, "festa preparada: ânimo +20");
+    assert!(proposals(&hall).iter().all(|proposal| proposal.due > 3));
+    let _ = dimension;
+}
+
+#[test]
+fn on_a_holiday_the_village_stops_working_and_an_unprepared_one_lowers_morale() {
+    use society::agenda::*;
+    let (mut village, _, mut hall) = society_town("veio:test_agenda_holiday", 22);
+    // Dia da Fundação (primavera, dia 1 = dia 0), sem preparo.
+    village.day = 1000;
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1140);
+    assert!(morale(&hall) < 50, "feriado sem festa: ânimo cai");
+    let mut farm = block(FARM_POST);
+    village.villager(18201, [62.5, 64.0, 2.5], [182, 22, 0, 1]);
+    assert!(hire_at(&mut village, &mut farm, [62, 64, 4], 0));
+    set_number(&mut farm, "Ration", 10);
+    // Fase do posto em [62, 64, 4]: (62 ^ 4) & 7 = 2, então os ciclos caem em 8, 18, 28...
+    step(&mut village, [62, 64, 4], &mut farm, 8, 1);
+    assert_eq!(number(&farm, "Status"), HOLIDAY, "feriado: o posto descansa");
+    village.day = DAY_TICKS + 1000;
+    step(&mut village, [62, 64, 4], &mut farm, 18, 2);
+    assert_ne!(number(&farm, "Status"), HOLIDAY, "no dia seguinte, volta ao trabalho");
+}
+
+#[test]
+fn a_civic_request_is_fulfilled_by_building_a_park_and_gives_leisure() {
+    use society::agenda::*;
+    let (mut village, _, mut hall) = society_town("veio:test_agenda_civic", 23);
+    let dimension = village.dimension;
+    hall.items[1] = Some(ItemStack::new(WAGE, 10));
+    let mut house = block(society::HOUSE);
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    // Dia útil com obra cívica: (dia % 4) == (60 ^ 0) & 3 = 0 → dia 4 (primavera, dia 5).
+    village.day = 4 * DAY_TICKS + 1000;
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1140);
+    let civic = proposals(&hall).into_iter().find(|proposal| EVENTS[proposal.event].kind == Kind::Civic).expect("pedido de obra cívica");
+    assert_eq!(civic.target, [16, 64, 0], "o bairro sem lazer");
+    let block_id = EVENTS[civic.event].amenity;
+    let mut amenity = block(block_id);
+    // Bloco cívico no bairro (fase 0 em [18, 64, 2]: (18 ^ 2) & 63 = 16; tempo 84).
+    society::tick_block(&mut village, [18, 64, 2], &mut amenity, 84);
+    assert!(leisure_near(dimension, [16, 64, 0], 1), "o bloco dá lazer ao bairro");
+    let company = balance(COMPANY, &village, [30, 64, 30]);
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1150);
+    let done = proposals(&hall).into_iter().find(|proposal| proposal.event == civic.event).unwrap();
+    assert!(done.prepared, "obra cívica cumprida");
+    assert!(balance(COMPANY, &village, [30, 64, 30]) > company, "a prefeitura paga a obra à companhia");
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    let homes = society::homes_near(dimension, [16, 64, 0], 1, 2);
+    assert!(homes[0].leisure, "a casa ganha lazer");
+}
+
+#[test]
+fn morale_and_leisure_move_the_human_development_index() {
+    let home = |leisure: bool, cheer: i32| society::Home {
+        dimension: "d".into(), pos: [0, 64, 0], built: 0, licensed: true, residents: 4, adults: 4, kids: 0,
+        employed: 2, income: 160, hungry: false, owed: false, wallet: 0, sanitation: true, leisure, cheer, power: true,
+        commerce: true, crowded: false, smog: false, food: 80, housing: 80,
+        services: if leisure { 100 } else { 75 }, wealth: 80, seen: 0,
+    };
+    assert!(home(true, 50).idh() > home(false, 50).idh(), "lazer conta nos serviços");
+    assert!(home(true, 100).idh() > home(true, 50).idh(), "ânimo alto melhora o IDH");
+    assert!(home(true, 0).idh() < home(true, 50).idh(), "ânimo baixo piora o IDH");
+    assert!(home(true, 100).idh() <= 100);
 }

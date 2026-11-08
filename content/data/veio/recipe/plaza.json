@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "minecraft:stone_bricks",
+    "minecraft:stone_bricks",
+    "minecraft:stone_bricks",
+    "minecraft:stone_bricks",
+    "minecraft:lantern",
+    "minecraft:lantern",
+    "minecraft:oak_stairs",
+    "minecraft:oak_stairs",
+    "minecraft:bell"
+  ],
+  "result": {
+    "id": "veio:plaza",
+    "count": 1
+  }
+}

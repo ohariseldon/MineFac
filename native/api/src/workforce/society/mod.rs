@@ -18,6 +18,7 @@ pub(crate) mod ledger;
 pub(crate) mod market;
 pub(crate) mod mayor;
 pub(crate) mod trade;
+pub(crate) mod agenda;
 
 pub(crate) use ledger::company_cycle;
 pub(crate) use market::{shop_cycle, traded};
@@ -83,7 +84,7 @@ pub(crate) const GOODS: [(&str, i32, i32); 12] = [
 ];
 
 pub(crate) fn is_society_block(block: &str) -> bool {
-    matches!(block, HOUSE | WELL | trade::PORT | trade::STATION)
+    matches!(block, HOUSE | WELL | trade::PORT | trade::STATION) || agenda::is_amenity(block)
 }
 
 pub(crate) fn goods(item: &str) -> Option<(i32, i32)> {
@@ -100,7 +101,9 @@ pub(crate) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         WELL => (1, vec![0], vec![0]),
         // Comida do comerciante; estoque; antigo caixa (só retirar).
         SHOP => (8, (0..7).collect(), vec![]),
-        TOWN_HALL => (2, vec![0, 1], vec![]),
+        // Comida do prefeito; aporte voluntário; entregas da agenda.
+        TOWN_HALL => (3, vec![0, 1, agenda::AGENDA_SLOT], vec![]),
+        agenda::PARK | agenda::PLAZA | agenda::MONUMENT => (1, vec![0], vec![]),
         trade::PORT | trade::STATION => (trade::SLOTS, (0..trade::SLOTS).collect(), vec![]),
         _ => return None,
     })
@@ -114,6 +117,9 @@ pub(crate) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (SHOP, 1..7) => market::base_price(&stack.item).is_some(),
         (TOWN_HALL, 0) => is_food(&stack.item),
         (TOWN_HALL, 1) => stack.item.as_ref() == WAGE,
+        (TOWN_HALL, agenda::AGENDA_SLOT) => agenda::wanted(&stack.item),
+        (agenda::PARK | agenda::PLAZA | agenda::MONUMENT, 0) => stack.item.as_ref().ends_with("_sapling")
+            || matches!(stack.item.as_ref(), "minecraft:poppy" | "minecraft:dandelion" | "minecraft:lantern"),
         (trade::PORT | trade::STATION, 0..trade::SLOTS) => trade::product(&stack.item).is_some(),
         _ => false,
     }
@@ -141,6 +147,10 @@ pub(crate) struct Home {
     /// Carteira da família, em moedas (para a identidade contábil).
     pub wallet: i32,
     pub sanitation: bool,
+    /// Parque, praça ou monumento perto (lazer).
+    pub leisure: bool,
+    /// Ânimo da vila (0 a 100) que governa a casa; 50 = neutro.
+    pub cheer: i32,
     pub power: bool,
     pub commerce: bool,
     pub crowded: bool,
@@ -155,10 +165,12 @@ pub(crate) struct Home {
 
 impl Home {
     /// IDH da família, em centésimos: média geométrica das quatro dimensões (piso de 0,05).
+    /// O ânimo da vila multiplica o resultado de 0,9x (0) a 1,1x (100), sem passar de 1.
     pub(crate) fn idh(&self) -> i32 {
         let parts = [self.food, self.housing, self.services, self.wealth];
         let product: f64 = parts.iter().map(|part| (f64::from(*part) / 100.0).max(0.05)).product();
-        (product.powf(0.25) * 100.0).round() as i32
+        let cheer = 0.9 + f64::from(self.cheer.clamp(0, 100)) / 500.0;
+        (product.powf(0.25) * cheer * 100.0).round().min(100.0) as i32
     }
 }
 
@@ -184,6 +196,8 @@ pub(crate) struct Hall {
     pub staffed: bool,
     /// O prefeito (funcionário público: salário da conta pública).
     pub mayor: Option<u32>,
+    /// Ânimo da vila (agenda), 0 a 100.
+    pub morale: i32,
     pub seen: u64,
 }
 
@@ -204,7 +218,10 @@ fn upsert<T>(list: &Mutex<Vec<T>>, item: T, same: impl Fn(&T) -> bool, fresh: im
     if let Some(known) = list.iter_mut().find(|known| same(known)) {
         *known = item;
     } else {
-        list.retain(|known| fresh(known));
+        // Limpa os vencidos só quando a lista cresce (a leitura já ignora os vencidos).
+        if list.len() >= 256 {
+            list.retain(|known| fresh(known));
+        }
         list.push(item);
     }
     ACTIVE.store(true, Ordering::Release);
@@ -413,6 +430,7 @@ pub(crate) fn tick_block(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     let phase = (time + i64::from((pos[0] ^ pos[2]) & 63)).rem_euclid(TURN);
     match entity.id.as_str() {
         trade::PORT | trade::STATION => trade::tick(host, pos, entity, time),
+        agenda::PARK | agenda::PLAZA | agenda::MONUMENT => agenda::tick_amenity(host, pos, entity, time),
         WELL => {
             if phase % 20 == 0 {
                 let dimension = host.dimension().to_owned();
@@ -503,6 +521,8 @@ pub(crate) fn house_turn(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     let phase = hall.as_ref().map_or(1, |hall| hall.phase);
     // Serviços em volta.
     let sanitation = well_near(&dimension, pos, now);
+    let leisure = agenda::leisure_near(&dimension, pos, now);
+    let cheer = hall.as_ref().map_or(50, |hall| hall.morale);
     let power = power::pole_near(&dimension, pos, POWER_RADIUS);
     let shops = shops_near(&dimension, pos, SHOP_RADIUS, now);
     let commerce = !shops.is_empty();
@@ -610,13 +630,14 @@ pub(crate) fn house_turn(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     let mut housing = if licensed { 100 } else { 0 };
     if crowded { housing = housing * 70 / 100; }
     if smog { housing = housing * if smog_level > 1200.0 { 30 } else { 60 } / 100; }
-    let services = (i32::from(sanitation) + i32::from(power) + i32::from(commerce)) * 100 / 3;
+    // Serviços: saneamento, energia, comércio e lazer, um quarto cada.
+    let services = (i32::from(sanitation) + i32::from(power) + i32::from(commerce) + i32::from(leisure)) * 100 / 4;
     let comfort_index = if people == 0 { 100 } else { (comfort * 100 / (people * 10)).min(100) };
     let wealth = if people == 0 { 100 } else { (income * 100 / (people * LIVING_COST)).min(100) * (50 + comfort_index / 2) / 100 };
     set_number(entity, "Wealth", wealth.clamp(0, 100));
     let home = Home {
         dimension: dimension.clone(), pos, built, licensed, residents: people, adults, kids, employed, income, hungry,
-        owed, wallet: wallet.max(0), sanitation, power, commerce, crowded, smog, food: food_index.clamp(0, 100), housing, services,
+        owed, wallet: wallet.max(0), sanitation, leisure, cheer, power, commerce, crowded, smog, food: food_index.clamp(0, 100), housing, services,
         wealth: wealth.clamp(0, 100), seen: now,
     };
     let need = worst_need(&home, hall.is_some());
@@ -667,6 +688,7 @@ pub(crate) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
             if read(2) > 1 { tr("veio.shop.owes", &[&read(2)]) } else { tr("veio.hint.shop", &[]) },
         ]),
         WELL => Some(vec![tr("veio.hint.well", &[])]),
+        agenda::PARK | agenda::PLAZA | agenda::MONUMENT => Some(vec![tr("veio.agenda.amenity", &[&read(6)]), tr("veio.hint.amenity", &[])]),
         trade::PORT | trade::STATION => Some(vec![
             tr("veio.dock.today", &[&read(6), &read(9)]),
             tr("veio.dock.next", &[&read(12), &read(1), &read(7)]),
@@ -682,7 +704,8 @@ pub(crate) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         WELL => vec![Some([89.0, 45.0])],
         SHOP => vec![Some([17.0, 45.0]), Some([44.0, 45.0]), Some([62.0, 45.0]), Some([80.0, 45.0]),
             Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([160.0, 45.0])],
-        TOWN_HALL => vec![Some([170.0, 104.0]), Some([170.0, 122.0])],
+        TOWN_HALL => vec![Some([170.0, 104.0]), Some([170.0, 122.0]), Some([152.0, 122.0])],
+        agenda::PARK | agenda::PLAZA | agenda::MONUMENT => vec![Some([89.0, 45.0])],
         trade::PORT | trade::STATION => (0..trade::SLOTS).map(|index| Some([17.0 + index as f32 * 18.0, 45.0])).collect(),
         _ => return None,
     })
@@ -693,7 +716,8 @@ pub(crate) fn roles(block: &str) -> Option<&'static [&'static str]> {
         HOUSE => &["food", "", ""],
         WELL => &[""],
         SHOP => &["food", "supply", "", "", "", "", "", ""],
-        TOWN_HALL => &["food", "wage"],
+        TOWN_HALL => &["food", "wage", ""],
+        agenda::PARK | agenda::PLAZA | agenda::MONUMENT => &[""],
         trade::PORT | trade::STATION => &["", "", "", "", "", "", "", "", ""],
         _ => return None,
     })

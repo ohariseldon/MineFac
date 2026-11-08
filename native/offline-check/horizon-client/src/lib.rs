@@ -370,6 +370,9 @@ pub mod mod_api {
         fn kill_mob(&mut self, dimension: &str, id: u32) -> bool {
             unimplemented!("kill_mob")
         }
+        fn remove_mob(&mut self, dimension: &str, id: u32) -> bool {
+            unimplemented!("remove_mob")
+        }
         fn set_mob_health(&mut self, dimension: &str, id: u32, health: f32) -> bool {
             unimplemented!("set_mob_health")
         }
@@ -719,6 +722,13 @@ pub mod mod_api {
             Self { block, data, batch, origin: [0.0, 0.0] }
         }
     }
+    /// `interact_entity` (API 29): `cancel`; `Flow::Cancel` toma o clique.
+    #[non_exhaustive]
+    pub struct InteractEntityEvent<'a> {
+        pub entity: i32,
+        pub kind: &'a str,
+        pub stack: Option<&'a ItemStack>,
+    }
     /// `screen_click` (API 20): `replace`, o retorno é o botão.
     #[non_exhaustive]
     pub struct ScreenClickEvent<'a> {
@@ -931,6 +941,9 @@ pub mod mod_api {
         }
         fn screen_draw(&self, host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {}
         fn screen_tooltip(&self, host: &dyn Host, event: &mut ScreenTooltipEvent<'_>) {}
+        fn interact_entity(&self, host: &mut dyn Host, event: &mut InteractEntityEvent<'_>) -> Flow {
+            Flow::Continue
+        }
         fn screen_click(&self, host: &dyn Host, event: &mut ScreenClickEvent<'_>) -> Option<i32> {
             None
         }
