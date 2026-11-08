@@ -299,6 +299,16 @@ impl Hooks for Factory {
         workforce::spawn::logged_in(event.player, event.name, defense::clock());
     }
 
+    /// Clique num aldeão: escolher quem contratar para o posto que espera, ou (agachado, mão
+    /// vazia) ver onde ele trabalha. Fora disso o comércio vanilla segue.
+    fn interact_entity(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::InteractEntityEvent<'_>) -> Flow {
+        if event.kind != "minecraft:villager" || event.entity < 0 {
+            return Flow::Continue;
+        }
+        let held = event.stack.filter(|stack| stack.count > 0).map(|stack| stack.item.to_string());
+        workforce::pick::interact(host, event.entity as u32, held.as_deref()).unwrap_or(Flow::Continue)
+    }
+
     fn trade_with_villager(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::TradeWithVillagerEvent<'_>) {
         if event.kind == "minecraft:villager" {
             workforce::society::traded(host, event.merchant, event.offer);
