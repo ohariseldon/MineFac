@@ -134,12 +134,15 @@
       ],
       "pt": "Motor trabalha",
       "en": "Motor runs",
-      "duration": 0.9,
-      "start": 1.5,
+      "duration": 2.4,
+      "start": 1.0,
       "rate": 0.8,
       "beats": [
         0
-      ]
+      ],
+      "ambient": true,
+      "lowpass": 1100,
+      "fade": 0.16
     },
     "grind": {
       "pack": "sci-fi-sounds",
@@ -149,12 +152,15 @@
       ],
       "pt": "Moinho gira",
       "en": "Mill grinds",
-      "duration": 0.85,
-      "start": 1.2,
+      "duration": 2.4,
+      "start": 1.0,
       "rate": 0.7,
       "beats": [
         0
-      ]
+      ],
+      "ambient": true,
+      "lowpass": 1100,
+      "fade": 0.16
     },
     "electronics": {
       "pack": "sci-fi-sounds",
@@ -194,9 +200,45 @@
       ],
       "pt": "Drone voa",
       "en": "Drone flies",
-      "duration": 0.85,
-      "start": 2,
+      "duration": 2.4,
+      "start": 1.0,
       "rate": 1.15,
+      "beats": [
+        0
+      ],
+      "ambient": true,
+      "lowpass": 1500,
+      "fade": 0.16
+    },
+    "belt": {
+      "pack": "sci-fi-sounds",
+      "files": [
+        "engineCircular_000.ogg",
+        "engineCircular_001.ogg"
+      ],
+      "pt": "Esteira funciona",
+      "en": "Conveyor runs",
+      "duration": 2.4,
+      "start": 1.0,
+      "rate": 0.9,
+      "beats": [
+        0
+      ],
+      "ambient": true,
+      "lowpass": 850,
+      "fade": 0.16
+    },
+    "repair": {
+      "pack": "impact-sounds",
+      "files": [
+        "impactMetal_heavy_000.ogg",
+        "impactMetal_heavy_001.ogg"
+      ],
+      "pt": "Máquina precisa de reparo",
+      "en": "Machine needs repair",
+      "duration": 0.7,
+      "start": 0,
+      "rate": 1,
       "beats": [
         0
       ]
@@ -210,7 +252,8 @@
       "work": "press",
       "finish": "finish",
       "interval": 32,
-      "volume": 0.24
+      "volume": 0.168,
+      "ambient": false
     },
     {
       "blocks": [
@@ -220,7 +263,8 @@
       "work": "assembly",
       "finish": "finish",
       "interval": 36,
-      "volume": 0.18
+      "volume": 0.126,
+      "ambient": false
     },
     {
       "blocks": [
@@ -229,7 +273,8 @@
       "work": "cut",
       "finish": null,
       "interval": 28,
-      "volume": 0.18
+      "volume": 0.126,
+      "ambient": false
     },
     {
       "blocks": [
@@ -238,7 +283,8 @@
       "work": "crush",
       "finish": null,
       "interval": 30,
-      "volume": 0.22
+      "volume": 0.154,
+      "ambient": false
     },
     {
       "blocks": [
@@ -248,8 +294,9 @@
       ],
       "work": "motor",
       "finish": null,
-      "interval": 28,
-      "volume": 0.2
+      "interval": 48,
+      "volume": 0.09,
+      "ambient": true
     },
     {
       "blocks": [
@@ -258,8 +305,9 @@
       ],
       "work": "motor",
       "finish": "finish",
-      "interval": 44,
-      "volume": 0.12
+      "interval": 48,
+      "volume": 0.09,
+      "ambient": true
     },
     {
       "blocks": [
@@ -268,7 +316,8 @@
       "work": "electronics",
       "finish": "assembly",
       "interval": 40,
-      "volume": 0.1
+      "volume": 0.07,
+      "ambient": false
     },
     {
       "blocks": [
@@ -276,8 +325,9 @@
       ],
       "work": "grind",
       "finish": null,
-      "interval": 30,
-      "volume": 0.18
+      "interval": 48,
+      "volume": 0.11,
+      "ambient": true
     },
     {
       "blocks": [
@@ -286,7 +336,8 @@
       "work": "rustle",
       "finish": "finish",
       "interval": 42,
-      "volume": 0.12
+      "volume": 0.084,
+      "ambient": false
     },
     {
       "blocks": [
@@ -295,7 +346,8 @@
       "work": "harvest",
       "finish": null,
       "interval": 36,
-      "volume": 0.18
+      "volume": 0.126,
+      "ambient": false
     },
     {
       "blocks": [
@@ -304,7 +356,8 @@
       "work": "rustle",
       "finish": null,
       "interval": 40,
-      "volume": 0.12
+      "volume": 0.084,
+      "ambient": false
     },
     {
       "blocks": [
@@ -313,7 +366,8 @@
       "work": "saw",
       "finish": null,
       "interval": 36,
-      "volume": 0.18
+      "volume": 0.126,
+      "ambient": false
     },
     {
       "blocks": [
@@ -324,8 +378,9 @@
       ],
       "work": "motor",
       "finish": null,
-      "interval": 40,
-      "volume": 0.12
+      "interval": 48,
+      "volume": 0.09,
+      "ambient": true
     },
     {
       "blocks": [
@@ -335,7 +390,8 @@
       "work": "wood",
       "finish": null,
       "interval": 46,
-      "volume": 0.12
+      "volume": 0.084,
+      "ambient": false
     },
     {
       "blocks": [
@@ -346,7 +402,8 @@
       "work": null,
       "finish": "assembly",
       "interval": 24,
-      "volume": 0.1
+      "volume": 0.1,
+      "ambient": false
     },
     {
       "blocks": [
@@ -354,8 +411,22 @@
       ],
       "work": "drone",
       "finish": null,
-      "interval": 28,
-      "volume": 0.12
+      "interval": 48,
+      "volume": 0.09,
+      "ambient": true
+    },
+    {
+      "blocks": [
+        "belt",
+        "fast_belt",
+        "splitter",
+        "merger"
+      ],
+      "work": "belt",
+      "finish": null,
+      "interval": 48,
+      "volume": 0.055,
+      "ambient": true
     }
   ]
 }

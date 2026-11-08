@@ -4,6 +4,7 @@ Runtime/build of the mod uses the checked-in OGGs, not ffmpeg or source download
 import array
 import hashlib
 import json
+import math
 import subprocess
 from pathlib import Path
 
@@ -34,7 +35,7 @@ def build():
             # Cut original recordings; gentle bandwidth reduction keeps the small,
             # dry sounds close to Minecraft's block feedback rather than loud music.
             filters = (f"atrim=start={event['start']}:duration={event['duration']},asetpts=PTS-STARTPTS,"
-                       f"aresample={RATE},asetrate={int(RATE * event['rate'])},aresample={RATE},highpass=f=100,lowpass=f=4500")
+                       f"aresample={RATE},asetrate={int(RATE * event['rate'])},aresample={RATE},highpass=f=100,lowpass=f={event.get("lowpass",4500)}")
             decoded = subprocess.check_output(['ffmpeg', '-v', 'error', '-i', str(source), '-ac', '1', '-ar', str(RATE),
                                                 '-af', filters, '-f', 's16le', '-'])
             samples = array.array('h', decoded)
@@ -46,7 +47,12 @@ def build():
                     mixed[i+offset] += value
             peak = max(map(abs, mixed), default=1) or 1
             gain = min(4, 16384 / peak)
-            faded = array.array('h', (round(v * gain * min(1, i/(RATE*.012), (len(mixed)-1-i)/(RATE*.07)))
+            if event.get('ambient'):
+                rms = math.sqrt(sum(v*v for v in mixed) / len(mixed)) or 1
+                gain = min(gain, 32768 * .10 / rms)
+            fade_in = event.get('fade', .012)
+            fade_out = event.get('fade', .07)
+            faded = array.array('h', (round(v * gain * min(1, i/(RATE*fade_in), (len(mixed)-1-i)/(RATE*fade_out)))
                                     for i, v in enumerate(mixed)))
             path = output / f'{name}_{index}.ogg'
             subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 's16le', '-ar', str(RATE), '-ac', '1', '-i', '-',
@@ -59,7 +65,7 @@ def build():
     for family, p in enumerate(config['profiles']):
         blocks = ' | '.join('"veio:'+block+'"' for block in p['blocks'])
         event = lambda k: 'Some("veio:machine.'+p[k]+'")' if p[k] else 'None'
-        generated.append(f'        {blocks} => Profile {{ family: {family}, work: {event("work")}, finish: {event("finish")}, interval: {p["interval"]}, volume: {p["volume"]} }},')
+        generated.append(f'        {blocks} => Profile {{ family: {family}, work: {event("work")}, finish: {event("finish")}, interval: {p["interval"]}, volume: {p["volume"]}, ambient: {str(p["ambient"]).lower()} }},')
     generated += ['        _ => return None,', '    })', '}']
     target = ROOT / 'native/api/src/soundscape/data.rs'
     target.parent.mkdir(parents=True, exist_ok=True)

@@ -12,7 +12,7 @@ def main():
     config = json.loads((ROOT / 'tools/machine_audio.json').read_text())
     cards = []
     for name, event in config['events'].items():
-        volume = max(p['volume'] for p in config['profiles'] if name in (p['work'], p['finish']))
+        volume = max((p['volume'] for p in config['profiles'] if name in (p['work'], p['finish'])), default=.16)
         players = []
         for i, _ in enumerate(event['files']):
             data = (ROOT / f'content/assets/veio/sounds/machines/{name}_{i}.ogg').read_bytes()

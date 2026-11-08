@@ -176,21 +176,30 @@ pub mod mod_api {
     }
     #[derive(Default)]
     pub struct HudBatch;
+    // Offline render probe only: command traces let tests verify cached/GPU
+    // movement and export geometry; none of these fields belong to the real API.
+    #[derive(Clone, Debug)]
+    pub enum DrawOp {
+        Push, Pop, Still, Translate([f32;3]), Scale([f32;3]),
+        Rotate([f32;3], f32, [f32;3]), Spin([f32;3], [f32;3], f32, f32),
+    }
     #[derive(Default)]
     pub struct BlockEntityDraw {
         pub partial: f32,
         pub game_time: i64,
         pub light: u32,
+        pub trace: Vec<DrawOp>,
+        pub kept: bool,
     }
     impl BlockEntityDraw {
-        pub fn keep(&mut self) {}
-        pub fn spin(&mut self, axis: [f32; 3], pivot: [f32; 3], degrees_per_tick: f32, phase: f32) {}
-        pub fn still(&mut self) {}
-        pub fn push(&mut self) {}
-        pub fn pop(&mut self) {}
-        pub fn translate(&mut self, by: [f32; 3]) {}
-        pub fn rotate_about(&mut self, axis: [f32; 3], degrees: f32, pivot: [f32; 3]) {}
-        pub fn scale(&mut self, by: [f32; 3]) {}
+        pub fn keep(&mut self) { self.kept = true; }
+        pub fn spin(&mut self, axis: [f32;3], pivot: [f32;3], rate: f32, phase: f32) { self.trace.push(DrawOp::Spin(axis,pivot,rate,phase)); }
+        pub fn still(&mut self) { self.trace.push(DrawOp::Still); }
+        pub fn push(&mut self) { self.trace.push(DrawOp::Push); }
+        pub fn pop(&mut self) { self.trace.push(DrawOp::Pop); }
+        pub fn translate(&mut self, by: [f32;3]) { self.trace.push(DrawOp::Translate(by)); }
+        pub fn rotate_about(&mut self, axis: [f32;3], angle: f32, pivot: [f32;3]) { self.trace.push(DrawOp::Rotate(axis,angle,pivot)); }
+        pub fn scale(&mut self, by: [f32;3]) { self.trace.push(DrawOp::Scale(by)); }
     }
     #[derive(Clone, Copy, Debug)]
     pub struct CubeFace<'a> {
@@ -572,6 +581,11 @@ pub mod mod_api {
         pub state: BlockStateId,
         pub entity: &'a ModBlockEntity,
         pub draw: &'a mut BlockEntityDraw,
+    }
+    impl<'a> BlockEntitySubmitEvent<'a> {
+        pub fn new(pos: [i32;3], block: &'a str, entity: &'a ModBlockEntity, draw: &'a mut BlockEntityDraw) -> Self {
+            Self {pos,block,state:BlockStateId(0),entity,draw}
+        }
     }
     #[non_exhaustive]
     pub struct EntityTickPreEvent<'a> {

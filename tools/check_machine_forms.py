@@ -49,8 +49,11 @@ def main():
         sweep = {"Drill": [5,3,5,11,13,11], "Press": [5,7,5,11,14,11],
                  "Saw": [3.75,4.75,7.5,12.25,13.25,8.5],
                  "Roller": [4,7.5,5.5,12,12.5,10.5]}.get(motion)
-        if motion == "Turntable":
+        if motion in ("Turntable", "Mill", "Seeder"):
             x,y,z = profile["center"]; sweep = [x-4.25,y,z-4.25,x+4.25,y+1.5,z+4.25]
+        sweep = {"Scanner": [3,9,7,13,12,12], "Mixer": [3,9,5,8,13,11],
+                 "Heat": [5,4,15.3,11,9,15.6], "Motor": [5,5,14.3,11,11,14.7],
+                 "Harvester": [4,6.5,7,12,9.5,11], "Feed": [4,8,7,12,11,12]}.get(motion, sweep)
         if sweep: assert any(contains(hit,[v/16 for v in sweep]) for hit in hits), (name,"moving part escapes collision")
     core = ["press","cutter","crusher","drill","electronics","integrator","mill"]
     silhouettes = {json.dumps([(p["from"],p["to"]) for p in form(name,BLOCKS[name][1],box)["elements"]]) for name in core}

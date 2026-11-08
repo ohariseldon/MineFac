@@ -295,3 +295,21 @@ fn matching_dyes_connect_two_ports_without_cycling_the_card_or_consuming_dye() {
     assert_eq!(world.held().unwrap().1, 1);
     assert!(export(&world.nodes[&A]).is_none(), "color setup is not a cargo request");
 }
+
+#[test]
+fn drone_render_extrapolation_is_bounded_and_freezes_on_pause_or_obstruction() {
+    let mut drone = port(DRONE,None);
+    for (key,value) in [("Status",1),("FlightPhase",1),("Progress",10),("Duration",40),("FlightVisualAt",100)] { set_number(&mut drone,key,value); }
+    assert_eq!(visual_progress(&drone,102,0.5),12.5);
+    assert_eq!(visual_progress(&drone,99,0.5),10.5); // a client clock behind the snapshot cannot jump forward
+    assert_eq!(visual_progress(&drone,1000,0.5),14.5); // no unlimited dead reckoning
+    for status in [3,9,22] {
+        set_number(&mut drone,"Status",status);
+        assert_eq!(visual_progress(&drone,102,0.5),10.0);
+    }
+    set_number(&mut drone,"Status",1);
+    set_number(&mut drone,"FlightVisualAt",i32::MAX-2);
+    assert_eq!(visual_progress(&drone,i64::from(i32::MAX)+1,0.5),13.5);
+    drone.nbt.remove(nbt_key("FlightVisualAt"));
+    assert_eq!(visual_progress(&drone,102,0.5),10.5); // legacy world has no timestamp
+}
