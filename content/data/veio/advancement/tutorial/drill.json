@@ -1,5 +1,5 @@
 {
-  "parent": "veio:tutorial/generator",
+  "parent": "veio:tutorial/hub",
   "display": {
     "icon": {
       "id": "veio:drill"
@@ -19,7 +19,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:drill"
+            "items": "veio:drill",
+            "count": {
+              "min": 1
+            }
           }
         ]
       }

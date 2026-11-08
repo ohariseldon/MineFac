@@ -14,6 +14,7 @@ mod pollution;
 mod production;
 mod power;
 mod tutorial;
+mod onboarding;
 mod upgrades;
 mod workforce;
 
@@ -24,7 +25,7 @@ use horizon_client::mod_api::{
 
 // Horizon exports Compound but not its UTF-16 key type. Derive that type from
 // the public map instead of requiring an engine patch or a second dependency.
-pub(super) trait CompoundKey { type Key; }
+pub(crate) trait CompoundKey { type Key; }
 impl<K, V> CompoundKey for std::collections::BTreeMap<K, V> { type Key = K; }
 type JavaString = <Compound as CompoundKey>::Key;
 
@@ -119,6 +120,7 @@ impl Hooks for Factory {
     {
         let block = host.block(event.pos);
         if let Some(flow) = freight::right_click(host, event.pos, &block) { return flow; }
+        onboarding::select(host, event.pos, &block, true);
         if let Some(flow) = logistics_controls::right_click(host, event.pos, &block) { return flow; }
         if !is_factory_block(&block) {
             return Flow::Continue;
@@ -214,9 +216,12 @@ impl Hooks for Factory {
         if power::tick(host, event.pos, event.entity, time) {
             host.block_entity_sync(event.pos);
         }
+        onboarding::before_machine(host, event.pos, event.entity);
         let previous = visual_signature(event.entity);
         let produced = number(event.entity, "Produced");
+        let tutorial_contract = if event.entity.id == HUB { number(event.entity, "ContractStage") } else { 0 };
         tick_factory(host, event.pos, event.entity, time);
+        onboarding::observe(host.dimension(), event.pos, event.entity, produced, tutorial_contract, time);
         pollution::emit(host, event.pos, event.entity, time);
         record_performance(event.entity, produced);
         presentation::publish(event.entity);
@@ -239,7 +244,8 @@ impl Hooks for Factory {
         Flow::Continue
     }
 
-    fn player_logged_in(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
+    fn player_logged_in(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
+        onboarding::logged_in(host);
         workforce::spawn::logged_in(event.player, event.name, defense::clock());
     }
 
@@ -280,10 +286,34 @@ impl Hooks for Factory {
         pollution::note_players(host, defense::clock());
         pollution::harm_villagers(host, defense::clock());
         workforce::spawn::tick(host, defense::clock());
+        onboarding::server_tick(host);
         home::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
         }
+    }
+
+    fn inventory_move_item(&self, host: &dyn Host, event: &mut horizon_client::mod_api::InventoryMoveItemEvent<'_>) -> Flow {
+        onboarding::hopper_attempt(host, event.source, event.destination, event.item);
+        Flow::Continue
+    }
+
+    fn place_block(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlaceBlockEvent<'_>) {
+        onboarding::select(host, event.pos, &host.block(event.pos), false);
+    }
+
+    fn player_logged_out(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedOutEvent<'_>) {
+        onboarding::logout(host, event.player);
+    }
+
+    fn register_commands(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::RegisterCommandsEvent<'_>) {
+        for action in ["ocultar", "mostrar", "reiniciar"] {
+            event.commands.push(horizon_client::mod_api::NativeCommand::new(&format!("veiotutorial {action}")));
+        }
+    }
+
+    fn perform_command(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PerformCommandEvent<'_>) -> Flow {
+        if onboarding::command(host, event.player, event.command) { Flow::Cancel } else { Flow::Continue }
     }
 
     fn register_goals(&self, event: &mut horizon_client::mod_api::RegisterGoalsEvent<'_>) {
@@ -564,12 +594,12 @@ fn nbt_key(name: &str) -> &'static JavaString {
     }
 }
 
-pub(super) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -> T {
+pub(crate) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -> T {
     read(nbt_key(name))
 }
 
 /// `JavaString` igual a `value`, sem montar uma `String` no meio.
-pub(super) fn java_eq(text: &JavaString, value: &str) -> bool {
+pub(crate) fn java_eq(text: &JavaString, value: &str) -> bool {
     let mut units = text.0.iter().copied();
     value.encode_utf16().all(|unit| units.next() == Some(unit)) && units.next().is_none()
 }

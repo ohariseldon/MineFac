@@ -277,6 +277,8 @@ pub mod mod_api {
     // ---------- Host: métodos com o nome e a assinatura do jogo ----------
     /// Each method's default panics with its name, as in the generated trait.
     pub trait Host {
+        fn mod_block_entity(&self, pos: [i32; 3]) -> Option<ModBlockEntity> { unimplemented!("mod_block_entity") }
+        fn world_dir(&self) -> Option<std::path::PathBuf> { unimplemented!("world_dir") }
         fn block(&self, pos: [i32; 3]) -> String {
             unimplemented!("block")
         }
@@ -646,8 +648,29 @@ pub mod mod_api {
         pub bounds: &'a mut [f32; 6],
     }
 
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct NativeCommand { pub usage: String, pub level: u8 }
+    impl NativeCommand {
+        pub fn new(usage: &str) -> Self { Self { usage: usage.to_owned(), level: 0 } }
+    }
+    #[non_exhaustive]
+    pub struct PlaceBlockEvent<'a> { pub stack: &'a ItemStack, pub pos: [i32; 3], pub state: BlockStateId }
+    #[non_exhaustive]
+    pub struct PlayerLoggedOutEvent<'a> { pub player: u128, pub name: &'a str }
+    #[non_exhaustive]
+    pub struct RegisterCommandsEvent<'a> { pub commands: &'a mut Vec<NativeCommand> }
+    #[non_exhaustive]
+    pub struct PerformCommandEvent<'a> { pub player: &'a NativeServerPlayer, pub command: &'a str }
+
+    pub struct InventoryMoveItemEvent<'a> { pub source: [i32; 3], pub destination: [i32; 3], pub item: &'a str }
+
     // ---------- Ganchos ----------
     pub trait Hooks: Send + Sync {
+        fn inventory_move_item(&self, host: &dyn Host, event: &mut InventoryMoveItemEvent<'_>) -> Flow { Flow::Continue }
+        fn place_block(&self, host: &mut dyn Host, event: &mut PlaceBlockEvent<'_>) {}
+        fn player_logged_out(&self, host: &mut dyn Host, event: &mut PlayerLoggedOutEvent<'_>) {}
+        fn register_commands(&self, host: &mut dyn Host, event: &mut RegisterCommandsEvent<'_>) {}
+        fn perform_command(&self, host: &mut dyn Host, event: &mut PerformCommandEvent<'_>) -> Flow { Flow::Continue }
         fn block_entity(&self, host: &mut dyn Host, event: &mut BlockEntityEvent<'_>) -> Option<(String, Compound)> {
             None
         }

@@ -1,5 +1,5 @@
 {
-  "parent": "veio:tutorial/hub",
+  "parent": "veio:tutorial/modules",
   "display": {
     "icon": {
       "id": "veio:repair_kit"
@@ -19,7 +19,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:repair_kit"
+            "items": "veio:repair_kit",
+            "count": {
+              "min": 1
+            }
           }
         ]
       }

@@ -19,7 +19,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:tesla"
+            "items": "veio:tesla",
+            "count": {
+              "min": 1
+            }
           }
         ]
       }

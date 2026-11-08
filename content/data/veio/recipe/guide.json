@@ -11,7 +11,7 @@
     "components": {
       "minecraft:written_book_content": {
         "title": {
-          "raw": "Veio 0.16.0"
+          "raw": "Veio 0.16.1"
         },
         "author": "Veio",
         "generation": 0,
@@ -46,7 +46,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 21
+                    "page": 13
                   }
                 },
                 {
@@ -58,7 +58,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 23
+                    "page": 15
                   }
                 },
                 {
@@ -70,7 +70,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 14
+                    "page": 6
                   }
                 },
                 {
@@ -82,7 +82,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 15
+                    "page": 7
                   }
                 },
                 {
@@ -94,7 +94,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 17
+                    "page": 9
                   }
                 },
                 {
@@ -106,7 +106,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 33
+                    "page": 24
                   }
                 },
                 {
@@ -118,7 +118,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 34
+                    "page": 25
                   }
                 },
                 {
@@ -130,7 +130,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 35
+                    "page": 26
                   }
                 },
                 {
@@ -142,7 +142,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 36
+                    "page": 27
                   }
                 },
                 {
@@ -154,7 +154,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 37
+                    "page": 28
                   }
                 },
                 {
@@ -166,7 +166,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 },
                 {
@@ -287,51 +287,6 @@
           },
           {
             "raw": {
-              "translate": "veio.guide.page.24"
-            }
-          },
-          {
-            "raw": {
-              "translate": "veio.guide.page.25"
-            }
-          },
-          {
-            "raw": {
-              "translate": "veio.guide.page.26"
-            }
-          },
-          {
-            "raw": {
-              "translate": "veio.guide.page.27"
-            }
-          },
-          {
-            "raw": {
-              "translate": "veio.guide.page.28"
-            }
-          },
-          {
-            "raw": {
-              "translate": "veio.guide.page.29"
-            }
-          },
-          {
-            "raw": {
-              "translate": "veio.guide.page.30"
-            }
-          },
-          {
-            "raw": {
-              "translate": "veio.guide.page.31"
-            }
-          },
-          {
-            "raw": {
-              "translate": "veio.guide.page.32"
-            }
-          },
-          {
-            "raw": {
               "text": "",
               "extra": [
                 {
@@ -361,7 +316,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 39
+                    "page": 30
                   }
                 },
                 {
@@ -373,7 +328,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 40
+                    "page": 31
                   }
                 },
                 {
@@ -385,7 +340,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 41
+                    "page": 32
                   }
                 },
                 {
@@ -397,7 +352,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 42
+                    "page": 33
                   }
                 },
                 {
@@ -409,7 +364,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 43
+                    "page": 34
                   }
                 },
                 {
@@ -421,7 +376,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 44
+                    "page": 35
                   }
                 },
                 {
@@ -433,7 +388,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 45
+                    "page": 36
                   }
                 },
                 {
@@ -445,7 +400,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 46
+                    "page": 37
                   }
                 },
                 {
@@ -457,7 +412,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 47
+                    "page": 38
                   }
                 },
                 {
@@ -469,7 +424,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 48
+                    "page": 39
                   }
                 },
                 {
@@ -509,7 +464,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 49
+                    "page": 40
                   }
                 },
                 {
@@ -521,7 +476,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 50
+                    "page": 41
                   }
                 },
                 {
@@ -533,7 +488,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 51
+                    "page": 42
                   }
                 },
                 {
@@ -545,7 +500,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 52
+                    "page": 43
                   }
                 },
                 {
@@ -557,7 +512,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 53
+                    "page": 44
                   }
                 },
                 {
@@ -569,7 +524,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 54
+                    "page": 45
                   }
                 },
                 {
@@ -581,7 +536,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 55
+                    "page": 46
                   }
                 },
                 {
@@ -593,7 +548,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 56
+                    "page": 47
                   }
                 },
                 {
@@ -605,7 +560,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 57
+                    "page": 48
                   }
                 },
                 {
@@ -645,7 +600,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 58
+                    "page": 49
                   }
                 },
                 {
@@ -657,7 +612,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 59
+                    "page": 50
                   }
                 },
                 {
@@ -669,7 +624,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 60
+                    "page": 51
                   }
                 },
                 {
@@ -681,7 +636,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 61
+                    "page": 52
                   }
                 },
                 {
@@ -693,7 +648,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 62
+                    "page": 53
                   }
                 },
                 {
@@ -705,7 +660,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 63
+                    "page": 54
                   }
                 },
                 {
@@ -717,7 +672,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 64
+                    "page": 55
                   }
                 },
                 {
@@ -729,7 +684,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 65
+                    "page": 56
                   }
                 },
                 {
@@ -769,7 +724,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 66
+                    "page": 57
                   }
                 },
                 {
@@ -781,7 +736,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 67
+                    "page": 58
                   }
                 },
                 {
@@ -793,7 +748,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 68
+                    "page": 59
                   }
                 },
                 {
@@ -805,7 +760,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 69
+                    "page": 60
                   }
                 },
                 {
@@ -817,7 +772,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 70
+                    "page": 61
                   }
                 },
                 {
@@ -829,7 +784,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 71
+                    "page": 62
                   }
                 },
                 {
@@ -841,7 +796,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 72
+                    "page": 63
                   }
                 },
                 {
@@ -853,7 +808,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 73
+                    "page": 64
                   }
                 },
                 {
@@ -865,7 +820,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 74
+                    "page": 65
                   }
                 },
                 {
@@ -877,7 +832,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 75
+                    "page": 66
                   }
                 },
                 {
@@ -889,7 +844,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 76
+                    "page": 67
                   }
                 },
                 {
@@ -901,7 +856,19 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 77
+                    "page": 68
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.caravan_station",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 69
                   }
                 },
                 {
@@ -913,7 +880,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 78
+                    "page": 70
                   }
                 },
                 {
@@ -953,7 +920,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 79
+                    "page": 71
                   }
                 },
                 {
@@ -965,7 +932,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 80
+                    "page": 72
                   }
                 },
                 {
@@ -991,7 +958,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 81
+                    "page": 73
                   }
                 },
                 {
@@ -1003,7 +970,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 83
+                    "page": 75
                   }
                 },
                 {
@@ -1015,7 +982,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 84
+                    "page": 76
                   }
                 },
                 {
@@ -1027,7 +994,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 85
+                    "page": 77
                   }
                 },
                 {
@@ -1039,7 +1006,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 86
+                    "page": 78
                   }
                 },
                 {
@@ -1051,7 +1018,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 88
+                    "page": 80
                   }
                 },
                 {
@@ -1063,7 +1030,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 89
+                    "page": 81
                   }
                 },
                 {
@@ -1075,7 +1042,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 90
+                    "page": 82
                   }
                 },
                 {
@@ -1087,7 +1054,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 96
+                    "page": 88
                   }
                 },
                 {
@@ -1099,7 +1066,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 97
+                    "page": 89
                   }
                 },
                 {
@@ -2603,6 +2570,44 @@
               "text": "",
               "extra": [
                 {
+                  "translate": "block.veio.caravan_station",
+                  "bold": true
+                },
+                {
+                  "text": "  «",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  },
+                  "hover_event": {
+                    "action": "show_text",
+                    "value": {
+                      "translate": "veio.guide.back"
+                    }
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.caravan_station"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.caravan_station",
+                  "color": "dark_gray"
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
                   "translate": "item.veio.wrench",
                   "bold": true
                 },
@@ -2820,7 +2825,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -2877,7 +2882,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -2921,7 +2926,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -2984,7 +2989,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3037,7 +3042,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3141,7 +3146,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3188,7 +3193,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3279,7 +3284,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3370,7 +3375,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3474,7 +3479,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3578,7 +3583,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3682,7 +3687,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3786,7 +3791,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3890,7 +3895,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -3975,7 +3980,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -4076,7 +4081,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -4207,7 +4212,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]
@@ -4347,7 +4352,7 @@
                   "color": "dark_blue",
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 29
                   }
                 }
               ]

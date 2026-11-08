@@ -1,6 +1,6 @@
 [package]
 name = "veio-launcher"
-version = "0.10.0"
+version = "0.16.0"
 edition = "2024"
 description = "Instala o Veio na instância do Horizon e abre o launcher."
 

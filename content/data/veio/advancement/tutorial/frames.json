@@ -1,5 +1,5 @@
 {
-  "parent": "veio:tutorial/gears",
+  "parent": "veio:tutorial/stock",
   "display": {
     "icon": {
       "id": "veio:frame"
@@ -19,7 +19,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:frame"
+            "items": "veio:frame",
+            "count": {
+              "min": 1
+            }
           }
         ]
       }

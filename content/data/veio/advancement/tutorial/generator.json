@@ -19,7 +19,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:generator"
+            "items": "veio:generator",
+            "count": {
+              "min": 1
+            }
           }
         ]
       }

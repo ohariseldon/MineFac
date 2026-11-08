@@ -1,0 +1,1 @@
+fn finite_portal_exit(game:&mut crate::game::Game<'_>,plan:&crate::game::nether_portal::Plan)->std::ops::ControlFlow<Option<horizon_world::level::portal_travel::FoundRectangle>>{crate::game::nether_portal::veio_portals::exit(game,plan)}

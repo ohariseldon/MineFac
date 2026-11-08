@@ -4,6 +4,12 @@ Leia [COORDENACAO.md](../COORDENACAO.md). Esta frente continua a expansão das f
 
 ## Escopo
 
+Restrição obrigatória para a expansão e a integração: [mundo finito e completo](../MAPA.md).
+Novos mundos precisam de Overworld de **15.000 × 15.000 blocos**, muralha de bedrock,
+todos os biomas e recursos de sobrevivência garantidos por geração adaptada, e Nether
+compatível com a escala 8:1 e com saídas de portais seguras. Esse contrato é requisito
+de implementação; ainda não representa funcionalidade entregue.
+
 O lote atual foi ampliado para uma [rede integrada de logística](CODEX-LOGISTICA.md): três braços, filtros, prioridades de divisores e unificadores, pausa por redstone, vazão e sinalização. O roteiro de teste cobre uma fábrica completa. As próximas rodadas devem ser organizadas por redes utilizáveis, evitando entregar apenas uma peça isolada por vez.
 
 - Continuar logística: braços de transferência, filtros, prioridades, transporte e ferramentas para montar fábricas em escala.

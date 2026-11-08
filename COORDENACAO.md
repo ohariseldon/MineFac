@@ -16,6 +16,16 @@ Divisão atual definida pelo usuário após a integração da 0.9.1. Ela substit
 
 Geração e distribuição continuam sendo sistemas distintos no código. Essa separação técnica não representa mais uma atribuição exclusiva de toda a produção ao Cloud: a nova frente dele é o sistema de trabalhadores.
 
+## Restrição obrigatória do mapa
+
+[MAPA.md](MAPA.md) define o contrato dos novos mundos: Overworld quadrado de
+**15.000 blocos de lado**, muralha de bedrock e restrição de coordenadas, cobertura
+garantida de biomas e conteúdo de sobrevivência em cada mundo, e portais seguros
+com Nether na escala 8:1. A geração adaptada foi autorizada pelo usuário. Todas as
+frentes devem respeitar esse contrato ao planejar recursos, estruturas, spawn,
+exploração, progressão e desempenho. Sua implementação ainda está pendente; o
+documento não altera mundos existentes.
+
 ## Fluxo compartilhado
 
 1. Partir da `main` atualizada. A base de código desta rodada é a **0.9.1**, commit `26599ecd7d8e94f9889a84da42b3928ad3156a9e`; este documento e as ordens acrescentam a coordenação da rodada.

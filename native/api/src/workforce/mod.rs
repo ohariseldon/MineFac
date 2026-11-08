@@ -516,6 +516,20 @@ pub(super) fn deliver(entity: &mut ModBlockEntity) -> bool {
     true
 }
 
+// Observe only accepted unloads; an output-full retry retains both cargo and evidence.
+fn deliver_tracked(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity) -> bool {
+    if entity.id != HAULER_POST || !super::onboarding::tracks_flow() || !has_load(entity) { return deliver(entity); }
+    let load = carried(entity);
+    let accepted = deliver(entity);
+    if accepted { super::onboarding::worker_unload(dimension, pos, &load); }
+    accepted
+}
+
+fn deliver_observed(host: &dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) -> bool {
+    if entity.id != HAULER_POST || !super::onboarding::tracks_flow() { return deliver(entity); }
+    deliver_tracked(host.dimension(), pos, entity)
+}
+
 fn uuid_of(nbt: &Compound) -> Option<Uuid> {
     match nbt.get(&"UUID".into()) {
         Some(Tag::IntArray(values)) if values.len() == 4 => Some([values[0], values[1], values[2], values[3]]),
@@ -683,7 +697,7 @@ pub(super) fn dismiss(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntit
     release(uuid, dimension, pos);
     unreserve(dimension, pos);
     set_worker(entity, None);
-    deliver(entity);
+    deliver_tracked(dimension, pos, entity);
     set_number(entity, "Status", NO_WORKER);
     true
 }
@@ -833,7 +847,7 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     }
     let Some(uuid) = worker(entity) else {
         // Sem trabalhador, o que ficou carregado entra assim que houver espaço.
-        deliver(entity);
+        deliver_observed(host, pos, entity);
         set_number(entity, "Status", NO_WORKER);
         return;
     };
@@ -841,7 +855,7 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     if !claim(uuid, dimension, pos, now) {
         // Outro posto ficou com este aldeão enquanto este estava descarregado.
         set_worker(entity, None);
-        deliver(entity);
+        deliver_observed(host, pos, entity);
         set_number(entity, "Status", NO_WORKER);
         return;
     }
@@ -856,7 +870,7 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             // Morto, removido ou longe demais por muito tempo: libera o posto.
             release(uuid, dimension, pos);
             set_worker(entity, None);
-            deliver(entity);
+            deliver_observed(host, pos, entity);
             set_number(entity, "Status", NO_WORKER);
         } else {
             set_number(entity, "Absent", absent);
@@ -911,13 +925,13 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         }
         set_number(entity, "Walk", 0);
         let Some(spot) = destination else {
-            if !deliver(entity) {
+            if !deliver_observed(host, pos, entity) {
                 return 3;
             }
             host.play_sound("minecraft:entity.villager.work_farmer", home, 4, 0.5, 1.0);
             return 1;
         };
-        arrive(host, entity, spot, now);
+        arrive(host, pos, entity, spot, now);
         unreserve(dimension, pos);
         order(id, home, now);
         return 1;
@@ -985,6 +999,9 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             set_target(entity, None);
             unreserve(dimension, pos);
             if let Some(load) = result {
+                if entity.id == HAULER_POST {
+                    for (item, count) in &load { super::onboarding::worker_pickup(host, pos, spot, item, *count); }
+                }
                 set_carried(entity, &load, None, Carry::Product, 0);
                 finish_task(entity);
                 order(id, home, now);
@@ -1011,6 +1028,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 return 1;
             }
             consume(&mut entity.items[from], taken);
+            if entity.id == HAULER_POST { super::onboarding::worker_pickup(host, pos, pos, &item, taken); }
             set_carried(entity, &[(item, taken)], Some(to), kind, into);
             set_number(entity, "Walk", 0);
             order(id, block_goal(to), now);
@@ -1043,6 +1061,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             if taken == 0 {
                 return 1;
             }
+            if entity.id == HAULER_POST { super::onboarding::worker_pickup(host, pos, from, &item, taken); }
             set_carried(entity, &[(item, taken)], Some(to), Carry::Supply, into);
             set_number(entity, "Walk", 0);
             order(id, block_goal(to), now);
@@ -1058,7 +1077,7 @@ pub(super) fn finish_task(entity: &mut ModBlockEntity) {
 }
 
 /// O trabalhador chegou ao destino da carga. O que não for usado volta com ele ao posto.
-fn arrive(host: &mut dyn Host, entity: &mut ModBlockEntity, spot: [i32; 3], now: u64) {
+fn arrive(host: &mut dyn Host, post: [i32; 3], entity: &mut ModBlockEntity, spot: [i32; 3], now: u64) {
     let load = carried(entity);
     let kind = carry_kind(entity);
     let into = number(entity, "CarryInto") as usize;
@@ -1066,7 +1085,11 @@ fn arrive(host: &mut dyn Host, entity: &mut ModBlockEntity, spot: [i32; 3], now:
         Carry::Supply => {
             let before: u32 = load.iter().map(|(_, count)| count).sum();
             let rest: Vec<(String, u32)> = load.into_iter()
-                .map(|(item, count)| { let left = insert_into(host, spot, into, &item, count); (item, left) })
+                .map(|(item, count)| {
+                    let left = insert_into(host, spot, into, &item, count);
+                    if entity.id == HAULER_POST { super::onboarding::worker_delivery(host, post, spot, &item, count - left); }
+                    (item, left)
+                })
                 .filter(|(_, left)| *left > 0)
                 .collect();
             if rest.iter().map(|(_, count)| count).sum::<u32>() < before {
