@@ -8,13 +8,77 @@
   "elements": [
     {
       "from": [
-        6,
+        6.5,
+        0,
+        5
+      ],
+      "to": [
+        9.5,
+        2.5,
+        11
+      ],
+      "faces": {
+        "down": {
+          "texture": "#wire"
+        },
+        "up": {
+          "texture": "#wire"
+        },
+        "north": {
+          "texture": "#wire"
+        },
+        "south": {
+          "texture": "#wire"
+        },
+        "west": {
+          "texture": "#wire"
+        },
+        "east": {
+          "texture": "#wire"
+        }
+      }
+    },
+    {
+      "from": [
+        6.5,
         0,
         0
       ],
       "to": [
-        10,
-        3,
+        9.5,
+        2.5,
+        5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#wire"
+        },
+        "up": {
+          "texture": "#wire"
+        },
+        "north": {
+          "texture": "#wire"
+        },
+        "south": {
+          "texture": "#wire"
+        },
+        "west": {
+          "texture": "#wire"
+        },
+        "east": {
+          "texture": "#wire"
+        }
+      }
+    },
+    {
+      "from": [
+        6.5,
+        0,
+        11
+      ],
+      "to": [
+        9.5,
+        2.5,
         16
       ],
       "faces": {
@@ -35,70 +99,6 @@
         },
         "east": {
           "texture": "#wire"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        0,
-        6
-      ],
-      "to": [
-        16,
-        3,
-        10
-      ],
-      "faces": {
-        "down": {
-          "texture": "#wire"
-        },
-        "up": {
-          "texture": "#wire"
-        },
-        "north": {
-          "texture": "#wire"
-        },
-        "south": {
-          "texture": "#wire"
-        },
-        "west": {
-          "texture": "#wire"
-        },
-        "east": {
-          "texture": "#wire"
-        }
-      }
-    },
-    {
-      "from": [
-        5,
-        0,
-        5
-      ],
-      "to": [
-        11,
-        4,
-        11
-      ],
-      "faces": {
-        "down": {
-          "texture": "#joint"
-        },
-        "up": {
-          "texture": "#joint"
-        },
-        "north": {
-          "texture": "#joint"
-        },
-        "south": {
-          "texture": "#joint"
-        },
-        "west": {
-          "texture": "#joint"
-        },
-        "east": {
-          "texture": "#joint"
         }
       }
     }

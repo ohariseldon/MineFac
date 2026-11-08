@@ -144,6 +144,9 @@ fn idle_cables_skip_neighbor_lookups() {
             change(&mut self.neighbor);
             true
         }
+        // O cabo relê os vizinhos para desenhar as ligações; isso não move energia.
+        fn block(&self, _pos: [i32; 3]) -> String { "minecraft:air".into() }
+        fn set_block_property(&mut self, _: [i32; 3], _: &str, _: &str) -> bool { true }
     }
     let mut probe = Probe { visits: 0, neighbor: entity(CABLE, 0) };
     let mut cable = entity(CABLE, 0);
@@ -669,4 +672,58 @@ fn every_block_with_a_menu_has_a_screen_with_one_slot_per_container_slot() {
         checked += 1;
     }
     assert!(checked > 40, "menus encontrados: {checked}");
+}
+
+/// Mundo de blocos com propriedades livres, para canos e cabos que se ligam.
+#[derive(Default)]
+struct Joints { blocks: HashMap<[i32; 3], String>, props: HashMap<([i32; 3], String), String>, writes: usize }
+
+impl Host for Joints {
+    fn block(&self, pos: [i32; 3]) -> String {
+        self.blocks.get(&pos).cloned().unwrap_or_else(|| "minecraft:air".into())
+    }
+    fn set_block_property(&mut self, pos: [i32; 3], key: &str, value: &str) -> bool {
+        self.writes += 1;
+        self.props.insert((pos, key.into()), value.into());
+        true
+    }
+}
+
+#[test]
+fn pipes_and_cables_draw_only_the_arms_that_touch_a_neighbor() {
+    let mut world = Joints::default();
+    world.blocks.insert([0, 0, -1], production::PIPE.into());
+    world.blocks.insert([0, 0, 1], production::SPRINKLER.into());
+    world.blocks.insert([1, 0, 0], "minecraft:stone".into());
+    let mut pipe = entity(production::PIPE, 0);
+    joints::refresh(&mut world, [0, 0, 0], &mut pipe, &joints::PIPE_FACES, joints::pipe_connects);
+    let face = |world: &Joints, key: &str| world.props.get(&([0, 0, 0], key.to_owned())).cloned();
+    assert_eq!(face(&world, "north").as_deref(), Some("true"));
+    assert_eq!(face(&world, "south").as_deref(), Some("true"), "liga no aspersor");
+    for key in ["east", "west", "up", "down"] {
+        assert_eq!(face(&world, key).as_deref(), Some("false"), "{key}: pedra e ar não ganham braço");
+    }
+    // Sem mudança na vizinhança, não regrava nada; um vizinho novo aparece na próxima leitura.
+    let writes = world.writes;
+    for _ in 0..40 {
+        joints::refresh(&mut world, [0, 0, 0], &mut pipe, &joints::PIPE_FACES, joints::pipe_connects);
+    }
+    assert_eq!(world.writes, writes);
+    world.blocks.insert([0, 1, 0], production::PIPE.into());
+    for _ in 0..40 {
+        joints::refresh(&mut world, [0, 0, 0], &mut pipe, &joints::PIPE_FACES, joints::pipe_connects);
+    }
+    assert_eq!(face(&world, "up").as_deref(), Some("true"));
+    assert_eq!(world.writes, writes + 1, "só a face que mudou");
+
+    let mut world = Joints::default();
+    world.blocks.insert([5, 0, 0], CABLE.into());
+    world.blocks.insert([3, 0, 0], PRESS.into());
+    world.blocks.insert([4, 1, 0], BATTERY.into());
+    let mut cable = entity(CABLE, 0);
+    joints::refresh(&mut world, [4, 0, 0], &mut cable, &joints::CABLE_FACES, joints::cable_connects);
+    let face = |key: &str| world.props.get(&([4, 0, 0], key.to_owned())).cloned();
+    assert_eq!((face("east").as_deref(), face("west").as_deref(), face("up").as_deref()), (Some("true"), Some("true"), Some("true")));
+    assert_eq!((face("north").as_deref(), face("south").as_deref()), (Some("false"), Some("false")));
+    assert_eq!(face("down"), None, "o cabo corre no chão: não tem braço para baixo");
 }
