@@ -272,7 +272,8 @@ impl Hooks for Factory {
     }
 
     fn screen_click(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::ScreenClickEvent<'_>) -> Option<i32> {
-        (event.block == workforce::CONTROL_CENTER && !event.right).then(|| holding::click(event.at)).flatten()
+        let tab = event.data.first().copied().unwrap_or(0) / 1000;
+        (event.block == workforce::CONTROL_CENTER && !event.right).then(|| holding::click(event.at, tab)).flatten()
     }
 
     fn menu_button(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::MenuButtonEvent<'_>) {
@@ -585,6 +586,10 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Wealth" => key!("Wealth"),
         "Tab" => key!("Tab"),
         "HData" => key!("HData"),
+        "Cash" => key!("Cash"),
+        "Known" => key!("Known"),
+        "Payable" => key!("Payable"),
+        "Revenue" => key!("Revenue"),
         _ => rare_nbt_key(name),
     }
 }

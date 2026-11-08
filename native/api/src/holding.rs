@@ -4,6 +4,10 @@
 //! extrativismo (madeira e folhas), urbanização (casas e saneamento), comércio (lojas) e gestão e
 //! segurança. A prefeitura é pública e fica de fora.
 //!
+//! Contas por empresa: a **receita** é o atacado que as lojas pagam pelos itens daquela empresa
+//! (`item_division`); os **gastos** são os salários dos trabalhadores dos postos dela e o imposto
+//! retido na fonte. Lucro = receita - gastos, em média do dia.
+//!
 //! Custo: cada bloco se registra uma vez a cada `SAMPLE` ticks (fase espalhada pela posição), com
 //! estado, se tem trabalhador e o aumento do seu contador de produção. A produção vira média do dia
 //! por divisão no turno da sociedade. O centro de controle soma a aba escolhida a cada
@@ -64,7 +68,47 @@ struct World {
     /// Produção deste turno e média do dia, por divisão.
     turn: [i32; TABS as usize],
     day: [i32; TABS as usize],
+    /// Receita e gastos do turno e do dia, por divisão.
+    revenue_turn: [i32; TABS as usize],
+    cost_turn: [i32; TABS as usize],
+    revenue_day: [i32; TABS as usize],
+    cost_day: [i32; TABS as usize],
     rolled: i64,
+}
+
+/// A empresa que produz um item (quem recebe o atacado dele).
+pub(super) fn item_division(item: &str) -> u8 {
+    let name = item.split(':').nth(1).unwrap_or(item);
+    if name.ends_with("_log") || name.ends_with("_wood") || name.ends_with("_planks") || name.ends_with("_sapling")
+        || name.ends_with("_leaves") || name == "stick" || name == "charcoal"
+    {
+        FORESTRY
+    } else if name.starts_with("raw_") || name.ends_with("_ore") || matches!(name, "coal" | "cobblestone" | "stone"
+        | "gravel" | "sand" | "flint" | "quartz" | "diamond" | "redstone" | "lapis_lazuli" | "clay_ball")
+    {
+        MINING
+    } else if production::pantry::value(item).is_some() || name.ends_with("_seeds") || name.ends_with("_wool")
+        || matches!(name, "wheat" | "leather" | "feather" | "egg" | "honey_bottle" | "sugar_cane" | "hay_block" | "milk_bucket")
+        || item == "veio:flour" || item == "veio:biomass"
+    {
+        AGRO
+    } else {
+        MANUFACTURING
+    }
+}
+
+/// Receita (bruta) e gastos de uma empresa neste turno.
+pub(super) fn book(dimension: &str, division: u8, revenue: i32, cost: i32) {
+    let division = (division as usize).min(TABS as usize - 1);
+    with_world(dimension, |world| {
+        world.revenue_turn[division] += revenue;
+        world.cost_turn[division] += cost;
+    });
+}
+
+/// A empresa do bloco em `pos` (pelo último registro), ou 0.
+pub(super) fn division_at(dimension: &str, pos: [i32; 3]) -> u8 {
+    with_world(dimension, |world| world.units.get(&pos).map_or(0, |unit| unit.division)).unwrap_or(0)
 }
 
 static WORLDS: Mutex<Vec<(String, World)>> = Mutex::new(Vec::new());
@@ -114,9 +158,14 @@ pub(super) fn roll(dimension: &str, time: i64) {
             return;
         }
         world.rolled = turn;
+        let daily = workforce::society::ledger::daily;
         for division in 0..TABS as usize {
-            world.day[division] = workforce::society::ledger::daily(world.day[division], world.turn[division]);
+            world.day[division] = daily(world.day[division], world.turn[division]);
+            world.revenue_day[division] = daily(world.revenue_day[division], world.revenue_turn[division]);
+            world.cost_day[division] = daily(world.cost_day[division], world.cost_turn[division]);
             world.turn[division] = 0;
+            world.revenue_turn[division] = 0;
+            world.cost_turn[division] = 0;
         }
     });
 }
@@ -128,11 +177,13 @@ pub(super) fn active(status: i32) -> bool {
 }
 
 /// Os números de uma divisão: [unidades, ativas, trabalhadores, produção/dia, estado parado mais
-/// comum, quantas nele].
-pub(super) fn summary(dimension: &str, division: u8) -> [i32; 6] {
+/// comum, quantas nele, receita/dia, gastos/dia].
+pub(super) fn summary(dimension: &str, division: u8) -> [i32; 8] {
     let now = defense::clock();
     with_world(dimension, |world| {
-        let mut out = [0; 6];
+        let mut out = [0; 8];
+        out[6] = world.revenue_day[division as usize];
+        out[7] = world.cost_day[division as usize];
         let mut stopped: Vec<(i32, i32)> = Vec::new();
         for unit in world.units.values().filter(|unit| unit.division == division && now.saturating_sub(unit.seen) <= STALE) {
             out[0] += 1;
@@ -184,15 +235,15 @@ pub(super) fn refresh(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntit
     if tab == 0 {
         return;
     }
-    let [units, active, workers, made, status, count] = summary(dimension, tab as u8);
+    let [units, active, workers, made, status, count, revenue, cost] = summary(dimension, tab as u8);
     let [a, b, c] = extras(dimension, pos, tab as u8);
-    entity.nbt.insert("HData".into(), Tag::IntArray(vec![units, active, workers, made, status, count, a, b, c]));
+    entity.nbt.insert("HData".into(), Tag::IntArray(vec![units, active, workers, made, status, count, a, b, c, revenue, cost]));
 }
 
 /// Valores do painel numa aba de divisão: [unidades, ativas, trabalhadores, produção, estado,
-/// quantos, extra1, extra2, extra3].
-pub(super) fn data(entity: &ModBlockEntity) -> [i32; 9] {
-    let mut out = [0; 9];
+/// quantos, extra1, extra2, extra3, receita/dia, gastos/dia].
+pub(super) fn data(entity: &ModBlockEntity) -> [i32; 11] {
+    let mut out = [0; 11];
     if let Some(Tag::IntArray(values)) = entity.nbt.get(nbt_key("HData")) {
         for (slot, value) in out.iter_mut().zip(values) {
             *slot = *value;
@@ -201,20 +252,26 @@ pub(super) fn data(entity: &ModBlockEntity) -> [i32; 9] {
     out
 }
 
-/// Clique nas setas do cabeçalho (coordenadas da tela).
-pub(super) fn click(at: [f32; 2]) -> Option<i32> {
+/// Clique nas setas do cabeçalho ou, na visão geral, na linha da companhia (saque).
+pub(super) fn click(at: [f32; 2], tab: i32) -> Option<i32> {
     let row = (20.0..32.0).contains(&at[1]);
     if row && (5.0..20.0).contains(&at[0]) {
         Some(PREVIOUS)
     } else if row && (162.0..180.0).contains(&at[0]) {
         Some(NEXT)
+    } else if tab == 0 && (64.0..76.0).contains(&at[1]) && (5.0..160.0).contains(&at[0]) {
+        Some(workforce::society::ledger::CASH_OUT)
     } else {
         None
     }
 }
 
-/// O botão chegou ao servidor: troca a aba e recalcula na hora.
+/// O botão chegou ao servidor: troca a aba e recalcula na hora, ou saca uma esmeralda.
 pub(super) fn press(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, id: i32) {
+    if id == workforce::society::ledger::CASH_OUT {
+        workforce::society::ledger::cash_out(dimension, pos, entity, defense::clock());
+        return;
+    }
     let step = match id { PREVIOUS => TABS - 1, NEXT => 1, _ => return };
     set_number(entity, "Tab", (number(entity, "Tab") + step).rem_euclid(TABS));
     refresh(dimension, pos, entity);
@@ -223,8 +280,8 @@ pub(super) fn press(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity,
 /// Uma linha por divisão no relatório do centro de controle.
 pub(super) fn report_lines(dimension: &str) -> Vec<Text> {
     (1..TABS as u8).filter_map(|division| {
-        let [units, active, workers, made, _, _] = summary(dimension, division);
-        (units > 0).then(|| Text::tr("veio.holding.report", &[&Text::tr(&format!("veio.holding.tab{division}"), &[]).plain(),
-            &units, &active, &workers, &made]))
+        let [units, active, workers, made, _, _, revenue, cost] = summary(dimension, division);
+        (units > 0 || revenue > 0).then(|| Text::tr("veio.holding.report", &[&Text::tr(&format!("veio.holding.tab{division}"), &[]).plain(),
+            &units, &active, &workers, &made, &revenue, &cost, &(revenue - cost)]))
     }).collect()
 }
