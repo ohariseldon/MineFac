@@ -33,6 +33,13 @@ material, que este shader lê. O original é 256x; o Veio reduz para 128x para c
 pacote em `resourcepacks/`, liga por último na lista (os seus pacotes continuam) e sobe o
 orçamento de texturas para 1024 MiB. No Leve ele sai.
 
+**Céu estável (3.1.2):** o Luiz viu o céu "bugar" ao andar e pular. Nas capturas, as nuvens
+volumétricas (calculadas na tela, em meia resolução) viravam bolhas grudadas no horizonte, com
+bordas granuladas, e faixas escuras no céu. Elas agora vêm desligadas (opção "Nuvens
+volumétricas", experimental), e voltam as nuvens planas do céu, que só dependem da direção do
+olhar. A imagem final ganhou um pontilhado de 1/255 para o céu escuro não formar faixas, e a
+fumaça da fábrica não tinge mais o horizonte à noite.
+
 **Noite (3.1.1):** o primeiro teste foi à noite e saiu escuro, lavado e roxo. A luz do céu à noite
 não escurece mais o que o jogo já ilumina; o olho se adapta ao ar livre à noite (+55%) e as cores
 desbotam um pouco, como na visão noturna de verdade; o céu noturno ficou azul-escuro em vez de

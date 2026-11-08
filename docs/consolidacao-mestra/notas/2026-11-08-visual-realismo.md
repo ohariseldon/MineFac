@@ -51,3 +51,15 @@ reforçou: realismo de "parecer real", e o melhor pacote de texturas já dentro 
   `textureBudgetMiB` para 1024; no Leve remove. Teste novo no launcher.
 - Falta: capturas de dia e do pôr do sol; quadrados escuros da sombra; árvores borradas ao longe
   (talvez o LOD do Horizon, não o shader).
+
+## 3.1.2 (commit desta seção)
+
+O Luiz explicou o defeito principal: "o céu tá com uma referência do player; quando ele se mexe ou
+pula, o céu inteiro buga". O estágio `sky` do Horizon recebe só a direção do olhar
+(`horizon_sky_view_ray`, conferido no código do Horizon), então o céu em si não depende da
+posição. O que dependia era a passada `sky_mirror` (nuvens volumétricas em meia tela): nas
+capturas clareadas, as "árvores" borradas do horizonte são cúmulos dela, e as faixas onduladas
+do céu também. Ela agora vem desligada por padrão (`volumetric_clouds = false`), com as nuvens
+planas do `sky.wgsl` de volta. A imagem final ganhou pontilhado triangular de 1/255 contra as
+faixas de 8 bits no céu escuro, e a fumaça da fábrica não pinta o horizonte à noite. Sem vídeo
+do defeito, a causa é a mais provável, não confirmada.

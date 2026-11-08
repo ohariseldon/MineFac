@@ -161,7 +161,7 @@ fn sky(input: SkyInput) -> vec4<f32> {
     color = mix(color, frame.fog_color, low * 0.45);
     // Industrial smog yellows and greys the sky near polluted factories.
     let smog = veio_smog();
-    color = mix(color, vec3<f32>(0.52, 0.48, 0.40) * mix(0.25, 1.0, day), smog * 0.45 * (1.0 - smoothstep(0.0, 0.6, direction.y)));
+    color = mix(color, vec3<f32>(0.52, 0.48, 0.40) * mix(0.25, 1.0, day), smog * 0.45 * day * (1.0 - smoothstep(0.0, 0.6, direction.y)));
     color = mix(color, frame.fog_color, storm);
     let sun_light = exp(-vec3<f32>(0.20, 0.46, 1.0) * 0.30 / (max(sun.y, 0.0) + 0.12));
 

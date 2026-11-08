@@ -164,5 +164,9 @@ fn post(input: PostInput) -> vec4<f32> {
         let fall = dot(centred, centred) * 1.6;
         graded *= 1.0 - vignette * 0.35 * fall * fall;
     }
+    // Dither of one step of 8 bits (triangular noise): dark gradients of the night sky no longer
+    // break into visible bands.
+    let n = veio_hash2(input.pixel) + veio_hash2(input.pixel + vec2<f32>(17.0, 59.0)) - 1.0;
+    graded += vec3<f32>(n / 255.0);
     return vec4<f32>(clamp(graded, vec3<f32>(0.0), vec3<f32>(1.0)), input.color.a);
 }
