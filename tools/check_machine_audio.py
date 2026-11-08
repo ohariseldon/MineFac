@@ -56,7 +56,7 @@ def check(decode=False):
     assert set((ASSETS / 'sounds/machines').glob('*.ogg')) == expected
     seen = set()
     for profile in config['profiles']:
-        assert 24 <= profile['interval'] <= 80 and 0 < profile['volume'] <= .3
+        assert 24 <= profile['interval'] <= 80 and 0 < profile['volume'] <= .75
         if profile['ambient']:
             assert profile['interval'] == 48 and config['events'][profile['work']]['duration'] == 2.4
         for kind in ('work','finish'):

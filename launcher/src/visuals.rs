@@ -6,9 +6,10 @@ use std::io::{self, IsTerminal, Write};
 use std::path::Path;
 use std::process::Command;
 
+/// Pasta em `shaderpacks/`: é também o valor de `pickedShaderPack` que o Horizon procura.
 const PACK_FOLDER: &str = "veio-industrial";
-const PACK_KEY: &str = "horizon:veio_industrial";
-const PRESET_REVISION: &str = "1";
+// 2: corrige pickedShaderPack (era "horizon:veio_industrial", que o Horizon não acha).
+const PRESET_REVISION: &str = "2";
 const MARKER: &str = ".veio-visual-profile";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -105,7 +106,13 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
         if !source.join("horizon-shaders.toml").is_file() {
             return Err("o pacote visual veio-industrial está faltando. Extraia o ZIP completo, ou abra Jogar-Leve.cmd.".into());
         }
-        super::copy_dir(&source, &instance.join("shaderpacks").join(PACK_FOLDER))?;
+        // O Horizon recusa o pacote se sobrar um .wgsl que o manifesto não cita: a pasta
+        // instalada é só nossa e é refeita do zero. As opções ficam ao lado, em veio-industrial.txt.
+        let target = instance.join("shaderpacks").join(PACK_FOLDER);
+        if target.exists() {
+            fs::remove_dir_all(&target).map_err(|error| format!("{}: {error}", target.display()))?;
+        }
+        super::copy_dir(&source, &target)?;
     }
     let marker = format!("{}:{PRESET_REVISION}", selection.profile.id());
     if !selection.reset && fs::read_to_string(instance.join(MARKER)).unwrap_or_default().trim() == marker {
@@ -149,7 +156,7 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
         ("hdr", "false"),
         ("caveCulling", "true"),
         ("framePacing", "efficient"),
-        ("pickedShaderPack", if realism { PACK_KEY } else { "" }),
+        ("pickedShaderPack", if realism { PACK_FOLDER } else { "" }),
     ];
     for (key, value) in extra_values {
         extra = set_option(&extra, key, value);
