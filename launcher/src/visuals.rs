@@ -6,9 +6,10 @@ use std::io::{self, IsTerminal, Write};
 use std::path::Path;
 use std::process::Command;
 
+/// Pasta em `shaderpacks/`: é também o valor de `pickedShaderPack` que o Horizon procura.
 const PACK_FOLDER: &str = "veio-industrial";
-const PACK_KEY: &str = "horizon:veio_industrial";
-const PRESET_REVISION: &str = "1";
+// 2: corrige pickedShaderPack (era "horizon:veio_industrial", que o Horizon não acha).
+const PRESET_REVISION: &str = "2";
 const MARKER: &str = ".veio-visual-profile";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -149,7 +150,7 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
         ("hdr", "false"),
         ("caveCulling", "true"),
         ("framePacing", "efficient"),
-        ("pickedShaderPack", if realism { PACK_KEY } else { "" }),
+        ("pickedShaderPack", if realism { PACK_FOLDER } else { "" }),
     ];
     for (key, value) in extra_values {
         extra = set_option(&extra, key, value);
