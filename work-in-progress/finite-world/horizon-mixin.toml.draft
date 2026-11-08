@@ -1,0 +1,286 @@
+[mod]
+id = "veio"
+version = "0.15.2"
+
+[api]
+path = "api"
+
+[compatibility]
+horizon_revision = "66f3981f522b24c250b21523a70080965b940424"
+
+[[module]]
+id = "finite_geometry"
+file = "crates/horizon-world/src/lib.rs"
+name = "veio_map"
+source = "map_core.rs"
+visibility = "pub"
+
+[[module]]
+id = "finite_catalog"
+file = "crates/horizon-world/src/worldgen/generator.rs"
+name = "veio_catalog"
+source = "world_catalog.rs"
+visibility = "pub"
+
+[[module]]
+id = "finite_pipeline"
+file = "crates/horizon-world/src/worldgen/generator.rs"
+name = "veio_finite"
+source = "world_pipeline.rs"
+
+[[module]]
+id = "finite_plan"
+file = "crates/horizon-client/src/game.rs"
+name = "veio_plan"
+source = "world_plan.rs"
+
+[[module]]
+id = "finite_entry"
+file = "crates/horizon-client/src/game.rs"
+name = "veio_entry"
+source = "world_entry.rs"
+
+[[injection]]
+id = "finite_world_open"
+target = "horizon_client::game::world_loading::WorldRequest::prepare"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/world_entry.rs"
+bindings = [
+  { name = "request", ty = "&crate::game::world_loading::WorldRequest", value = "&self" },
+  { name = "res", ty = "&crate::game::Resources", value = "res" },
+  { name = "pack", ty = "&crate::game::PackResources", value = "pack" },
+  { name = "options", ty = "&crate::game::Options", value = "options" },
+  { name = "settings", ty = "&crate::game::Settings", value = "settings" },
+  { name = "upgrade", ty = "&horizon_world::datafix::progress::UpgradeProgress", value = "upgrade" },
+]
+
+[[injection]]
+id = "finite_generator_wrap"
+target = "horizon_world::worldgen::generator::OverworldGenerator::for_world_with_settings"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/world_generator.rs"
+bindings = [
+  { name = "data", ty = "std::sync::Arc<crate::worldgen::generator::GeneratorData>", value = "data.clone()" },
+  { name = "seed", ty = "i64", value = "seed" },
+  { name = "preset", ty = "&str", value = "preset" },
+  { name = "dimension", ty = "&str", value = "dimension" },
+  { name = "structures", ty = "bool", value = "with_structures" },
+  { name = "saved", ty = "Option<&serde_json::Value>", value = "saved_stem" },
+]
+
+[[injection]]
+id = "finite_portal_bounds"
+target = "horizon_client::game::nether_portal::Game<'_>::border_bounds"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/world_border.rs"
+bindings = [{ name = "game", ty = "&crate::game::Game<'_>", value = "&*self" }]
+
+[[injection]]
+id = "finite_player_collision"
+target = "horizon_client::game::commands::terrain_cmds::Game<'_>::player_border"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/player_border.rs"
+bindings = [{ name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" }]
+
+[[injection]]
+id = "finite_save_chunks"
+target = "horizon_client_lib::save::SaveDir::queue"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/save_boundary.rs"
+bindings = [
+  { name = "save", ty = "&crate::save::SaveDir", value = "&*self" },
+  { name = "folder", ty = "crate::save::Folder", value = "folder" },
+  { name = "records", ty = "&Vec<((i32,i32),crate::save::Record)>", value = "&records" },
+  { name = "wait", ty = "bool", value = "wait" },
+]
+
+[[module]]
+id = "finite_portal_runtime"
+file = "crates/horizon-client/src/game/nether_portal.rs"
+name = "veio_portals"
+source = "world_portals.rs"
+
+[[module]]
+id = "finite_travel_runtime"
+file = "crates/horizon-client/src/game/server_travel.rs"
+name = "veio_travel"
+source = "world_travel.rs"
+
+[[injection]]
+id = "finite_portal_plan"
+target = "horizon_client::game::nether_portal::Game<'_>::portal_plan"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/portal_plan.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "entry", ty = "horizon_core::position::BlockPos", value = "entry" },
+  { name = "at", ty = "horizon_core::geometry::Vec3", value = "at" },
+  { name = "width", ty = "f32", value = "width" },
+  { name = "height", ty = "f32", value = "height" },
+  { name = "reset", ty = "bool", value = "reset_forward" },
+]
+
+[[injection]]
+id = "finite_portal_candidates"
+target = "horizon_client::game::nether_portal::Game<'_>::portal_blocks"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/portal_candidates.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "center", ty = "horizon_core::position::BlockPos", value = "center" },
+  { name = "radius", ty = "i32", value = "radius" },
+]
+
+[[injection]]
+id = "finite_portal_exit"
+target = "horizon_client::game::nether_portal::Game<'_>::nether_exit_portal"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/portal_exit.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "plan", ty = "&crate::game::nether_portal::Plan", value = "plan" },
+]
+
+[[injection]]
+id = "finite_portal_entity_preservation"
+target = "horizon_client::game::nether_portal::Game<'_>::resolve_arrivals"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/portal_entities.rs"
+bindings = [{ name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" }]
+
+[[injection]]
+id = "finite_portal_wait_at_origin"
+target = "horizon_client::game::server_travel::Game<'_>::start_server_trip"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/portal_start.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "host", ty = "&mut crate::game::lan::LanHost", value = "host" },
+  { name = "conn", ty = "u32", value = "conn" },
+  { name = "target", ty = "crate::game::Dim", value = "target" },
+  { name = "plan", ty = "Option<crate::game::nether_portal::Plan>", value = "plan" },
+]
+
+[[injection]]
+id = "finite_portal_wait_tick"
+target = "horizon_client::game::server_travel::Game<'_>::arrive_server_trips"
+kind = "HEAD"
+helper = "hooks/portal_tick.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "host", ty = "&mut crate::game::lan::LanHost", value = "host" },
+]
+
+[[injection]]
+id = "finite_command_teleport"
+target = "horizon_client::game::commands::Game<'_>::teleport_to_in_level"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/teleport_boundary.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "at", ty = "[f64;3]", value = "pos" },
+]
+
+[[injection]]
+id = "finite_pearl_teleport"
+hook = "ender_pearl_teleport"
+hook_version = 1
+kind = "HEAD"
+helper = "hooks/random_teleport_boundary.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "target", ty = "&[f64;3]", value = "&*target" },
+  { name = "cancel", ty = "&mut bool", value = "cancel" },
+]
+
+[[injection]]
+id = "finite_chorus_teleport"
+hook = "chorus_fruit_teleport"
+hook_version = 1
+kind = "HEAD"
+helper = "hooks/random_teleport_boundary.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "target", ty = "&[f64;3]", value = "&*target" },
+  { name = "cancel", ty = "&mut bool", value = "cancel" },
+]
+
+[[module]]
+id = "finite_level_runtime"
+file = "crates/horizon-client/src/game/levels.rs"
+name = "veio_level"
+source = "world_level.rs"
+
+[[injection]]
+id = "finite_enter_level"
+target = "horizon_client::game::levels::Game<'_>::enter_level"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/enter_level.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "host", ty = "Option<&mut crate::game::lan::LanHost>", value = "host.as_deref_mut()" },
+  { name = "target", ty = "crate::game::Dim", value = "target" },
+]
+
+[[injection]]
+id = "finite_initial_level_border"
+hook = "level_load"
+hook_version = 1
+kind = "HEAD"
+helper = "hooks/level_border.rs"
+bindings = [{ name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" }]
+
+[[injection]]
+id = "finite_writes"
+target = "horizon_client_render::world::World::set"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/write_boundary.rs"
+bindings = [
+  { name = "world", ty = "&crate::world::World", value = "&*self" },
+  { name = "x", ty = "i32", value = "x" },
+  { name = "z", ty = "i32", value = "z" },
+]
+
+[[injection]]
+id = "finite_mining"
+target = "horizon_client::game::Game<'_>::break_block"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/break_boundary.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "pos", ty = "[i32;3]", value = "pos" },
+]
+
+[[injection]]
+id = "finite_cross_dimension_commands"
+target = "horizon_client::game::commands::Game<'_>::teleport_across"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/cross_teleport_boundary.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "dimension", ty = "crate::game::Dim", value = "level" },
+  { name = "pos", ty = "[f64;3]", value = "pos" },
+]
+
+[[injection]]
+id = "finite_world_session_end"
+hook = "world_lifecycle"
+hook_version = 1
+kind = "HEAD"
+helper = "hooks/world_closed.rs"
+bindings = [{ name = "phase", ty = "horizon_client::mod_api::WorldPhase", value = "phase" }]

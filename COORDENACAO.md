@@ -10,6 +10,16 @@ Divisão atual definida pelo usuário após a integração da 0.9.1. Ela substit
 
 Geração e distribuição continuam sendo sistemas distintos no código. Essa separação técnica não representa mais uma atribuição exclusiva de toda a produção ao Cloud: a nova frente dele é o sistema de trabalhadores.
 
+## Restrição obrigatória do mapa
+
+[MAPA.md](MAPA.md) define o contrato dos novos mundos: Overworld quadrado de
+**15.000 blocos de lado**, muralha de bedrock e restrição de coordenadas, cobertura
+garantida de biomas e conteúdo de sobrevivência em cada mundo, e portais seguros
+com Nether na escala 8:1. A geração adaptada foi autorizada pelo usuário. Todas as
+frentes devem respeitar esse contrato ao planejar recursos, estruturas, spawn,
+exploração, progressão e desempenho. Sua implementação ainda está pendente; o
+documento não altera mundos existentes.
+
 ## Fluxo compartilhado
 
 1. Partir da `main` atualizada. A base de código desta rodada é a **0.9.1**, commit `26599ecd7d8e94f9889a84da42b3928ad3156a9e`; este documento e as ordens acrescentam a coordenação da rodada.
@@ -30,6 +40,7 @@ A preparação comum de postos está descrita em [frentes/INTERFACE_POSTOS.md](f
 - `native/api/src/farm.rs`: colheitadeira; compartilhada quando trabalhadores ou novas funções agrícolas exigirem integração.
 - `native/api/src/lib.rs`: reúne ganchos, registros e distribuição adjacente de energia. Receitas e jazidas estão em `production/`. Evite substituí-lo inteiro em uma entrega; envie alterações pequenas e descreva quais funções mudou.
 - `native/api/src/workforce/`: trabalhadores (Cloud). Posto, atribuição exclusiva por UUID, ordens de caminhada, objetivo `Work` dos aldeões e tarefas por setor (`farmhand.rs`). Estados 18-23 do painel. Detalhes e contratos tocados em [TRABALHADORES.md](TRABALHADORES.md).
+- `native/api/src/home/`: casa do fundador (Cloud): construção, presença com bônus nas máquinas, regra das duas camas, comida do jogador e mural. Liga-se a `upgrades::effect` (multiplicador de tempo) e ao tick do centro de controle. Detalhes em [TRABALHADORES.md](TRABALHADORES.md), sexta entrega.
 - `presentation.rs`, `tutorial.rs`, traduções e geradores de conteúdo são compartilhados. Preserve as entradas do outro lado ao acrescentar conteúdo.
 
 O transporte consulta `output_slots` para descobrir quais slots uma máquina permite esvaziar. Produção define suas entradas, saídas e filtros em `layout`/`accepts`. O transporte entrega itens por `Host::insert_item` e desconta da origem somente a quantidade aceita. Receita, consumo de ingredientes e criação de produtos continuam na produção. Estoque cheio deve parar o fluxo sem destruir itens.

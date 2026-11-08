@@ -1,5 +1,5 @@
 {
-  "parent": "veio:tutorial/modules",
+  "parent": "veio:tutorial/gears",
   "display": {
     "icon": {
       "id": "veio:contract_hub"
@@ -19,7 +19,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:contract_hub"
+            "items": "veio:contract_hub",
+            "count": {
+              "min": 1
+            }
           }
         ]
       }

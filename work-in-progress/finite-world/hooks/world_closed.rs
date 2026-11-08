@@ -1,0 +1,1 @@
+fn finite_world_closed(phase:horizon_client::mod_api::WorldPhase){if matches!(phase,horizon_client::mod_api::WorldPhase::WorldCloseFinal|horizon_client::mod_api::WorldPhase::WorldCloseFailed|horizon_client::mod_api::WorldPhase::WorldOpenFailed){horizon_world::veio_map::activate(std::path::Path::new(""),None);}}

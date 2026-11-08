@@ -23,6 +23,14 @@ def main():
     languages = [read_json(CONTENT / f"assets/veio/lang/{code}.json") for code in ("pt_br", "en_us")]
     pages = check_book(languages, "guide")
     check_book(languages, "village_guide")
+    check_book(languages, "first_steps")
+    # Dynamic native keys are not reachable from a book's JSON tree.
+    keys = ([f"veio.onboarding.goal.{i}" for i in range(8)]
+            + [f"veio.onboarding.hint.{i}" for i in range(9)]
+            + [f"veio.onboarding.blocked.{i}" for i in (3, 5, 9)]
+            + ["veio.onboarding.hidden", "veio.onboarding.shown", "veio.onboarding.save_failed"])
+    for language in languages:
+        assert all(language.get(key, "").strip() for key in keys), "Falta tradução do tutorial na tela"
     textures = check_assets(languages)
     print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas; "
           f"{textures} texturas 16x16 encontradas.")

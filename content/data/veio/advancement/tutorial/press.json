@@ -1,0 +1,31 @@
+{
+  "parent": "veio:tutorial/generator",
+  "display": {
+    "icon": {
+      "id": "veio:press"
+    },
+    "title": {
+      "translate": "veio.tutorial.press.title"
+    },
+    "description": {
+      "translate": "veio.tutorial.press.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:press",
+            "count": {
+              "min": 1
+            }
+          }
+        ]
+      }
+    }
+  }
+}

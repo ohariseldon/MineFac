@@ -1,4 +1,8 @@
-# Veio 0.15.0
+# Veio 0.15.2
+
+**0.15.2 — tutorial com transporte livre:** agora aceita braços (todos os níveis), funis, carregadores e combinações com esteiras. Estoques abastecidos pelo jogador podem fornecer a entrada; a alimentação e o armazenamento precisam acontecer automaticamente. O progresso da 0.15.1 é preservado.
+
+**0.15.1 — tutorial na tela:** um objetivo por vez acima da barra de itens, com avanço por energia recebida, ciclos produzidos, fluxo automático e entrega real. Usa a consolidada da 0.15.0 com a otimização integrada em `65cab50`.
 
 **Build consolidada** das três frentes até aqui:
 
@@ -12,9 +16,9 @@ Histórico: a 0.14.0 fez as vilas crescerem com a fábrica até 150 aldeões (co
 - **Codex — interface de postos:** [consulta comum de estações](frentes/INTERFACE_POSTOS.md), com setor, inventários, motivo de espera e dica ao passar o cursor sobre o estado da máquina. O posto do lavrador já está registrado nela.
 - **Grok — lote 1:** [ticks mais leves e energia renovável utilizável](frentes/GROK-LOTE.md): roda d'água, cata-vento e biomassa reforçados; menos trabalho repetido em cabos, esteiras e sensores. **Lote 3:** [postos da 0.11.0](frentes/GROK-LOTE3.md): varredura por fileira, pão paga 3 tarefas, trigo cru não fecha o ciclo. **Lote 4:** [inspeções do carregador e NBT do pastor](frentes/GROK-LOTE4.md): 3 máquinas por ciclo; o pastor relê só o alvo. **Lote 5:** [fila do capataz](frentes/GROK-LOTE5.md): uma leitura por bloco da rede; 3 postos por ciclo. **Lote 6:** [zonas da 0.13.0](frentes/GROK-LOTE6.md): 9 blocos/ciclo na lavoura grande; um teste de água por ciclo. **Lote 7:** [tick sem alocação repetida](frentes/GROK-LOTE7.md): chaves NBT reaproveitadas; a difusão da poluição corre uma vez por dimensão.
 
-**Para jogar no Windows:** depois de clonar, abra `launcher.exe` na raiz do repositório (ou extraia `release/Veio-0.15.0.zip` em qualquer pasta e abra o `launcher.exe` de dentro). Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Se a instância não existir, ele a cria (`horizon-launcher instance create Veio`) e depois abre o jogo direto. Antes, instale o Horizon Launcher, entre com a conta e faça o Prepare uma vez. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo. Para gerar de novo: `python tools/package.py`.
+**Para jogar no Windows:** depois de clonar, abra `launcher.exe` na raiz do repositório (ou extraia `release/Veio-0.15.2.zip` em qualquer pasta e abra o `launcher.exe` de dentro). Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Se a instância não existir, ele a cria (`horizon-launcher instance create Veio`) e depois abre o jogo direto. Antes, instale o Horizon Launcher, entre com a conta e faça o Prepare uma vez. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo. Para gerar de novo: `python tools/package.py`.
 
-A integração passou na conferência de conteúdo e nos testes offline (108 regras do mod e 2 do launcher). A compilação nativa pelo Horizon Launcher e o teste dentro do jogo ainda precisam ser feitos na máquina do usuário; o `launcher.exe` executa essa compilação. Ordens das frentes: [Cloud](frentes/CLOUD.md), [Grok](frentes/GROK.md) e [Codex](frentes/CODEX.md); acordo em [COORDENACAO.md](COORDENACAO.md).
+A integração anterior passou na conferência de conteúdo e nos testes offline (108 regras do mod e 2 do launcher). As regras do tutorial na tela e as verificações atuais estão descritas abaixo. A compilação nativa pelo Horizon Launcher e o teste dentro do jogo ainda precisam ser feitos na máquina do usuário; o `launcher.exe` executa essa compilação. Ordens das frentes: [Cloud](frentes/CLOUD.md), [Grok](frentes/GROK.md) e [Codex](frentes/CODEX.md); acordo em [COORDENACAO.md](COORDENACAO.md).
 
 Código do projeto **MineFac**. Para continuar o desenvolvimento localmente ou na nuvem, leia [CONTRIBUTING.md](CONTRIBUTING.md). A verificação de conteúdo funciona com Python, e a do módulo Rust funciona sem internet, sem instalar o jogo.
 
@@ -24,15 +28,42 @@ A fábrica faz parte do mundo do Minecraft: extrai das jazidas vanilla, queima c
 
 ## Tutorial dentro do jogo
 
-Ao entrar no mundo, cada jogador recebe uma vez o **Guia do Veio**. Selecione o livro na barra e abra com o botão direito. O sumário é clicável. Comece pela primeira fábrica de cobre e siga até a primeira engrenagem. As páginas finais servem de consulta para uso e fabricação das máquinas.
+O tutorial principal acontece **na tela, acima da barra de itens**, com um objetivo por vez. Você conhece Minecraft; a vila ensina a transformar uma oficina operada à mão numa linha que trabalha sozinha. Os livros ficam como consulta opcional.
 
-- Abra **Avanços > Primeira fábrica** para acompanhar materiais obtidos. Recolha os produtos no inventário para registrar os marcos.
-- Abra uma máquina com botão direito. Os rótulos mostram entradas e saídas. Passe o cursor sobre um slot vazio para saber qual material colocar.
-- Passe o cursor no **?** do painel para consultar funcionamento e receita. No inventário, máquinas e componentes também mostram sua função.
-- Perdeu o guia? Junte **um livro e um papel** na bancada para fabricar outro.
-- O guia acompanha o idioma do jogo, com português brasileiro e inglês. As opções de idioma ficam nas configurações do Horizon.
+A sequência avança automaticamente quando o servidor observa o resultado:
 
-O começo usa receitas sem posição fixa na bancada, uma extratora diretamente sobre minério de cobre, gerador com carvão e cabos encostando em cada máquina. Monte `extratora > esteira > prensa > baú` na mesma altura. A prensa usa **cobre bruto**, e o montador transforma **duas chapas de cobre** em uma engrenagem.
+1. **Colocar um gerador** na oficina.
+2. **Energizar uma prensa**: confirmar energia armazenada ou consumida num ciclo real.
+3. **Produzir 4 chapas novas**, colocando cobre bruto na prensa.
+4. **Produzir uma engrenagem nova**, usando o montador.
+5. **Extrair cobre de verdade**, com extratora sobre uma jazida.
+6. **Abastecer a prensa automaticamente**: pelo menos 2 cobres realmente entregues por algum transporte e pelo menos uma chapa produzida com essa alimentação. O estoque de entrada pode ter sido abastecido à mão.
+7. **Guardar 4 chapas automaticamente**: só contam chapas produzidas com abastecimento automático e efetivamente aceitas num estoque. Baú, barril, funil, celeiro, silo e estoque do posto do carregador são destinos válidos.
+8. **Concluir a primeira encomenda da central**: 24 chapas + 8 engrenagens. A transação real consome o pedido e entrega 64 esteiras + 32 cabos.
+
+Cada etapa mostra uma orientação de montagem no chat, incluindo as receitas necessárias, sem exigir abrir um livro. Falta de energia, saída cheia e pausa por redstone também têm avisos, limitados para evitar repetição constante. A faixa do objetivo é renovada uma vez por segundo; a conclusão encerra a faixa e apresenta o próximo caminho pela vila.
+
+Colocar uma máquina seleciona essa máquina para o tutorial. Para usar uma instalação que já existe, **abra a máquina correspondente**. Não é preciso desmontar a fábrica. Só produção nova, enquanto a etapa está ativa, conta; possuir a máquina ou o produto no inventário não completa esses exercícios. Para o último objetivo, use a primeira encomenda de uma central ainda não concluída.
+
+A detecção aceita **esteiras, braços básicos/rápidos/longos, funis e carregadores**, inclusive em rotas mistas. Você pode automatizar um trecho por vez: abastecer o baú ou o posto à mão e deixar que o transporte alimente a prensa é válido. Colocar cobre diretamente na prensa não comprova alimentação automática; chapas antigas colocadas no estoque não completam o objetivo.
+
+- Esteiras continuam informando só as quantidades aceitas pelo destino.
+- Braços preservam filtros, alcance, energia e a movimentação original. A detecção confere o item que realmente mudou de inventário, inclusive nos braços sem filtro.
+- Funis anunciam uma tentativa antes de mover o item. O tutorial espera a mudança real na prensa, antes da produção seguinte ou da próxima operação de transporte. Tentativas recusadas, inventários ausentes e leituras antigas não geram crédito. Um funil recebendo a saída da prensa já funciona como estoque intermediário válido.
+- Nos carregadores, a coleta guarda uma prova separada da carga em trânsito. Só a quantidade efetivamente entregue conta; saída cheia mantém a carga e sua prova para a tentativa seguinte. O caminho inclui a coleta normal, o estoque do posto e a fila do capataz. Sobras podem voltar ao posto sem contar duas vezes.
+
+
+- `/veiotutorial ocultar`: esconde o objetivo sem pausar a fábrica ou apagar o progresso.
+- `/veiotutorial mostrar`: volta a exibir a etapa atual.
+- `/veiotutorial reiniciar`: refaz os exercícios sem alterar receitas liberadas, máquinas ou estoques.
+
+O progresso é individual e fica em `<pasta do mundo>/veio/tutorial/<UUID>.txt`, junto do mundo para acompanhar seus backups. Etapas, contagens e máquinas selecionadas são salvas a cada cinco segundos e na saída; créditos de transporte em trânsito são recomeçados após uma recarga. As contagens e etapas existentes da 0.15.1 continuam válidas; não é necessário reiniciar o tutorial. Trocar de mundo não reutiliza o progresso do anterior. Recolocar a prensa ou a extratora invalida a prova de fluxo ainda em andamento. O sistema observa eventos existentes e mantém rastros limitados; não varre o terreno por tick.
+
+**Consulta opcional:** Sua primeira oficina usa **livro + pedregulho**; o Guia do Veio completo usa **livro + papel**; o Guia da Vila Operária usa **livro + trigo**. Livros antigos não se reescrevem. O guia da vila continua sendo apresentado quando seus postos e zonas entram em uso. Os marcos em Avanços > Primeiros pedidos são uma consulta de materiais, silenciosa e independente do objetivo real da tela.
+
+A **0.15.2 muda código nativo**, portanto o launcher recompila na primeira abertura desta versão. O pacote de tutorial `release/Veio-0.15.2.zip` parte da base consolidada mais recente e inclui os visuais já integrados. A geração de mapa que está em edição na frente paralela permanece no workspace e fica fora deste pacote; seu manifesto é montado sobre o da base consolidada, sem os módulos ainda não integrados.
+
+A conferência de conteúdo passou com 480 JSON e traduções válidas. Passaram 131 testes offline, mais dois cenários isolados: retomada de sessão e transporte misto sem esteiras. Quatro rotinas ficam fora da execução comum; os dois cenários de tutorial foram executados separadamente, e a prévia visual e o benchmark permaneceram opcionais. Os testes verificam tentativas recusadas, transporte misto sem nenhuma esteira, carga em trânsito, entregas parciais, retorno de sobras, retomada de sessão e preservação de mundos. Os cenários que ativam o registro global do tutorial são executados separadamente, sem interferir nos testes paralelos de logística. Essas verificações não substituem a compilação pelo Horizon Launcher e o teste dentro do jogo.
 
 ## Energia
 
@@ -116,8 +147,14 @@ O shader é original e opcional, em `visuals/veio-industrial`, sob MIT. Não acr
 
 **8 GB é a meta para o computador inteiro, não uma reserva de memória para o jogo nem uma garantia em qualquer placa gráfica.** O orçamento de 2 ms declarado pelo shader é um objetivo; FPS, consumo total e comportamento em fábricas grandes precisam ser medidos no Horizon real. Mais detalhes em [visuals/veio-industrial/README.md](visuals/veio-industrial/README.md).
 
-
 ## Desempenho
+
+**Restrição de projeto para novos mundos:** Overworld de **15.000 × 15.000 blocos**,
+muralha de bedrock e todos os biomas e recursos de sobrevivência garantidos por
+geração adaptada. O Nether deve respeitar a escala 8:1 e nunca devolver o jogador
+para fora da muralha. O contrato e os critérios de aceite estão em [MAPA.md](MAPA.md).
+Essa geração ainda não está implementada; mundos atuais não são alterados por essa
+decisão. O limite contém o crescimento do mundo, mas não garante ganho de FPS.
 
 O código evita trabalho por tick:
 

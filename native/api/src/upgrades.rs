@@ -33,8 +33,12 @@ pub(super) fn effect_of(module: i32) -> Effect {
     }
 }
 
+/// O módulo da máquina e, por cima, a casa e a comida do jogador (`home::time_factor`), que só
+/// encurtam o ciclo: a energia por tick fica igual, então cada produto sai mais barato.
 pub(super) fn effect(entity: &ModBlockEntity) -> Effect {
-    effect_of(number(entity, "Module"))
+    let mut effect = effect_of(number(entity, "Module"));
+    effect.time *= home::time_factor(defense::clock());
+    effect
 }
 
 pub(super) fn index(item: &str) -> Option<i32> {
