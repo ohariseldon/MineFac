@@ -102,13 +102,17 @@ pub(super) fn draw_filter(host: &dyn Host, event: &mut horizon_client::mod_api::
         }
         event.draw.pop();
     }
-    let Some(item) = filter(event.entity) else { return; };
+    let item = with_nbt_key("LogisticsFilter", |key| match event.entity.nbt.get(key) {
+        Some(Tag::String(value)) if !value.0.is_empty() => Some(value),
+        _ => None,
+    });
+    let Some(item) = item else { return; };
     use horizon_client::mod_api::DisplayContext;
     event.draw.push();
     event.draw.translate([0.5, if inserters::is_arm(event.block) { 0.65 } else { 0.45 }, 0.5]);
     event.draw.rotate_about([1.0, 0.0, 0.0], 90.0, [0.0; 3]);
     event.draw.scale([0.25; 3]);
-    host.draw_item(event.draw, &ItemStack::new(&item, 1), DisplayContext::Fixed, None, 0);
+    presentation::with_drawn_item(item, |stack| { host.draw_item(event.draw, stack, DisplayContext::Fixed, None, 0); });
     event.draw.pop();
 }
 

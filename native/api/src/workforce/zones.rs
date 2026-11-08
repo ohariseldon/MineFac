@@ -156,14 +156,14 @@ pub(crate) fn requirement(unlocked: i32) -> Option<(u32, i32, i32)> {
 
 pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let phase = (time + i64::from((pos[0] ^ pos[2]) & 15)).rem_euclid(20);
-    if phase != 0 && entity.nbt.contains_key(&"Villagers".into()) {
+    if phase != 0 && entity.nbt.contains_key(nbt_key("Villagers")) {
         return;
     }
-    if (time + i64::from(pos[0] & 15)).rem_euclid(200) == 0 || !entity.nbt.contains_key(&"Villagers".into()) {
+    if (time + i64::from(pos[0] & 15)).rem_euclid(200) == 0 || !entity.nbt.contains_key(nbt_key("Villagers")) {
         let center = [f64::from(pos[0]) + 0.5, f64::from(pos[1]), f64::from(pos[2]) + 0.5];
         set_number(entity, "Villagers", production::ranch::villagers_near(host, center, VILLAGE_RADIUS));
     }
-    if !entity.nbt.contains_key(&"Unlocked".into()) {
+    if !entity.nbt.contains_key(nbt_key("Unlocked")) {
         set_number(entity, "Unlocked", 1);
         set_number(entity, "Level", 1);
     }

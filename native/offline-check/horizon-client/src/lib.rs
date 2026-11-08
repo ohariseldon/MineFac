@@ -181,9 +181,12 @@ pub mod mod_api {
         pub partial: f32,
         pub game_time: i64,
         pub light: u32,
+        kept: bool,
     }
     impl BlockEntityDraw {
-        pub fn keep(&mut self) {}
+        pub fn keep(&mut self) { self.kept = true; }
+        /// Só no substituto: o desenho pediu `keep` (o jogo o reaproveitaria).
+        pub fn preview_kept(&self) -> bool { self.kept }
         pub fn spin(&mut self, axis: [f32; 3], pivot: [f32; 3], degrees_per_tick: f32, phase: f32) {}
         pub fn still(&mut self) {}
         pub fn push(&mut self) {}
@@ -592,6 +595,13 @@ pub mod mod_api {
         pub state: BlockStateId,
         pub entity: &'a ModBlockEntity,
         pub draw: &'a mut BlockEntityDraw,
+    }
+    impl<'a> BlockEntitySubmitEvent<'a> {
+        /// Só no substituto: monta o evento para medições do quadro.
+        pub fn preview(pos: [i32; 3], block: &'a str, state: BlockStateId, entity: &'a ModBlockEntity,
+            draw: &'a mut BlockEntityDraw) -> Self {
+            Self { pos, block, state, entity, draw }
+        }
     }
     #[non_exhaustive]
     pub struct EntityTickPreEvent<'a> {
