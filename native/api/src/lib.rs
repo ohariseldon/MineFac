@@ -1,5 +1,6 @@
 mod budget;
 mod presentation;
+mod appearance;
 mod contracts;
 mod freight;
 mod logistics;

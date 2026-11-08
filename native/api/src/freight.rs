@@ -282,8 +282,9 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
 /// The visible drone is an animation of the port's durable flight, not a loose
 /// entity holding a second copy of the cargo. No target or inventory is teleported.
 pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
+    appearance::draw(host, event);
     if let Some(item) = export(event.entity) {
-        event.draw.push(); event.draw.translate([0.5, 1.02, 0.5]);
+        event.draw.push(); event.draw.translate(appearance::marker(event.block).unwrap_or([0.5, 1.02, 0.5]));
         event.draw.rotate_about([1.0, 0.0, 0.0], 90.0, [0.0; 3]); event.draw.scale([0.35; 3]);
         host.draw_item(event.draw, &ItemStack::new(&item, 1), horizon_client::mod_api::DisplayContext::Fixed, None, 0);
         event.draw.pop();
@@ -299,7 +300,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     event.draw.push();
     event.draw.translate([
         (to[0] - event.pos[0]) as f32 * fraction,
-        (to[1] - event.pos[1]) as f32 * fraction + if phase > 0 { 2.0 } else { 0.0 },
+        (to[1] - event.pos[1]) as f32 * fraction + if phase > 0 { 2.0 } else { appearance::marker(event.block).map_or(0.0, |point| point[1] - 1.0) },
         (to[2] - event.pos[2]) as f32 * fraction,
     ]);
     host.draw_cube(event.draw, [5.0, 17.0, 5.0], [11.0, 20.0, 11.0], faces, 0x47b9ce);

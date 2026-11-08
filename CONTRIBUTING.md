@@ -32,6 +32,7 @@ A divisão atual é Cloud para trabalhadores, Grok para desempenho e balanceamen
 - `native/api/src/tutorial.rs`: ajuda no inventário, rótulos e dicas dos painéis.
 - `content/data/veio`: registros, receitas, avanços e tabelas de saque.
 - `tools/build_content.py`: lista única de blocos e itens. Gera modelos, blockstates, registros, menus, saques, abas criativas e a tag de picareta.
+- `tools/machine_forms.py`: formas, materiais, colisões e posições de indicadores das máquinas. O gerador também escreve `native/api/src/appearance/data.rs`. Ao mudar formas, execute `python3 tools/check_machine_forms.py`. A prévia opcional está em `tools/preview_machine_forms.py` (Pillow).
 - `tools/production.json` e `tools/build_production.py`: receitas, jazidas, combustíveis e valores de comida. O script gera `native/api/src/production/data.rs`; rode-o ao mudar o JSON. O guia lê o mesmo JSON.
 - `tools/build_textures.py`: pixel art 16x16 desenhada em texto. Gera todos os PNG do Veio.
 - `content/assets/veio`: traduções `pt_br` e `en_us` e os arquivos gerados acima.

@@ -302,6 +302,10 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     }
     if inserters::is_arm(event.block) { return inserters::draw(host, event); }
     if freight::owns(event.block) { freight::draw(host, event); return; }
+    if let Some(dynamic) = appearance::draw(host, event) {
+        if !dynamic { event.draw.keep(); }
+        return;
+    }
     if production::draw(host, event) || workforce::zones::draw(host, event) {
         return;
     }
