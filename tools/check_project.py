@@ -181,6 +181,11 @@ def check_assets(languages):
     data = CONTENT / "data/veio"
     textures = sorted((assets / "textures").rglob("*.png"))
     for path in textures:
+        if path.parent.name == "gui" and path.name == "ui.png":
+            # Atlas da interface (ícones, setas e chamas): como as telas vanilla, até 256x256.
+            width, height = png_size(path)
+            assert width <= 256 and height <= 256, f"{path.name} passa de 256x256"
+            continue
         assert png_size(path) == (16, 16), f"{path.name} deve ter 16x16, como as texturas vanilla"
     for kind in ("block", "item"):
         for path in (data / f"horizon/{kind}").glob("*.json"):

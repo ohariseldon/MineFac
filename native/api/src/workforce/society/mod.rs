@@ -21,7 +21,7 @@ pub(crate) mod trade;
 
 pub(crate) use ledger::company_cycle;
 pub(crate) use market::{shop_cycle, traded};
-pub(crate) use mayor::{draw_screen, hall_cycle, hall_data, report_to_chat};
+pub(crate) use mayor::{draw_hall, hall_cycle, hall_data, report_to_chat};
 #[cfg(test)]
 pub(crate) use market::bundle;
 #[cfg(test)]

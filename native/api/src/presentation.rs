@@ -34,7 +34,7 @@ pub(super) const STATUS_KEYS: [&str; 44] = [
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
-    let slots = match block {
+    let slots = if let Some(slots) = ui::screens::slots(block) { slots } else { match block {
         DRILL | DRILL_MK2 | BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL | GENERATOR | lift::LIFT => vec![Some([89.0, 45.0])],
         PRESS | ASSEMBLER | CUTTER | CRUSHER | GEOTHERMAL => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
         MERGER => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
@@ -49,7 +49,7 @@ pub(super) fn screen(block: &str) -> Option<NativeScreen> {
         _ if milestones::owns(block) => milestones::screen_slots(),
         _ if workforce::owns(block) => workforce::screen_slots(block)?,
         _ => production::screen_slots(block)?,
-    };
+    } };
     Some(NativeScreen {
         width: WIDTH,
         height: HEIGHT,
@@ -114,6 +114,9 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     if !is_factory_block(event.block) {
         return;
     }
+    if ui::screens::draw(host, event) || ui::custom::draw(host, event) {
+        return;
+    }
     let [x, y] = event.origin;
     // Painel com contorno preto e cantos recortados, como o fundo das telas de contêiner.
     host.fill(event.batch, [x + 1.0, y, WIDTH - 2.0, HEIGHT], EDGE);
@@ -138,30 +141,6 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     host.text(event.batch, &title, [x + 8.0, y + 7.0], INK, false);
     tutorial::draw_labels(host, event);
     host.text(event.batch, &Text::tr("container.inventory", &[]).plain(), [x + 17.0, y + 143.0], INK, false);
-    if event.block == HUB {
-        contracts::draw_screen(host, event);
-        return;
-    }
-    if event.block == industry::MONITOR {
-        industry::draw_monitor(host, event);
-        return;
-    }
-    if event.block == workforce::CONTROL_CENTER {
-        workforce::center::draw_screen(host, event);
-        return;
-    }
-    if event.block == workforce::TOWN_HALL {
-        workforce::society::draw_screen(host, event);
-        return;
-    }
-    if event.block == workforce::HOME {
-        workforce::home::draw_screen(host, event);
-        return;
-    }
-    if milestones::owns(event.block) {
-        milestones::draw_screen(host, event);
-        return;
-    }
     let status = read(0).clamp(0, STATUS_KEYS.len() as i32 - 1) as usize;
     let status_text = Text::tr(&format!("veio.status.{}", STATUS_KEYS[status]), &[]).plain();
     lamp_icon(host, event, [9.0, 24.0], status);
@@ -307,11 +286,19 @@ fn lamp_icon(host: &dyn Host, event: &mut ScreenDrawEvent<'_>, [lx, ly]: [f32; 2
 }
 
 /// Valores enviados ao painel. Os menus em `data/veio/horizon/menu` declaram o mesmo número
-/// (`tools/check_project.py` confere).
-pub(super) const DATA_SLOTS: usize = 13;
+/// (`tools/check_project.py` confere): os 13 números de cada bloco (`VALUES`) e, no fim, a
+/// máscara dos slots vazios, para a tela desenhar os ícones-fantasma (`ui::screens::EMPTY`).
+pub(super) const DATA_SLOTS: usize = 14;
+pub(super) const VALUES: usize = 13;
 
 /// Copia o NBT para o painel. Devolve `true` quando o item desenhado sobre a esteira mudou:
 /// o desenho só lê o nome (`DisplayItem`), então mudar só a quantidade não pede sincronia.
+/// Na central, o último número é a estrela do farol; no grande projeto, as peças já entregues
+/// da segunda meta (a primeira vai em `Total`).
+fn hub_info(entity: &ModBlockEntity, stage: i32, info: i32) -> i32 {
+    if contracts::phase(stage.max(0) as usize).is_some() { info } else { i32::from(contracts::beacon_selected(entity)) }
+}
+
 pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
     // These blocks have no menu; rendering and electricity read their NBT directly.
     if matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE | production::PIPE) { return false; }
@@ -352,13 +339,14 @@ pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
         let module = if number(entity, "Tier") >= 2 { module + upgrades::MK2_FLAG } else { module };
         let stage = if freight::owns(&entity.id) { number(entity, "FlightPhase") } else { stage };
         [status, progress, duration, energy, burn, capacity(&entity.id), rate, utilization, stage, total,
-            damage, module, if entity.id == TESLA { smog } else if entity.id == HUB { i32::from(contracts::beacon_selected(entity)) } else { info }]
+            damage, module, if entity.id == TESLA { smog } else if entity.id == HUB { hub_info(entity, stage, info) } else { info }]
     };
-    debug_assert_eq!(values.len(), DATA_SLOTS);
+    let values: [i32; VALUES] = values;
     if entity.data.len() != DATA_SLOTS {
         entity.data.resize(DATA_SLOTS, 0);
     }
-    entity.data.copy_from_slice(&values);
+    entity.data[..VALUES].copy_from_slice(&values);
+    entity.data[ui::screens::EMPTY] = empty_slots(entity);
     if !matches!(entity.id.as_str(), BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER) {
         return false;
     }
@@ -380,6 +368,13 @@ pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
     });
     // Sem carga antes e depois (só faltava a chave): o desenho não muda.
     !(was_empty && name.is_empty())
+}
+
+/// Bit `i` aceso quando o slot `i` está vazio (até 15 slots: o menu sincroniza 16 bits).
+fn empty_slots(entity: &ModBlockEntity) -> i32 {
+    entity.items.iter().take(15).enumerate()
+        .filter(|(_, stack)| stack.as_ref().is_none_or(|stack| stack.count == 0))
+        .fold(0, |mask, (index, _)| mask | 1 << index)
 }
 
 /// Cor das luzes no mundo: fortes, para ler de longe.

@@ -23,6 +23,7 @@ mod research;
 mod stations;
 mod rivers;
 mod tutorial;
+mod ui;
 mod onboarding;
 mod upgrades;
 mod holding;
@@ -1050,7 +1051,8 @@ fn published_signature(entity: &ModBlockEntity) -> (i32, i32, i32, bool) {
         && !inserters::is_arm(&entity.id) && !workforce::zones::is_marker(&entity.id)
         && !freight::owns(&entity.id) && !milestones::owns(&entity.id);
     match entity.data.as_slice() {
-        [status, .., module, info] if standard && entity.data.len() == presentation::DATA_SLOTS => (*status, *module, *info, burning(entity)),
+        // A máscara de slots vazios (o último) não muda o desenho no mundo.
+        [status, .., module, info, _empty] if standard && entity.data.len() == presentation::DATA_SLOTS => (*status, *module, *info, burning(entity)),
         _ => visual_signature(entity),
     }
 }

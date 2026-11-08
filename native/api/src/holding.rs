@@ -285,17 +285,16 @@ pub(super) fn data(entity: &ModBlockEntity) -> [i32; 11] {
     out
 }
 
-/// Altura da linha da companhia na página Resumo (4ª linha do painel).
-const TOP_COMPANY: f32 = 33.0 + 3.0 * 9.5;
-
-/// Clique nas setas do cabeçalho ou, no Resumo (`tab` 0), na linha da companhia (saque).
+/// Clique nos botões das abas ou, no Resumo (`tab` 0), na linha da companhia (saque).
 pub(super) fn click(at: [f32; 2], tab: i32) -> Option<i32> {
-    let row = (20.0..32.0).contains(&at[1]);
-    if row && (5.0..20.0).contains(&at[0]) {
+    use workforce::center::{COMPANY_ROW, NEXT as NEXT_BUTTON, PREVIOUS as PREVIOUS_BUTTON};
+    let inside = |[x, y, w, h]: [f32; 4]| (x..x + w).contains(&at[0]) && (y..y + h).contains(&at[1]);
+    let [company_y, company_h] = COMPANY_ROW;
+    if inside(PREVIOUS_BUTTON) {
         Some(PREVIOUS)
-    } else if row && (162.0..180.0).contains(&at[0]) {
+    } else if inside(NEXT_BUTTON) {
         Some(NEXT)
-    } else if tab == 0 && (TOP_COMPANY..TOP_COMPANY + 9.5).contains(&at[1]) && (5.0..160.0).contains(&at[0]) {
+    } else if tab == 0 && (company_y..company_y + company_h).contains(&at[1]) && (6.0..188.0).contains(&at[0]) {
         Some(workforce::society::ledger::CASH_OUT)
     } else {
         None

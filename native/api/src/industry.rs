@@ -200,8 +200,8 @@ pub(super) fn tick_monitor(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModB
 }
 
 /// Os 13 números do painel do monitor.
-pub(super) fn monitor_data(entity: &ModBlockEntity) -> [i32; presentation::DATA_SLOTS] {
-    let mut data = [0; presentation::DATA_SLOTS];
+pub(super) fn monitor_data(entity: &ModBlockEntity) -> [i32; presentation::VALUES] {
+    let mut data = [0; presentation::VALUES];
     data[0] = number(entity, "Status");
     for row in 0..ROWS {
         data[1 + row] = number(entity, &format!("Flow{row}"));
@@ -212,31 +212,41 @@ pub(super) fn monitor_data(entity: &ModBlockEntity) -> [i32; presentation::DATA_
     data
 }
 
-pub(super) fn draw_monitor(host: &dyn Host, event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>) {
+/// Monitor: quantas máquinas trabalham, esperam ou pararam e, embaixo, a tabela por item com o
+/// que a fábrica produz e gasta por minuto (vermelho quando gasta mais do que produz).
+pub(super) fn draw_monitor(pen: &mut ui::Pen<'_>, view: &ui::screens::View<'_>) {
     use horizon_client::mod_api::Text;
-    let [x, y] = event.origin;
-    let read = |index: usize| event.data.get(index).copied().unwrap_or(0);
-    let counts = Text::tr("veio.monitor.counts", &[&read(10), &read(11), &read(12)]).plain();
-    host.text(event.batch, &counts, [x + 9.0, y + 24.0], if read(12) > 0 { presentation::text_color(3) } else { presentation::INK }, false);
-    host.text(event.batch, &Text::tr("veio.monitor.header", &[]).plain(), [x + 9.0, y + 36.0], presentation::SOFT_INK, false);
+    let read = |index: usize| view.read(index);
+    let tr = |key: &str, args: &[&dyn std::fmt::Display]| Text::tr(key, args).plain();
+    let stopped = read(12) > 0;
+    pen.lamp(9.0, ui::STATUS_Y + 2.5, if stopped { 0xd03030 } else if read(10) > 0 { 0x3fae3f } else { 0x9a9a9a });
+    let counts = pen.fit(&tr("veio.ui.monitor.counts", &[&read(10), &read(11), &read(12)]), 171.0);
+    pen.text(&counts, 18.0, ui::STATUS_Y + 2.0, if stopped { ui::BAD } else { ui::INK });
+    let top = 45.0;
+    pen.text(&tr("veio.ui.monitor.item", &[]), 8.0, top, ui::FAINT);
+    pen.text_right(&tr("veio.ui.monitor.made", &[]), 150.0, top, ui::FAINT);
+    pen.text_right(&tr("veio.ui.monitor.used", &[]), 186.0, top, ui::FAINT);
+    pen.fill(7.0, top + 10.0, 180.0, 1.0, 0xffa8a8a8);
     let mut shown = 0;
     for row in 0..ROWS {
         let (index, made, used) = unpack(read(1 + row));
         let Some(item) = index.checked_sub(1).and_then(|index| items().get(index)) else { continue; };
-        let line_y = y + 48.0 + shown as f32 * 10.0;
-        let mut name = contracts::item_name(item);
-        while host.text_width(&name) > 100.0 && name.pop().is_some() {}
-        host.text(event.batch, &name, [x + 9.0, line_y], presentation::INK, false);
-        let made_text = format!("+{made}");
-        let used_text = format!("-{used}");
-        host.text(event.batch, &made_text, [x + 140.0 - host.text_width(&made_text), line_y], 0xff2f7d32, false);
+        let y = top + 13.0 + shown as f32 * 9.0;
+        if shown % 2 == 1 { pen.fill(7.0, y - 1.0, 180.0, 9.0, 0x12000000); }
+        pen.item(item, 8.0, y - 0.5, 8.0);
+        let name = pen.fit(&contracts::item_name(item), 100.0);
+        pen.text(&name, 19.0, y, ui::INK);
+        let signed = |sign: char, value: i32| if value > 0 { format!("{sign}{value}") } else { "0".to_owned() };
+        pen.text_right(&signed('+', made), 150.0, y, if made > 0 { ui::GOOD } else { ui::FAINT });
         // Consumo maior que a produção pinta de vermelho: a linha está faltando esse item.
-        let color = if used > made { 0xffb03030 } else { presentation::SOFT_INK };
-        host.text(event.batch, &used_text, [x + 182.0 - host.text_width(&used_text), line_y], color, false);
+        pen.text_right(&signed('-', used), 186.0, y, if used > made { ui::BAD } else if used > 0 { ui::SOFT } else { ui::FAINT });
         shown += 1;
     }
     if shown == 0 {
-        host.text(event.batch, &Text::tr("veio.monitor.empty", &[]).plain(), [x + 9.0, y + 48.0], presentation::SOFT_INK, false);
+        pen.text(&tr("veio.monitor.empty", &[]), 8.0, top + 13.0, ui::SOFT);
+    }
+    if shown <= 8 {
+        pen.paragraph(&tr("veio.ui.how.factory_monitor", &[]), 7.0, 134.0, 180.0, 1, ui::FAINT);
     }
 }
 

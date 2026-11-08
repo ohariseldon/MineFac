@@ -114,13 +114,62 @@ pub mod mod_api {
             Self { plain: s.into() }
         }
         /// O substituto não tem traduções: devolve a chave, como o jogo faz com chaves ausentes.
+        /// Só as prévias de tela (`preview_language`) traduzem, com os argumentos no lugar.
         pub fn tr(key: &str, args: &[&dyn std::fmt::Display]) -> Self {
-            let _ = args;
-            Self { plain: key.to_owned() }
+            let lang = PREVIEW_LANGUAGE.lock().unwrap();
+            let Some(lang) = lang.as_ref() else {
+                return Self { plain: key.to_owned() };
+            };
+            let Some(pattern) = lang.get(key) else {
+                return Self { plain: key.to_owned() };
+            };
+            Self { plain: format_language(pattern, args) }
         }
         pub fn plain(&self) -> String {
             self.plain.clone()
         }
+    }
+
+    static PREVIEW_LANGUAGE: std::sync::Mutex<Option<std::collections::HashMap<String, String>>> =
+        std::sync::Mutex::new(None);
+
+    /// Só no substituto: traduz `Text::tr` com este mapa (as prévias de tela), ou volta às chaves.
+    pub fn preview_language(map: Option<std::collections::HashMap<String, String>>) {
+        *PREVIEW_LANGUAGE.lock().unwrap() = map;
+    }
+
+    /// `%s`, `%1$s` e `%%` como no `String.format` que o Minecraft usa nas traduções.
+    fn format_language(pattern: &str, args: &[&dyn std::fmt::Display]) -> String {
+        let mut out = String::new();
+        let mut next = 0;
+        let mut chars = pattern.chars().peekable();
+        while let Some(c) = chars.next() {
+            if c != '%' {
+                out.push(c);
+                continue;
+            }
+            let mut digits = String::new();
+            while let Some(d) = chars.peek().copied().filter(char::is_ascii_digit) {
+                digits.push(d);
+                chars.next();
+            }
+            let explicit = if !digits.is_empty() && chars.peek() == Some(&'$') {
+                chars.next();
+                Some(digits.parse::<usize>().unwrap_or(1).saturating_sub(1))
+            } else {
+                None
+            };
+            match chars.next() {
+                Some('%') => out.push('%'),
+                Some('s' | 'd') => {
+                    let index = explicit.unwrap_or_else(|| { next += 1; next - 1 });
+                    out.push_str(&args.get(index).map(|a| a.to_string()).unwrap_or_default());
+                }
+                Some(other) => { out.push('%'); out.push(other); }
+                None => out.push('%'),
+            }
+        }
+        out
     }
 
     // ---------- Blocos com entidade ----------
@@ -176,6 +225,12 @@ pub mod mod_api {
     }
     #[derive(Default)]
     pub struct HudBatch;
+    /// Relógio do mundo no cliente (API 20): tempo de jogo e hora do dia, em ticks.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub struct NativeClock {
+        pub game_time: i64,
+        pub day_time: i64,
+    }
     // Offline render probe only: command traces let tests verify cached/GPU
     // movement and export geometry; none of these fields belong to the real API.
     #[derive(Clone, Debug)]
@@ -392,6 +447,26 @@ pub mod mod_api {
         }
         fn text_width(&self, text: &str) -> f32 {
             unimplemented!("text_width")
+        }
+        /// Parte `src` do sprite `name` (`gui/...` do vanilla ou `mod:gui/...`) esticada em `dst`. API 19.
+        fn sprite(&self, batch: &mut HudBatch, name: &str, src: [f32; 4], dst: [f32; 4]) -> bool {
+            unimplemented!("sprite")
+        }
+        /// Ícone do item `item` com o canto em `at`, `size` pixels de lado (16 num slot). API 20.
+        fn item(&self, batch: &mut HudBatch, item: &str, at: [f32; 2], size: f32) -> bool {
+            unimplemented!("item")
+        }
+        /// Quadrilátero de cantos `points` (em volta, em ordem), `argb`. API 111.
+        fn quad(&self, batch: &mut HudBatch, points: [[f32; 2]; 4], argb: u32) {
+            unimplemented!("quad")
+        }
+        /// Onde está o mouse, em pixels da interface. API 20.
+        fn cursor(&self) -> [f32; 2] {
+            unimplemented!("cursor")
+        }
+        /// Relógio do mundo carregado no cliente; `None` fora de um mundo. API 20.
+        fn clock(&self) -> Option<NativeClock> {
+            unimplemented!("clock")
         }
         fn draw_cube(
             &self,
@@ -612,6 +687,10 @@ pub mod mod_api {
     pub struct ScreenEvent<'a> {
         pub block: &'a str,
     }
+    impl<'a> ScreenEvent<'a> {
+        /// Só no substituto: para as prévias do painel.
+        pub fn preview(block: &'a str) -> Self { Self { block } }
+    }
     #[non_exhaustive]
     pub struct ScreenDrawEvent<'a> {
         pub block: &'a str,
@@ -646,6 +725,12 @@ pub mod mod_api {
         pub data: &'a [i32],
         pub at: [f32; 2],
         pub lines: &'a mut Vec<String>,
+    }
+    impl<'a> ScreenTooltipEvent<'a> {
+        /// Só no substituto: a dica do painel nas prévias.
+        pub fn preview(block: &'a str, data: &'a [i32], at: [f32; 2], lines: &'a mut Vec<String>) -> Self {
+            Self { block, data, at, lines }
+        }
     }
     #[non_exhaustive]
     pub struct TooltipEvent<'a> {

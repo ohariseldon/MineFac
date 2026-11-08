@@ -226,25 +226,37 @@ pub(crate) fn decimal(hundredths: i32) -> String {
 }
 
 /// Tela da prefeitura: fase, indicadores, contas públicas e o pedido.
-pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>) {
-    let [x, y] = event.origin;
-    let read = |index: usize| event.data.get(index).copied().unwrap_or(0);
+/// Painel da prefeitura: o estado e a fase, as contas da vila numa linha cada e, embaixo, a
+/// comida e o salário do prefeito nos slots da direita.
+pub(crate) fn draw_hall(pen: &mut ui::Pen<'_>, view: &ui::screens::View<'_>) {
+    use ui::icons;
+    let read = |index: usize| view.read(index);
     let tr = |key: &str, args: &[&dyn std::fmt::Display]| Text::tr(key, args).plain();
-    let status = read(0).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
+    ui::screens::status_strip(pen, view);
+    let phase = tr(&format!("veio.mayor.phase_name{}", read(1).clamp(1, 4)), &[]);
+    pen.text_right(&phase, 186.0, ui::STATUS_Y + 2.0, ui::INFO);
     let request = read(11);
     let suspended = read(12) != 0;
+    let calm = !suspended && matches!(request / 1000, 0 | 10);
     let lines = [
-        (tr(&format!("veio.status.{}", presentation::STATUS_KEYS[status]), &[]), presentation::text_color(status)),
-        (tr(&format!("veio.mayor.phase_name{}", read(1).clamp(1, 4)), &[]), 0x1f4fa8),
-        (tr("veio.mayor.population", &[&read(2), &read(3), &read(4)]), presentation::INK),
-        (tr("veio.mayor.idh", &[&decimal(read(5)), &decimal(read(6))]), if read(5) < 50 { 0x9a5a00 } else { 0x1e7a1e }),
-        (tr("veio.mayor.gdp", &[&read(7), &read(9)]), presentation::INK),
-        (tr("veio.mayor.public", &[&read(8), &read(10)]), presentation::INK),
-        (if suspended { tr("veio.mayor.suspended", &[]) } else { tr(&format!("veio.mayor.request{}", request / 1000), &[&(request % 1000)]) },
-            if suspended || !matches!(request / 1000, 0 | 10) { 0xaa1f1f } else { 0x1e7a1e }),
+        (icons::PEOPLE, tr("veio.mayor.population", &[&read(2), &read(3), &read(4)]), ui::INK),
+        (icons::HEART, tr("veio.mayor.idh", &[&decimal(read(5)), &decimal(read(6))]), if read(5) < 50 { ui::WARN } else { ui::GOOD }),
+        (icons::CHART, tr("veio.mayor.gdp", &[&read(7), &read(9)]), ui::INK),
+        (icons::EMERALD, tr("veio.mayor.public", &[&read(8), &read(10)]), ui::INK),
+        (if calm { icons::CHECK } else { icons::WARNING },
+            if suspended { tr("veio.mayor.suspended", &[]) } else { tr(&format!("veio.mayor.request{}", request / 1000), &[&(request % 1000)]) },
+            if calm { ui::GOOD } else { ui::BAD }),
     ];
-    for (index, (line, color)) in lines.iter().enumerate() {
-        host.text(event.batch, line, [x + 8.0, y + 22.0 + index as f32 * 11.0], *color, false);
+    for (index, (icon, text, rgb)) in lines.iter().enumerate() {
+        ui::screens::info_row(pen, *icon, text, 6.0, 44.0 + index as f32 * 11.0, 182.0, *rgb);
+    }
+    let how = tr("veio.ui.how.town_hall", &[]);
+    pen.paragraph(&how, 7.0, 104.0, 126.0, 4, ui::SOFT);
+    // Comida e salário do prefeito, com o nome à esquerda de cada slot.
+    for (slot, item, label) in [(0, "minecraft:bread", "veio.ui.label.food"), (1, "minecraft:emerald", "veio.ui.label.wage")] {
+        let Some([x, y]) = screen_slots(TOWN_HALL).and_then(|slots| slots.get(slot).copied().flatten()) else { continue };
+        if view.empty(slot) { pen.ghost(item, x, y); }
+        pen.text_right(&tr(label, &[]), x - 4.0, y + 4.0, ui::SOFT);
     }
 }
 

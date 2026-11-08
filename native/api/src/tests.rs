@@ -518,11 +518,12 @@ fn the_holding_counts_units_workers_and_daily_production_per_division() {
     assert_eq!(made, 15, "15 minérios no turno viram a produção do dia");
     roll(dimension, 1300);
     assert_eq!(summary(dimension, MINING)[3], 15, "um turno só fecha uma vez");
-    // As abas do centro de controle: setas no cabeçalho.
+    // As abas do centro de controle: botões < e > no cabeçalho.
     assert_eq!(click([10.0, 25.0], 1), Some(PREVIOUS));
-    assert_eq!(click([170.0, 25.0], 1), Some(NEXT));
-    assert_eq!(click([90.0, 60.0], 1), None);
-    assert_eq!(click([90.0, 70.0], 0), Some(workforce::society::ledger::CASH_OUT), "linha da companhia: saque");
+    assert_eq!(click([180.0, 25.0], 1), Some(NEXT));
+    assert_eq!(click([170.0, 25.0], 1), None, "o nome da aba no meio não é botão");
+    assert_eq!(click([90.0, 64.0], 1), None);
+    assert_eq!(click([90.0, 64.0], 0), Some(workforce::society::ledger::CASH_OUT), "linha da companhia: saque");
     let mut center = ModBlockEntity::default();
     center.id = workforce::CONTROL_CENTER.to_owned();
     // Primeiro as páginas da vila (aba 0), depois as divisões.
@@ -647,6 +648,25 @@ fn every_project_preserves_inputs_until_both_rewards_fit() {
         for (slot, &(item, count)) in contract.rewards.iter().enumerate() {
             assert!(count > 0 && count <= 64);
             assert_eq!(hub.items[slot + 2], Some(ItemStack::new(item, count)));
+        }
+    }
+}
+
+#[test]
+fn screen_slots_stay_inside_the_panel_above_the_inventory_and_never_overlap() {
+    let menus = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../content/data/veio/horizon/menu");
+    for file in std::fs::read_dir(&menus).unwrap() {
+        let name = file.unwrap().file_name().to_string_lossy().trim_end_matches(".json").to_owned();
+        let block = format!("veio:{name}");
+        let screen = presentation::screen(&block).unwrap();
+        let slots: Vec<[f32; 2]> = screen.slots.iter().flatten().copied().collect();
+        for (index, [x, y]) in slots.iter().enumerate() {
+            // A moldura do slot ocupa um pixel em volta; o rótulo "Inventário" fica em y 143.
+            assert!(*x >= 6.0 && x + 17.0 <= ui::WIDTH - 5.0, "{block}: slot {index} fora do painel em x {x}");
+            assert!(*y >= 19.0 && y + 17.0 <= ui::INVENTORY_Y - 11.0, "{block}: slot {index} fora do painel em y {y}");
+            for (other, [ox, oy]) in slots.iter().enumerate().skip(index + 1) {
+                assert!((x - ox).abs() >= 18.0 || (y - oy).abs() >= 18.0, "{block}: slots {index} e {other} se sobrepõem");
+            }
         }
     }
 }
