@@ -1,4 +1,4 @@
-# Veio — Realismo 2.0
+# Veio — Realismo 2.1
 
 Visual original para o Veio: céu com atmosfera, nuvens, estrelas e sol próprios, plantas e
 água em movimento, luz colorida de tochas, fornos e máquinas quentes, brilho, raios de sol,
@@ -9,6 +9,23 @@ O launcher oferece **Realismo leve — pensado para 8 GB** e **Leve — sem shad
 `Escolher-Visual.cmd` abre essa escolha de novo; `Jogar-Leve.cmd` inicia sem o pacote.
 Também dá para desligar o pacote em Opções > Vídeo > Shaders.
 
+## O que deixa a imagem com cara de jogo novo (2.1)
+
+- **Relevo das texturas:** perto da câmera, o detalhe de cada bloco vira relevo, e o sol de lado
+  revela pedras, tábuas e rebites. Com um pacote de recursos LabPBR, usa os mapas de normal dele.
+- **Sol mais forte, sombra mais azul:** a luz direta ganha peso contra a luz do céu, como numa
+  tarde de verdade.
+- **Sombra de cantos (oclusão de ambiente):** cantos, frestas, o pé das paredes e o chão embaixo
+  das máquinas escurecem. Calculada em meia tela com as normais do relevo e ampliada sem halo.
+- **Luz volumétrica:** o raio de visão atravessa o ar e pergunta ao mapa de sombra se o sol chega
+  ali. Os feixes passam entre folhas, janelas e chaminés mesmo com o sol fora da tela, com
+  neblina de manhã, no outono, na chuva e na fumaça da fábrica.
+- **Reflexos na tela:** chão molhado depois da chuva, metal e vidro refletem lâmpadas, máquinas e
+  céu que estão na imagem.
+- **Água:** refração do fundo com as ondas, absorção do vermelho com a profundidade, cáusticas
+  dançando no fundo raso, ondinhas de vento e o brilho do sol bem fino.
+- **Nitidez:** um filtro que respeita o contraste deixa as texturas nítidas sem serrilhar.
+
 ## Níveis de qualidade
 
 A opção **Qualidade** decide o custo de uma vez só:
@@ -16,9 +33,11 @@ A opção **Qualidade** decide o custo de uma vez só:
 | | Leve (8 GB) | Equilibrado (padrão) | Alto |
 |---|---|---|---|
 | Nuvens | 2 camadas | 4 camadas | 5 camadas |
-| Brilho (bloom) e raios de sol | desligados | ligados, 12 passos | ligados, 24 passos |
+| Brilho (bloom) | desligado | ligado | ligado |
 | Luz colorida | desligada | ligada | ligada |
 | Plantas e água balançando | desligadas | ligadas até 48 blocos | ligadas até 48 blocos |
+| Relevo, sombra de cantos, reflexos na tela, refração | desligados | ligados (8 amostras de cantos, 12 passos de reflexo) | ligados (12 amostras, 24 passos) |
+| Luz no ar | desligada | 8 passos pelo mapa de sombra | 16 passos |
 
 Sombras (512, 1024 ou 2048; alcance de 32 a 96 blocos), reflexos, atmosfera, nuvens, vinheta
 e cada efeito também têm opção própria nas páginas do pacote.
@@ -45,9 +64,10 @@ Sem o mod (pacote usado sozinho), o shader usa valores neutros: primavera, sem f
 - O mod: com mil máquinas quentes, cerca de 40 µs por tick e as 8 luzes por quadro sem
   varrer a fábrica (`python tools/check_performance.py`, cenário
   `ambience_1000_hot_machines_second`).
-- O pacote: pós-processamento em meia e um quarto de resolução para brilho e raios de sol;
-  nuvens analíticas no céu, sem volume; sem SSAO, traçado de raios ou histórico temporal.
-- O `budget.gpu_ms` (3 ms) é um objetivo, não uma medição. A meta de 8 GB considera o
+- O pacote: sombra de cantos, luz no ar e reflexos rodam em meia resolução; brilho em meia e um
+  quarto. Relevo custa duas leituras de textura por pixel até 32 blocos. Nuvens analíticas no
+  céu, sem volume; sem traçado de raios nem histórico temporal. No Leve nada disso roda.
+- O `budget.gpu_ms` (4,5 ms no Equilibrado) é um objetivo, não uma medição. A meta de 8 GB considera o
   computador inteiro. Placa de vídeo, resolução e tamanho da fábrica pesam mais que a RAM.
 
 ## Desenvolvimento

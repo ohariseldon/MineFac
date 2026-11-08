@@ -3,6 +3,35 @@ override water_detail: bool = true;
 override wet_surfaces: bool = true;
 override reflections: bool = false;
 override colored_lights: bool = true;
+override relief: f32 = 0.6;
+
+// Relief: the texture's own detail turned into a surface normal near the camera, so the sun
+// grazing a wall shows each stone and plank. LabPBR normal maps win when a resource pack has
+// them. Two extra texture reads; off on Leve and past 32 blocks.
+fn veio_relief_normal(input: MaterialInput, distance: f32) -> vec3<f32> {
+    let n = input.normal;
+    if quality == 0u || relief <= 0.0 || input.translucent || distance > 32.0 || input.emission > 0.5 {
+        return n;
+    }
+    let t = input.tangent.xyz;
+    let b = cross(n, t) * input.tangent.w;
+    let fade = relief * (1.0 - smoothstep(18.0, 32.0, distance));
+    if block_pbr_maps() {
+        let m = block_normal_map(input.uv).rg * 2.0 - 1.0;
+        let z = sqrt(max(1.0 - dot(m, m), 0.0));
+        let mapped = normalize(t * m.x + b * m.y + n * z);
+        return normalize(mix(n, mapped, min(fade * 1.4, 1.0)));
+    }
+    // Brighter texels stand out, darker ones (mortar, grooves, knots) sink in.
+    let lod = block_texture_lod();
+    let texel = 1.0 / block_texture_size();
+    let centre = veio_luma(input.albedo.rgb);
+    let across = veio_luma(block_texture_level(fract(input.uv + vec2<f32>(texel.x, 0.0)), lod).rgb);
+    let down = veio_luma(block_texture_level(fract(input.uv + vec2<f32>(0.0, texel.y)), lod).rgb);
+    // Mip levels blur the steps: keep the slope the same in blocks at every distance.
+    let gradient = vec2<f32>(across - centre, down - centre) * (2.2 / exp2(lod * 0.5));
+    return normalize(n - (t * gradient.x + b * gradient.y) * fade);
+}
 
 // Colour of the light given by torches, lava, lanterns and Veio's working machines:
 // the pack's [[lights]] colours and the frame's coloured lights (mods, held items).
@@ -54,10 +83,10 @@ fn veio_visibility(position: vec3<f32>, normal: vec3<f32>, light: vec3<f32>) -> 
     return mix(lit, 1.0, fade);
 }
 
-fn veio_water_thickness(input: MaterialInput, view: vec3<f32>) -> f32 {
+fn veio_water_thickness(input: MaterialInput, view: vec3<f32>, screen: vec2<f32>) -> f32 {
     // Horizon already copies this depth for native materials. Read only on translucent water.
     let size = textureDimensions(opaque_depth);
-    let pixel = clamp(vec2<i32>(input.screen * vec2<f32>(size)), vec2<i32>(0), vec2<i32>(size) - vec2<i32>(1));
+    let pixel = clamp(vec2<i32>(screen * vec2<f32>(size)), vec2<i32>(0), vec2<i32>(size) - vec2<i32>(1));
     let depth = textureLoad(opaque_depth, pixel, 0);
     if depth <= 0.000001 {
         return 12.0;
@@ -67,7 +96,7 @@ fn veio_water_thickness(input: MaterialInput, view: vec3<f32>) -> f32 {
     let projected = frame.projection_inverse * clip;
     let local = projected.xyz / max(abs(projected.w), 0.00001);
     let behind = (frame.view_inverse * vec4<f32>(local, 0.0)).xyz;
-    return clamp(dot(behind - input.position, -view), 0.0, 12.0);
+    return clamp(dot(behind - input.position, -view), -1.0, 12.0);
 }
 
 fn material(input: MaterialInput) -> Surface {
@@ -81,16 +110,23 @@ fn material(input: MaterialInput) -> Surface {
     let sky_light = input.light.y * input.light.y;
     let key_strength = mix(0.16, 1.0, day) * (1.0 - 0.80 * frame.rain);
     let light = veio_key_direction();
-    let normal = input.normal;
-    let view = -input.position / max(length(input.position), 0.001);
-    let facing = max(dot(normal, light), 0.0);
+    let distance_here = length(input.position);
+    let geometric = input.normal;
+    let normal = veio_relief_normal(input, distance_here);
+    let view = -input.position / max(distance_here, 0.001);
+    // The face itself decides what the sun can reach; relief only shades inside it.
+    let facing = max(dot(normal, light), 0.0) * smoothstep(-0.05, 0.10, dot(geometric, light));
     var visibility = 1.0;
     if sky_light > 0.01 {
-        visibility = veio_visibility(input.position, normal, light);
+        visibility = veio_visibility(input.position, geometric, light);
     }
-    let sky_ambient = mix(vec3<f32>(0.91, 0.96, 1.06), vec3<f32>(0.97, 1.005, 1.035), day);
-    let hemisphere = 0.76 + 0.12 * max(normal.y, 0.0);
-    let lighting = sky_ambient * hemisphere + veio_key_color() * (0.23 * facing * visibility * key_strength);
+    // Equilibrado and Alto: a stronger sun against a bluer sky-lit shade, like a real
+    // afternoon. Leve keeps the soft 1.x balance.
+    let contrast = select(0.0, 1.0, quality >= 1u);
+    let sky_ambient = mix(vec3<f32>(0.91, 0.96, 1.06), mix(vec3<f32>(0.97, 1.005, 1.035), vec3<f32>(0.90, 0.97, 1.10), contrast), day);
+    let hemisphere = mix(0.76, 0.66 + 0.10 * frame.rain, contrast) + 0.12 * max(normal.y, 0.0);
+    let key = mix(0.23, 0.44, contrast);
+    let lighting = sky_ambient * hemisphere + veio_key_color() * (key * facing * visibility * key_strength);
     var color = vanilla * mix(vec3<f32>(1.0), lighting, sky_light * (1.0 - input.emission));
     // Warm only light already supplied by the game. No gathered or newly created light sources.
     let local_light = clamp(input.light.x - input.light.y * day, 0.0, 1.0) * (1.0 - input.emission);
@@ -111,6 +147,7 @@ fn material(input: MaterialInput) -> Surface {
         wet = frame.wetness * smoothstep(0.98, 1.0, input.light.y) * smoothstep(0.45, 0.95, normal.y);
         color *= 1.0 - wet * select(0.14, 0.035, metal || painted);
     }
+    var smoothness = wet * 0.75;
     if metal || painted || glass || patina || wet > 0.01 {
         let half_raw = view + light;
         let half_light = half_raw / max(length(half_raw), 0.001);
@@ -133,6 +170,7 @@ fn material(input: MaterialInput) -> Surface {
         // Oxidation stays a matte coating instead of returning green copper to orange metal.
         if patina { roughness = 0.86; }
         roughness = mix(roughness, min(roughness, 0.24), wet * 0.72);
+        smoothness = max(smoothness, (1.0 - roughness) * select(0.6, 1.0, metal));
         let exponent = mix(80.0, 10.0, roughness);
         let highlight = pow(max(dot(normal, half_light), 0.0), exponent);
         let fresnel = veio_fresnel(f0, max(dot(normal, view), 0.0));
@@ -148,6 +186,12 @@ fn material(input: MaterialInput) -> Surface {
         color += vanilla * vec3<f32>(0.075, 0.065, 0.025) * backlight * visibility;
     }
 
+    if !input.translucent {
+        // For the post passes: the relief normal shades corners (AO) and smooth or wet
+        // surfaces get screen reflections. data 1 marks foliage, which neither touches.
+        set_surface(normal, clamp(smoothness, 0.0, 1.0), select(0.0, 1.0, foliage));
+    }
+
     var alpha = surface.a;
     if water_detail && input.fluid == 1u && input.translucent && frame.eye_in == 0u {
         var water_normal = normal;
@@ -157,15 +201,48 @@ fn material(input: MaterialInput) -> Surface {
             let camera = frame.camera_position.xz - floor(frame.camera_position.xz / 256.0) * 256.0;
             let p = input.position.xz + camera;
             let phase = frame.time * 0.65;
-            let ripple = vec2<f32>(sin(p.x * 0.7363108 + p.y * 0.49087385 + phase), sin(p.y * 0.6135923 - p.x * 0.3681554 - phase));
+            var ripple = vec2<f32>(sin(p.x * 0.7363108 + p.y * 0.49087385 + phase), sin(p.y * 0.6135923 - p.x * 0.3681554 - phase));
+            if quality >= 1u {
+                // Smaller wind ripples over the swell: two noise octaves drifting with the wind.
+                let drift = vec2<f32>(frame.time * 0.9, frame.time * 0.4) * (0.5 + veio_wind());
+                let e = 0.35;
+                let q = p * 2.3 + drift;
+                let h = veio_noise(q) + 0.5 * veio_noise(q * 2.1 - drift);
+                let hx = veio_noise(q + vec2<f32>(e, 0.0)) + 0.5 * veio_noise((q + vec2<f32>(e, 0.0)) * 2.1 - drift);
+                let hz = veio_noise(q + vec2<f32>(0.0, e)) + 0.5 * veio_noise((q + vec2<f32>(0.0, e)) * 2.1 - drift);
+                ripple = ripple * 0.7 + vec2<f32>(h - hx, h - hz) * (2.6 + 1.5 * frame.rain);
+            }
             let amplitude = 0.035 * (1.0 - smoothstep(16.0, 72.0, distance));
             water_normal = normalize(normal + vec3<f32>(ripple.x, 0.0, ripple.y) * amplitude);
         }
-        let thickness = veio_water_thickness(input, view);
+        var thickness = max(veio_water_thickness(input, view, input.screen), 0.0);
         let absorption = 1.0 - exp(-thickness * 0.16);
         let deep = mix(vanilla, vec3<f32>(0.025, 0.15, 0.18) * max(veio_luma(input.lightmap), 0.02), 0.55);
-        color = mix(color, deep, absorption * 0.62);
-        alpha = mix(surface.a * 0.52, max(surface.a, 0.84), absorption);
+        if quality >= 1u {
+            // Refraction: what lies behind the water, bent by the waves, loses red first with
+            // depth and takes the water's own blue-green. Caustics dance on a shallow bottom.
+            let bend = water_normal.xz * 0.04 * (1.0 - smoothstep(6.0, 48.0, distance)) * min(thickness, 2.0) * 0.5;
+            let bent_thickness = veio_water_thickness(input, view, input.screen + bend);
+            // Never pull in what stands in front of the water.
+            let bent = bent_thickness > 0.02;
+            let screen_here = select(input.screen, input.screen + bend, bent);
+            thickness = select(thickness, bent_thickness, bent);
+            let size = textureDimensions(opaque_color);
+            let pixel = clamp(vec2<i32>(screen_here * vec2<f32>(size)), vec2<i32>(0), vec2<i32>(size) - vec2<i32>(1));
+            var behind = textureLoad(opaque_color, pixel, 0).rgb;
+            let floor_point = input.position - view * thickness + frame.camera_position - floor(frame.camera_position / 256.0) * 256.0;
+            let c1 = veio_noise(floor_point.xz * 1.1 + vec2<f32>(frame.time * 0.5, frame.time * 0.3));
+            let c2 = veio_noise(floor_point.xz * 1.3 - vec2<f32>(frame.time * 0.4, -frame.time * 0.35));
+            let caustic = pow(1.0 - abs(c1 - c2), 10.0) * (1.0 - smoothstep(0.5, 5.0, thickness));
+            behind *= 1.0 + caustic * 0.55 * sky_light * key_strength * visibility;
+            let transmit = exp(-thickness * vec3<f32>(0.42, 0.11, 0.085));
+            let body = mix(vec3<f32>(0.020, 0.13, 0.16), surface.rgb * 0.30, 0.45) * max(veio_luma(input.lightmap), 0.025);
+            color = behind * transmit + body * (vec3<f32>(1.0) - transmit);
+            alpha = 1.0;
+        } else {
+            color = mix(color, deep, absorption * 0.62);
+            alpha = mix(surface.a * 0.52, max(surface.a, 0.84), absorption);
+        }
         let fresnel = 0.02 + 0.68 * veio_pow5(1.0 - clamp(dot(water_normal, view), 0.0, 1.0));
         var sky = veio_environment(reflect(-view, water_normal));
         if reflections && quality >= 1u && frame.has_reflection == 1u && input.face == 1u {
@@ -178,7 +255,8 @@ fn material(input: MaterialInput) -> Surface {
         alpha = max(alpha, fresnel * sky_light * 0.85);
         let half_raw = view + light;
         let half_light = half_raw / max(length(half_raw), 0.001);
-        let sparkle = pow(max(dot(water_normal, half_light), 0.0), 64.0);
+        let sharp = select(64.0, 420.0, quality >= 1u);
+        let sparkle = pow(max(dot(water_normal, half_light), 0.0), sharp) * select(1.0, 4.0, quality >= 1u);
         color += veio_key_color() * sparkle * 0.18 * sky_light * key_strength * visibility;
     }
     // Horizon applies its original alpha rules and biome fog after this material.

@@ -1,5 +1,22 @@
 override edge_smoothing: bool = true;
 override color_strength: f32 = 0.65;
+override sharpen: f32 = 0.35;
+
+// Ambient occlusion from the half-size pass, upscaled along the depth: of four nearby texels,
+// those at this pixel's distance count, so no dark halo leaks around the edges of things.
+fn veio_occlusion(uv: vec2<f32>, distance: f32) -> f32 {
+    let texel = 1.0 / vec2<f32>(textureDimensions(ao));
+    var sum = 0.0;
+    var weights = 0.0;
+    for (var i = 0; i < 4; i++) {
+        let offset = vec2<f32>(f32(i & 1) - 0.5, f32(i >> 1u) - 0.5) * texel * 1.5;
+        let tap = textureSampleLevel(ao, linear_sampler, uv + offset, 0.0);
+        let w = 1.0 / (0.05 + abs(tap.g - distance) / max(distance * 0.04, 0.05));
+        sum += tap.r * w;
+        weights += w;
+    }
+    return sum / max(weights, 0.0001);
+}
 
 // The last pass: smooth edges, then air (distance haze and factory smog), light shafts and
 // bloom, the eye's adaptation, a gentle film curve, the grade and a vignette.
@@ -23,6 +40,24 @@ fn post(input: PostInput) -> vec4<f32> {
         let subpixel = clamp(abs(center_luma - average) / max(hi - lo, 0.02), 0.0, 1.0);
         let blend = smoothstep(0.055, 0.20, hi - lo) * (0.08 + 0.24 * subpixel);
         color = mix(color, filtered, blend);
+        if quality >= 1u && sharpen > 0.0 {
+            // Contrast-aware sharpening: block textures stay crisp at a distance, edges the
+            // smoothing just softened are left alone.
+            let around = (left + right + up + down) * 0.25;
+            let room = clamp(min(lo, 1.0 - hi) / max(hi, 0.05), 0.0, 1.0);
+            color += (color - around) * sharpen * 0.9 * sqrt(room) * (1.0 - blend * 3.0);
+        }
+    }
+    if quality >= 1u && input.depth > 0.000001 {
+        let distance_here = length(view_position(input.uv, input.depth));
+        if ambient_occlusion > 0.0 {
+            let open = veio_occlusion(input.uv, distance_here);
+            color *= mix(1.0, open, ambient_occlusion);
+        }
+        if screen_reflections {
+            let mirrored = textureSampleLevel(ssr, linear_sampler, input.uv, 0.0);
+            color = mix(color, mirrored.rgb, mirrored.a * 0.75);
+        }
     }
     let overworld = frame.dimension == 0 && frame.eye_in == 0u;
     if overworld && input.depth > 0.000001 {

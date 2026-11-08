@@ -1,9 +1,9 @@
 schema = 1
 id = "veio_industrial"
 name = "Veio — Realismo"
-version = "2.0.0"
+version = "2.1.0"
 api = "0.1"
-description = "Céu com atmosfera, nuvens e estrelas, plantas e água em movimento, luz colorida de tochas e fornos, brilho, raios de sol, estações do ano e fumaça da fábrica. Três níveis de qualidade; o Leve foi pensado para PCs de 8 GB."
+description = "Céu com atmosfera, nuvens e estrelas, relevo nas texturas, sombra de cantos, luz volumétrica, reflexos em chão molhado e metal, água com refração e cáusticas, plantas em movimento, luz colorida, estações do ano e fumaça da fábrica. Três níveis de qualidade; o Leve foi pensado para PCs de 8 GB."
 authors = ["Veio"]
 license = "MIT"
 shared = ["common.wgsl"]
@@ -54,9 +54,21 @@ output = "glow"
 scale = 0.25
 
 [[post]]
+file = "ao.wgsl"
+name = "Sombra de cantos (oclusão)"
+output = "ao"
+scale = 0.5
+
+[[post]]
 file = "rays.wgsl"
-name = "Raios de sol"
+name = "Luz no ar (volumétrica)"
 output = "rays"
+scale = 0.5
+
+[[post]]
+file = "ssr.wgsl"
+name = "Reflexos na tela"
+output = "ssr"
 scale = 0.5
 
 [[post]]
@@ -147,7 +159,7 @@ reach = 2.5
 [[options]]
 id = "quality"
 name = "Qualidade"
-description = "Leve: pensado para PCs de 8 GB e placas integradas (sem brilho, raios de sol, luz colorida nem plantas balançando). Equilibrado: o padrão. Alto: nuvens mais detalhadas e raios de sol mais longos."
+description = "Leve: pensado para PCs de 8 GB e placas integradas (sem relevo, sombra de cantos, luz no ar, reflexos, brilho, luz colorida nem plantas balançando). Equilibrado: o padrão, com tudo ligado em contas menores. Alto: mais amostras de sombra de cantos, luz no ar e reflexos, e nuvens mais detalhadas."
 type = "choice"
 default = "Equilibrado"
 values = ["Leve (8 GB)", "Equilibrado", "Alto"]
@@ -216,10 +228,47 @@ step = 0.05
 
 [[options]]
 id = "sun_rays"
-name = "Raios de sol"
-description = "Feixes de luz entre árvores e prédios olhando para o sol."
+name = "Luz no ar"
+description = "Feixes de luz de verdade entre árvores, janelas e chaminés, com neblina de manhã, no outono e na fumaça da fábrica. Usa as sombras; sem elas, só olhando para o sol."
 type = "float"
 default = 0.5
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "relief"
+name = "Relevo das texturas"
+description = "O detalhe de cada bloco vira relevo: com o sol de lado aparecem as pedras, tábuas e rebites. Usa os mapas de normal de um pacote de recursos LabPBR quando houver. Até 32 blocos."
+type = "float"
+default = 0.6
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "ambient_occlusion"
+name = "Sombra de cantos"
+description = "Cantos, frestas, o pé das paredes e o chão sob as máquinas escurecem como na vida real."
+type = "float"
+default = 0.7
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "screen_reflections"
+name = "Reflexos no chão e no metal"
+description = "Chão molhado depois da chuva, metal e vidro refletem as lâmpadas, máquinas e o céu que estão na tela."
+type = "bool"
+default = true
+
+[[options]]
+id = "sharpen"
+name = "Nitidez"
+description = "Deixa as texturas nítidas sem serrilhar as bordas."
+type = "float"
+default = 0.35
 min = 0.0
 max = 1.0
 step = 0.05
@@ -301,19 +350,19 @@ items = ["atmosphere", "clouds", "sun_rays"]
 id = "world"
 name = "Mundo vivo"
 description = "Vento, água, chuva e estações."
-items = ["waving", "seasons", "water_detail", "reflections", "wet_surfaces"]
+items = ["waving", "seasons", "water_detail", "reflections", "wet_surfaces", "screen_reflections"]
 
 [[pages]]
 id = "light"
 name = "Luz"
-description = "Cor das fontes de luz, brilho e metais."
-items = ["colored_lights", "bloom", "metal_highlights"]
+description = "Cor das fontes de luz, brilho, metais, sombra de cantos e relevo."
+items = ["colored_lights", "bloom", "metal_highlights", "ambient_occlusion", "relief"]
 
 [[pages]]
 id = "image"
 name = "Imagem"
 description = "Cor, vinheta e suavização."
-items = ["color_strength", "vignette", "edge_smoothing"]
+items = ["color_strength", "vignette", "edge_smoothing", "sharpen"]
 
 [[pages]]
 id = "shadow_quality"
@@ -323,4 +372,4 @@ items = ["shadow_resolution", "shadow_distance"]
 
 # Objetivo de custo no Equilibrado, não uma medição nem um limitador automático.
 [budget]
-gpu_ms = 3.0
+gpu_ms = 4.5

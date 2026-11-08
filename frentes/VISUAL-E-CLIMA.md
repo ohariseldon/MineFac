@@ -15,6 +15,23 @@ Equilibrado e Alto. Detalhes e custo em `visuals/veio-industrial/README.md`.
 Validação offline: `python tools/check_shaders.py` (precisa do `naga`, `cargo install naga-cli`).
 Os prelúdios da Shader API 0.1 ficam em `tools/horizon_shader_0_1/`.
 
+## 2.1: cara de jogo novo
+
+Pedido seguinte do Luiz: "aprimorar o realismo visual... dar uma impressão de um Minecraft 2030".
+Usa o que a Shader API 0.1 já oferece e o pacote ainda não usava:
+
+- `set_surface` no material (normal com relevo, suavidade, 1 em folhagem) → `surface_at` no pós.
+- `ao.wgsl` (meia tela): oclusão de ambiente por hemisfério, 8/12 amostras, ampliada no
+  `finish.wgsl` pela distância de cada texel (alvos são Rgba16Float, então o g guarda a distância).
+- `rays.wgsl`: luz volumétrica pelo `shadow_map`, 8/16 passos; sem sombras volta ao raio na tela.
+- `ssr.wgsl` (meia tela): reflexo na tela em superfícies lisas ou molhadas, 12/24 passos e 3
+  bissecções.
+- Material: relevo procedural (ou LabPBR), sol mais forte contra sombra azulada, água com
+  refração por `opaque_color`, absorção por canal e cáusticas.
+- `finish.wgsl`: nitidez que respeita o contraste.
+
+Tudo some no Leve. Nada disso foi visto no jogo ainda: só validado pelo `naga`.
+
 ## O que o mod manda (native/api/src/ambience.rs)
 
 - `shader_params`: `frame.mods[0] = [fase do ano 0..4, temperatura/50, fumaça 0..1, 1]`.

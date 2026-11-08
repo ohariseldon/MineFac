@@ -12,6 +12,8 @@ override seasons: bool = true;
 override bloom: f32 = 0.6;
 override sun_rays: f32 = 0.5;
 override vignette: f32 = 0.35;
+override ambient_occlusion: f32 = 0.7;
+override screen_reflections: bool = true;
 
 fn veio_daylight() -> f32 {
     return smoothstep(-0.10, 0.18, frame.sun_direction.y);
@@ -67,6 +69,17 @@ fn veio_season_weights() -> vec4<f32> {
 
 fn veio_smog() -> f32 {
     return select(0.0, clamp(frame.mods[0].z, 0.0, 1.0), veio_has_mod());
+}
+
+// Projects a camera-relative point (blocks) to the screen: xy uv from the top left, z 1 if in front.
+fn veio_project(p: vec3<f32>) -> vec3<f32> {
+    let view = frame.view * vec4<f32>(p, 0.0);
+    let clip = frame.projection * vec4<f32>(view.xyz, 1.0);
+    if clip.w <= 0.0001 {
+        return vec3<f32>(0.0);
+    }
+    let ndc = clip.xy / clip.w;
+    return vec3<f32>(ndc.x * 0.5 + 0.5, 0.5 - ndc.y * 0.5, 1.0);
 }
 
 // ---------- Hash noise, no textures ----------
