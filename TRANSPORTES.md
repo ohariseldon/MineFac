@@ -1,6 +1,6 @@
 # Transporte entre zonas
 
-Integração atualizada com a `main` b43d4a4: terminais ferroviários, portos de
+Integração atualizada com a `main` cf37004: terminais ferroviários, portos de
 drones, caravanas e a fila do capataz/carregador compartilham filtros e inventários. Esta entrega está em código e testes offline; aguarda compilação
 pelo launcher e validação no jogo. Não inclui os PRs separados de balanceamento
 ou pesquisa de jazidas, ainda não integrados à base.
@@ -187,7 +187,7 @@ cancelada; mudar de destino também zera o atraso para procurar o novo caminho.
 ## Validação
 
 Executar da raiz: `python3 tools/check_project.py` e `python3 tools/check_rust.py`.
-No último resultado, 146 testes Rust passaram, sem falhas, com dois opcionais
+No último resultado, 150 testes Rust passaram, sem falhas, com dois opcionais
 ignorados. Conteúdo: 506 JSON, 97 páginas do guia geral, 23 do guia da vila,
 12 do Guia de Transportes e 62 texturas. Os três livros são conferidos.
 O conteúdo inclui modelos, receitas, avanços, traduções, ajuda e guia em ambos
