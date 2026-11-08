@@ -1015,9 +1015,9 @@ pub mod mobs {
         pub id: u32,
         pub kind: Arc<MobType>,
         pub position: Vec3,
-        /// `Mob.velocity` e `Mob.on_climbable` do Horizon: a subida por escada de mão (`workforce`).
+        /// `Mob.velocity` e `Mob.climbing` do Horizon: a subida por escada de mão (`workforce`).
         pub velocity: Vec3,
-        pub on_climbable: bool,
+        pub climbing: bool,
         pub ai: Ai,
         /// No jogo, `MobExtra` tem muito mais; o Veio só chega ao aldeão por `villager::ext`.
         pub extra: MobExtra,
@@ -1105,6 +1105,11 @@ pub mod mobs {
         pub fn nav_move_to(&mut self, w: &MobWorld, at: [f64; 3], speed: f64) -> bool {
             let _ = (w, at, speed);
             true
+        }
+        /// No Horizon (`mobs/living.rs`) é método e lê o bloco do mundo; aqui devolve `climbing`.
+        pub fn on_climbable(&self, w: &MobWorld) -> bool {
+            let _ = w;
+            self.climbing
         }
     }
 

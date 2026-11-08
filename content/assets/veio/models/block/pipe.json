@@ -2,7 +2,7 @@
   "parent": "minecraft:block/block",
   "textures": {
     "pipe": "minecraft:block/cut_copper",
-    "joint": "minecraft:block/waxed_copper_block",
+    "joint": "minecraft:block/copper_block",
     "glass": "minecraft:block/light_blue_stained_glass",
     "particle": "minecraft:block/cut_copper"
   },

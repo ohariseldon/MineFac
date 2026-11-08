@@ -39,7 +39,7 @@ fn realism_is_installed_before_launch_and_preserves_personal_options_and_origina
     assert!(game.contains("renderDistance:8\nsimulationDistance:5\n"));
     let extra = fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap();
     assert!(extra.contains("graphicsApi:dx12\nunknownFutureOption:42\n"));
-    assert!(extra.contains("pickedShaderPack:horizon:veio_industrial\n"));
+    assert!(extra.contains("pickedShaderPack:veio-industrial\n"));
     assert_eq!(fs::read_to_string(dir.join("shaderpacks/veio-industrial/material.wgsl")).unwrap(), "test-pack");
     assert_eq!(fs::read_to_string(dir.join("options.txt.antes-do-veio")).unwrap(), original);
     assert_eq!(fs::read_to_string(dir.join("horizon-graphics.txt.antes-do-veio")).unwrap(), graphics);
@@ -80,7 +80,7 @@ fn switching_both_directions_replaces_the_shader_selection_and_keeps_saves() {
     install(&fixture.0, &dir, selection(Profile::Light)).unwrap();
     assert!(fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap().contains("pickedShaderPack:\n"));
     install(&fixture.0, &dir, selection(Profile::Realism)).unwrap();
-    assert!(fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap().contains("pickedShaderPack:horizon:veio_industrial\n"));
+    assert!(fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap().contains("pickedShaderPack:veio-industrial\n"));
     assert_eq!(fs::read_to_string(dir.join("saves/MyWorld/level.dat")).unwrap(), "player-data");
 }
 

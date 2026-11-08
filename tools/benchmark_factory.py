@@ -89,9 +89,9 @@ class Game:
             "preset:custom\nlodDistance:0\ntextureBudgetMiB:256\nworkers:2\nhdr:false\n"
             f"resolutionScale:{scale}\ntaa:false\nfxaa:false\nupscaling:native\nframeGeneration:off\n"
             "caveCulling:true\nframePacing:efficient\npickedShaderPack:"
-            + ("horizon:veio_industrial" if shader else "") + "\n", encoding="utf-8")
+            + ("veio-industrial" if shader else "") + "\n", encoding="utf-8")
         if shadow_resolution or shadow_distance:
-            options = directory / "shaderpacks/.horizon-options/veio_industrial.txt"
+            options = directory / "shaderpacks/veio-industrial.txt"
             options.parent.mkdir(parents=True, exist_ok=True)
             options.write_text((f"shadow_resolution={shadow_resolution}\n" if shadow_resolution else "")
                                + (f"shadow_distance={shadow_distance}\n" if shadow_distance else ""), encoding="utf-8")
