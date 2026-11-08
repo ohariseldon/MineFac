@@ -392,6 +392,39 @@ for key, pt, en in [
  ('veio.mayor.request12', 'Dívida de impostos da companhia: %s moedas', 'Company tax debt: %s coins'),
  ('veio.mayor.report.public', 'Contas públicas: saldo %s · imposto %s%% (%s/dia) · salários %s/dia · poços %s/dia · assistência %s/dia · dívida da companhia %s.', 'Public accounts: balance %s · tax %s%% (%s/day) · wages %s/day · wells %s/day · assistance %s/day · company debt %s.'),
  ('veio.house.need10', 'Salário atrasado: abasteça o cofre da companhia', 'Wages overdue: fill the company vault'),
+ ('veio.holding.tab0', 'Holding: visão geral', 'Holding: overview'),
+ ('veio.holding.tab1', 'Mineração', 'Mining'),
+ ('veio.holding.tab2', 'Manufatura', 'Manufacturing'),
+ ('veio.holding.tab3', 'Energia', 'Power'),
+ ('veio.holding.tab4', 'Logística', 'Logistics'),
+ ('veio.holding.tab5', 'Agro (fazendas)', 'Agriculture'),
+ ('veio.holding.tab6', 'Extrativismo', 'Forestry'),
+ ('veio.holding.tab7', 'Urbanização', 'Urban development'),
+ ('veio.holding.tab8', 'Comércio', 'Retail'),
+ ('veio.holding.tab9', 'Gestão e segurança', 'Management and security'),
+ ('veio.holding.units', 'Unidades: %s · ativas: %s', 'Units: %s · active: %s'),
+ ('veio.holding.workers', 'Trabalhadores: %s · folha ~%s/dia', 'Workers: %s · payroll ~%s/day'),
+ ('veio.holding.made1', 'Minério extraído: %s/dia', 'Ore mined: %s/day'),
+ ('veio.holding.made2', 'Peças fabricadas: %s/dia', 'Parts made: %s/day'),
+ ('veio.holding.made3', 'Produção registrada: %s/dia', 'Recorded output: %s/day'),
+ ('veio.holding.made4', 'Itens movidos: %s/dia', 'Items moved: %s/day'),
+ ('veio.holding.made5', 'Colheitas e produtos: %s/dia', 'Harvests and goods: %s/day'),
+ ('veio.holding.made6', 'Madeira e folhas: %s/dia', 'Wood and leaves: %s/day'),
+ ('veio.holding.made7', 'Moradia: números abaixo', 'Housing: see below'),
+ ('veio.holding.made8', 'Vendas: números abaixo', 'Sales: see below'),
+ ('veio.holding.made9', 'Tarefas: %s/dia', 'Tasks: %s/day'),
+ ('veio.holding.extra1', 'Extratoras sobre jazidas', 'Extractors on ore veins'),
+ ('veio.holding.extra2', 'Prensas, montadoras, carregadores', 'Presses, assemblers, haulers'),
+ ('veio.holding.extra3', 'Geradores, painéis, baterias, postes', 'Generators, panels, batteries, poles'),
+ ('veio.holding.extra4', 'Esteiras, braços, armazéns, capatazes', 'Belts, arms, storage, foremen'),
+ ('veio.holding.extra5', 'Lavouras %s · cercados %s · níveis %s', 'Fields %s · pens %s · levels %s'),
+ ('veio.holding.extra6', 'Fazendas de árvores', 'Tree farms'),
+ ('veio.holding.extra7', 'Casas %s · moradores %s · sem alvará %s', 'Homes %s · residents %s · no permit %s'),
+ ('veio.holding.extra8', 'Lojas %s · abertas %s · preços %s%%', 'Shops %s · open %s · prices %s%%'),
+ ('veio.holding.extra9', 'Centro, quartel e torres Tesla', 'Center, barracks and Tesla towers'),
+ ('veio.holding.stopped', 'Parado mais comum: %s (%s)', 'Most common stop: %s (%s)'),
+ ('veio.holding.all_good', 'Nada parado', 'Nothing stopped'),
+ ('veio.holding.report', '%s: %s unidades, %s ativas, %s trabalhadores, %s/dia', '%s: %s units, %s active, %s workers, %s/day'),
  ('veio.zone.need_mayor', 'O plano diretor não permite: suba a fase da vila na prefeitura.', 'The master plan forbids it: raise the village phase at the town hall.'),
  ('veio.zone.suspended', 'Licenças suspensas pelo prefeito: melhore o bem-estar da vila.', "Permits suspended by the mayor: improve the village's well-being."),
  ('veio.guide.role.output', 'Saída', 'Output'),
@@ -757,7 +790,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.19.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.20.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -867,6 +900,9 @@ v_shop=vpage(
 v_mayor=vpage(
  "10. Prefeito e contas\n\nDuas contas separadas:\nCompanhia (sua): cofre do centro de controle. Paga seus trabalhadores e impostos.\nPública: prefeitura. Recebe impostos; paga prefeito, poços e assistência.\n\nImposto: 0% no Povoado, depois 8%, 12% e 16%.",
  "10. Mayor and accounts\n\nTwo separate accounts:\nCompany (yours): control center vault. Pays your workers and taxes.\nPublic: the town hall. Collects taxes; pays mayor, wells and assistance.\n\nTax: 0% as a Hamlet, then 8%, 12% and 16%.")
+v_holding=vpage(
+ "Holding\n\nO centro de controle é a sede da companhia. Setas < > trocam a empresa: mineração, manufatura, energia, logística, agro, extrativismo, urbanização, comércio e gestão.\n\nCada aba: unidades, ativas, trabalhadores, produção do dia e o que está parado.",
+ "Holding\n\nThe control center is the company headquarters. The < > arrows switch business: mining, manufacturing, power, logistics, agriculture, forestry, urban, retail and management.\n\nEach tab: units, active, workers, daily output and what is stopped.")
 v_prices=vpage(
  "Preços locais\n\nCada loja tem seus preços. Muita procura e pouco estoque: até o dobro. Estoque parado: barateia até 70%. Família sem achar comida empurra o preço.\n\nCada vila tem seu mercado: abasteça onde está caro.",
  "Local prices\n\nEach shop sets its own prices. High demand and low stock: up to double. Idle stock: drops to 70%. Families who find no food push prices up.\n\nEach village has its own market: supply where it is expensive.")
@@ -895,7 +931,7 @@ vlinks=[("Começar","Start here",v_intro),("1. Trabalhador","1. Worker",v_hire),
  ("3. Cercados","3. Pens",v_pen),("4. Armazéns","4. Storage",v_store),("5. Carregadores","5. Haulers",v_haul),
  ("6. Capataz","6. Foreman",v_foreman),("7. Centro","7. Center",v_center),("Expandir zonas","Grow zones",v_expand),
  ("A vila cresce","Village growth",v_grow),("8. Casas","8. Homes",v_society),("9. Loja","9. Shop",v_shop),
- ("10. Prefeito e contas","10. Mayor and accounts",v_mayor),("Preços","Prices",v_prices),("Fases e indicadores","Phases and indicators",v_phases),("Quartel","Barracks",v_barracks),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
+ ("10. Prefeito e contas","10. Mayor and accounts",v_mayor),("Preços","Prices",v_prices),("Holding","Holding",v_holding),("Fases e indicadores","Phases and indicators",v_phases),("Quartel","Barracks",v_barracks),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
 label("veio.village.title","Guia da Vila Operária","Worker Village Guide")
 extra=[{"translate":"veio.village.title","bold":True},{"text":"\n"}]
 for n,(pt,en,target) in enumerate(vlinks):

@@ -12,6 +12,7 @@ mod production;
 mod power;
 mod tutorial;
 mod upgrades;
+mod holding;
 mod workforce;
 
 use horizon_client::mod_api::{
@@ -270,6 +271,16 @@ impl Hooks for Factory {
         presentation::screen_draw(host, event);
     }
 
+    fn screen_click(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::ScreenClickEvent<'_>) -> Option<i32> {
+        (event.block == workforce::CONTROL_CENTER && !event.right).then(|| holding::click(event.at)).flatten()
+    }
+
+    fn menu_button(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::MenuButtonEvent<'_>) {
+        if event.entity.id == workforce::CONTROL_CENTER {
+            holding::press(host.dimension(), event.pos, event.entity, event.id);
+        }
+    }
+
     fn screen_tooltip(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::ScreenTooltipEvent<'_>) {
         tutorial::screen_tooltip(event);
     }
@@ -317,6 +328,7 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     let previous = visual_signature(entity);
     let produced = number(entity, "Produced");
     tick_factory(host, pos, entity, time);
+    holding::observe(host.dimension(), pos, entity, time);
     pollution::emit(host, pos, entity, time);
     record_performance(entity, produced);
     let cargo = presentation::publish(entity);
@@ -571,6 +583,8 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "UpkeepHalf" => key!("UpkeepHalf"),
         "Wallet" => key!("Wallet"),
         "Wealth" => key!("Wealth"),
+        "Tab" => key!("Tab"),
+        "HData" => key!("HData"),
         _ => rare_nbt_key(name),
     }
 }
