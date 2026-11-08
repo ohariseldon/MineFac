@@ -17,3 +17,6 @@ Fora do #47: o pacote Realismo passou para 3.0.1, com 4 saídas de pós-processa
 - Sons do Veio não tocam no jogo. Os arquivos estão instalados. Em investigação: lista de ouvintes vazia (`server_players`) ou fila de sons do Horizon.
 - O céu do Realismo 3.0.1 está "quebrado" e o brilho e o contraste estão estranhos, segundo o Luiz. Aguardando capturas. A correção é da frente de visual (#51).
 - Lição: o substituto offline do Horizon pode divergir da API real. Ao acrescentar API nele, confira no fonte do 66f3981.
+
+## Adendo: volume das máquinas ×2,5
+O Luiz testou e os sons das máquinas tocam, mas baixo demais. Ele pediu cerca de 2,5 vezes: perceptível, sem incomodar. Todos os volumes de `tools/machine_audio.json` e `soundscape/data.rs` foram multiplicados por 2,5 (prensa 0,168 → 0,42; esteira 0,055 → 0,138), e o aviso de reparo foi de 0,16 para 0,4. O limite do `check_machine_audio.py` subiu de 0,3 para 0,75. A esteira vazia continua abaixo das máquinas.
