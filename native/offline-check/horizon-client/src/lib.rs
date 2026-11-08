@@ -248,6 +248,23 @@ pub mod mod_api {
             host.entity_position(self)
         }
     }
+    /// `mod_api::LivingRef` (Horizon 66f3981): uma entidade viva, de `Host::living`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct LivingRef(EntityRef);
+    impl LivingRef {
+        pub fn new(entity: EntityRef) -> Self {
+            Self(entity)
+        }
+        pub fn entity(self) -> EntityRef {
+            self.0
+        }
+        pub fn id(self) -> u32 {
+            self.0.id()
+        }
+    }
+    /// `horizon_world::player_inventory::EquipmentSlot`, reexportado por `mod_api`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum EquipmentSlot { MainHand, OffHand, Feet, Legs, Chest, Head, Body, Saddle }
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct LevelRef {
         dimension: &'static str,
@@ -433,6 +450,15 @@ pub mod mod_api {
         /// sem saída). `false` sem servidor (cliente de outro servidor) ou se o comando falhar.
         fn run_command(&mut self, line: &str) -> bool {
             unimplemented!("run_command")
+        }
+        /// `native_living_refs::Game::native_living`: a entidade como ser vivo.
+        fn living(&self, entity: EntityRef) -> Option<LivingRef> {
+            unimplemented!("living")
+        }
+        /// `native_living_refs::Game::native_living_set_equipment`: põe `stack` (None esvazia) no
+        /// slot de equipamento, como `/item replace entity`.
+        fn living_set_equipment(&mut self, living: LivingRef, slot: EquipmentSlot, stack: Option<ItemStack>) -> bool {
+            unimplemented!("living_set_equipment")
         }
     }
 

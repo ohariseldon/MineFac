@@ -56,6 +56,9 @@ struct Village {
     commands: Vec<String>,
     /// Hora do dia (0 = manhã).
     day: i64,
+    /// Item na mão de cada aldeão e NBT mesclado neles.
+    hands: HashMap<u32, Option<String>>,
+    villager_nbt: HashMap<u32, Compound>,
     players: Vec<horizon_client::mod_api::NativeServerPlayer>,
     edits: Cell<u32>,
     reads: Cell<u32>,
@@ -114,8 +117,22 @@ impl Host for Village {
             .or_else(|| self.animals.get(&entity.id()).map(|(at, _)| *at))
     }
     fn entity_merge_nbt(&mut self, entity: EntityRef, nbt: Compound) -> bool {
+        if self.villagers.contains_key(&entity.id()) {
+            self.villager_nbt.entry(entity.id()).or_default().extend(nbt);
+            return true;
+        }
         let Some((_, data)) = self.animals.get_mut(&entity.id()) else { return false };
         data.extend(nbt);
+        true
+    }
+    fn living(&self, entity: EntityRef) -> Option<horizon_client::mod_api::LivingRef> {
+        self.villagers.contains_key(&entity.id()).then(|| horizon_client::mod_api::LivingRef::new(entity))
+    }
+    fn living_set_equipment(&mut self, living: horizon_client::mod_api::LivingRef,
+        slot: horizon_client::mod_api::EquipmentSlot, stack: Option<ItemStack>) -> bool
+    {
+        assert_eq!(slot, horizon_client::mod_api::EquipmentSlot::MainHand);
+        self.hands.insert(living.id(), stack.map(|stack| stack.item.to_string()));
         true
     }
     fn item_entities(&self, _: &str, min: [f64; 3], max: [f64; 3]) -> Vec<NativeItemEntity> {
@@ -1318,4 +1335,25 @@ fn workers_rest_at_night_and_resume_in_the_morning() {
     assert_ne!(cycle(&mut village, &mut entity, 2), RESTING, "de manhã volta a trabalhar");
     let now = cycles_at(&mut village, POST, &mut entity, 3, 40, |post| target(post) == Some(WHEAT));
     assert_eq!(order_for(17101, now), Some(goal(WHEAT)), "e vai até o trigo");
+}
+
+#[test]
+fn worker_holds_what_it_carries_and_empties_the_hand_after_delivery() {
+    let mut village = Village::new("veio:test_work_hand");
+    village.villager(17201, [5.5, 64.0, 5.5], [81, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 10);
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    let hand = |village: &Village| village.hands.get(&17201).cloned().flatten();
+    cycle(&mut village, &mut entity, 1);
+    assert_eq!(village.hands.get(&17201), Some(&None), "primeira vez: a mão é acertada (vazia)");
+    village.walk(17201, WHEAT);
+    let now = cycles_at(&mut village, POST, &mut entity, 2, 60, |post| !carried(post).is_empty());
+    assert_eq!(hand(&village).as_deref(), Some("minecraft:wheat"), "colheu: segura o trigo");
+    let chances = village.villager_nbt.get(&17201).and_then(|nbt| nbt.get(&"HandDropChances".into()).cloned());
+    assert_eq!(chances, Some(Tag::List(vec![Tag::Float(0), Tag::Float(0)])), "o item da mão não cai na morte");
+    village.walk(17201, [1, 64, 0]);
+    cycle(&mut village, &mut entity, now + 1);
+    assert_eq!(hand(&village), None, "entregou: mão vazia");
+    assert!(outputs_of(&entity).contains(&("minecraft:wheat".into(), 1)), "a colheita está no posto, não na mão");
 }

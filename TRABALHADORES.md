@@ -32,6 +32,14 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## 0.16.1: o trabalhador segura o que carrega
+
+- Enquanto leva algo (trigo, lã, minério, insumos, a esmeralda do capataz), o aldeão segura na mão o primeiro item da carga; ao entregar, à noite e ao ser dispensado, a mão fica vazia.
+- É só visual: a carga continua no NBT do posto (`Carried`), então salvar, descarregar o chunk ou trocar de trabalhador não perde nem duplica nada. A chance de o item da mão cair na morte é zerada (`HandDropChances`), para a morte do aldeão não duplicar o que já está no posto.
+- O posto só chama o jogo quando o item muda (`Held` no NBT do posto). Um aldeão vindo de outro posto ou de um save antigo tem a mão acertada na primeira vez.
+- API: `Host::living` e `Host::living_set_equipment(living, EquipmentSlot::MainHand, stack)`, com `LivingRef` e `EquipmentSlot` (`horizon_world::player_inventory`), conferidos no Horizon `66f3981` (`game/native_living_refs.rs`) e acrescentados ao substituto offline.
+- Teste: `worker_holds_what_it_carries_and_empties_the_hand_after_delivery`.
+
 ## Sexta entrega: aldeões guiados pelo cérebro, noite, spawn conferido e vilas grandes
 
 Feita sem teste no jogo, a partir do código do Horizon `66f3981` (`mobs/ai.rs`, `mobs/villager.rs`, `mobs/villager_brain.rs`, `game/integrated.rs`, `game/commands*`).
@@ -260,7 +268,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0 e 110 na 0.16.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0 e 135 na 0.16.1 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
