@@ -208,6 +208,12 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     assert_eq!((loaded.input_credit, loaded.output_credit), (0, 0));
     assert!(loaded.raw.is_empty());
     assert!(Progress::decode("bad save").is_none());
+    // Kits e dicas sobrevivem ao save; um save antigo (v1) conta os kits das etapas já passadas.
+    p.kits = 0b111; p.tips = TIP_BELT;
+    let loaded = Progress::decode(&p.encode()).unwrap();
+    assert_eq!((loaded.kits, loaded.tips), (0b111, TIP_BELT));
+    let old = p.encode().replace("veio-onboarding-2", "veio-onboarding-1").replacen(" 7 2\n", "\n", 1);
+    assert_eq!(Progress::decode(&old).map(|old| old.kits), Some(0b11_1111));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
 
@@ -303,14 +309,19 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
         fn tell(&mut self, uuid: u128, text: Text) -> bool {
             assert_eq!(uuid, self.player.uuid); self.messages.push(text.plain()); true
         }
+        fn run_command(&mut self, line: &str) -> bool { self.messages.push(line.to_owned()); true }
     }
     let unique = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
     let root = std::env::temp_dir().join(format!("veio-tutorial-lifecycle-{}-{unique}", std::process::id()));
     let other_world = root.with_extension("other");
-    let player = NativeServerPlayer { uuid: 10, dimension: "minecraft:overworld".to_owned(), ..Default::default() };
+    let player = NativeServerPlayer { uuid: 10, name: "Tutorial".into(), dimension: "minecraft:overworld".to_owned(), ..Default::default() };
     let mut host = Server { root: root.clone(), player: player.clone(), bars: vec![], messages: vec![] };
     tick(&mut host, 20);
     assert!(host.bars.last().unwrap().contains("goal.0"));
+    // A etapa chega em passos curtos, com o kit entregue uma vez.
+    assert!(host.messages.iter().any(|line| line.contains("title.0")));
+    assert!(host.messages.iter().any(|line| line.contains("do.0.3")));
+    assert!(host.messages.iter().any(|line| line == "give Tutorial veio:generator 1"), "{:?}", host.messages);
     select(&host, GEN, GENERATOR, false);
     tick(&mut host, 40);
     assert!(host.bars.last().unwrap().contains("goal.1"));
@@ -350,7 +361,10 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
     std::fs::remove_dir(&save_root).unwrap();
     std::fs::remove_dir(root.join("veio")).unwrap();
     std::fs::remove_dir(root).unwrap();
-    assert!(!other_world.exists());
+    // O outro mundo guardou só o kit entregue lá (etapa 0), separado deste.
+    let other = Progress::decode(&std::fs::read_to_string(path(&other_world.join("veio/tutorial"), player.uuid)).unwrap()).unwrap();
+    assert_eq!((other.step, other.kits), (0, 1));
+    std::fs::remove_dir_all(&other_world).unwrap();
 }
 
 #[test]

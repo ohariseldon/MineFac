@@ -15,6 +15,24 @@ const HUB_SLOT: usize = 4;
 const MAX_TRACE: usize = 128;
 // Workers may walk and wait with a load. No short conveyor-speed deadline.
 const TRACE_TTL: u64 = 6000;
+/// Linhas "faça" de cada etapa (`veio.onboarding.do.<etapa>.<n>`), na ordem.
+const DO_LINES: [u8; 9] = [3, 4, 4, 3, 3, 4, 3, 4, 3];
+/// Kit de cada etapa, entregue uma vez ao anunciá-la: o tutorial ensina a montar a fábrica,
+/// não a caçar receita (as receitas continuam no livro e no ? de cada máquina).
+const KITS: [&[(&str, u32)]; 8] = [
+    &[(GENERATOR, 1), ("minecraft:coal", 16), (CABLE, 8)],
+    &[(PRESS, 1)],
+    &[("minecraft:raw_copper", 12)],
+    &[(ASSEMBLER, 1)],
+    &[(DRILL, 1)],
+    &[(BELT, 16)],
+    &[("minecraft:chest", 1), (BELT, 8)],
+    &[(HUB, 1)],
+];
+/// Dicas de uma vez só, na hora em que fazem sentido (como as do Factorio).
+const TIP_FACES: u16 = 1;
+const TIP_BELT: u16 = 2;
+const TIPS: [(u16, &str); 2] = [(TIP_FACES, "faces"), (TIP_BELT, "belt")];
 static ACTIVE: AtomicBool = AtomicBool::new(false);
 static FLOW_ACTIVE: AtomicBool = AtomicBool::new(false);
 static SERVER_CLOCK: AtomicU64 = AtomicU64::new(0);
@@ -37,6 +55,10 @@ struct Progress {
     made: u32,
     stored: u32,
     delivered: bool,
+    /// Kits já entregues e dicas já vistas (bits), salvos com o progresso.
+    kits: u16,
+    tips: u16,
+    pending_tips: u16,
     // Unsaved transient evidence must not survive a reload or manual intervention.
     input_credit: u32,
     output_credit: u32,
@@ -196,9 +218,9 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-1\n{} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-2\n{} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
-            self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.dimension);
+            self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.kits, self.tips, self.dimension);
         for pos in self.blocks {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
@@ -208,9 +230,12 @@ impl Progress {
 
     fn decode(text: &str) -> Option<Self> {
         let mut lines = text.lines();
-        if lines.next()? != "veio-onboarding-1" { return None; }
+        let fields = match lines.next()? { "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, _ => return None };
         let values: Vec<u32> = lines.next()?.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
-        if values.len() != 10 || values[0] > u32::from(DONE) { return None; }
+        if values.len() != fields || values[0] > u32::from(DONE) { return None; }
+        // Saves antigos: as etapas já passadas contam como kit entregue.
+        let (kits, tips) = if fields == 12 { (values[10] as u16, values[11] as u16) }
+            else { ((1u16 << values[0].min(8)) - 1, 0) };
         let dimension = lines.next()?.to_owned();
         if dimension.len() > 128 { return None; }
         let mut blocks = [None; 5];
@@ -224,7 +249,7 @@ impl Progress {
         Some(Self { step: values[0] as u8, hidden: values[1] != 0, powered: values[2] != 0,
             plates: values[3].min(4), gears: values[4].min(1), copper: values[5].min(1),
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
-            delivered: values[9] != 0, dimension, blocks, ..Self::default() })
+            delivered: values[9] != 0, kits, tips, dimension, blocks, ..Self::default() })
     }
 }
 
@@ -296,13 +321,16 @@ fn save(root: &Path, uuid: u128, progress: &mut Progress) -> std::io::Result<()>
 /// machine by opening it. No nearest-player guessing; another player's factory
 /// cannot complete your workshop unless you explicitly select that machine.
 pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
-    if !matches!(block, GENERATOR | PRESS | ASSEMBLER | DRILL | DRILL_MK2 | production::DRILL_MK3 | HUB) { return; }
+    let tutorial = matches!(block, GENERATOR | PRESS | ASSEMBLER | DRILL | DRILL_MK2 | production::DRILL_MK3 | HUB);
+    let tip = tip_for(block).filter(|_| !clicked);
+    if !tutorial && tip.is_none() { return; }
     let Some(player) = host.acting_player() else { return; };
     let Ok(mut slot) = SESSION.lock() else { return; };
     if !session(host, &mut slot) { return; }
     let s = slot.as_mut().unwrap();
     let progress = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
-    if progress.step == DONE { return; }
+    if let Some(bit) = tip && progress.tips & bit == 0 { progress.pending_tips |= bit; }
+    if !tutorial || progress.step == DONE { return; }
     if clicked { progress.bind(&player.dimension, pos, block); }
     else { progress.placed(&player.dimension, pos, block); }
     if clicked && block == PRESS {
@@ -312,6 +340,33 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     }
     ACTIVE.store(true, Ordering::Relaxed);
 }
+
+/// A dica que colocar este bloco desperta: esteira (direção e carga) ou máquina (entrada e saída).
+fn tip_for(block: &str) -> Option<u16> {
+    if logistics::is_belt(block) { return Some(TIP_BELT); }
+    (is_factory_block(block) && !logistics::transport(block) && !output_slots(block).is_empty()
+        && has_item_inputs(block)).then_some(TIP_FACES)
+}
+
+/// Anuncia a etapa: título, por quê, passos numerados e o kit (entregue uma vez).
+fn announce(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) {
+    let step = usize::from(p.step);
+    host.tell(player.uuid, Text::tr(&format!("veio.onboarding.title.{step}"), &[]));
+    host.tell(player.uuid, Text::tr(&format!("veio.onboarding.why.{step}"), &[]));
+    for line in 1..=DO_LINES.get(step).copied().unwrap_or(0) {
+        host.tell(player.uuid, Text::tr(&format!("veio.onboarding.do.{step}.{line}"), &[]));
+    }
+    let bit = 1u16 << step;
+    if let Some(kit) = KITS.get(step) && p.kits & bit == 0 && spawn_safe(&player.name) {
+        if kit.iter().all(|(item, count)| host.run_command(&format!("give {} {item} {count}", player.name))) {
+            host.tell(player.uuid, Text::tr(&format!("veio.onboarding.kit.{step}"), &[]));
+        }
+        p.kits |= bit;
+        p.dirty = true;
+    }
+}
+
+fn spawn_safe(name: &str) -> bool { workforce::spawn::safe_name(name) }
 
 #[cfg(test)]
 pub(super) fn observe(dimension: &str, pos: Pos, entity: &ModBlockEntity, before: i32, contract_before: i32, time: i64) {
@@ -386,8 +441,18 @@ fn tick(host: &mut dyn Host, now: u64) {
             if p.step == DONE { host.action_bar(player.uuid, Text::literal("")); }
         }
         if !p.hidden && p.announced != Some(p.step) {
-            host.tell(player.uuid, Text::tr(&format!("veio.onboarding.hint.{}", p.step), &[]));
+            announce(host, player, p);
             p.announced = Some(p.step);
+        }
+        if !p.hidden && p.pending_tips != 0 {
+            for (bit, key) in TIPS {
+                if p.pending_tips & bit != 0 && p.tips & bit == 0 {
+                    host.tell(player.uuid, Text::tr(&format!("veio.onboarding.tip.{key}"), &[]));
+                    p.tips |= bit;
+                    p.dirty = true;
+                }
+            }
+            p.pending_tips = 0;
         }
         if !p.hidden && p.step < DONE {
             let count = match p.step { 2 => p.plates, 3 => p.gears, 4 => p.copper,
@@ -436,7 +501,8 @@ pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command:
     let s = slot.as_mut().unwrap();
     let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
     match action { 0 => { p.hidden = true; }, 1 => { p.hidden = false; p.announced = None; },
-        _ => { *p = Progress::default(); } }
+        // Refazer não entrega os kits de novo (nem repete as dicas já vistas).
+        _ => { *p = Progress { kits: p.kits, tips: p.tips, ..Progress::default() }; } }
     p.dirty = true;
     if save(&s.root, player.uuid, p).is_err() { host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); }
     host.tell(player.uuid, Text::tr(if action == 0 { "veio.onboarding.hidden" } else { "veio.onboarding.shown" }, &[]));

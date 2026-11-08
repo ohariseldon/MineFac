@@ -33,7 +33,7 @@ def main():
     check_page_fit(languages, "transport_guide")
     # Dynamic native keys are not reachable from a book's JSON tree.
     keys = ([f"veio.onboarding.goal.{i}" for i in range(8)]
-            + [f"veio.onboarding.hint.{i}" for i in range(9)]
+            + [f"veio.onboarding.{part}.{i}" for part in ("title", "why") for i in range(9)]
             + [f"veio.onboarding.blocked.{i}" for i in (3, 5, 9)]
             + ["veio.onboarding.hidden", "veio.onboarding.shown", "veio.onboarding.save_failed"])
     for language in languages:

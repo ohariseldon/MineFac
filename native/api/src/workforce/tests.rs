@@ -1319,6 +1319,23 @@ fn village_cap_grows_with_development_up_to_150() {
 
 // ---------- Spawn no centro da vila ----------
 
+#[test]
+fn the_new_village_goes_on_flat_dry_land_without_trees() {
+    // Plano e limpo: nota 0. Morro de 9 blocos e copas pesam; água recusa.
+    let flat = vec![70; 49];
+    assert_eq!(spawn::site_score(&flat, &flat, &flat), Some(0));
+    let mut hill = flat.clone();
+    hill[10] = 79;
+    assert_eq!(spawn::site_score(&hill, &hill, &hill), Some(36));
+    let mut canopy = flat.clone();
+    canopy[3] = 76;
+    canopy[4] = 75;
+    assert_eq!(spawn::site_score(&flat, &flat, &canopy), Some(6));
+    let mut lake = flat.clone();
+    lake[0] = 72;
+    assert_eq!(spawn::site_score(&flat, &lake, &lake), None, "água não serve");
+}
+
 fn player(uuid: u128, name: &str, at: [f64; 3]) -> horizon_client::mod_api::NativeServerPlayer {
     horizon_client::mod_api::NativeServerPlayer {
         uuid, name: name.to_owned(), dimension: spawn::OVERWORLD.to_owned(), position: at, ..Default::default()
@@ -1363,10 +1380,12 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     spawn::tick(&mut village, 60);
     assert!(village.commands.is_empty(), "ainda esperando os aldeões carregarem");
     spawn::tick(&mut village, 40 + spawn::WAIT + 20);
-    assert!(village.commands.iter().any(|line| line.contains("place structure minecraft:village_plains")));
-    spawn::tick(&mut village, 40 + 2 * spawn::WAIT + 40);
-    assert!(village.commands.iter().any(|line| line.contains("veio.spawn.none")));
-    assert!(village.commands.iter().any(|line| line == "tag Alex add veio_village"));
+    // Terreno todo plano no teste: a vila nasce onde o jogador está, e ele já vai para o centro.
+    let joined = village.commands.join("\n");
+    assert!(joined.contains("place structure minecraft:village_plains 5000 70 5000"), "{joined}");
+    assert!(joined.contains("tp @s 5000 70 5000") && joined.contains("tag Alex add veio_village"));
+    assert!(!joined.contains("fill"), "sem árvores, nada a limpar");
+    assert_eq!(spawn::center(), Some(([5000, 70, 5000], false)));
 
     // O centro de controle vira o centro da vila; quem renasce volta para lá.
     village.commands.clear();

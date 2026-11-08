@@ -1229,13 +1229,16 @@ page(
  "A vila operária\n\nAldeões contratados trabalham por você: lavoura, animais, máquinas, armazéns e um centro de controle.\n\nTudo isso está no Guia da Vila Operária, entregue ao obter um posto. Livro + trigo fabricam outro.",
  "The worker village\n\nHired villagers work for you: fields, animals, machines, storage and a control center.\n\nIt is all in the Worker Village Guide, given when you obtain a post. Book + wheat craft another.")
 help["belt"] = (
- "Curvas e rampas automáticas.\nConecte esteiras vizinhas.\nRampas vencem 1 bloco.\nChave fixa a direção.\nAgachar + chave: automático.",
- "Automatic turns and ramps.\nConnect neighboring belts.\nRamps span one block up.\nWrench locks the direction.\nSneak + wrench: automatic.")
+ "Anda para longe de você.\nLeva 5 minérios ou 1 produto.\nNada entra pela frente.\nChave fixa a direção.\nAgachar + chave: automático.",
+ "Runs away from you.\nCarries 5 ores or 1 product.\nNothing enters its front.\nWrench locks the direction.\nSneak + wrench: automatic.")
 help["fast_belt"] = (
  "Mesmas curvas e rampas.\nTransporta até 5 itens/s.\nUse na saída do unificador.\nChave fixa a direção.",
  "Same turns and ramps.\nCarries up to 5 items/s.\nUse after a merger.\nWrench locks direction.")
 for name in ("belt", "fast_belt"):
  label(f"veio.help.{name}", *help[name])
+page(
+ "Entrada e saída\n\nVERDE: a máquina recebe.\nVERMELHO: a produção sai.\n\nEsteira: nada entra pela frente. Leva 5 minérios ou 1 produto (rápida 2, expressa 4).",
+ "Input and output\n\nGREEN (front and sides): the machine takes items.\nRED (back): products leave; nothing enters.\n\nA belt accepts nothing from its front and holds up to 5 ores or 1 finished product (fast 2, express 4).")
 page(
  "Curvas de esteira\n\nConecte uma entrada e uma saída vizinhas. A curva se ajusta sozinha.\n\nEm cruzamentos, use a chave para fixar a saída. Agache com a chave para voltar ao automático.",
  "Conveyor turns\n\nConnect one incoming and one outgoing belt. The corner adjusts automatically.\n\nAt junctions, use the wrench to lock the outlet. Sneak with it to restore automatic routing.")
@@ -1250,9 +1253,6 @@ help["merger"] = (
  "Two inputs, one outlet.\nSneak + wrench: balanced,\nA or B priority.\nUp to 5 items/s.\nRedstone pauses the flow.")
 for name in ("splitter", "merger"):
  label(f"veio.help.{name}", *help[name])
-page(
- "Rede de logística\n\nEsteiras levam itens longe. Braços ligam baús e máquinas. Unificadores juntam; divisores distribuem.\n\nUse rápidas depois de juntar linhas.",
- "Logistics network\n\nBelts carry over distance. Arms link chests and machines. Mergers join; splitters distribute.\n\nUse fast belts after merging.")
 page(
  "Megafábricas\n\nCopiadora: monte a linha no quadrado acima dela e clique com papel.\nMarco de obra: mão vazia mostra o orçamento; agachado com a chave, constrói.\n\nAndares: escada de mão até o piso de cima, ou elevador de carga.",
  "Megafactories\n\nCopier: build a line on the square above it and click with paper.\nBuild marker: empty hand lists materials; sneak with the wrench to build.\n\nFloors: a ladder up to the next floor, or a cargo lift.")
@@ -1399,7 +1399,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.27.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.28.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",

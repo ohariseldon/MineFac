@@ -363,3 +363,59 @@ fn belt_tunnels_pair_up_and_skip_what_is_between() {
     transfer_outputs(&mut world, [5, 0, 0], &mut exit, 4);
     assert_eq!(world.delivered[1].0, [6, 0, 0], "a saída entrega ao vizinho da frente");
 }
+
+fn holding(block: &str, item: &str, count: u32) -> ModBlockEntity {
+    let mut entity = ModBlockEntity::default();
+    entity.id = block.into();
+    entity.items = vec![(count > 0).then(|| ItemStack::new(item, count))];
+    entity
+}
+
+#[test]
+fn a_machine_never_returns_its_product_to_the_belt_that_feeds_it() {
+    let mut world = RouteWorld::default();
+    // Esteira em [0, 0, 1] apontando para o norte, direto na prensa em [0, 0, 0]. A prensa
+    // virada para o sul (para o jogador) solta a produção pelo norte, do outro lado.
+    world.put([0, 0, 1], BELT, "south");
+    world.put([0; 3], PRESS, "south");
+    assert_eq!(output_direction(&world, [0, 0, 1]), Some(Direction::North));
+    assert_eq!(output_direction(&world, [0; 3]), Some(Direction::North));
+    let press = holding(PRESS, "minecraft:raw_copper", 0);
+    // Entrada pela frente: aceita. Pela face de saída (norte): recusa.
+    assert!(accepts_at(&world, [0; 3], &press, 0, "minecraft:copper_ingot", Some(Direction::South)));
+    assert!(!accepts_at(&world, [0; 3], &press, 0, "minecraft:copper_ingot", Some(Direction::North)));
+    // A esteira não aceita o que chega pela frente dela (a própria máquina que ela alimenta).
+    let belt = holding(BELT, "", 0);
+    assert!(!accepts_at(&world, [0, 0, 1], &belt, 0, "veio:copper_plate", Some(Direction::North)));
+    assert!(accepts_at(&world, [0, 0, 1], &belt, 0, "veio:copper_plate", Some(Direction::South)));
+    assert!(accepts_at(&world, [0, 0, 1], &belt, 0, "veio:copper_plate", Some(Direction::East)));
+}
+
+#[test]
+fn belts_carry_a_few_ores_and_one_finished_product() {
+    let world = RouteWorld::default();
+    assert!(is_raw("minecraft:raw_iron") && is_raw("minecraft:cobblestone") && is_raw("minecraft:oak_log"));
+    assert!(!is_raw("minecraft:iron_ingot") && !is_raw("veio:gear"));
+    let ore = |count| holding(BELT, "minecraft:raw_iron", count);
+    assert!(accepts_at(&world, [0; 3], &ore(4), 0, "minecraft:raw_iron", None));
+    assert!(!accepts_at(&world, [0; 3], &ore(5), 0, "minecraft:raw_iron", None), "5 minérios por esteira");
+    let plate = |block, count| holding(block, "minecraft:iron_ingot", count);
+    assert!(accepts_at(&world, [0; 3], &plate(BELT, 0), 0, "minecraft:iron_ingot", None));
+    assert!(!accepts_at(&world, [0; 3], &plate(BELT, 1), 0, "minecraft:iron_ingot", None), "1 produto na esteira comum");
+    // As rápidas guardam o que movem por vez, para não perder vazão.
+    assert!(accepts_at(&world, [0; 3], &plate(FAST_BELT, 1), 0, "minecraft:iron_ingot", None));
+    assert!(!accepts_at(&world, [0; 3], &plate(FAST_BELT, 2), 0, "minecraft:iron_ingot", None));
+    assert!(!accepts_at(&world, [0; 3], &plate(EXPRESS_BELT, 4), 0, "minecraft:iron_ingot", None));
+}
+
+#[test]
+fn a_belt_does_not_snap_into_a_machine_output_face() {
+    let mut world = RouteWorld::default();
+    // Prensa virada para o oeste solta pelo leste, em [1, 0, 0]: a esteira ali não deve virar
+    // para dentro dela.
+    world.put([0; 3], PRESS, "west");
+    world.put([1, 0, 0], BELT, "north");
+    world.put([1, 0, -1], BELT, "north");
+    refresh_path(&mut world, [1, 0, 0], &mut belt());
+    assert_ne!(world.block_property([1, 0, 0], "facing").as_deref(), Some("east"));
+}

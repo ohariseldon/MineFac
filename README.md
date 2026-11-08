@@ -1,4 +1,6 @@
-# Veio 0.27.0
+# Veio 0.28.0
+
+A 0.28.0 corrige a **fábrica e o começo do jogo**: cada máquina tem entrada e saída fixas e visíveis (faixas **verdes** na frente e nas laterais recebem; moldura **vermelha** atrás solta a produção e não aceita nada), e a esteira não aceita nada pela frente, então a máquina nunca devolve o produto na esteira que a alimenta; cada esteira transporta no máximo 5 minérios ou 1 produto pronto (2 na rápida, 4 na expressa), em vez de acumular uma pilha de 64; a vila gerada no começo vai para um terreno plano, seco e sem árvores perto do jogador (e as copas que sobrarem são tiradas), e o jogador já nasce no centro dela; e o **tutorial** foi refeito: cada etapa chega em passos curtos e numerados com o porquê, um kit com as peças da etapa e dicas que aparecem na hora (ao pôr a primeira esteira ou máquina). Detalhes em [LOGISTICA.md](LOGISTICA.md#entrada-saída-e-carga-028).
 
 A 0.27.0 traz a **agenda da vila** ([frentes/AGENDA.md](frentes/AGENDA.md)): estações com domingos e 6 feriados por ano em que a vila para de trabalhar e se reúne na praça; personagens que chegam à prefeitura pedindo festas, eventos de domingo e obras cívicas (parque, praça, monumento), que o prefeito transforma em missões para o jogador; ânimo da vila e lazer entrando no IDH; e a prefeitura pagando à companhia o que foi entregue ou construído.
 
