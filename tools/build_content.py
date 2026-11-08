@@ -76,7 +76,7 @@ BLOCKS = {
     "pen_marker": ("marker", None, 1, [], 1.0),
     "barn": ("machine", "wood", 27, [], 2.0),
     "silo": ("machine", "iron", 18, [], 2.0),
-    "control_center": ("machine", "steel", 5, [], 2.0),
+    "control_center": ("machine", "steel", 6, [5], 2.0),
     "barracks": ("machine", "iron", 2, [], 2.0),
     # Sociedade (0.18): casas, lojas, prefeitura e saneamento.
     "house": ("machine", "wood", 3, [], 1.5),
@@ -90,7 +90,7 @@ BLOCKS = {
     "pipe": ("pipe", None, 0, [], 1.0),
     "sprinkler": ("sprinkler", None, 1, [], 1.0),
     "hydro_turbine": ("machine", "steel", 1, [], 2.5),
-    # Grande indústria (0.20): pesquisa, cadeia funda, monitor, âncora e esteira expressa.
+    # Grande indústria (0.22): pesquisa, cadeia funda, monitor, âncora e esteira expressa.
     "research_lab": ("machine", "iron", 2, [], 2.0),
     "fabricator": ("machine", "steel", 4, [3], 2.5),
     "factory_monitor": ("machine", "iron", 1, [], 1.5),

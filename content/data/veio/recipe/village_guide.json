@@ -190,7 +190,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 18
+                    "page": 19
                   }
                 },
                 {
@@ -202,7 +202,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 19
+                    "page": 20
                   }
                 },
                 {
@@ -214,7 +214,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 13
+                    "page": 18
                   }
                 },
                 {
@@ -226,7 +226,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 12
+                    "page": 21
                   }
                 },
                 {
@@ -238,7 +238,31 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 21
+                    "page": 13
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.contents.18",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 12
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.contents.19",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 23
                   }
                 },
                 {
@@ -344,6 +368,16 @@
           },
           {
             "raw": {
+              "translate": "veio.village.page.21"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.22"
+            }
+          },
+          {
+            "raw": {
               "text": "",
               "extra": [
                 {
@@ -359,7 +393,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 22
+                    "page": 24
                   }
                 },
                 {
@@ -371,7 +405,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 23
+                    "page": 25
                   }
                 },
                 {
@@ -383,7 +417,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 24
+                    "page": 26
                   }
                 },
                 {
@@ -395,7 +429,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 25
+                    "page": 27
                   }
                 },
                 {
@@ -407,7 +441,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 26
+                    "page": 28
                   }
                 },
                 {
@@ -419,7 +453,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 27
+                    "page": 29
                   }
                 },
                 {
@@ -431,7 +465,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 28
+                    "page": 30
                   }
                 },
                 {
@@ -443,7 +477,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 29
+                    "page": 31
                   }
                 },
                 {
@@ -455,7 +489,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 32
                   }
                 },
                 {
@@ -467,7 +501,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 31
+                    "page": 33
                   }
                 },
                 {
@@ -479,7 +513,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 32
+                    "page": 34
                   }
                 },
                 {
@@ -491,7 +525,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 33
+                    "page": 35
                   }
                 },
                 {
@@ -503,7 +537,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 34
+                    "page": 36
                   }
                 },
                 {
@@ -515,7 +549,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 35
+                    "page": 37
                   }
                 },
                 {

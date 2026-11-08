@@ -42,7 +42,8 @@ pub(super) fn screen_tooltip(event: &mut ScreenTooltipEvent<'_>) {
     let Some(layout) = presentation::screen(event.block) else { return; };
     let [x, y] = event.at;
     if (8.0..186.0).contains(&x) && (23.0..34.0).contains(&y) && event.block != HUB {
-        let status = event.data.first().copied().unwrap_or(0);
+        // O centro de controle guarda a aba nos milhares do estado.
+        let status = event.data.first().copied().unwrap_or(0) % 1000;
         event.lines.push(Text::tr(&operations::advice_key(status), &[]).plain());
         return;
     }

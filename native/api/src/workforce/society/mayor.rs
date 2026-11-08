@@ -1,24 +1,18 @@
 //! Prefeitura: contas públicas, impostos, indicadores, fases do plano diretor e relatório.
 //!
-//! A cada turno o prefeito:
-//! 1. cobra o **imposto** da fase sobre a produção e as vendas do turno na sua área, da conta da
-//!    companhia mais próxima; o que faltar vira **dívida** (cobrada antes, no turno seguinte);
-//! 2. paga a **manutenção** dos poços da área (sem dinheiro, os poços deixam de contar);
-//! 3. mede a vila (população, emprego, PIB, IDH, Gini, bairros, custo de vida) e decide a fase;
-//! 4. aponta o pior problema.
-//! O salário do prefeito e a assistência às famílias saem da conta pública no turno das casas.
+//! A conta pública só recebe impostos, retidos na fonte em cada venda (atacado e varejo) na área
+//! da prefeitura, e aportes voluntários em esmeralda. Paga o salário do prefeito e a assistência
+//! às famílias pobres (no turno das casas). Não cria nem destrói dinheiro.
+//!
+//! A cada turno o prefeito mede a vila (população, emprego, PIB, IDH, Gini, bairros, custo de vida),
+//! decide a fase e aponta o pior problema.
 use super::*;
 use std::collections::HashSet;
 
-/// Imposto da fase sobre produção e vendas, em %.
+/// Imposto da fase sobre cada venda, retido na fonte, em %.
 pub(crate) fn tax_rate(phase: i32) -> i32 {
-    match phase { 1 => 0, 2 => 8, 3 => 12, _ => 16 }
+    match phase { 1 => 4, 2 => 8, 3 => 12, _ => 16 }
 }
-
-/// Verba inicial da prefeitura nova (o "estado" funda a cidade): paga o prefeito antes dos impostos.
-pub(crate) const GRANT: i32 = 300;
-/// Manutenção de cada poço por turno, em meias moedas (1 moeda a cada 2 turnos).
-const WELL_UPKEEP_HALVES: i32 = 1;
 
 /// Exigências para chegar a cada fase: (moradores, famílias, IDH, PIB/dia, emprego %, Gini máx., bairros).
 pub(crate) const PHASES: [(i32, i32, i32, i32, i32, i32, i32); 3] = [
@@ -143,12 +137,12 @@ pub(crate) fn next_phase(phase: i32, numbers: &Indicators, gdp: i32) -> i32 {
 }
 
 /// Pedido do prefeito: (código, número), o pior problema primeiro. 0 = tudo certo.
-/// 12 dívida de impostos, 1 salários da companhia atrasados, 11 cofre público vazio, 2 fome,
-/// 3 sem-teto, 4 saneamento, 5 comércio, 6 energia, 7 desemprego, 8 poluição, 9 lotação, 10 meta.
-pub(crate) fn request(numbers: &Indicators, debt: i32, broke: bool, phase: i32) -> (i32, i32) {
+/// 1 salários da companhia atrasados, 11 cofre público vazio, 2 fome, 3 sem-teto, 4 saneamento,
+/// 5 comércio, 6 energia, 7 desemprego, 8 poluição, 9 lotação, 10 meta.
+pub(crate) fn request(numbers: &Indicators, broke: bool, phase: i32) -> (i32, i32) {
     let unemployed = numbers.adults - numbers.employed;
     let issues = [
-        (12, debt), (1, numbers.company_owed), (11, i32::from(broke)), (2, numbers.hungry), (3, numbers.homeless),
+        (1, numbers.company_owed), (11, i32::from(broke)), (2, numbers.hungry), (3, numbers.homeless),
         (4, numbers.no_sanitation), (5, numbers.no_commerce), (6, if phase >= 2 { numbers.no_power } else { 0 }),
         (7, unemployed), (8, numbers.smog), (9, numbers.crowded),
     ];
@@ -169,45 +163,29 @@ fn homeless_near(host: &dyn Host, dimension: &str, pos: [i32; 3], now: u64) -> i
 
 /// Ciclo da prefeitura (a cada ciclo do posto). Contas, medição e fase só uma vez por turno.
 pub(crate) fn hall_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
+    use ledger::Book;
     let now = defense::clock();
-    let dimension = host.dimension().to_owned();
+    let dimension: &'static str = host.dimension();
     // O governo segue de noite e enquanto o prefeito anda; para sem prefeito, ausente ou com fome.
     let staffed = worker(entity).is_some() && !matches!(number(entity, "Status"), NO_WORKER | ABSENT | NO_FOOD);
     let mayor = worker(entity).and_then(cached_entity);
-    // Conta pública: a memória manda; ao reabrir o mundo, volta do NBT. A primeira vez traz a verba.
-    if !entity.nbt.contains_key(nbt_key("Public")) {
-        set_number(entity, "Public", GRANT);
-    }
-    let mut coins = ledger::balance(true, &dimension, pos).unwrap_or_else(|| number(entity, "Public"));
-    coins = coins.saturating_add(ledger::take_emeralds(entity, 1));
     let close = ledger::turn_edge(pos, time) || !entity.nbt.contains_key(nbt_key("DPop"));
-    let flow = ledger::touch(true, &dimension, pos, coins, now, close);
+    let (_, flow) = ledger::open(Book::Public, dimension, pos, number(entity, "Public"), now, close);
+    // Aporte voluntário: esmeraldas de verdade entram na conta pública.
+    let gift = ledger::take_emeralds(dimension, entity, 1);
+    ledger::put(Book::Public, dimension, pos, 0, gift, ledger::RECEIVED, now);
+    let coins = ledger::balance(Book::Public, dimension, pos).unwrap_or(0);
     let phase = number(entity, "Phase").max(1);
     if close {
-        // 1. Imposto sobre o turno, mais a dívida.
-        let rate = tax_rate(phase);
-        let due = (flow[ledger::MADE] + flow[ledger::SOLD]) * rate / 100 + number(entity, "Debt");
-        let paid = ledger::pay(false, &dimension, pos, i32::MAX / 4, due, ledger::TAXES, now);
-        coins += paid;
-        set_number(entity, "Debt", due - paid);
-        // 2. Manutenção dos poços da área.
-        let wells = wells_near(&dimension, pos, HALL_RADIUS, now);
-        let upkeep = (wells * WELL_UPKEEP_HALVES + number(entity, "UpkeepHalf")) / 2;
-        set_number(entity, "UpkeepHalf", (wells * WELL_UPKEEP_HALVES + number(entity, "UpkeepHalf")) % 2);
-        let maintained = coins >= upkeep;
-        coins -= upkeep.min(coins);
-        set_number(entity, "Maintained", i32::from(maintained));
-        // Médias diárias das contas.
-        for (key, value) in [("DMade", flow[ledger::MADE]), ("DSold", flow[ledger::SOLD]), ("DTax", paid),
-            ("DWages", flow[ledger::WAGES]), ("DUpkeep", upkeep), ("DAssist", flow[ledger::ASSIST])] {
+        for (key, value) in [("DMade", flow[ledger::MADE]), ("DSold", flow[ledger::SOLD]), ("DTax", flow[ledger::TAXES]),
+            ("DWages", flow[ledger::WAGES]), ("DAssist", flow[ledger::ASSIST])] {
             set_number(entity, key, ledger::daily(number(entity, key), value));
         }
-        ledger::touch(true, &dimension, pos, coins, now, false);
-        // 3. Medição e fase.
-        let homes = homes_near(&dimension, pos, HALL_RADIUS, now);
-        let homeless = homeless_near(host, &dimension, pos, now);
+        let homes = homes_near(dimension, pos, HALL_RADIUS, now);
+        let homeless = homeless_near(host, dimension, pos, now);
         let numbers = measure(&homes, homeless);
-        let gdp = number(entity, "DMade") + number(entity, "DSold");
+        // PIB: consumo final (o varejo do dia).
+        let gdp = number(entity, "DSold");
         let promoted = if staffed { next_phase(phase, &numbers, gdp) } else { phase };
         if promoted > phase {
             set_number(entity, "Phase", promoted);
@@ -215,12 +193,10 @@ pub(crate) fn hall_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
             host.play_sound("minecraft:ui.toast.challenge_complete", center(pos), 4, 0.8, 1.0);
         }
         let phase = promoted;
-        // Licença suspensa: IDH bem abaixo do que a fase exigiu, ou dívida maior que um dia de imposto.
+        // Licença suspensa: IDH bem abaixo do que a fase exigiu.
         let required = if phase >= 2 { PHASES[(phase - 2) as usize].2 } else { 0 };
-        let debt = number(entity, "Debt");
-        let suspended = (numbers.population > 0 && numbers.idh + 5 < required)
-            || debt > number(entity, "DTax").max(COINS_PER_EMERALD);
-        let (code, value) = request(&numbers, debt, coins < WAGE_PER_TURN, phase);
+        let suspended = numbers.population > 0 && numbers.idh + 5 < required;
+        let (code, value) = request(&numbers, coins < WAGE_PER_TURN, phase);
         for (key, number) in [
             ("DPop", numbers.population), ("DFamilies", numbers.families), ("DEmploy", numbers.employment),
             ("DIdh", numbers.idh), ("DGini", numbers.gini), ("DRequest", code), ("DRequestN", value),
@@ -232,9 +208,7 @@ pub(crate) fn hall_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     set_number(entity, "Public", coins);
     let phase = number(entity, "Phase").max(1);
     upsert(&HALLS, Hall {
-        dimension: dimension.clone(), pos, phase, suspended: number(entity, "DSuspended") != 0, staffed, mayor,
-        maintained: number(entity, "Maintained") != 0 || !entity.nbt.contains_key(nbt_key("Maintained")),
-        seen: now,
+        dimension: dimension.to_owned(), pos, phase, suspended: number(entity, "DSuspended") != 0, staffed, mayor, seen: now,
     }, |known| known.dimension == dimension && known.pos == pos, |known| now.saturating_sub(known.seen) <= STALE);
 }
 
@@ -242,8 +216,8 @@ pub(crate) fn hall_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
 pub(crate) fn hall_data(entity: &ModBlockEntity) -> [i32; 13] {
     let phase = number(entity, "Phase").max(1);
     [number(entity, "Status"), phase, number(entity, "DPop"), number(entity, "DFamilies"), number(entity, "DEmploy"),
-        number(entity, "DIdh"), number(entity, "DGini"), number(entity, "DMade") + number(entity, "DSold"),
-        number(entity, "Public"), tax_rate(phase), number(entity, "Debt"),
+        number(entity, "DIdh"), number(entity, "DGini"), number(entity, "DSold"),
+        number(entity, "Public"), tax_rate(phase), number(entity, "DTax"),
         number(entity, "DRequest") * 1000 + number(entity, "DRequestN").min(999), number(entity, "DSuspended")]
 }
 
@@ -265,7 +239,7 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
         (tr("veio.mayor.population", &[&read(2), &read(3), &read(4)]), presentation::INK),
         (tr("veio.mayor.idh", &[&decimal(read(5)), &decimal(read(6))]), if read(5) < 50 { 0x9a5a00 } else { 0x1e7a1e }),
         (tr("veio.mayor.gdp", &[&read(7), &read(9)]), presentation::INK),
-        (tr("veio.mayor.public", &[&read(8), &read(10)]), if read(10) > 0 { 0xaa1f1f } else { presentation::INK }),
+        (tr("veio.mayor.public", &[&read(8), &read(10)]), presentation::INK),
         (if suspended { tr("veio.mayor.suspended", &[]) } else { tr(&format!("veio.mayor.request{}", request / 1000), &[&(request % 1000)]) },
             if suspended || !matches!(request / 1000, 0 | 10) { 0xaa1f1f } else { 0x1e7a1e }),
     ];
@@ -280,8 +254,7 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     host.change_mod_block_entity(pos, &mut |entity| {
         if entity.id == TOWN_HALL {
             state = Some((worker(entity).is_some(), number(entity, "Phase").max(1),
-                [number(entity, "Public"), number(entity, "DTax"), number(entity, "DWages"), number(entity, "DUpkeep"),
-                    number(entity, "DAssist"), number(entity, "Debt")],
+                [number(entity, "Public"), number(entity, "DTax"), number(entity, "DWages"), number(entity, "DAssist")],
                 [number(entity, "DMade"), number(entity, "DSold")]));
         }
     });
@@ -302,10 +275,11 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     host.tell(player, Text::tr(&format!("veio.mayor.phase_name{phase}"), &[]));
     host.tell(player, Text::tr("veio.mayor.report.people", &[&numbers.population, &numbers.adults, &numbers.kids,
         &numbers.families, &numbers.homeless]));
-    host.tell(player, Text::tr("veio.mayor.report.economy", &[&(made + sold), &made, &sold, &numbers.employment,
+    host.tell(player, Text::tr("veio.mayor.report.economy", &[&sold, &made, &numbers.employment,
         &cost_of_living(&dimension, pos, now)]));
     host.tell(player, Text::tr("veio.mayor.report.public", &[&public[0], &tax_rate(phase), &public[1], &public[2],
-        &public[3], &public[4], &public[5]]));
+        &public[3]]));
+    host.tell(player, money_report(&dimension, now));
     host.tell(player, Text::tr("veio.mayor.report.idh", &[&decimal(numbers.idh), &decimal(numbers.gini)]));
     // Bairros, cada um com sua população e IDH.
     let lived: Vec<Home> = homes.iter().filter(|home| home.residents > 0).cloned().collect();
@@ -318,7 +292,7 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     }
     // Todos os problemas, não só o pior.
     let unemployed = numbers.adults - numbers.employed;
-    for (code, value) in [(12, public[5]), (1, numbers.company_owed), (11, i32::from(public[0] < WAGE_PER_TURN)),
+    for (code, value) in [(1, numbers.company_owed), (11, i32::from(public[0] < WAGE_PER_TURN)),
         (2, numbers.hungry), (3, numbers.homeless), (4, numbers.no_sanitation), (5, numbers.no_commerce),
         (6, if phase >= 2 { numbers.no_power } else { 0 }), (7, unemployed), (8, numbers.smog), (9, numbers.crowded)] {
         if value > 0 {
@@ -344,4 +318,20 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
 pub(crate) fn cost_of_living(dimension: &str, pos: [i32; 3], now: u64) -> i32 {
     let shops = shops_near(dimension, pos, HALL_RADIUS, now);
     if shops.is_empty() { 100 } else { shops.iter().map(|shop| shop.prices).sum::<i32>() / shops.len() as i32 }
+}
+
+/// A identidade contábil: o dinheiro de todos os livros soma o que entrou em esmeraldas menos o que
+/// saiu (desde que o mundo abriu).
+pub(crate) fn money(dimension: &str, now: u64) -> [i64; 6] {
+    use ledger::Book;
+    let families: i64 = homes_near(dimension, [0, 0, 0], i32::MAX / 4, now).iter().map(|home| i64::from(home.wallet)).sum();
+    let (emitted, redeemed) = ledger::borders(dimension);
+    [ledger::total(Book::Company, dimension), ledger::total(Book::Public, dimension), ledger::total(Book::Shop, dimension),
+        families, emitted, redeemed]
+}
+
+fn money_report(dimension: &str, now: u64) -> Text {
+    let [company, public, shops, families, emitted, redeemed] = money(dimension, now);
+    Text::tr("veio.mayor.report.money", &[&(company + public + shops + families), &company, &public, &shops, &families,
+        &emitted, &redeemed])
 }

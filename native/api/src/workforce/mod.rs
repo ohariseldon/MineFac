@@ -133,7 +133,7 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         SHEPHERD_POST => (5, vec![0, 1], vec![2, 3, 4]),
         // Comida do administrador; três metas (sem automação).
         // Comida do administrador; três metas; cofre da companhia.
-        CONTROL_CENTER => (5, vec![0, society::ledger::COMPANY_VAULT], vec![]),
+        CONTROL_CENTER => (6, vec![0, society::ledger::COMPANY_VAULT], vec![society::ledger::COMPANY_CASHOUT]),
         BARRACKS => (2, vec![0, 1], vec![]),
         _ => return zones::layout(block).or_else(|| storage::layout(block)).or_else(|| society::layout(block)),
     })
@@ -233,11 +233,11 @@ pub(super) fn release(uuid: Uuid, dimension: &str, post: [i32; 3]) {
     }
 }
 
-/// Ids de entidade dos trabalhadores contratados agora (para o emprego da sociedade).
-pub(super) fn employed_entities(now: u64) -> Vec<u32> {
+/// Trabalhadores contratados nesta dimensão e o posto de cada um.
+pub(super) fn employers(dimension: &str, now: u64) -> Vec<(u32, [i32; 3])> {
     CLAIMS.lock().map(|claims| claims.iter()
-        .filter(|(_, claim)| now.saturating_sub(claim.seen) <= CLAIM_STALE)
-        .filter_map(|(_, claim)| claim.entity).collect()).unwrap_or_default()
+        .filter(|(_, claim)| claim.dimension == dimension && now.saturating_sub(claim.seen) <= CLAIM_STALE)
+        .filter_map(|(_, claim)| claim.entity.map(|id| (id, claim.post))).collect()).unwrap_or_default()
 }
 
 fn cached_entity(uuid: Uuid) -> Option<u32> {
@@ -948,7 +948,16 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         match entity.id.as_str() {
             SHOP => society::shop_cycle(host, pos, entity, time),
             TOWN_HALL => society::hall_cycle(host, pos, entity, time),
-            CONTROL_CENTER => society::company_cycle(host, pos, entity, time),
+            CONTROL_CENTER => {
+                society::company_cycle(host, pos, entity, time);
+                // Holding: fecha a produção do turno e recalcula a aba aberta de vez em quando.
+                if society::ledger::turn_edge(pos, time) {
+                    super::holding::roll(host.dimension(), time);
+                }
+                if time.div_euclid(EVERY) % 4 == 0 {
+                    super::holding::refresh(host.dimension(), pos, entity);
+                }
+            }
             _ => {}
         }
     }
@@ -1005,13 +1014,7 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     if entity.id == FOREMAN_DESK {
         foreman::organize(host, pos, entity, now);
     }
-    let before = number(entity, "Total");
     let status = work(host, pos, entity, id, at, now);
-    // Cada tarefa concluída entra no PIB da vila.
-    let done = number(entity, "Total") - before;
-    if done > 0 {
-        society::record(dimension, pos, done * society::TASK_VALUE, false, now);
-    }
     show_load(host, entity, id, true);
     set_number(entity, "Status", status);
     publish_ration(entity);

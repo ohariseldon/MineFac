@@ -587,6 +587,21 @@ pub mod mod_api {
             Self { block, data, batch, origin: [0.0, 0.0] }
         }
     }
+    /// `screen_click` (API 20): `replace`, o retorno é o botão.
+    #[non_exhaustive]
+    pub struct ScreenClickEvent<'a> {
+        pub block: &'a str,
+        pub data: &'a [i32],
+        pub at: [f32; 2],
+        pub right: bool,
+    }
+    /// `menu_button` (API 20), no servidor.
+    #[non_exhaustive]
+    pub struct MenuButtonEvent<'a> {
+        pub pos: [i32; 3],
+        pub entity: &'a mut ModBlockEntity,
+        pub id: i32,
+    }
     #[non_exhaustive]
     pub struct ScreenTooltipEvent<'a> {
         pub block: &'a str,
@@ -735,6 +750,10 @@ pub mod mod_api {
         }
         fn screen_draw(&self, host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {}
         fn screen_tooltip(&self, host: &dyn Host, event: &mut ScreenTooltipEvent<'_>) {}
+        fn screen_click(&self, host: &dyn Host, event: &mut ScreenClickEvent<'_>) -> Option<i32> {
+            None
+        }
+        fn menu_button(&self, host: &mut dyn Host, event: &mut MenuButtonEvent<'_>) {}
         fn tooltip(&self, host: &dyn Host, event: &mut TooltipEvent<'_>) {}
         fn menu_slot_rules(&self, event: &mut MenuSlotRulesEvent<'_>) {}
         fn block_entity_update_tag(&self, event: &mut BlockEntityUpdateTagEvent<'_>) -> Option<Compound> {

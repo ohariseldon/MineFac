@@ -32,6 +32,20 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## 0.21.0: economia fechada
+
+- **Imposto na fonte:** cada venda (varejo e atacado) já manda a parte da prefeitura (4%, 8%, 12%, 16%). Saíram a dívida de imposto, a verba inicial da prefeitura e a manutenção dos poços: nada cria nem destrói moeda.
+- **Comerciantes independentes:** o estoque entregue pela indústria vira atacado (70% do preço local) devido à companhia, por empresa; a loja paga com o caixa (fiado quando falta) e paga o próprio comerciante. O antigo caixa em esmeraldas virou só retirada.
+- **Três livros + famílias** em `society/ledger.rs`, com as bordas (esmeraldas que entram e saem) contadas. Teste `money_circulates_without_appearing_or_vanishing`: a soma de todos os saldos não muda dentro da economia.
+- **Saque:** clique na linha da companhia no painel do centro de controle (botão de menu); a esmeralda sai no novo 6º espaço.
+- **Holding:** cada aba mostra receita (atacado dos itens da empresa), gastos (salários dos postos da empresa e imposto) e lucro do dia; o relatório também.
+
+## 0.20.0: holding no centro de controle
+
+- O centro de controle virou a sede da companhia como **holding**. Setas `<` `>` no cabeçalho do painel trocam a aba (clique na tela → botão de menu no servidor): visão geral e nove empresas — mineração, manufatura, energia, logística (inclui armazéns e capatazes), agro (fazendas, cercados, comida), extrativismo (fazendas de árvores: madeira e folhas), urbanização (casas e poços), comércio (lojas) e gestão e segurança (centro, quartel, Tesla). A prefeitura é pública e fica fora.
+- Cada aba mostra unidades, ativas, trabalhadores, folha estimada, produção do dia e o estado parado mais comum, mais números próprios (zonas no agro; casas, moradores e alvarás na urbanização; lojas e preços no comércio). O livro no centro dá uma linha por empresa.
+- **Leve:** `holding.rs` registra cada bloco uma vez a cada 100 ticks (fase pela posição) num mapa por dimensão; a produção é o aumento do contador do bloco, somado por turno e virando média do dia. A aba aberta é recalculada a cada 4 ciclos do centro, nunca por tick. O teste de alocação zero continua passando.
+
 ## 0.19.0: contas separadas, impostos e preços locais
 
 - **Companhia x prefeitura:** o centro de controle ganhou um 5º espaço, o cofre da companhia. Ele paga os salários dos trabalhadores do jogador e os impostos. A prefeitura tem conta própria (verba inicial de 300 moedas, impostos, aportes) e paga o prefeito, a manutenção dos poços (1 moeda a cada 2 turnos por poço) e a assistência às famílias pobres.
@@ -294,7 +308,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0, 149 na 0.18.0 e 160 na 0.19.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0, 149 na 0.18.0, 160 na 0.19.0, 162 na 0.20.0 e 164 na 0.21.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.

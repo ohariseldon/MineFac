@@ -1,4 +1,4 @@
-# Água, lavoura e rios (0.20.0)
+# Água, lavoura e rios (0.22.0)
 
 Pedido do Luiz: lavoura com irrigação e necessidades reais, sem refazer as plantas do
 Minecraft; bomba, cano e usinas de verdade; nascentes no alto de algumas montanhas formando
