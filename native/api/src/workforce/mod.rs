@@ -63,6 +63,15 @@ pub(super) const NO_WAGE: i32 = 25;
 /// Marco de zona ativo e armazém com espaço.
 pub(super) const ZONE_ACTIVE: i32 = 26;
 pub(super) const STORING: i32 = 27;
+/// Noite: o trabalhador dorme, como todo aldeão vanilla a partir de 12000.
+pub(super) const RESTING: i32 = 28;
+/// Início da noite na agenda vanilla do aldeão (`Schedule.VILLAGER_DEFAULT`: descanso de 12000 a 0).
+const REST_FROM: i64 = 12000;
+
+/// Hora de dormir? O cérebro do aldeão manda ele para a cama; o posto espera em vez de disputar.
+pub(super) fn night(host: &dyn Host) -> bool {
+    host.day_time().rem_euclid(24000) >= REST_FROM
+}
 /// Resposta de uma tarefa que ainda está procurando: o painel mantém o estado anterior.
 pub(super) const KEEP: i32 = -1;
 
@@ -273,13 +282,24 @@ pub(super) fn order_for(entity: u32, now: u64) -> Option<[f64; 3]> {
 pub(super) struct Work {
     target: Option<[f64; 3]>,
     cooldown: i32,
+    /// Chamadas até a próxima consulta ao mapa de ordens.
+    wait: u8,
 }
+
+/// O objetivo consulta o mapa de ordens a cada `ORDER_POLL` chamadas (meio segundo).
+const ORDER_POLL: u8 = 10;
 
 impl Goal for Work {
     fn flags(&self) -> u8 {
         goals::MOVE | goals::LOOK
     }
     fn can_use(&mut self, m: &mut Mob, _cx: &mut Cx) -> bool {
+        // Com 150 aldeões, consultar o mapa em todo tick custaria 150 travas por tick.
+        if self.wait > 0 {
+            self.wait -= 1;
+            return self.target.is_some();
+        }
+        self.wait = ORDER_POLL - 1;
         self.target = order_for(m.id, defense::clock());
         self.target.is_some()
     }
@@ -289,17 +309,80 @@ impl Goal for Work {
     }
     fn tick(&mut self, m: &mut Mob, cx: &mut Cx) {
         let Some(goal) = self.target else { return };
-        self.cooldown -= 1;
-        let close = (m.position.x - goal[0]).hypot(m.position.z - goal[2]) < REACH * 0.8
-            && (m.position.y - goal[1]).abs() < 2.0;
-        // A ordem pode mudar de alvo; refaz o caminho quando ele termina ou a cada segundo.
-        if !close && (m.ai.nav.is_done() || self.cooldown <= 0) {
-            m.nav_move_to(cx.w, goal, 0.6);
-            self.cooldown = 20;
+        match steer(m, goal) {
+            // O cérebro anda até o alvo: nada a fazer aqui.
+            Steer::Brain => {}
+            // Pânico, ataque, esconderijo ou sono: o aldeão cuida de si e o posto espera.
+            Steer::Busy => {}
+            Steer::Navigation => {
+                self.cooldown -= 1;
+                let close = (m.position.x - goal[0]).hypot(m.position.z - goal[2]) < REACH * 0.8
+                    && (m.position.y - goal[1]).abs() < 2.0;
+                // A ordem pode mudar de alvo; refaz o caminho quando ele termina ou a cada segundo.
+                if !close && (m.ai.nav.is_done() || self.cooldown <= 0) {
+                    m.nav_move_to(cx.w, goal, 0.6);
+                    self.cooldown = 20;
+                }
+            }
+        }
+    }
+    fn stop(&mut self, m: &mut Mob, _cx: &mut Cx) {
+        // Sem ordem: solta o alvo que o objetivo deu ao cérebro, para o vanilla seguir na hora.
+        if let Some(goal) = self.target.take() {
+            release_walk(m, goal);
         }
     }
     fn box_clone(&self) -> Box<dyn Goal> {
         Box::new(self.clone())
+    }
+}
+
+/// Quem leva o aldeão até a ordem.
+enum Steer {
+    /// O cérebro vanilla, com a ordem como alvo de caminhada.
+    Brain,
+    /// O cérebro está em pânico, num ataque, escondido ou dormindo: não interferir.
+    Busy,
+    /// Sem cérebro (outro mob, ou antes do primeiro tick): a navegação direto.
+    Navigation,
+}
+
+fn walk_block(goal: [f64; 3]) -> [i32; 3] {
+    [goal[0].floor() as i32, goal[1].floor() as i32, goal[2].floor() as i32]
+}
+
+/// No Horizon, o aldeão é guiado pelo cérebro, que roda depois dos objetivos e refaz o caminho
+/// sempre que tem um alvo de caminhada (`MoveToTargetSink`). Em vez de disputar a navegação, a
+/// ordem vira esse alvo: os outros comportamentos (passear, sino, emprego) só escolhem alvo
+/// quando não há um, então o próprio cérebro leva o trabalhador à tarefa.
+fn steer(m: &mut Mob, goal: [f64; 3]) -> Steer {
+    use horizon_client::mobs::villager;
+    use horizon_client::mobs::villager_brain::{Act, Tracker, WalkTarget};
+    if villager::ext(m).and_then(|ext| ext.brain.as_ref()).is_none() {
+        return Steer::Navigation;
+    }
+    let Some(brain) = villager::ext_mut(m).brain.as_mut() else { return Steer::Navigation };
+    if matches!(brain.activity, Act::Panic | Act::Raid | Act::PreRaid | Act::Hide | Act::Rest) {
+        return Steer::Busy;
+    }
+    let target = WalkTarget { target: Tracker::Block(walk_block(goal)), speed: 0.6, close: 1 };
+    if brain.mem.walk_target.get() != Some(&target) {
+        brain.mem.walk_target.set(target);
+    }
+    Steer::Brain
+}
+
+/// Tira do cérebro o alvo que veio de uma ordem (e só esse).
+fn release_walk(m: &mut Mob, goal: [f64; 3]) {
+    use horizon_client::mobs::villager;
+    use horizon_client::mobs::villager_brain::Tracker;
+    if villager::ext(m).and_then(|ext| ext.brain.as_ref()).is_none() {
+        return;
+    }
+    if let Some(brain) = villager::ext_mut(m).brain.as_mut()
+        && brain.mem.walk_target.get().is_some_and(|walk| walk.target == Tracker::Block(walk_block(goal)))
+    {
+        brain.mem.walk_target.clear();
     }
 }
 
@@ -771,7 +854,7 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         foreman::continue_planning(host, pos, entity, now);
     }
     if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) == 0 {
-        if entity.id == CONTROL_CENTER && number(entity, "Status") != 1 {
+        if entity.id == CONTROL_CENTER && !matches!(number(entity, "Status"), 1 | RESTING) {
             set_number(entity, "Admin", 0);
         }
         center::report(host.dimension(), pos, entity, now);
@@ -816,6 +899,14 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return;
     };
     set_number(entity, "Absent", 0);
+    if night(host) {
+        // A carga e o alvo ficam guardados: o trabalho continua de manhã.
+        cancel(id);
+        unreserve(dimension, pos);
+        set_number(entity, "Status", RESTING);
+        publish_ration(entity);
+        return;
+    }
     if entity.id == FOREMAN_DESK {
         foreman::organize(host, pos, entity, now);
     }
@@ -889,7 +980,11 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         Err(status) => {
             cancel(id);
             unreserve(dimension, pos);
-            return if status == KEEP { number(entity, "Status") } else { status };
+            return match status {
+                KEEP if number(entity, "Status") == RESTING => IDLE_WORK,
+                KEEP => number(entity, "Status"),
+                status => status,
+            };
         }
     };
     match plan {

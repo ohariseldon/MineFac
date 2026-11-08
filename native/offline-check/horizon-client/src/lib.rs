@@ -570,8 +570,20 @@ pub mod mod_api {
         pub entity: u32,
         pub kind: &'a str,
     }
+    impl<'a> EntityTickPreEvent<'a> {
+        /// Só no substituto: monta o evento para medições.
+        pub fn preview(dimension: &'a str, entity: u32, kind: &'a str) -> Self {
+            Self { dimension, entity, kind }
+        }
+    }
     #[non_exhaustive]
     pub struct TickEvent {}
+    impl TickEvent {
+        /// Só no substituto: monta o evento para medições.
+        pub fn preview() -> Self {
+            Self {}
+        }
+    }
     #[non_exhaustive]
     pub struct PlayerLoggedInEvent<'a> {
         pub player: u128,
@@ -666,6 +678,12 @@ pub mod mobs {
     pub struct MobWorld<'w> {
         _world: std::marker::PhantomData<&'w ()>,
     }
+    impl MobWorld<'static> {
+        /// Só no substituto: um mundo vazio para rodar objetivos em testes e medições.
+        pub fn preview() -> Self {
+            Self { _world: std::marker::PhantomData }
+        }
+    }
     #[derive(Default)]
     pub struct Navigation {
         pub done: bool,
@@ -686,6 +704,80 @@ pub mod mobs {
         pub kind: Arc<MobType>,
         pub position: Vec3,
         pub ai: Ai,
+        /// No jogo, `MobExtra` tem muito mais; o Veio só chega ao aldeão por `villager::ext`.
+        pub extra: MobExtra,
+    }
+    #[derive(Default)]
+    pub struct MobExtra {
+        pub villager: Option<Box<villager::Ext>>,
+    }
+
+    /// `mobs::villager` (Horizon 66f3981): só o acesso ao cérebro que o Veio usa.
+    pub mod villager {
+        use super::Mob;
+        #[derive(Default)]
+        pub struct Ext {
+            /// O cérebro do aldeão, criado no primeiro tick.
+            pub brain: Option<Box<super::villager_brain::Brain>>,
+        }
+        pub fn ext(m: &Mob) -> Option<&Ext> {
+            m.extra.villager.as_deref()
+        }
+        pub fn ext_mut(m: &mut Mob) -> &mut Ext {
+            m.extra.villager.get_or_insert_with(Box::default)
+        }
+    }
+
+    /// `mobs::villager_brain` (Horizon 66f3981): memórias e atividade que o Veio lê e escreve.
+    pub mod villager_brain {
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        pub enum Act { Core, Idle, Work, Play, Rest, Meet, Panic, Raid, PreRaid, Hide }
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        pub enum Tracker {
+            Block([i32; 3]),
+            Point([f64; 3]),
+        }
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        pub struct WalkTarget {
+            pub target: Tracker,
+            pub speed: f32,
+            pub close: i32,
+        }
+        #[derive(Debug)]
+        pub struct Slot<T> {
+            v: Option<T>,
+        }
+        impl<T> Default for Slot<T> {
+            fn default() -> Self {
+                Self { v: None }
+            }
+        }
+        impl<T> Slot<T> {
+            pub fn set(&mut self, v: T) {
+                self.v = Some(v);
+            }
+            pub fn clear(&mut self) {
+                self.v = None;
+            }
+            pub fn get(&self) -> Option<&T> {
+                self.v.as_ref()
+            }
+        }
+        #[derive(Debug, Default)]
+        pub struct Memories {
+            pub walk_target: Slot<WalkTarget>,
+        }
+        #[derive(Debug)]
+        pub struct Brain {
+            pub mem: Memories,
+            pub activity: Act,
+        }
+        impl Brain {
+            /// Só no substituto.
+            pub fn preview(activity: Act) -> Self {
+                Self { mem: Memories::default(), activity }
+            }
+        }
     }
     impl Mob {
         pub fn nav_move_to(&mut self, w: &MobWorld, at: [f64; 3], speed: f64) -> bool {
