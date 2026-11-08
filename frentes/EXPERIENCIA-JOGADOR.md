@@ -111,7 +111,7 @@ PROGRESSAO-FASES.md.
 
 ## Validação
 
-- `python3 tools/check_rust.py`: 143 testes aprovados (8 novos do quadro: fases,
+- `python3 tools/check_rust.py`: 151 testes aprovados sobre a 0.16.0 (8 novos do quadro: fases,
   saída cheia, pedido diário, pagamento único por dimensão, censo, alertas,
   amanhecer e anoitecer).
 - `python3 tools/check_project.py`: 492 JSON, 94 páginas, 62 texturas.
