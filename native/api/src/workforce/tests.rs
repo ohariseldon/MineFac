@@ -1075,7 +1075,7 @@ fn full_houses_stop_births_and_ask_for_more() {
     village.parts.insert([3, 64, 1], "foot".into());
     village.villager(15200, [0.5, 64.0, 0.5], [52, 0, 0, 9]);
     for now in 0..2_000 {
-        village::scan_homes(&mut village, dimension, 15200, now);
+        village::scan_homes(&village, dimension, 15200, now);
         if village::homes(dimension, [0, 64, 0]).is_some() {
             break;
         }
@@ -1099,7 +1099,7 @@ fn full_houses_stop_births_and_ask_for_more() {
     // Mais uma cabeceira na volta seguinte: o aviso some e o nascimento volta a ser possível.
     village.crops.insert([4, 64, 1], ("minecraft:white_bed".into(), 0));
     for step in 0..2_000 {
-        village::scan_homes(&mut village, dimension, 15200, now + 1 + step);
+        village::scan_homes(&village, dimension, 15200, now + 1 + step);
         if village::homes(dimension, [0, 64, 0]) == Some(2) {
             break;
         }

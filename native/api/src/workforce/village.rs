@@ -129,7 +129,7 @@ pub(crate) fn cap(dimension: &str, at: [i32; 3], now: u64) -> usize {
 
 /// Chamado no tick de cada aldeão. Quase sempre sai na primeira comparação.
 pub(crate) fn observe(host: &mut dyn Host, dimension: &str, id: u32, now: u64) {
-    if (now + u64::from(id)) % CHECK != 0 || roll(id, now) % CHANCE != 0 {
+    if !(now + u64::from(id)).is_multiple_of(CHECK) || !roll(id, now).is_multiple_of(CHANCE) {
         return;
     }
     let Some(handle) = host.entity(id) else { return };

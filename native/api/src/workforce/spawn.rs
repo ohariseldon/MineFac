@@ -122,7 +122,7 @@ fn settle(host: &mut dyn Host, name: &str, [x, y, z]: [i32; 3]) -> bool {
 /// Chamado no tick do jogo. Sai na primeira comparação quando ninguém está chegando.
 pub(crate) fn tick(host: &mut dyn Host, now: u64) {
     send_respawns(host);
-    if !ARRIVING.load(Ordering::Acquire) || now % 20 != 0 {
+    if !ARRIVING.load(Ordering::Acquire) || !now.is_multiple_of(20) {
         return;
     }
     let players = host.server_players();
