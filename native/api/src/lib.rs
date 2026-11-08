@@ -314,7 +314,7 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     pollution::emit(host, pos, entity, time);
     record_performance(entity, produced);
     let cargo = presentation::publish(entity);
-    if cargo || visual_signature(entity) != previous {
+    if cargo || published_signature(entity) != previous {
         host.block_entity_sync(pos);
     }
 }
@@ -571,6 +571,45 @@ fn set_number_at(entity: &mut ModBlockEntity, key: &JavaString, value: i32) {
 /// O braço anima pelo `MovedAt`.
 fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {
     (number(entity, "Status"), number(entity, "Module"), number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }))
+}
+
+/// A mesma assinatura logo depois de `presentation::publish`: o painel acabou de copiar
+/// `Status`, `Module` e `Info` para `data[0]`, `data[11]` e `data[12]`, sem novas buscas no NBT.
+/// Quem publica outra coisa nessas posições (ou não publica) relê o NBT.
+fn published_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {
+    let standard = !matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE | TESLA | workforce::CONTROL_CENTER)
+        && !inserters::is_arm(&entity.id) && !workforce::zones::is_marker(&entity.id);
+    match entity.data.as_slice() {
+        [status, .., module, info] if standard && entity.data.len() == presentation::DATA_SLOTS => (*status, *module, *info),
+        _ => visual_signature(entity),
+    }
+}
+
+/// Hash multiplicativo (o do rustc) para chaves pequenas consultadas todo tick: chunks e
+/// posições. Os mapas que o usam só são consultados por chave, nunca percorridos em ordem.
+#[derive(Default, Clone, Copy)]
+pub(super) struct FastHasher(u64);
+pub(super) type FastHash = std::hash::BuildHasherDefault<FastHasher>;
+
+impl FastHasher {
+    #[inline]
+    fn add(&mut self, word: u64) {
+        self.0 = (self.0.rotate_left(5) ^ word).wrapping_mul(0x51_7c_c1_b7_27_22_0a_95);
+    }
+}
+
+impl std::hash::Hasher for FastHasher {
+    fn finish(&self) -> u64 { self.0 }
+    fn write(&mut self, bytes: &[u8]) {
+        let mut chunks = bytes.chunks_exact(8);
+        for chunk in &mut chunks { self.add(u64::from_le_bytes(chunk.try_into().expect("8 bytes"))); }
+        for byte in chunks.remainder() { self.add(u64::from(*byte)); }
+    }
+    fn write_u8(&mut self, value: u8) { self.add(u64::from(value)); }
+    fn write_u32(&mut self, value: u32) { self.add(u64::from(value)); }
+    fn write_i32(&mut self, value: i32) { self.add(u64::from(value as u32)); }
+    fn write_u64(&mut self, value: u64) { self.add(value); }
+    fn write_usize(&mut self, value: usize) { self.add(value as u64); }
 }
 
 fn center([x, y, z]: [i32; 3]) -> [f64; 3] {

@@ -14,7 +14,7 @@ type Key = (&'static str, [i32; 3]);
 struct Queue {
     used: u32,
     order: VecDeque<Key>,
-    seen: HashMap<Key, u64>,
+    seen: HashMap<Key, u64, super::FastHash>,
 }
 
 #[derive(Default)]
