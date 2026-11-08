@@ -152,3 +152,52 @@ fn veio_wind() -> f32 {
     let season = 0.85 * seasons_now.y + 1.0 * seasons_now.x + 1.15 * seasons_now.z + 1.2 * seasons_now.w;
     return (0.45 + 0.5 * frame.rain + 0.55 * frame.thunder) * season;
 }
+
+// 3D value noise (trilinear), for the volumetric clouds.
+fn veio_noise3(p: vec3<f32>) -> f32 {
+    let i = floor(p);
+    let f = fract(p);
+    let u = f * f * (3.0 - 2.0 * f);
+    let a = mix(veio_hash3(i), veio_hash3(i + vec3<f32>(1.0, 0.0, 0.0)), u.x);
+    let b = mix(veio_hash3(i + vec3<f32>(0.0, 1.0, 0.0)), veio_hash3(i + vec3<f32>(1.0, 1.0, 0.0)), u.x);
+    let c = mix(veio_hash3(i + vec3<f32>(0.0, 0.0, 1.0)), veio_hash3(i + vec3<f32>(1.0, 0.0, 1.0)), u.x);
+    let d = mix(veio_hash3(i + vec3<f32>(0.0, 1.0, 1.0)), veio_hash3(i + vec3<f32>(1.0, 1.0, 1.0)), u.x);
+    return mix(mix(a, b, u.y), mix(c, d, u.y), u.z);
+}
+
+// ---------- Cumulus layer, shared by the cloud pass and the cloud shadows on the ground ----------
+override clouds: bool = true;
+override volumetric_clouds: bool = true;
+const VEIO_CLOUD_BASE: f32 = 560.0;
+const VEIO_CLOUD_TOP: f32 = 1150.0;
+
+// The camera's ground position wrapped to keep precision far from the origin.
+fn veio_cloud_origin() -> vec2<f32> {
+    return frame.camera_position.xz - floor(frame.camera_position.xz / 8192.0) * 8192.0;
+}
+
+// The wind's drift of the cloud field, in blocks.
+fn veio_cloud_wind() -> vec2<f32> {
+    return vec2<f32>(frame.time * 4.0, frame.time * 1.6) * (0.6 + veio_wind());
+}
+
+// How much of the sky the clouds cover: rain and the cold seasons more, summer less.
+fn veio_cloud_cover() -> f32 {
+    let w = veio_season_weights();
+    return clamp(0.48 + 0.38 * frame.rain + 0.06 * w.w + 0.05 * w.z - 0.05 * w.y, 0.0, 0.95);
+}
+
+// The cloud field seen from above at a world point (xz, wrapped near the camera), 0..1: where
+// the cumulus towers stand. Three octaves; the shape the 3D detail then erodes.
+fn veio_cloud_coverage(xz: vec2<f32>) -> f32 {
+    var q = (xz + veio_cloud_wind()) / 1150.0;
+    var sum = 0.0;
+    var amp = 0.55;
+    for (var i = 0; i < 3; i++) {
+        sum += veio_noise(q) * amp;
+        q = q * 2.13 + vec2<f32>(5.2, -3.7);
+        amp *= 0.5;
+    }
+    let cover = veio_cloud_cover();
+    return smoothstep(1.0 - cover, 1.0 - cover + 0.28, sum / 0.9625);
+}

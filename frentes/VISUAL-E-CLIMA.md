@@ -32,6 +32,14 @@ Usa o que a Shader API 0.1 já oferece e o pacote ainda não usava:
 
 Tudo some no Leve. Nada disso foi visto no jogo ainda: só validado pelo `naga`.
 
+## 3.0: "radical, excepcional, sem perder a essência"
+
+Pedido do Luiz com fotos de referência (pôr do sol com nuvens grandes, lago espelhado):
+`clouds.wgsl` (nuvens volumétricas em meia tela, 16/28 passos e 3/5 rumo ao sol; prévia em numpy
+usada para acertar luz e forma), sombra das nuvens no material, parallax por luminância
+(8/14 passos), PCF de Poisson com PCSS simples no Alto, reflexo planar da água ligado por padrão,
+gradação de cinema. São 8 passes de pós (o máximo do manifesto). Custo alvo 7 ms no Equilibrado.
+
 ## Pelo motor, sem depender do shader
 
 Luiz: "mexer no motor do jogo... realismo mais integrado, de um jeito nativo" (visual). Funciona

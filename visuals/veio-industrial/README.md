@@ -1,4 +1,4 @@
-# Veio — Realismo 2.1
+# Veio — Realismo 3.0
 
 Visual original para o Veio: céu com atmosfera, nuvens, estrelas e sol próprios, plantas e
 água em movimento, luz colorida de tochas, fornos e máquinas quentes, brilho, raios de sol,
@@ -9,7 +9,21 @@ O launcher oferece **Realismo leve — pensado para 8 GB** e **Leve — sem shad
 `Escolher-Visual.cmd` abre essa escolha de novo; `Jogar-Leve.cmd` inicia sem o pacote.
 Também dá para desligar o pacote em Opções > Vídeo > Shaders.
 
-## O que deixa a imagem com cara de jogo novo (2.1)
+## 3.0: o salto
+
+- **Nuvens volumétricas:** cúmulos de verdade, entre 560 e 1.150 blocos de altura, com base
+  escura, topo iluminado, bordas prateadas contra o sol e luz dourada no fim da tarde. Luz por
+  dentro da nuvem (lei de Beer com efeito "powder" e espalhamento múltiplo aproximado). Meia tela.
+- **Sombra das nuvens no chão:** manchas que andam com o vento sobre o terreno.
+- **Profundidade nas texturas (parallax):** as frestas entre pedras, tijolos e tábuas afundam de
+  verdade e mudam com o ângulo da câmera.
+- **Sombras suaves:** disco de Poisson girado; no Alto a penumbra cresce com a distância até o
+  que faz a sombra, como a do sol de verdade.
+- **Água espelhada ligada por padrão.**
+- **Cor de cinema:** hora dourada mais forte, curva de contraste maior, saturação e
+  tonalização dividida (sombras frias, luzes quentes).
+
+## 2.1: cara de jogo novo
 
 - **Relevo das texturas:** perto da câmera, o detalhe de cada bloco vira relevo, e o sol de lado
   revela pedras, tábuas e rebites. Com um pacote de recursos LabPBR, usa os mapas de normal dele.

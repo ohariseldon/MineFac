@@ -1,9 +1,4 @@
-override clouds: bool = true;
 
-// The camera's ground position wrapped to keep precision far from the origin.
-fn veio_cloud_origin() -> vec2<f32> {
-    return frame.camera_position.xz - floor(frame.camera_position.xz / 8192.0) * 8192.0;
-}
 
 // Layered cloud density 0..1 at a point of the cloud plane (blocks).
 fn veio_cloud_density(p: vec2<f32>) -> f32 {
@@ -70,7 +65,7 @@ fn sky(input: SkyInput) -> vec4<f32> {
         star = veio_stars(direction) * (1.0 - day / 0.6) * (1.0 - storm);
     }
 
-    if clouds && direction.y > 0.012 {
+    if clouds && !(volumetric_clouds && quality >= 1u) && direction.y > 0.012 {
         // A cloud plane 1,200 blocks up: far away it meets the horizon in perspective.
         let t = 1200.0 / direction.y;
         let p = veio_cloud_origin() + direction.xz * t;
