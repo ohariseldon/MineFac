@@ -161,7 +161,8 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
     let extra_values = [
         ("preset", "custom"),
         ("lodDistance", "0"),
-        ("textureBudgetMiB", "256"),
+        // Realismo: texturas de 128x com mapas de relevo e brilho (o pacote do Veio ou outro).
+        ("textureBudgetMiB", if realism { "1024" } else { "256" }),
         ("workers", "2"),
         ("resolutionScale", if realism { "85" } else { "75" }),
         ("taa", "false"),
@@ -175,10 +176,6 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
     ];
     for (key, value) in extra_values {
         extra = set_option(&extra, key, value);
-    }
-    // Texturas de 128x com mapas de relevo e brilho pedem mais memória de vídeo que o padrão.
-    if realism && textures.is_some() {
-        extra = set_option(&extra, "textureBudgetMiB", "1024");
     }
     for key in ["resourcePacks", "incompatibleResourcePacks"] {
         game = set_pack_list(&game, key, textures.as_deref());
