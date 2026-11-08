@@ -645,7 +645,7 @@ pub(crate) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         WELL => Some(vec![tr("veio.hint.well", &[])]),
         trade::PORT | trade::STATION => Some(vec![
             tr("veio.dock.today", &[&read(6), &read(9)]),
-            tr("veio.dock.next", &[&read(12), &read(7)]),
+            tr("veio.dock.next", &[&read(12), &read(1), &read(7)]),
             tr(if block == trade::PORT { "veio.hint.export_dock" } else { "veio.hint.freight_station" }, &[]),
         ]),
         _ => None,

@@ -464,6 +464,19 @@ for key, pt, en in [
  ('veio.trade.flows', 'Exporta %s/dia · importa %s/dia · saldo %s', 'Exports %s/day · imports %s/day · balance %s'),
  ('veio.trade.contract', '%s: %s/%s · %s dias', '%s: %s/%s · %s days'),
  ('veio.export.best', 'Bolsa hoje: %s paga %s moedas por unidade', 'Market today: %s pays %s coins per unit'),
+ ('veio.status.locked_market', 'Mercado fechado (reputação)', 'Market closed (reputation)'),
+ ('veio.dock.next', 'Partida em %s s · %s pilhas · frete até %s', 'Departs in %s s · %s stacks · freight up to %s'),
+ ('veio.trade.reputation', 'Reputação %s · camada %s aberta · próxima com %s', 'Reputation %s · tier %s open · next at %s'),
+ ('veio.trade.reputation_max', 'Reputação %s · todos os mercados abertos', 'Reputation %s · every market open'),
+ ('veio.trade.board', 'Bolsa: %s a %s moedas (%s hoje)', 'Market: %s at %s coins (%s today)'),
+ ('veio.trade.news.offered', 'Novo contrato: %s %s em %s dias, pagando %s%% a mais. Veja a aba Comércio exterior.', 'New contract: %s %s in %s days, paying %s%% more. See the Foreign trade tab.'),
+ ('veio.trade.news.fulfilled', 'Contrato cumprido: %s. Prêmio de %s moedas e +1 de reputação.', 'Contract fulfilled: %s. %s coins premium and +1 reputation.'),
+ ('veio.trade.news.lost', 'Contrato perdido: %s. Reputação -1.', 'Contract lost: %s. Reputation -1.'),
+ ('veio.trade.news.opened2', 'Mercado aberto: componentes (engrenagens, fios, molduras, silício, aço).', 'Market open: components (gears, wires, frames, silicon, steel).'),
+ ('veio.trade.news.opened3', 'Mercado aberto: eletrônicos (circuitos, módulos mecânicos, kits de reparo).', 'Market open: electronics (circuits, mechanical modules, repair kits).'),
+ ('veio.trade.news.opened4', 'Mercado aberto: módulos de melhoria.', 'Market open: upgrade modules.'),
+ ('veio.trade.departed.ship', 'Navio partiu: %s itens, %s moedas líquidas', 'Ship departed: %s items, %s net coins'),
+ ('veio.trade.departed.train', 'Trem partiu: %s itens, %s moedas líquidas', 'Train departed: %s items, %s net coins'),
  ('veio.zone.need_mayor', 'O plano diretor não permite: suba a fase da vila na prefeitura.', 'The master plan forbids it: raise the village phase at the town hall.'),
  ('veio.zone.suspended', 'Licenças suspensas pelo prefeito: melhore o bem-estar da vila.', "Permits suspended by the mayor: improve the village's well-being."),
  ('veio.guide.role.output', 'Saída', 'Output'),
@@ -833,7 +846,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.23.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.24.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -953,8 +966,8 @@ v_export=vpage(
  "Comércio exterior\n\nConexões externas: porto de carga (no mar ou rio largo) e estação de carga (na fronteira, a 96 blocos da sede). Leve a carga até elas; cada viagem tem capacidade e frete.\n\nQuando falta comida, as lojas importam por elas.",
  "Foreign trade\n\nOutside connections: cargo port (on the sea or a wide river) and freight station (at the frontier, 96 blocks from HQ). Haul cargo to them; each trip has capacity and freight.\n\nWhen food runs short, shops import through them.")
 v_market=vpage(
- "Bolsa e contratos\n\nCotação = valor x complexidade (1x a 4x) x bolsa do dia, e cai quando você inunda um item.\n\nContratos pedem lotes com prazo e pagam 50% a mais. Cumprir sobe a reputação e abre componentes, eletrônicos e módulos.",
- "Market and contracts\n\nQuote = value x complexity (1x to 4x) x the day's market, and drops when you flood an item.\n\nContracts ask for lots with a deadline and pay 50% more. Completing them raises reputation and opens components, electronics and modules.")
+ "Bolsa e contratos\n\nCotação = valor x complexidade x bolsa do dia; cai se você inunda um item.\n\nContratos têm prazo e pagam 50% a mais; o chat avisa. Reputação 1 abre componentes, 3 eletrônicos, 6 módulos. Contrato perdido: -1.",
+ "Market and contracts\n\nQuote = value x complexity x the day's market; it drops if you flood an item.\n\nContracts have deadlines and pay 50% more; chat tells you. Reputation 1 opens components, 3 electronics, 6 modules. A lost contract: -1.")
 v_prices=vpage(
  "Preços locais\n\nCada loja tem seus preços. Muita procura e pouco estoque: até o dobro. Estoque parado: barateia até 70%. Família sem achar comida empurra o preço.\n\nCada vila tem seu mercado: abasteça onde está caro.",
  "Local prices\n\nEach shop sets its own prices. High demand and low stock: up to double. Idle stock: drops to 70%. Families who find no food push prices up.\n\nEach village has its own market: supply where it is expensive.")

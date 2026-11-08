@@ -254,11 +254,11 @@ pub(super) fn refresh(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntit
         return;
     }
     if tab == FOREIGN {
-        // [reputação, camada, exporta/dia, importa/dia] e três contratos em dois números cada:
-        // produto x 1000 + dias, pedido x 10000 + feito.
+        // [reputação, camada, exporta/dia, importa/dia, próxima reputação] e três contratos em dois
+        // números cada: produto x 1000 + dias, pedido x 10000 + feito.
         let day = time.div_euclid(workforce::society::DAY);
-        let ([reputation, tier, exports, imports], contracts) = workforce::society::trade::summary(dimension, day);
-        let mut values = vec![reputation, tier, exports, imports];
+        let ([reputation, tier, exports, imports, next], contracts) = workforce::society::trade::summary(dimension, day);
+        let mut values = vec![reputation, tier, exports, imports, next];
         for slot in 0..3 {
             match contracts.get(slot) {
                 Some(&[product, done, need, days]) => values.extend([product * 1000 + days.min(999), need * 10000 + done.min(9999)]),

@@ -69,6 +69,23 @@ exportar) e a de importação (teto)**. Exportar traz moeda nova, importar e o f
 e tudo passa pelas bordas do `ledger`, então a identidade contábil continua valendo (testes conferem
 com o porto, o frete e a importação).
 
+**Detalhes do acabamento (0.24):**
+
+- Contratos nunca repetem um produto ativo; o lote é menor quanto mais complexo o produto (256 de
+  matéria-prima, 128 de processado, 80 de componente, 64 de eletrônico, 48 de módulo, mais uma variação).
+- O prêmio de 50% é somado em centésimos de moeda, para não sumir em itens baratos.
+- Reputação abre as camadas em 1 (componentes), 3 (eletrônicos) e 6 (módulos); a aba mostra quanto
+  falta. Carga de camada fechada espera no porto com o estado *Mercado fechado*, sem ser vendida.
+- Avisos no chat (pelo centro de controle): contrato novo, cumprido (com o prêmio), perdido e mercado
+  aberto. A partida de navio ou trem toca buzina ou trilho, solta fumaça e avisa quem está a 48 blocos
+  com os itens e o líquido depois do frete.
+- A saturação da bolsa e a reputação ficam salvas no centro de controle (`Trade`, `TradeRecent`): reabrir
+  o mundo não "limpa" o mercado.
+- A estação também precisa estar a 96 blocos do centro da vila.
+- A importação traz a comida que a loja mais vende (que esteja na bolsa), ou pão.
+- O relatório do centro de controle mostra as 5 melhores cotações abertas com a tendência do dia.
+- Uma trava só por pilha exportada (cotação, saturação, contratos e reputação juntos).
+
 **Onde ver:** a aba *Comércio exterior* do centro de controle (reputação, exportação e importação do
 dia, saldo comercial e os contratos); o relatório do centro sugere os itens guardados que mais rendem
 na bolsa hoje; o relatório da prefeitura separa a moeda que entrou por exportação.

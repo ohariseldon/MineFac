@@ -47,6 +47,7 @@ def add_labels(langs):
         "no_company": ("Coloque um centro de controle: o cofre da companhia recebe as vendas.", "Place a control center: the company vault receives the sales."),
         "no_water": ("O porto de carga precisa de mar ou rio largo em volta (20 blocos de água).", "The cargo port needs sea or a wide river around it (20 water blocks)."),
         "not_frontier": ("A estação de carga fica na fronteira: a 96 blocos da sede e das prefeituras.", "The freight station goes at the frontier: 96 blocks from headquarters and town halls."),
+        "locked_market": ("O mundo ainda não compra essa camada: cumpra contratos para subir a reputação.", "The world does not buy this tier yet: fulfill contracts to raise reputation."),
         "storing": ("A fila do capataz guarda e retira itens daqui.", "The foreman's queue stores and takes items here."),
         "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
     }

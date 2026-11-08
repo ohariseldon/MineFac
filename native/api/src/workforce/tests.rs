@@ -1706,7 +1706,7 @@ fn the_world_market_pays_for_complexity_and_reputation_opens_markets() {
     assert!(import_price("minecraft:bread", 0).unwrap() > quote(dimension, "minecraft:bread", 0).unwrap(),
         "importar custa mais que exportar: o preço local fica entre os dois");
     assert_eq!(quote(dimension, WAGE, 0), None, "a esmeralda é a moeda");
-    let contract = issue(1, 0, 10);
+    let contract = issue(1, 0, 10, &[]);
     assert_eq!(PRODUCTS[contract.product].3, 2, "contratos pedem a camada mais alta liberada");
     assert!(contract.need >= 16 && contract.due >= 13);
 }
@@ -1792,4 +1792,61 @@ fn shops_import_food_when_short_and_money_leaves_the_economy() {
     assert_eq!(i64::from(economy_total(&village) + number(&house, "Wallet") - before), -(left_after - left),
         "identidade contábil com a importação");
     assert_eq!(number(&shop, "Duration"), 0, "importado não vira dívida com a indústria");
+}
+
+#[test]
+fn contracts_never_repeat_a_product_and_news_reach_the_chat() {
+    use society::trade::*;
+    let dimension = "veio:test_trade_news";
+    roll(dimension, 0);
+    let (_, contracts) = state(dimension);
+    let mut products: Vec<usize> = contracts.iter().map(|contract| contract.product).collect();
+    products.sort_unstable();
+    products.dedup();
+    assert_eq!(products.len(), 3, "três contratos, três produtos diferentes");
+    let news = drain(dimension);
+    assert_eq!(news.iter().filter(|item| matches!(item, News::Offered(..))).count(), 3, "o chat anuncia os contratos");
+    assert!(drain(dimension).is_empty(), "cada aviso sai uma vez");
+    assert_eq!(unlocked_tier(0), 1);
+    assert_eq!(unlocked_tier(TIER_AT[0]), 2, "a primeira reputação abre os componentes");
+    assert_eq!(next_unlock(0), Some(TIER_AT[0]));
+    assert_eq!(next_unlock(99), None);
+    let board = board(dimension, 0, 5);
+    assert!(board.windows(2).all(|pair| pair[0].1 >= pair[1].1), "a bolsa vem da maior cotação para a menor");
+}
+
+#[test]
+fn a_fulfilled_contract_announces_the_premium_and_opens_a_market() {
+    use society::trade::*;
+    let (mut village, _, _) = society_town("veio:test_trade_open", 12);
+    let dimension = village.dimension;
+    roll(dimension, 0);
+    drain(dimension);
+    let (_, contracts) = state(dimension);
+    let contract = contracts.iter().find(|contract| PRODUCTS[contract.product].3 <= 1).cloned().unwrap();
+    export(dimension, [40, 64, 40], PRODUCTS[contract.product].0, contract.need as u32, 0, 1);
+    let news = drain(dimension);
+    assert!(news.iter().any(|item| matches!(item, News::Fulfilled(product, premium) if *product == contract.product && *premium > 0)));
+    assert!(news.contains(&News::Opened(2)), "reputação 1: o mundo passa a comprar componentes");
+    let _ = &mut village;
+}
+
+#[test]
+fn locked_cargo_waits_at_the_port_and_reputation_survives_a_reload() {
+    use society::trade::*;
+    let (mut village, _, _) = society_town("veio:test_trade_locked", 13);
+    let dimension = village.dimension;
+    sea(&mut village, [40, 64, 40]);
+    let mut port = block(PORT);
+    port.items[0] = Some(ItemStack::new("veio:speed_module", 2));
+    society::tick_block(&mut village, [40, 64, 40], &mut port, 2400);
+    assert_eq!(number(&port, "Status"), LOCKED_MARKET, "módulos ainda não têm mercado: a carga espera");
+    assert!(port.items[0].is_some());
+    // Reputação e contratos ficam no centro de controle e voltam ao reabrir o mundo.
+    set_reputation(dimension, 4);
+    let mut office = block(CONTROL_CENTER);
+    persist(dimension, &mut office, 0);
+    persist("veio:test_trade_reloaded", &mut office, 0);
+    assert_eq!(state("veio:test_trade_reloaded").0, 4);
+    assert_eq!(state("veio:test_trade_reloaded").1.len(), state(dimension).1.len());
 }
