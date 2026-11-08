@@ -1,4 +1,4 @@
-# Veio — Realismo 2.1
+# Veio — Realismo 3.0
 
 Visual original para o Veio: céu com atmosfera, nuvens, estrelas e sol próprios, plantas e
 água em movimento, luz colorida de tochas, fornos e máquinas quentes, brilho, raios de sol,
@@ -9,7 +9,72 @@ O launcher oferece **Realismo leve — pensado para 8 GB** e **Leve — sem shad
 `Escolher-Visual.cmd` abre essa escolha de novo; `Jogar-Leve.cmd` inicia sem o pacote.
 Também dá para desligar o pacote em Opções > Vídeo > Shaders.
 
-## O que deixa a imagem com cara de jogo novo (2.1)
+## 3.1: céu físico e cor limpa
+
+Depois do primeiro teste no jogo (céu "quebrado", brilho e contraste esquisitos), o céu e a cor
+foram refeitos com técnicas publicadas e usadas há anos, em vez de fórmulas próprias:
+
+- **Céu físico:** dispersão simples numa atmosfera esférica com ar (Rayleigh), névoa (Mie) e
+  ozônio, com os coeficientes da Terra de Hillaire (EGSR 2020) e Bruneton. A luz até o sol
+  também é calculada, então o pôr do sol avermelha sozinho e a sombra da Terra sobe no
+  anoitecer. Depois, exposição fixa e a curva de filme ACES (ajuste de Narkowicz).
+- **Brilho (bloom):** o céu claro do dia não brilha mais; só o sol e o que passa do branco. No
+  chão, lâmpadas, lava, fogo e janelas acesas.
+- **Cor:** sem a curva de contraste forte, sem tonalização dividida e com o tom dourado mais
+  leve. A imagem fica perto das cores do Minecraft, com um pouco mais de saturação.
+- Água e sombras não mudaram.
+
+**Texturas realistas embutidas (3.1.1):** o Realismo instala e liga sozinho o pacote
+`visuals/texturas/Veio-Texturas-JG-128x.zip`, uma adaptação de **PBR JG** (Jason J. Gardner,
+CC BY-NC-SA 4.0): texturas fotográficas com mapas LabPBR de relevo, oclusão e brilho por
+material, que este shader lê. O original é 256x; o Veio reduz para 128x para caber na meta de
+8 GB (cerca de 93 MB) e mantém a água do jogo. O pacote não vai para o git: gere com
+`python tools/build_realistic_textures.py`, que baixa do Modrinth e confere o SHA-512. O launcher põe o
+pacote em `resourcepacks/`, liga por último na lista (os seus pacotes continuam) e sobe o
+orçamento de texturas para 1024 MiB. No Leve ele sai.
+
+**Adaptação do olho e nuvens lisas (3.2):** o brilho segue o lugar onde o jogador está, pela luz
+em volta do olho que o jogo suaviza em ~2 s (a mesma técnica do BSL e do Complementary com
+`eyeBrightnessSmooth`): em caverna, quarto escuro ou ao ar livre à noite a exposição abre até 2×
+(em luz, não na imagem codificada); de dia fica em 1. Ao sair da caverna para o sol, a imagem
+começa clara e assenta. As nuvens trocaram o deslocamento por célula (que serrilhava) por um
+ruído suave, e a ampliação da meia tela passou a um filtro 3×3.
+
+**Céu estável (3.1.3):** o Luiz viu o céu "bugar" ao andar e pular. A causa: as passadas de
+nuvens e de luz no ar montavam a direção do olhar com um ponto a 0,1 bloco do olho, e o balanço
+da câmera ao andar (que o Horizon põe na projeção) desloca o olho alguns centímetros; a direção
+errava dezenas de graus a cada passo. Agora a direção é a diferença de dois pontos do mesmo raio,
+imune ao balanço. As nuvens também deixaram o ruído preso à tela (que "andava" ao mexer a câmera)
+por um preso às próprias nuvens, ganharam mais passos (24/36), somem no ar com a distância
+mostrando o céu de verdade por trás, e à noite não brilham mais que o céu. Pontilhado de 1/255
+contra faixas no céu escuro; a fumaça da fábrica não pinta o horizonte à noite.
+
+**Noite (3.1.1):** o primeiro teste foi à noite e saiu escuro, lavado e roxo. A luz do céu à noite
+não escurece mais o que o jogo já ilumina; o olho se adapta ao ar livre à noite (+55%) e as cores
+desbotam um pouco, como na visão noturna de verdade; o céu noturno ficou azul-escuro em vez de
+preto, com estrelas mais visíveis; a lua clareia mais neutra; os tons azuis da noite e do inverno
+caíram para um terço; a vinheta caiu de 0,35 para 0,2.
+
+## 3.0.1
+
+O jogo recusava o pacote ("a pack may write 4"): os efeitos agora cabem em quatro alvos de pós.
+Mesmo visual; o brilho passou a ser lido direto da imagem, em um quarto da tela.
+
+## 3.0: o salto
+
+- **Nuvens volumétricas:** cúmulos de verdade, entre 560 e 1.150 blocos de altura, com base
+  escura, topo iluminado, bordas prateadas contra o sol e luz dourada no fim da tarde. Luz por
+  dentro da nuvem (lei de Beer com efeito "powder" e espalhamento múltiplo aproximado). Meia tela.
+- **Sombra das nuvens no chão:** manchas que andam com o vento sobre o terreno.
+- **Profundidade nas texturas (parallax):** as frestas entre pedras, tijolos e tábuas afundam de
+  verdade e mudam com o ângulo da câmera.
+- **Sombras suaves:** disco de Poisson girado; no Alto a penumbra cresce com a distância até o
+  que faz a sombra, como a do sol de verdade.
+- **Água espelhada ligada por padrão.**
+- **Cor de cinema:** hora dourada mais forte, curva de contraste maior, saturação e
+  tonalização dividida (sombras frias, luzes quentes).
+
+## 2.1: cara de jogo novo
 
 - **Relevo das texturas:** perto da câmera, o detalhe de cada bloco vira relevo, e o sol de lado
   revela pedras, tábuas e rebites. Com um pacote de recursos LabPBR, usa os mapas de normal dele.
@@ -64,8 +129,7 @@ Sem o mod (pacote usado sozinho), o shader usa valores neutros: primavera, sem f
 - O mod: com mil máquinas quentes, cerca de 40 µs por tick e as 8 luzes por quadro sem
   varrer a fábrica (`python tools/check_performance.py`, cenário
   `ambience_1000_hot_machines_second`).
-- O pacote: sombra de cantos, luz no ar e reflexos rodam em meia resolução; brilho em meia e um
-  quarto. Relevo custa duas leituras de textura por pixel até 32 blocos. Nuvens analíticas no
+- O pacote: sombra de cantos, luz no ar e reflexos rodam em meia resolução; brilho em um quarto. Relevo custa duas leituras de textura por pixel até 32 blocos. Nuvens analíticas no
   céu, sem volume; sem traçado de raios nem histórico temporal. No Leve nada disso roda.
 - O `budget.gpu_ms` (4,5 ms no Equilibrado) é um objetivo, não uma medição. A meta de 8 GB considera o
   computador inteiro. Placa de vídeo, resolução e tamanho da fábrica pesam mais que a RAM.

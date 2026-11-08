@@ -1,9 +1,9 @@
 schema = 1
 id = "veio_industrial"
 name = "Veio — Realismo"
-version = "2.1.0"
+version = "3.2.0"
 api = "0.1"
-description = "Céu com atmosfera, nuvens e estrelas, relevo nas texturas, sombra de cantos, luz volumétrica, reflexos em chão molhado e metal, água com refração e cáusticas, plantas em movimento, luz colorida, estações do ano e fumaça da fábrica. Três níveis de qualidade; o Leve foi pensado para PCs de 8 GB."
+description = "Nuvens volumétricas, água espelhada, profundidade nas texturas, sombras suaves com penumbra e sombra das nuvens no chão, céu com atmosfera e estrelas, relevo nas texturas, sombra de cantos, luz volumétrica, reflexos em chão molhado e metal, água com refração e cáusticas, plantas em movimento, luz colorida, estações do ano e fumaça da fábrica. Três níveis de qualidade; o Leve foi pensado para PCs de 8 GB."
 authors = ["Veio"]
 license = "MIT"
 shared = ["common.wgsl"]
@@ -34,17 +34,12 @@ distance_option = "shadow_distance"
 [reflection]
 option = "reflections"
 
-# Brilho em três passos pequenos (metade e um quarto da tela), raios de sol em meia tela.
-[[post]]
-file = "bright.wgsl"
-name = "Brilho: partes claras"
-output = "bright"
-scale = 0.5
-
+# Um pacote pode escrever no máximo 4 saídas de [[post]]. Brilho em dois passos de um quarto da
+# tela; sombra de cantos e luz no ar dividem uma saída; nuvens (céu) e reflexos (chão) outra.
 [[post]]
 file = "blur_h.wgsl"
-name = "Brilho: desfoque horizontal"
-output = "blur_h"
+name = "Brilho: partes claras, desfoque horizontal"
+output = "glow_h"
 scale = 0.25
 
 [[post]]
@@ -54,21 +49,15 @@ output = "glow"
 scale = 0.25
 
 [[post]]
-file = "ao.wgsl"
-name = "Sombra de cantos (oclusão)"
-output = "ao"
+file = "light.wgsl"
+name = "Sombra de cantos e luz no ar"
+output = "light"
 scale = 0.5
 
 [[post]]
-file = "rays.wgsl"
-name = "Luz no ar (volumétrica)"
-output = "rays"
-scale = 0.5
-
-[[post]]
-file = "ssr.wgsl"
-name = "Reflexos na tela"
-output = "ssr"
+file = "sky_mirror.wgsl"
+name = "Nuvens volumétricas e reflexos na tela"
+output = "sky_mirror"
 scale = 0.5
 
 [[post]]
@@ -159,7 +148,7 @@ reach = 2.5
 [[options]]
 id = "quality"
 name = "Qualidade"
-description = "Leve: pensado para PCs de 8 GB e placas integradas (sem relevo, sombra de cantos, luz no ar, reflexos, brilho, luz colorida nem plantas balançando). Equilibrado: o padrão, com tudo ligado em contas menores. Alto: mais amostras de sombra de cantos, luz no ar e reflexos, e nuvens mais detalhadas."
+description = "Leve: pensado para PCs de 8 GB e placas integradas (sem relevo, sombra de cantos, luz no ar, reflexos, brilho, luz colorida nem plantas balançando). Equilibrado: o padrão, com tudo ligado em contas menores. Alto: mais amostras de sombra de cantos, luz no ar, reflexos e nuvens, penumbra que cresce com a distância e mais profundidade nas texturas."
 type = "choice"
 default = "Equilibrado"
 values = ["Leve (8 GB)", "Equilibrado", "Alto"]
@@ -199,6 +188,13 @@ step = 0.05
 id = "clouds"
 name = "Nuvens"
 description = "Nuvens em camadas que andam com o vento e cobrem mais o céu na chuva e no inverno."
+type = "bool"
+default = true
+
+[[options]]
+id = "volumetric_clouds"
+name = "Nuvens volumétricas"
+description = "Cúmulos de verdade, com volume: base escura, topo iluminado pelo sol, bordas prateadas e luz dourada no fim da tarde. Somem no ar com a distância. Equilibrado e Alto; no Leve as nuvens são planas."
 type = "bool"
 default = true
 
@@ -247,6 +243,16 @@ max = 1.0
 step = 0.05
 
 [[options]]
+id = "parallax"
+name = "Profundidade das texturas"
+description = "As frestas entre pedras, tijolos e tábuas ganham profundidade de verdade, que muda com o ângulo da câmera. Até 12 blocos no Equilibrado e 20 no Alto."
+type = "float"
+default = 0.7
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
 id = "ambient_occlusion"
 name = "Sombra de cantos"
 description = "Cantos, frestas, o pé das paredes e o chão sob as máquinas escurecem como na vida real."
@@ -276,9 +282,9 @@ step = 0.05
 [[options]]
 id = "reflections"
 name = "Reflexo do mundo na água"
-description = "A água espelha árvores, morros e a fábrica. Desenha o mundo uma segunda vez em meia resolução: é o efeito mais caro. Desligado, a água reflete só o céu."
+description = "A água espelha árvores, morros, casas e a fábrica como um lago parado. Desenha o mundo uma segunda vez em meia resolução: é o efeito mais caro. No Leve (8 GB), desligue também. Desligado, a água reflete só o céu."
 type = "bool"
-default = false
+default = true
 
 [[options]]
 id = "seasons"
@@ -330,7 +336,7 @@ step = 0.05
 id = "vignette"
 name = "Vinheta"
 type = "float"
-default = 0.35
+default = 0.2
 min = 0.0
 max = 1.0
 step = 0.05
@@ -344,7 +350,7 @@ items = ["quality", "shadows", "page:sky", "page:world", "page:light", "page:ima
 id = "sky"
 name = "Céu e ar"
 description = "Atmosfera, nuvens e raios de sol."
-items = ["atmosphere", "clouds", "sun_rays"]
+items = ["atmosphere", "clouds", "volumetric_clouds", "sun_rays"]
 
 [[pages]]
 id = "world"
@@ -356,7 +362,7 @@ items = ["waving", "seasons", "water_detail", "reflections", "wet_surfaces", "sc
 id = "light"
 name = "Luz"
 description = "Cor das fontes de luz, brilho, metais, sombra de cantos e relevo."
-items = ["colored_lights", "bloom", "metal_highlights", "ambient_occlusion", "relief"]
+items = ["colored_lights", "bloom", "metal_highlights", "ambient_occlusion", "relief", "parallax"]
 
 [[pages]]
 id = "image"
@@ -372,4 +378,4 @@ items = ["shadow_resolution", "shadow_distance"]
 
 # Objetivo de custo no Equilibrado, não uma medição nem um limitador automático.
 [budget]
-gpu_ms = 4.5
+gpu_ms = 7.0

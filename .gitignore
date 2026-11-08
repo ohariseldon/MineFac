@@ -12,3 +12,6 @@ dist/
 
 # Caminhos pessoais gravados pelo launcher.exe
 launcher.ini
+
+# Gerado por tools/build_textures.py (passa de 100 MB; não vai para o git)
+visuals/texturas/*.zip

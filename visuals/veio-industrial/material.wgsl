@@ -8,7 +8,7 @@ override relief: f32 = 0.6;
 // Relief: the texture's own detail turned into a surface normal near the camera, so the sun
 // grazing a wall shows each stone and plank. LabPBR normal maps win when a resource pack has
 // them. Two extra texture reads; off on Leve and past 32 blocks.
-fn veio_relief_normal(input: MaterialInput, distance: f32) -> vec3<f32> {
+fn veio_relief_normal(input: MaterialInput, distance: f32, uv: vec2<f32>, albedo: vec3<f32>) -> vec3<f32> {
     let n = input.normal;
     if quality == 0u || relief <= 0.0 || input.translucent || distance > 32.0 || input.emission > 0.5 {
         return n;
@@ -17,7 +17,7 @@ fn veio_relief_normal(input: MaterialInput, distance: f32) -> vec3<f32> {
     let b = cross(n, t) * input.tangent.w;
     let fade = relief * (1.0 - smoothstep(18.0, 32.0, distance));
     if block_pbr_maps() {
-        let m = block_normal_map(input.uv).rg * 2.0 - 1.0;
+        let m = block_normal_map(uv).rg * 2.0 - 1.0;
         let z = sqrt(max(1.0 - dot(m, m), 0.0));
         let mapped = normalize(t * m.x + b * m.y + n * z);
         return normalize(mix(n, mapped, min(fade * 1.4, 1.0)));
@@ -25,9 +25,9 @@ fn veio_relief_normal(input: MaterialInput, distance: f32) -> vec3<f32> {
     // Brighter texels stand out, darker ones (mortar, grooves, knots) sink in.
     let lod = block_texture_lod();
     let texel = 1.0 / block_texture_size();
-    let centre = veio_luma(input.albedo.rgb);
-    let across = veio_luma(block_texture_level(fract(input.uv + vec2<f32>(texel.x, 0.0)), lod).rgb);
-    let down = veio_luma(block_texture_level(fract(input.uv + vec2<f32>(0.0, texel.y)), lod).rgb);
+    let centre = veio_luma(albedo);
+    let across = veio_luma(block_texture_level(fract(uv + vec2<f32>(texel.x, 0.0)), lod).rgb);
+    let down = veio_luma(block_texture_level(fract(uv + vec2<f32>(0.0, texel.y)), lod).rgb);
     // Mip levels blur the steps: keep the slope the same in blocks at every distance.
     let gradient = vec2<f32>(across - centre, down - centre) * (2.2 / exp2(lod * 0.5));
     return normalize(n - (t * gradient.x + b * gradient.y) * fade);
@@ -82,7 +82,44 @@ fn veio_visibility(position: vec3<f32>, normal: vec3<f32>, light: vec3<f32>) -> 
     if any(p.xy <= vec2<f32>(0.002)) || any(p.xy >= vec2<f32>(0.998)) || p.z <= 0.0 || p.z >= 1.0 {
         return 1.0;
     }
-    let lit = textureSampleCompareLevel(shadow_map, shadow_sampler, p.xy, p.z - (0.00015 + 0.0002 * slope));
+    let reference = p.z - (0.00015 + 0.0002 * slope);
+    var lit = 0.0;
+    if quality == 0u {
+        lit = textureSampleCompareLevel(shadow_map, shadow_sampler, p.xy, reference);
+    } else {
+        // Soft shadows: a rotated Poisson disc of bilinear comparisons. On Alto the disc widens
+        // with the distance to whatever casts the shadow (a branch near the ground stays sharp,
+        // a tower's shadow far below goes soft), like the sun's real penumbra.
+        let texel = 1.0 / max(frame.shadow_resolution, 256.0);
+        let spin = veio_hash2(floor(position.xz * 16.0) + floor(position.y * 16.0)) * 6.2831853;
+        let rotation = mat2x2<f32>(cos(spin), sin(spin), -sin(spin), cos(spin));
+        var radius = 1.6 * texel;
+        if quality >= 2u {
+            var blocker = 0.0;
+            var found = 0.0;
+            let size = vec2<f32>(textureDimensions(shadow_map));
+            for (var b = 0; b < 4; b++) {
+                let o = rotation * vec2<f32>(f32(b & 1) * 2.0 - 1.0, f32(b >> 1u) * 2.0 - 1.0) * 3.0 * texel;
+                let d = textureLoad(shadow_map, vec2<i32>(clamp((p.xy + o) * size, vec2<f32>(0.0), size - 1.0)), 0);
+                let blocks = select(0.0, 1.0, d < reference);
+                blocker += d * blocks;
+                found += blocks;
+            }
+            if found > 0.0 {
+                let gap = reference - blocker / found;
+                radius = texel * clamp(1.2 + gap * 900.0, 1.2, 6.0);
+            }
+        }
+        let taps = select(6, 12, quality >= 2u);
+        for (var i = 0; i < 12; i++) {
+            if i >= taps { break; }
+            let k = (f32(i) + 0.5) / f32(taps);
+            let angle = f32(i) * 2.3999632;
+            let o = rotation * vec2<f32>(cos(angle), sin(angle)) * sqrt(k) * radius;
+            lit += textureSampleCompareLevel(shadow_map, shadow_sampler, p.xy + o, reference);
+        }
+        lit /= f32(taps);
+    }
     let fade = smoothstep(frame.shadow_distance * 0.72, frame.shadow_distance, length(position.xz));
     return mix(lit, 1.0, fade);
 }
@@ -103,8 +140,71 @@ fn veio_water_thickness(input: MaterialInput, view: vec3<f32>, screen: vec2<f32>
     return clamp(dot(behind - input.position, -view), -1.0, 12.0);
 }
 
+override parallax: f32 = 0.7;
+
+// Parallax: the texture's darker texels (mortar, the gaps between cobbles and planks) are
+// read as lower ground, and the view ray is followed into them so each stone stands out with
+// real depth as the camera moves. 8 steps within 12 blocks on Equilibrado, 14 within 20 on Alto.
+// Returns the texture coordinate where the ray meets the relief.
+fn veio_parallax(input: MaterialInput, view: vec3<f32>, distance: f32, foliage: bool) -> vec2<f32> {
+    let reach = select(12.0, 20.0, quality >= 2u);
+    if quality == 0u || parallax <= 0.0 || input.translucent || foliage || distance > reach || input.emission > 0.5 || input.displaced > 0.5 {
+        return input.uv;
+    }
+    let n = input.normal;
+    let t = input.tangent.xyz;
+    let b = cross(n, t) * input.tangent.w;
+    let local = vec3<f32>(dot(view, t), dot(view, b), dot(view, n));
+    if local.z < 0.12 {
+        return input.uv;
+    }
+    let fade = 1.0 - smoothstep(reach * 0.6, reach, distance);
+    let depth = 0.055 * parallax * fade;
+    let steps = select(8, 14, quality >= 2u);
+    let stride = -local.xy / max(local.z, 0.25) * depth / f32(steps);
+    let lod = block_texture_lod() + 0.5;
+    var uv = input.uv;
+    var layer = 0.0;
+    let layer_step = 1.0 / f32(steps);
+    var height = 1.0 - veio_luma(block_texture_level(fract(uv), lod).rgb) * 1.6;
+    var previous_uv = uv;
+    var previous_gap = 0.0;
+    for (var i = 0; i < 14; i++) {
+        if i >= steps || layer >= height { break; }
+        previous_uv = uv;
+        previous_gap = height - layer;
+        uv += stride;
+        layer += layer_step;
+        height = 1.0 - veio_luma(block_texture_level(fract(uv), lod).rgb) * 1.6;
+    }
+    // Between the last step above the relief and the first below it.
+    let after = layer - height;
+    let w = previous_gap / max(previous_gap + after, 0.0001);
+    return fract(mix(previous_uv, uv, clamp(w, 0.0, 1.0)));
+}
+
+// Shadows of the cumulus layer drifting over the land: the sun's ray from this point up to
+// the cloud base, through the same field the cloud pass draws.
+fn veio_cloud_shadow(position: vec3<f32>, light: vec3<f32>) -> f32 {
+    if quality == 0u || !clouds || !volumetric_clouds || light.y < 0.05 {
+        return 1.0;
+    }
+    let world_y = position.y + frame.camera_position.y;
+    let up = (VEIO_CLOUD_BASE + 120.0 - world_y) / light.y;
+    let xz = veio_cloud_origin() + position.xz + light.xz * up;
+    let cover = veio_cloud_coverage(xz);
+    return 1.0 - smoothstep(0.15, 0.75, cover) * 0.72;
+}
+
 fn material(input: MaterialInput) -> Surface {
-    let surface = input.albedo * input.tint;
+    let foliage_early = input.material == 5u || input.material >= 7u && input.material <= 9u;
+    let view_early = -input.position / max(length(input.position), 0.001);
+    let parallax_uv = veio_parallax(input, view_early, length(input.position), foliage_early);
+    var albedo = input.albedo;
+    if any(parallax_uv != input.uv) {
+        albedo = vec4<f32>(block_texture(parallax_uv).rgb, input.albedo.a);
+    }
+    let surface = albedo * input.tint;
     let vanilla = surface.rgb * input.lightmap;
     // Other dimensions retain their own palette, fog, lighting and visibility rules.
     if frame.dimension != 0 {
@@ -116,19 +216,20 @@ fn material(input: MaterialInput) -> Surface {
     let light = veio_key_direction();
     let distance_here = length(input.position);
     let geometric = input.normal;
-    let normal = veio_relief_normal(input, distance_here);
+    let normal = veio_relief_normal(input, distance_here, parallax_uv, albedo.rgb);
     let view = -input.position / max(distance_here, 0.001);
     // The face itself decides what the sun can reach; relief only shades inside it.
     let facing = max(dot(normal, light), 0.0) * smoothstep(-0.05, 0.10, dot(geometric, light));
     var visibility = 1.0;
     if sky_light > 0.01 {
-        visibility = veio_visibility(input.position, geometric, light);
+        visibility = veio_visibility(input.position, geometric, light) * veio_cloud_shadow(input.position, light);
     }
     // Equilibrado and Alto: a stronger sun against a bluer sky-lit shade, like a real
     // afternoon. Leve keeps the soft 1.x balance.
     let contrast = select(0.0, 1.0, quality >= 1u);
     let sky_ambient = mix(vec3<f32>(0.91, 0.96, 1.06), mix(vec3<f32>(0.97, 1.005, 1.035), vec3<f32>(0.90, 0.97, 1.10), contrast), day);
-    let hemisphere = mix(0.76, 0.66 + 0.10 * frame.rain, contrast) + 0.12 * max(normal.y, 0.0);
+    // At night the sky light keeps the game's own level: the moon adds, it never darkens.
+    let hemisphere = mix(0.96, mix(0.76, 0.66 + 0.10 * frame.rain, contrast), day) + 0.12 * max(normal.y, 0.0);
     let key = mix(0.23, 0.44, contrast);
     let lighting = sky_ambient * hemisphere + veio_key_color() * (key * facing * visibility * key_strength);
     var color = vanilla * mix(vec3<f32>(1.0), lighting, sky_light * (1.0 - input.emission));

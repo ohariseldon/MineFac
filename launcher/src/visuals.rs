@@ -9,7 +9,11 @@ use std::process::Command;
 /// Pasta em `shaderpacks/`: é também o valor de `pickedShaderPack` que o Horizon procura.
 const PACK_FOLDER: &str = "veio-industrial";
 // 2: corrige pickedShaderPack (era "horizon:veio_industrial", que o Horizon não acha).
-const PRESET_REVISION: &str = "2";
+// 3: liga o pacote de texturas realistas (visuals/texturas) no Realismo.
+const PRESET_REVISION: &str = "3";
+/// Pacotes de texturas que o Veio traz em `visuals/texturas/` (ver tools/build_realistic_textures.py).
+const TEXTURES_FOLDER: &str = "texturas";
+const TEXTURES_PREFIX: &str = "Veio-Texturas-";
 const MARKER: &str = ".veio-visual-profile";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -98,6 +102,20 @@ pub(super) fn launch_environment(command: &mut Command, profile: Profile) {
     }
 }
 
+/// O Horizon recusa o pacote inteiro se sobrar um `.wgsl` que nenhum estágio usa, como os de
+/// uma versão anterior. Só apaga `.wgsl` da raiz que a versão nova não traz.
+fn remove_stale_shaders(source: &Path, target: &Path) -> Result<(), String> {
+    let Ok(entries) = fs::read_dir(target) else { return Ok(()) };
+    for entry in entries {
+        let path = entry.map_err(|error| error.to_string())?.path();
+        let shader = path.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("wgsl"));
+        if shader && path.is_file() && !source.join(path.file_name().unwrap_or_default()).is_file() {
+            fs::remove_file(&path).map_err(|error| format!("{}: {error}", path.display()))?;
+        }
+    }
+    Ok(())
+}
+
 pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Result<(), String> {
     // Não há shaders no pacote de conteúdo do mod: desligar aqui remove a seleção sem
     // um gancho nativo voltar a ativá-la. A instalação não executa nenhum WGSL.
@@ -106,14 +124,11 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
         if !source.join("horizon-shaders.toml").is_file() {
             return Err("o pacote visual veio-industrial está faltando. Extraia o ZIP completo, ou abra Jogar-Leve.cmd.".into());
         }
-        // O Horizon recusa o pacote se sobrar um .wgsl que o manifesto não cita: a pasta
-        // instalada é só nossa e é refeita do zero. As opções ficam ao lado, em veio-industrial.txt.
         let target = instance.join("shaderpacks").join(PACK_FOLDER);
-        if target.exists() {
-            fs::remove_dir_all(&target).map_err(|error| format!("{}: {error}", target.display()))?;
-        }
+        remove_stale_shaders(&source, &target)?;
         super::copy_dir(&source, &target)?;
     }
+    let textures = install_textures(root, instance, selection.profile)?;
     let marker = format!("{}:{PRESET_REVISION}", selection.profile.id());
     if !selection.reset && fs::read_to_string(instance.join(MARKER)).unwrap_or_default().trim() == marker {
         println!("      Ajustes visuais da instância preservados.");
@@ -146,7 +161,8 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
     let extra_values = [
         ("preset", "custom"),
         ("lodDistance", "0"),
-        ("textureBudgetMiB", "256"),
+        // Realismo: texturas de 128x com mapas de relevo e brilho (o pacote do Veio ou outro).
+        ("textureBudgetMiB", if realism { "1024" } else { "256" }),
         ("workers", "2"),
         ("resolutionScale", if realism { "85" } else { "75" }),
         ("taa", "false"),
@@ -161,6 +177,9 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
     for (key, value) in extra_values {
         extra = set_option(&extra, key, value);
     }
+    for key in ["resourcePacks", "incompatibleResourcePacks"] {
+        game = set_pack_list(&game, key, textures.as_deref());
+    }
     backup(&options)?;
     backup(&graphics)?;
     write_options(&options, &game)?;
@@ -168,6 +187,57 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
     write_options(&instance.join(MARKER), &marker)?;
     println!("      Perfil aplicado antes da partida: {}.", selection.profile.label());
     Ok(())
+}
+
+/// Copia o pacote de texturas do Veio para `resourcepacks/` no Realismo e devolve o nome que a
+/// lista de pacotes usa (`file/<zip>`). Versões antigas do pacote são apagadas. No Leve, nada.
+fn install_textures(root: &Path, instance: &Path, profile: Profile) -> Result<Option<String>, String> {
+    let source = root.join("visuals").join(TEXTURES_FOLDER);
+    let zip = fs::read_dir(&source).ok().into_iter().flatten().flatten().map(|entry| entry.path())
+        .filter(|path| path.extension().is_some_and(|e| e == "zip")
+            && path.file_name().is_some_and(|n| n.to_string_lossy().starts_with(TEXTURES_PREFIX)))
+        .max();
+    let target = instance.join("resourcepacks");
+    let name = zip.as_ref().map(|path| path.file_name().unwrap().to_string_lossy().into_owned());
+    if let Ok(entries) = fs::read_dir(&target) {
+        for entry in entries.flatten() {
+            let file = entry.file_name().to_string_lossy().into_owned();
+            let keep = profile == Profile::Realism && Some(&file) == name.as_ref();
+            if file.starts_with(TEXTURES_PREFIX) && !keep {
+                fs::remove_file(entry.path()).map_err(|error| format!("{}: {error}", entry.path().display()))?;
+            }
+        }
+    }
+    let (Some(zip), Some(name), Profile::Realism) = (zip, name, profile) else { return Ok(None) };
+    let destination = target.join(&name);
+    let same = fs::metadata(&destination).ok().map(|m| m.len()) == fs::metadata(&zip).ok().map(|m| m.len());
+    if !same {
+        fs::create_dir_all(&target).map_err(|error| format!("{}: {error}", target.display()))?;
+        fs::copy(&zip, &destination).map_err(|error| format!("{}: {error}", destination.display()))?;
+    }
+    Ok(Some(format!("file/{name}")))
+}
+
+/// Uma lista de pacotes do options.txt (`["vanilla","file/x.zip"]`) sem os do Veio e, se houver,
+/// com o pacote do Veio por último (prioridade mais alta). Os pacotes da pessoa ficam.
+fn set_pack_list(text: &str, key: &str, ours: Option<&str>) -> String {
+    let current = text.lines().find_map(|line| line.split_once(':')
+        .filter(|(name, _)| name.trim() == key).map(|(_, value)| value.trim().to_owned()));
+    let inner = current.as_deref().unwrap_or("[]").trim_start_matches('[').trim_end_matches(']').to_owned();
+    let mut items: Vec<String> = inner.split(',').map(|item| item.trim().trim_matches('"').to_owned())
+        .filter(|item| !item.is_empty() && !item.starts_with(&format!("file/{TEXTURES_PREFIX}")))
+        .collect();
+    if key == "resourcePacks" && ours.is_some() && items.is_empty() {
+        items.push("vanilla".into());
+    }
+    if let Some(ours) = ours {
+        items.push(ours.into());
+    }
+    if current.is_none() && items.is_empty() {
+        return text.to_owned();
+    }
+    let value = format!("[{}]", items.iter().map(|item| format!("\"{item}\"")).collect::<Vec<_>>().join(","));
+    set_option(text, key, &value)
 }
 
 fn read_options(path: &Path) -> Result<String, String> {
