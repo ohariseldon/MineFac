@@ -193,25 +193,7 @@ impl Hooks for Factory {
     }
 
     fn block_entity_tick(&self, host: &mut dyn Host, event: &mut BlockEntityTickEvent<'_>) {
-        if !is_factory_block(&event.entity.id) {
-            return;
-        }
-        let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) else {
-            return;
-        };
-        pollution::update(host, time);
-        if power::tick(host, event.pos, event.entity, time) {
-            host.block_entity_sync(event.pos);
-        }
-        let previous = visual_signature(event.entity);
-        let produced = number(event.entity, "Produced");
-        tick_factory(host, event.pos, event.entity, time);
-        pollution::emit(host, event.pos, event.entity, time);
-        record_performance(event.entity, produced);
-        presentation::publish(event.entity);
-        if visual_signature(event.entity) != previous {
-            host.block_entity_sync(event.pos);
-        }
+        block_entity_tick(host, event.pos, event.entity);
     }
 
     fn entity_tick_pre(&self, host: &mut dyn Host,
@@ -312,6 +294,29 @@ impl Hooks for Factory {
         presentation::draw(host, event);
     }
 
+}
+
+/// Tick de um bloco do Veio. Fora do gancho para as medições chamarem o mesmo caminho.
+fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
+    if !is_factory_block(&entity.id) {
+        return;
+    }
+    let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) else {
+        return;
+    };
+    pollution::update(host, time);
+    if power::tick(host, pos, entity, time) {
+        host.block_entity_sync(pos);
+    }
+    let previous = visual_signature(entity);
+    let produced = number(entity, "Produced");
+    tick_factory(host, pos, entity, time);
+    pollution::emit(host, pos, entity, time);
+    record_performance(entity, produced);
+    presentation::publish(entity);
+    if visual_signature(entity) != previous {
+        host.block_entity_sync(pos);
+    }
 }
 
 fn is_factory_block(block: &str) -> bool {

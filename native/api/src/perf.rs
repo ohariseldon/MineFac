@@ -1,6 +1,7 @@
 //! Reproducible offline allocation/work benchmarks. Never compiled into the game.
 use super::*;
 use std::{alloc::{GlobalAlloc, Layout, System}, cell::Cell, hint::black_box, time::Instant};
+mod factory;
 
 #[derive(Clone, Copy, Default)]
 struct Counts { allocations: usize, bytes: usize, keys: usize, fallback: usize }
