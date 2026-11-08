@@ -953,9 +953,11 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
                 // Holding: fecha a produção do turno e recalcula a aba aberta de vez em quando.
                 if society::ledger::turn_edge(pos, time) {
                     super::holding::roll(host.dimension(), time);
+                    society::trade::roll(host.dimension(), time);
                 }
                 if time.div_euclid(EVERY) % 4 == 0 {
-                    super::holding::refresh(host.dimension(), pos, entity);
+                    society::trade::persist(host.dimension(), entity, time);
+                    super::holding::refresh(host.dimension(), pos, entity, time);
                 }
             }
             _ => {}

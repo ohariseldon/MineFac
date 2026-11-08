@@ -182,6 +182,21 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
             (if read(7) < 0 { tr("veio.center.no_storage", &[&read(5), &read(6)]) } else { tr("veio.center.storage", &[&read(5), &read(6), &read(7)]) },
                 presentation::INK),
         ]
+    } else if tab == super::super::holding::FOREIGN {
+        let mut lines = vec![
+            (tr("veio.trade.reputation", &[&read(1), &read(2)]), 0x1f4fa8),
+            (tr("veio.trade.flows", &[&read(3), &read(4), &(read(3) - read(4))]), if read(3) >= read(4) { 0x1e7a1e } else { 0xaa1f1f }),
+        ];
+        for slot in 0..3 {
+            let (product, need) = (read(5 + slot * 2), read(6 + slot * 2));
+            if product < 0 {
+                continue;
+            }
+            let Some(&(_, key, _, _)) = society::trade::PRODUCTS.get((product / 1000) as usize) else { continue };
+            lines.push((tr("veio.trade.contract", &[&tr(key, &[]), &(need % 10000), &(need / 10000), &(product % 1000)]),
+                presentation::INK));
+        }
+        lines
     } else {
         let stopped = read(5).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
         vec![
@@ -259,7 +274,7 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     for store in storage::stores_near(dimension, pos, RADIUS, now) {
         for (item, _) in store.items {
             if !best.iter().any(|(_, known)| *known == item)
-                && let Some(price) = society::export::quote(dimension, &item, day)
+                && let Some(price) = society::trade::quote(dimension, &item, day)
             {
                 best.push((price, item));
             }

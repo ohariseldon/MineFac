@@ -17,7 +17,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 pub(crate) mod ledger;
 pub(crate) mod market;
 pub(crate) mod mayor;
-pub(crate) mod export;
+pub(crate) mod trade;
 
 pub(crate) use ledger::company_cycle;
 pub(crate) use market::{shop_cycle, traded};
@@ -74,7 +74,7 @@ pub(crate) const GOODS: [(&str, i32, i32); 12] = [
 ];
 
 pub(crate) fn is_society_block(block: &str) -> bool {
-    matches!(block, HOUSE | WELL | export::DOCK)
+    matches!(block, HOUSE | WELL | trade::PORT | trade::STATION)
 }
 
 pub(crate) fn goods(item: &str) -> Option<(i32, i32)> {
@@ -92,7 +92,7 @@ pub(crate) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         // Comida do comerciante; estoque; antigo caixa (só retirar).
         SHOP => (8, (0..7).collect(), vec![]),
         TOWN_HALL => (2, vec![0, 1], vec![]),
-        export::DOCK => (export::DOCK_SLOTS, (0..export::DOCK_SLOTS).collect(), vec![]),
+        trade::PORT | trade::STATION => (trade::SLOTS, (0..trade::SLOTS).collect(), vec![]),
         _ => return None,
     })
 }
@@ -105,7 +105,7 @@ pub(crate) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (SHOP, 1..7) => market::base_price(&stack.item).is_some(),
         (TOWN_HALL, 0) => is_food(&stack.item),
         (TOWN_HALL, 1) => stack.item.as_ref() == WAGE,
-        (export::DOCK, 0..export::DOCK_SLOTS) => export::exportable(&stack.item),
+        (trade::PORT | trade::STATION, 0..trade::SLOTS) => trade::product(&stack.item).is_some(),
         _ => false,
     }
 }
@@ -403,7 +403,7 @@ fn worst_need(home: &Home, governed: bool) -> i32 {
 pub(crate) fn tick_block(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let phase = (time + i64::from((pos[0] ^ pos[2]) & 63)).rem_euclid(TURN);
     match entity.id.as_str() {
-        export::DOCK => export::tick(host, pos, entity, time),
+        trade::PORT | trade::STATION => trade::tick(host, pos, entity, time),
         WELL => {
             if phase % 20 == 0 {
                 let dimension = host.dimension().to_owned();
@@ -643,10 +643,10 @@ pub(crate) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
             if read(2) > 1 { tr("veio.shop.owes", &[&read(2)]) } else { tr("veio.hint.shop", &[]) },
         ]),
         WELL => Some(vec![tr("veio.hint.well", &[])]),
-        export::DOCK => Some(vec![
+        trade::PORT | trade::STATION => Some(vec![
             tr("veio.dock.today", &[&read(6), &read(9)]),
-            tr("veio.dock.next", &[&read(12)]),
-            tr("veio.hint.export_dock", &[]),
+            tr("veio.dock.next", &[&read(12), &read(7)]),
+            tr(if block == trade::PORT { "veio.hint.export_dock" } else { "veio.hint.freight_station" }, &[]),
         ]),
         _ => None,
     }
@@ -659,7 +659,7 @@ pub(crate) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         SHOP => vec![Some([17.0, 45.0]), Some([44.0, 45.0]), Some([62.0, 45.0]), Some([80.0, 45.0]),
             Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([160.0, 45.0])],
         TOWN_HALL => vec![Some([170.0, 104.0]), Some([170.0, 122.0])],
-        export::DOCK => (0..export::DOCK_SLOTS).map(|index| Some([17.0 + index as f32 * 18.0, 45.0])).collect(),
+        trade::PORT | trade::STATION => (0..trade::SLOTS).map(|index| Some([17.0 + index as f32 * 18.0, 45.0])).collect(),
         _ => return None,
     })
 }
@@ -670,7 +670,7 @@ pub(crate) fn roles(block: &str) -> Option<&'static [&'static str]> {
         WELL => &[""],
         SHOP => &["food", "supply", "", "", "", "", "", ""],
         TOWN_HALL => &["food", "wage"],
-        export::DOCK => &["", "", "", "", "", "", "", "", ""],
+        trade::PORT | trade::STATION => &["", "", "", "", "", "", "", "", ""],
         _ => return None,
     })
 }

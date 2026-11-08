@@ -22,6 +22,8 @@ use horizon_client::mod_api::MerchantOffer;
 use ledger::Book;
 
 pub(crate) const STOCK_SLOTS: std::ops::Range<usize> = 1..7;
+/// O que o comerciante importa quando falta comida.
+const IMPORTED: &str = "minecraft:bread";
 /// Preço de atacado, em % do preço local.
 pub(crate) const WHOLESALE: i32 = 70;
 const FLOOR: i32 = 50;
@@ -84,7 +86,8 @@ pub(crate) fn target(current: i32, stock: u32, demand_day: i32, short: bool) -> 
 }
 
 /// Uma vez por turno: atualiza procura e preços.
-fn update_prices(entity: &mut ModBlockEntity) {
+/// `ceiling`: o maior fator que cada item pode ter (paridade de importação), quando há conexão.
+fn update_prices(entity: &mut ModBlockEntity, ceiling: &dyn Fn(&str) -> Option<i32>) {
     let stock = stock(entity);
     let sold = int_map(entity, "Sold");
     let mut demand = int_map(entity, "Demand");
@@ -106,6 +109,8 @@ fn update_prices(entity: &mut ModBlockEntity) {
         let current = read(&prices, &item).unwrap_or(100);
         let goal = target(current, have, day, short && is_food(&item));
         let next = current + (goal - current) / 4;
+        // Com conexão externa, o preço local não passa do custo de importar.
+        let next = ceiling(&item).map_or(next, |cap| next.min(cap));
         if have > 0 || day > 0 {
             next_demand.push((item.clone(), day));
             next_prices.push((item, next.clamp(FLOOR, CEILING)));
@@ -336,7 +341,36 @@ pub(crate) fn shop_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     if !entity.nbt.contains_key(nbt_key("Prices")) {
         set_int_map(entity, "Prices", &[]);
     } else if ledger::turn_edge(pos, time) {
-        update_prices(entity);
+        let day = time.div_euclid(DAY);
+        // Falta de comida e conexão externa: o comerciante importa pão (moeda sai da economia).
+        let short = number(entity, "Short");
+        if short > 0 && trade::connected(dimension, now) {
+            let wanted = (short as u32).min(16);
+            let room = STOCK_SLOTS.map(|slot| entity.items[slot].as_ref().map_or(64, |stack| {
+                if stack.item.as_ref() == IMPORTED && stack.extra.is_none() { 64 - stack.count.min(64) } else { 0 }
+            })).sum::<u32>();
+            let units = trade::import(dimension, pos, IMPORTED, wanted.min(room), day, now);
+            let mut left = units;
+            for slot in STOCK_SLOTS {
+                let fits = entity.items[slot].as_ref().map_or(64, |stack| {
+                    if stack.item.as_ref() == IMPORTED && stack.extra.is_none() { 64 - stack.count.min(64) } else { 0 }
+                });
+                let put = fits.min(left);
+                if put > 0 {
+                    add(&mut entity.items[slot], IMPORTED, put);
+                    left -= put;
+                }
+            }
+            // Importado não é entrega da indústria: não vira atacado.
+            let mut known = int_map(entity, "Known");
+            bump(&mut known, IMPORTED, units as i32);
+            set_int_map(entity, "Known", &known);
+        }
+        let connected = trade::connected(dimension, now);
+        update_prices(entity, &|item| {
+            let base = base_price(item)?;
+            connected.then(|| trade::import_price(item, day)).flatten().map(|cost| (cost * 100 / base.max(1)).clamp(FLOOR, CEILING))
+        });
     }
     // Vendas do dia: zera no começo de cada dia.
     let today = time.div_euclid(DAY) as i32;

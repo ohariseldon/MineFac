@@ -347,6 +347,16 @@ MOTIFS.update({
         "uuvuuvuu",
         "vuuvuuvu",
     ],
+    "freight_station": [
+        "........",
+        ".xxxxxx.",
+        ".xvvvvx.",
+        ".xxxxxx.",
+        "..k..k..",
+        "dndndndn",
+        "dddddddd",
+        "dndndndn",
+    ],
     "barracks": [
         "..xx....",
         ".xRRx...",
@@ -446,7 +456,7 @@ MACHINE_TIER = {
     "drill_mk3": "steel", "electric_furnace": "copper", "mill": "copper", "kitchen": "iron", "pantry": "copper",
     "biomass_generator": "copper", "steam_engine": "steel", "planter": "iron", "tree_farm": "iron", "ranch": "copper",
     "farm_post": "copper", "hauler_post": "iron", "foreman_desk": "copper", "shepherd_post": "copper",
-    "barracks": "iron", "house": "copper", "shop": "copper", "town_hall": "steel", "well": "iron", "export_dock": "steel",
+    "barracks": "iron", "house": "copper", "shop": "copper", "town_hall": "steel", "well": "iron", "export_dock": "steel", "freight_station": "iron",
     "barn": "copper", "silo": "iron", "control_center": "steel",
 }
 

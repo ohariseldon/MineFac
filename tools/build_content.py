@@ -83,8 +83,9 @@ BLOCKS = {
     "shop": ("machine", "wood", 8, [7], 1.5),
     "town_hall": ("machine", "steel", 2, [], 2.0),
     "well": ("machine", "iron", 1, [0], 1.5),
-    # Comércio exterior (0.22): porto de exportação.
+    # Comércio exterior (0.23): porto de carga (no mar) e estação de carga (na fronteira).
     "export_dock": ("machine", "steel", 9, [], 2.0),
+    "freight_station": ("machine", "iron", 9, [], 2.0),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
 }
@@ -121,7 +122,7 @@ TABS = {
     "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench"]),
     "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
-        "pantry", "flour", "biomass", "tesla", "barracks", "house", "shop", "town_hall", "well", "export_dock", "repair_kit", "minecraft:bone_meal"]),
+        "pantry", "flour", "biomass", "tesla", "barracks", "house", "shop", "town_hall", "well", "export_dock", "freight_station", "repair_kit", "minecraft:bone_meal"]),
 }
 
 FACES = ("down", "up", "north", "south", "west", "east")
