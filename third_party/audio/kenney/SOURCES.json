@@ -1,0 +1,53 @@
+{
+  "impact-sounds": {
+    "author": "Kenney",
+    "source_url": "https://kenney.nl/assets/impact-sounds",
+    "license": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "archive_sha256": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8",
+    "members": {
+      "impactMetal_light_000.ogg": "33b5e6e37c6e9d54e07bf5a89b12c76e879f40c1ea83cdd82714df1d6f9fec6d",
+      "impactMetal_light_001.ogg": "fba69c467ddd85da7b1d82e259f936b876d9ba6a3d6f1b24bdd10468e46bfe08",
+      "impactMetal_medium_000.ogg": "a96f879fec0864a8938e0c745b6996a6c5679c16a234ce31a01cc995e8401003",
+      "impactMetal_medium_001.ogg": "e8a9eaba7c4d27422e4eeb3e6c7100d5d7dc0f83e005efc98c960adcc5265337",
+      "impactMetal_heavy_000.ogg": "e07045693e4a2b3d165c424e3dab4c781d9ff8880a386880ac89a51315d7f831",
+      "impactMetal_heavy_001.ogg": "83554049f81f4db9209379e103c30bfa63f65c42189a03f300b045c2c82e23ae",
+      "impactWood_medium_000.ogg": "1723a9fd25103ed41af06054814e84e65f4a772bac86ab2dc927da93d9592ff5",
+      "impactWood_medium_001.ogg": "15271dbe8e2872dbb0ff1aeb7b12b2d2b92b7c1951c88532b9ab9158c36dfc73",
+      "footstep_grass_000.ogg": "9d49497777405d78d7cf7f2888e28277f3a23192300cfd1d79d54876b20f479f",
+      "footstep_grass_001.ogg": "fb28781bd22b2eefdc14077f1adf5c94d7fe9c3a130194633b55f3e0d39d9f04"
+    }
+  },
+  "rpg-audio": {
+    "author": "Kenney",
+    "source_url": "https://kenney.nl/assets/rpg-audio",
+    "license": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "archive_sha256": "6dbeaf8544da958d8f2adcb4a4a4b76c1ade34a05f8ab9edccd327da7375f38b",
+    "members": {
+      "cloth1.ogg": "ddb93a3671233f95da0e0b10367f082f7eb42fa6caaddcf776410aa8833c747d",
+      "cloth2.ogg": "8a7451193c38bc05483aec25dd193e163a15d44cf7fff04ac7912573231b0201",
+      "metalPot1.ogg": "159def979e8e386c2c539f5e99cc30a080eb2dcb6c911fa2e4ccc0785b2522fd",
+      "metalPot2.ogg": "8e1f820d217d380fde10e969d109db34303e3f4d11c3951926eddef813d04ae2",
+      "drawKnife1.ogg": "276403e72c3b71c47bc24db3083970c23f8e5551ffa78f436f83483c56f3f0bb",
+      "drawKnife2.ogg": "d5df6a4130cbb016f97b4883769a418917b9629cb4c21717030b186e0c73281a"
+    }
+  },
+  "sci-fi-sounds": {
+    "author": "Kenney",
+    "source_url": "https://kenney.nl/assets/sci-fi-sounds",
+    "license": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "archive_sha256": "119340f351a5098ad814f78719438c0da355a9ce8a4c8a3af6a8d48aa3d49e04",
+    "members": {
+      "engineCircular_000.ogg": "8ab85f9fa85e9e692287f98acb36b9ac3ba15313b007c039055e286b736f4e3a",
+      "engineCircular_001.ogg": "e1df3a942842a24f7c4056db3177e8008edd73d4f3985fd95f55362bc85058bc",
+      "engineCircular_002.ogg": "5f364bd42269e111df1d421fa2b45f0b2f0cc99a873ceae2d55b34898ad0d779",
+      "engineCircular_003.ogg": "f592ec53043887cf5aeec60d545372da3b4459fba3f634265ee9d5251a4edf4e",
+      "computerNoise_000.ogg": "1527944e16eb14b48ee03fe3e7ce6aae94262833a4e1f83928d451a7414fe4e1",
+      "computerNoise_001.ogg": "29b4842f6d8c0ba2b0cb00bfaff3b852b492bb43197a82e697917aacbe106757",
+      "doorOpen_000.ogg": "5b7e07eccd4413ad9ef3720c2d14f9cc699f4c50111e9b2f48bd60e6f1a164c3",
+      "doorOpen_001.ogg": "8c204ca94eb722d3af95f29221f4551938ca3c217fda32c14dabe2cf6a9c782b"
+    }
+  }
+}

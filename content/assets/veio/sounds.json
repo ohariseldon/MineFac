@@ -1,0 +1,171 @@
+{
+  "machine.press": {
+    "subtitle": "subtitles.veio.machine.press",
+    "sounds": [
+      {
+        "name": "veio:machines/press_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/press_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.assembly": {
+    "subtitle": "subtitles.veio.machine.assembly",
+    "sounds": [
+      {
+        "name": "veio:machines/assembly_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/assembly_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.crush": {
+    "subtitle": "subtitles.veio.machine.crush",
+    "sounds": [
+      {
+        "name": "veio:machines/crush_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/crush_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.wood": {
+    "subtitle": "subtitles.veio.machine.wood",
+    "sounds": [
+      {
+        "name": "veio:machines/wood_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/wood_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.harvest": {
+    "subtitle": "subtitles.veio.machine.harvest",
+    "sounds": [
+      {
+        "name": "veio:machines/harvest_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/harvest_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.rustle": {
+    "subtitle": "subtitles.veio.machine.rustle",
+    "sounds": [
+      {
+        "name": "veio:machines/rustle_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/rustle_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.finish": {
+    "subtitle": "subtitles.veio.machine.finish",
+    "sounds": [
+      {
+        "name": "veio:machines/finish_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/finish_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.cut": {
+    "subtitle": "subtitles.veio.machine.cut",
+    "sounds": [
+      {
+        "name": "veio:machines/cut_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/cut_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.motor": {
+    "subtitle": "subtitles.veio.machine.motor",
+    "sounds": [
+      {
+        "name": "veio:machines/motor_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/motor_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.grind": {
+    "subtitle": "subtitles.veio.machine.grind",
+    "sounds": [
+      {
+        "name": "veio:machines/grind_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/grind_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.electronics": {
+    "subtitle": "subtitles.veio.machine.electronics",
+    "sounds": [
+      {
+        "name": "veio:machines/electronics_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/electronics_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.saw": {
+    "subtitle": "subtitles.veio.machine.saw",
+    "sounds": [
+      {
+        "name": "veio:machines/saw_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/saw_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "machine.drone": {
+    "subtitle": "subtitles.veio.machine.drone",
+    "sounds": [
+      {
+        "name": "veio:machines/drone_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "veio:machines/drone_1",
+        "attenuation_distance": 8
+      }
+    ]
+  }
+}

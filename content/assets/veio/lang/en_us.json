@@ -908,5 +908,18 @@
   "veio.freight.disabled": "disabled",
   "veio.freight.capacity": "Cargo per trip: up to %s",
   "veio.freight.caravan_outbound": "Animal delivering cargo",
-  "veio.freight.caravan_return": "Animal returning home"
+  "veio.freight.caravan_return": "Animal returning home",
+  "subtitles.veio.machine.press": "Press clanks",
+  "subtitles.veio.machine.assembly": "Mechanism assembles",
+  "subtitles.veio.machine.crush": "Crusher crunches",
+  "subtitles.veio.machine.wood": "Wooden mechanism turns",
+  "subtitles.veio.machine.harvest": "Machine harvests",
+  "subtitles.veio.machine.rustle": "Crops rustle",
+  "subtitles.veio.machine.finish": "Machine finishes product",
+  "subtitles.veio.machine.cut": "Blade cuts",
+  "subtitles.veio.machine.motor": "Motor runs",
+  "subtitles.veio.machine.grind": "Mill grinds",
+  "subtitles.veio.machine.electronics": "Circuits work",
+  "subtitles.veio.machine.saw": "Saw cuts wood",
+  "subtitles.veio.machine.drone": "Drone flies"
 }

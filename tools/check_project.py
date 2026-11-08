@@ -25,6 +25,8 @@ def main():
     check_book(languages, "village_guide")
     check_book(languages, "transport_guide")
     textures = check_assets(languages)
+    from check_machine_audio import check as check_audio
+    check_audio()
     print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas; "
           f"{textures} texturas 16x16 encontradas.")
 

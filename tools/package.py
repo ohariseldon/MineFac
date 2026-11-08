@@ -62,6 +62,10 @@ def main():
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.write(exe, f"{top}/launcher.exe")
         archive.writestr(f"{top}/LEIA-ME.txt", README.format(version=current).replace("\n", "\r\n"))
+        archive.write(ROOT / "CREDITS.md", f"{top}/CREDITS.md")
+        for path, relative in files("third_party/audio/kenney"):
+            if path.name in {"LICENSE.txt", "SOURCES.json"}:
+                archive.write(path, f"{top}/{relative.as_posix()}")
         count = 0
         for path, relative in [*files("content"), *files("native", skip={"offline-check", "target"})]:
             archive.write(path, f"{top}/{relative.as_posix()}")
