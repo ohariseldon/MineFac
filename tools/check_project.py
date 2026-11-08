@@ -34,6 +34,9 @@ def main():
     # Dynamic native keys are not reachable from a book's JSON tree.
     keys = ([f"veio.onboarding.goal.{i}" for i in range(8)]
             + [f"veio.onboarding.{part}.{i}" for part in ("title", "why") for i in range(9)]
+            + [f"veio.onboarding.from.{i}" for i in range(8)] + [f"veio.onboarding.recipe.{i}.0" for i in (0, 1, 3, 4, 5, 6, 7)]
+            + ["veio.onboarding.recipe.1.1", "veio.onboarding.book", "veio.onboarding.make", "veio.onboarding.done"]
+            + [f"veio.onboarding.name.{item.rsplit(':', 1)[-1]}" for item in onboarding_items()]
             + [f"veio.onboarding.blocked.{i}" for i in (3, 5, 9)]
             + ["veio.onboarding.hidden", "veio.onboarding.shown", "veio.onboarding.save_failed"])
     for language in languages:
@@ -100,6 +103,16 @@ def flatten(node, lang, bold=False):
         vanilla = key.split(".")[-1].replace("_", " ").capitalize()
         runs.append((lang.get(key, vanilla).replace("%%", "%"), bold))
     return runs + flatten(node.get("extra", []), lang, bold)
+
+
+def onboarding_items():
+    # Itens da lista de materiais do tutorial (CRAFT em onboarding.rs): todos precisam de nome.
+    import re
+    source = (ROOT / "native/api/src/onboarding.rs").read_text(encoding="utf-8")
+    block = source[source.index("const CRAFT"):source.index("fn craft_bit")]
+    consts = {"GENERATOR": "generator", "PRESS": "press", "CABLE": "cable", "ASSEMBLER": "assembler", "DRILL": "drill",
+              "BELT": "belt", "HUB": "contract_hub", "PLATE": "copper_plate", "GEAR": "gear"}
+    return re.findall(r'"#?([a-z_]+:[a-z_]+)"', block) + [consts[name] for name in re.findall(r"\b([A-Z]+)\b", block) if name in consts]
 
 
 def check_page_fit(languages, name, strict=True):

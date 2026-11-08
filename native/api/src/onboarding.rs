@@ -17,18 +17,23 @@ const MAX_TRACE: usize = 128;
 const TRACE_TTL: u64 = 6000;
 /// Linhas "faça" de cada etapa (`veio.onboarding.do.<etapa>.<n>`), na ordem.
 const DO_LINES: [u8; 9] = [3, 4, 4, 3, 3, 4, 3, 4, 3];
-/// Kit de cada etapa, entregue uma vez ao anunciá-la: o tutorial ensina a montar a fábrica,
-/// não a caçar receita (as receitas continuam no livro e no ? de cada máquina).
-const KITS: [&[(&str, u32)]; 8] = [
-    &[(GENERATOR, 1), ("minecraft:coal", 16), (CABLE, 8)],
-    &[(PRESS, 1)],
-    &[("minecraft:raw_copper", 12)],
-    &[(ASSEMBLER, 1)],
-    &[(DRILL, 1)],
-    &[(BELT, 16)],
-    &[("minecraft:chest", 1), (BELT, 8)],
-    &[(HUB, 1)],
+/// O que fabricar em cada etapa: o produto e os ingredientes da receita (sem repetir). A ficha
+/// da etapa (texto gerado das receitas em `build_onboarding.py`) explica a receita; a lista de
+/// materiais acima da barra de itens marca o que o jogador já tem. Nada é dado de graça.
+const CRAFT: [&[(&str, &[&str])]; 8] = [
+    &[(GENERATOR, &["minecraft:furnace", "minecraft:iron_ingot", "minecraft:copper_ingot"])],
+    &[(PRESS, &["minecraft:copper_ingot", "minecraft:iron_ingot", "minecraft:piston", "minecraft:smooth_stone"]),
+      (CABLE, &["minecraft:copper_ingot", "minecraft:stick"])],
+    &[("minecraft:raw_copper", &[])],
+    &[(ASSEMBLER, &[PLATE, "minecraft:piston", "minecraft:crafting_table"])],
+    &[(DRILL, &["minecraft:copper_ingot", "minecraft:iron_ingot", "minecraft:piston"])],
+    &[(BELT, &["minecraft:copper_ingot", "minecraft:stick"])],
+    &[("minecraft:chest", &["#minecraft:planks"])],
+    &[(HUB, &["minecraft:chest", GEAR, "minecraft:iron_ingot", "minecraft:copper_ingot"])],
 ];
+
+fn craft_bit(step: usize, part: usize) -> u16 { 1 << (step * 2 + part) }
+
 /// Dicas de uma vez só, na hora em que fazem sentido (como as do Factorio).
 const TIP_FACES: u16 = 1;
 const TIP_BELT: u16 = 2;
@@ -55,8 +60,8 @@ struct Progress {
     made: u32,
     stored: u32,
     delivered: bool,
-    /// Kits já entregues e dicas já vistas (bits), salvos com o progresso.
-    kits: u16,
+    /// Produtos da etapa já fabricados (`craft_bit`) e dicas já vistas (bits), salvos.
+    crafted: u16,
     tips: u16,
     pending_tips: u16,
     // Unsaved transient evidence must not survive a reload or manual intervention.
@@ -220,7 +225,7 @@ impl Progress {
     fn encode(&self) -> String {
         let mut text = format!("veio-onboarding-2\n{} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
-            self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.kits, self.tips, self.dimension);
+            self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips, self.dimension);
         for pos in self.blocks {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
@@ -233,9 +238,7 @@ impl Progress {
         let fields = match lines.next()? { "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, _ => return None };
         let values: Vec<u32> = lines.next()?.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
         if values.len() != fields || values[0] > u32::from(DONE) { return None; }
-        // Saves antigos: as etapas já passadas contam como kit entregue.
-        let (kits, tips) = if fields == 12 { (values[10] as u16, values[11] as u16) }
-            else { ((1u16 << values[0].min(8)) - 1, 0) };
+        let (crafted, tips) = if fields == 12 { (values[10] as u16, values[11] as u16) } else { (0, 0) };
         let dimension = lines.next()?.to_owned();
         if dimension.len() > 128 { return None; }
         let mut blocks = [None; 5];
@@ -249,7 +252,7 @@ impl Progress {
         Some(Self { step: values[0] as u8, hidden: values[1] != 0, powered: values[2] != 0,
             plates: values[3].min(4), gears: values[4].min(1), copper: values[5].min(1),
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
-            delivered: values[9] != 0, kits, tips, dimension, blocks, ..Self::default() })
+            delivered: values[9] != 0, crafted, tips, dimension, blocks, ..Self::default() })
     }
 }
 
@@ -323,13 +326,20 @@ fn save(root: &Path, uuid: u128, progress: &mut Progress) -> std::io::Result<()>
 pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     let tutorial = matches!(block, GENERATOR | PRESS | ASSEMBLER | DRILL | DRILL_MK2 | production::DRILL_MK3 | HUB);
     let tip = tip_for(block).filter(|_| !clicked);
-    if !tutorial && tip.is_none() { return; }
+    let part = !clicked && CRAFT.iter().any(|parts| parts.iter().any(|(target, _)| *target == block));
+    if !tutorial && tip.is_none() && !part { return; }
     let Some(player) = host.acting_player() else { return; };
     let Ok(mut slot) = SESSION.lock() else { return; };
     if !session(host, &mut slot) { return; }
     let s = slot.as_mut().unwrap();
     let progress = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
     if let Some(bit) = tip && progress.tips & bit == 0 { progress.pending_tips |= bit; }
+    // Colocou o produto da etapa: já foi fabricado (a lista de materiais não volta).
+    if part && let Some(parts) = CRAFT.get(usize::from(progress.step)) {
+        for (index, (target, _)) in parts.iter().enumerate() {
+            if *target == block { progress.crafted |= craft_bit(usize::from(progress.step), index); progress.dirty = true; }
+        }
+    }
     if !tutorial || progress.step == DONE { return; }
     if clicked { progress.bind(&player.dimension, pos, block); }
     else { progress.placed(&player.dimension, pos, block); }
@@ -348,22 +358,74 @@ fn tip_for(block: &str) -> Option<u16> {
         && has_item_inputs(block)).then_some(TIP_FACES)
 }
 
-/// Anuncia a etapa: título, por quê, passos numerados e o kit (entregue uma vez).
+/// Anuncia a etapa: título, por quê, a ficha (receita e de onde vem cada material), o livro de
+/// receitas com a receita liberada, e os passos numerados.
 fn announce(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) {
     let step = usize::from(p.step);
     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.title.{step}"), &[]));
     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.why.{step}"), &[]));
+    if let Some(parts) = CRAFT.get(step) {
+        for (index, (target, _)) in parts.iter().enumerate() {
+            if target.starts_with("veio:") || *target == "minecraft:chest" {
+                host.tell(player.uuid, Text::tr(&format!("veio.onboarding.recipe.{step}.{index}"), &[]));
+                if target.starts_with("veio:") && spawn_safe(&player.name) {
+                    host.run_command(&format!("recipe give {} {target}", player.name));
+                }
+            }
+        }
+        host.tell(player.uuid, Text::tr(&format!("veio.onboarding.from.{step}"), &[]));
+        if parts.iter().any(|(target, _)| target.starts_with("veio:")) {
+            host.tell(player.uuid, Text::tr("veio.onboarding.book", &[]));
+        }
+    }
     for line in 1..=DO_LINES.get(step).copied().unwrap_or(0) {
         host.tell(player.uuid, Text::tr(&format!("veio.onboarding.do.{step}.{line}"), &[]));
     }
-    let bit = 1u16 << step;
-    if let Some(kit) = KITS.get(step) && p.kits & bit == 0 && spawn_safe(&player.name) {
-        if kit.iter().all(|(item, count)| host.run_command(&format!("give {} {item} {count}", player.name))) {
-            host.tell(player.uuid, Text::tr(&format!("veio.onboarding.kit.{step}"), &[]));
+}
+
+fn name_key(item: &str) -> String {
+    format!("veio.onboarding.name.{}", item.rsplit(':').next().unwrap_or(item))
+}
+
+fn has_item(host: &mut dyn Host, name: &str, item: &str) -> bool {
+    host.run_command(&format!("execute if items entity {name} container.* {item}"))
+}
+
+/// Contagem do objetivo da etapa (o que aparece como x/N na barra).
+fn goal_count(p: &Progress) -> u32 {
+    match p.step { 2 => p.plates, 3 => p.gears, 4 => p.copper, 5 => p.fed.min(2), 6 => p.stored, _ => 0 }
+}
+
+/// Lista de materiais acima da barra de itens, enquanto o produto da etapa não foi fabricado:
+/// "Fabrique: Prensa  ✔ lingote de cobre  ✘ pistão ...", verde o que já tem, vermelho o que falta.
+/// Devolve se mostrou (então o objetivo comum espera).
+fn checklist(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) -> bool {
+    let step = usize::from(p.step);
+    let Some(parts) = CRAFT.get(step) else { return false };
+    if goal_count(p) > 0 || !spawn_safe(&player.name) { return false; }
+    for (index, (target, ingredients)) in parts.iter().enumerate() {
+        let bit = craft_bit(step, index);
+        if p.crafted & bit != 0 { continue; }
+        if has_item(host, &player.name, target) { p.crafted |= bit; p.dirty = true; continue; }
+        let mut line = vec![format!(r#"{{"translate":"veio.onboarding.make","with":[{{"translate":"{}"}}],"color":"gold"}}"#, name_key(target))];
+        for item in *ingredients {
+            let (mark, color) = if has_item(host, &player.name, item) { ("✔", "green") } else { ("✘", "red") };
+            line.push(format!(r#"{{"text":"  {mark} ","color":"{color}"}},{{"translate":"{}","color":"{color}"}}"#, name_key(item)));
         }
-        p.kits |= bit;
-        p.dirty = true;
+        host.run_command(&format!(r#"title {} actionbar ["",{}]"#, player.name, line.join(",")));
+        return true;
     }
+    false
+}
+
+/// Etapa concluída: título na tela, som de conquista e um pouco de experiência.
+fn celebrate(host: &mut dyn Host, player: &NativeServerPlayer, step: u8) {
+    if !spawn_safe(&player.name) { return; }
+    let name = &player.name;
+    host.run_command(&format!(r#"title {name} subtitle {{"translate":"veio.onboarding.title.{step}"}}"#));
+    host.run_command(&format!(r#"title {name} title {{"translate":"veio.onboarding.done","color":"gold"}}"#));
+    host.run_command(&format!("playsound minecraft:ui.toast.challenge_complete master {name}"));
+    host.run_command(&format!("xp add {name} {} points", 10 + 5 * u32::from(step)));
 }
 
 fn spawn_safe(name: &str) -> bool { workforce::spawn::safe_name(name) }
@@ -438,6 +500,7 @@ fn tick(host: &mut dyn Host, now: u64) {
         // Exactly one transition per update. Never skip an unperformed exercise.
         if player.dimension == p.dimension && p.ready() {
             p.step += 1; p.dirty = true; p.status = 0; p.last_status_notice = None;
+            celebrate(host, player, p.step);
             if p.step == DONE { host.action_bar(player.uuid, Text::literal("")); }
         }
         if !p.hidden && p.announced != Some(p.step) {
@@ -455,9 +518,10 @@ fn tick(host: &mut dyn Host, now: u64) {
             p.pending_tips = 0;
         }
         if !p.hidden && p.step < DONE {
-            let count = match p.step { 2 => p.plates, 3 => p.gears, 4 => p.copper,
-                5 => p.fed.min(2), 6 => p.stored, _ => 0 };
-            host.action_bar(player.uuid, Text::tr(&format!("veio.onboarding.goal.{}", p.step), &[&count]));
+            let count = goal_count(p);
+            if !checklist(host, player, p) {
+                host.action_bar(player.uuid, Text::tr(&format!("veio.onboarding.goal.{}", p.step), &[&count]));
+            }
             if matches!(p.status, 3 | 5 | 9) {
                 if p.last_status_notice != Some(p.status) && now >= p.next_status_notice {
                     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.blocked.{}", p.status), &[]));
@@ -501,8 +565,8 @@ pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command:
     let s = slot.as_mut().unwrap();
     let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
     match action { 0 => { p.hidden = true; }, 1 => { p.hidden = false; p.announced = None; },
-        // Refazer não entrega os kits de novo (nem repete as dicas já vistas).
-        _ => { *p = Progress { kits: p.kits, tips: p.tips, ..Progress::default() }; } }
+        // Refazer não repete as dicas já vistas.
+        _ => { *p = Progress { tips: p.tips, ..Progress::default() }; } }
     p.dirty = true;
     if save(&s.root, player.uuid, p).is_err() { host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); }
     host.tell(player.uuid, Text::tr(if action == 0 { "veio.onboarding.hidden" } else { "veio.onboarding.shown" }, &[]));

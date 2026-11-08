@@ -208,12 +208,12 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     assert_eq!((loaded.input_credit, loaded.output_credit), (0, 0));
     assert!(loaded.raw.is_empty());
     assert!(Progress::decode("bad save").is_none());
-    // Kits e dicas sobrevivem ao save; um save antigo (v1) conta os kits das etapas já passadas.
-    p.kits = 0b111; p.tips = TIP_BELT;
+    // O que já foi fabricado e as dicas sobrevivem ao save; um save antigo (v1) ainda abre.
+    p.crafted = 0b101; p.tips = TIP_BELT;
     let loaded = Progress::decode(&p.encode()).unwrap();
-    assert_eq!((loaded.kits, loaded.tips), (0b111, TIP_BELT));
-    let old = p.encode().replace("veio-onboarding-2", "veio-onboarding-1").replacen(" 7 2\n", "\n", 1);
-    assert_eq!(Progress::decode(&old).map(|old| old.kits), Some(0b11_1111));
+    assert_eq!((loaded.crafted, loaded.tips), (0b101, TIP_BELT));
+    let old = p.encode().replace("veio-onboarding-2", "veio-onboarding-1").replacen(" 5 2\n", "\n", 1);
+    assert_eq!(Progress::decode(&old).map(|old| (old.step, old.crafted)), Some((6, 0)));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
 
@@ -298,6 +298,8 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
         player: NativeServerPlayer,
         bars: Vec<String>,
         messages: Vec<String>,
+        /// Itens no inventário do jogador (para `execute if items`); `None`: tem de tudo.
+        inventory: Option<Vec<&'static str>>,
     }
     impl Host for Server {
         fn world_dir(&self) -> Option<PathBuf> { Some(self.root.clone()) }
@@ -309,22 +311,44 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
         fn tell(&mut self, uuid: u128, text: Text) -> bool {
             assert_eq!(uuid, self.player.uuid); self.messages.push(text.plain()); true
         }
-        fn run_command(&mut self, line: &str) -> bool { self.messages.push(line.to_owned()); true }
+        fn run_command(&mut self, line: &str) -> bool {
+            self.messages.push(line.to_owned());
+            match (&self.inventory, line.strip_prefix("execute if items entity Tutorial container.* ")) {
+                (Some(items), Some(item)) => items.contains(&item),
+                _ => true,
+            }
+        }
     }
     let unique = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
     let root = std::env::temp_dir().join(format!("veio-tutorial-lifecycle-{}-{unique}", std::process::id()));
     let other_world = root.with_extension("other");
     let player = NativeServerPlayer { uuid: 10, name: "Tutorial".into(), dimension: "minecraft:overworld".to_owned(), ..Default::default() };
-    let mut host = Server { root: root.clone(), player: player.clone(), bars: vec![], messages: vec![] };
+    let mut host = Server { root: root.clone(), player: player.clone(), bars: vec![], messages: vec![],
+        inventory: Some(vec!["minecraft:iron_ingot"]) };
     tick(&mut host, 20);
+    // Sem o gerador: a lista de materiais ocupa a barra (ferro já tem, o resto falta).
+    assert!(host.bars.is_empty());
+    let list = host.messages.iter().find(|line| line.starts_with("title Tutorial actionbar")).unwrap().clone();
+    assert!(list.contains(r#"✔ ","color":"green"},{"translate":"veio.onboarding.name.iron_ingot""#), "{list}");
+    assert!(list.contains(r#"✘ ","color":"red"},{"translate":"veio.onboarding.name.furnace""#), "{list}");
+    // Com o gerador fabricado, volta o objetivo.
+    host.inventory = None;
+    tick(&mut host, 40);
     assert!(host.bars.last().unwrap().contains("goal.0"));
-    // A etapa chega em passos curtos, com o kit entregue uma vez.
+    // A etapa chega em passos curtos.
     assert!(host.messages.iter().any(|line| line.contains("title.0")));
     assert!(host.messages.iter().any(|line| line.contains("do.0.3")));
-    assert!(host.messages.iter().any(|line| line == "give Tutorial veio:generator 1"), "{:?}", host.messages);
+    // A ficha da receita, o livro de receitas e a lista de materiais (nada é dado de graça).
+    assert!(host.messages.iter().any(|line| line.contains("recipe.0.0")));
+    assert!(host.messages.iter().any(|line| line == "recipe give Tutorial veio:generator"), "{:?}", host.messages);
+    assert!(host.messages.iter().any(|line| line.starts_with("title Tutorial actionbar") && line.contains("name.furnace")));
+    assert!(!host.messages.iter().any(|line| line.starts_with("give ")));
     select(&host, GEN, GENERATOR, false);
     tick(&mut host, 40);
     assert!(host.bars.last().unwrap().contains("goal.1"));
+    // Etapa concluída: título, som de conquista e experiência.
+    assert!(host.messages.iter().any(|line| line == "playsound minecraft:ui.toast.challenge_complete master Tutorial"));
+    assert!(host.messages.iter().any(|line| line.starts_with("xp add Tutorial ")));
     select(&host, PRESS_AT, PRESS, false);
     let mut press = machine(PRESS, None, 0);
     set_number(&mut press, "energy", 20);
@@ -361,9 +385,9 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
     std::fs::remove_dir(&save_root).unwrap();
     std::fs::remove_dir(root.join("veio")).unwrap();
     std::fs::remove_dir(root).unwrap();
-    // O outro mundo guardou só o kit entregue lá (etapa 0), separado deste.
+    // No outro mundo o gerador ainda não existe; o progresso de lá fica separado deste.
     let other = Progress::decode(&std::fs::read_to_string(path(&other_world.join("veio/tutorial"), player.uuid)).unwrap()).unwrap();
-    assert_eq!((other.step, other.kits), (0, 1));
+    assert_eq!(other.step, 0);
     std::fs::remove_dir_all(&other_world).unwrap();
 }
 
