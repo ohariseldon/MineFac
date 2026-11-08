@@ -1,6 +1,6 @@
 # Artwork
 
-The optional **Veio — Realismo leve** shader in `visuals/veio-industrial` is original WGSL under its included MIT license. Its industrial visual direction is inspired by Satisfactory; it includes no code, art or assets from Satisfactory or other shader packs. It uses the documented Horizon shader API 0.1.
+The optional **Veio — Realismo leve 1.1** shader in `visuals/veio-industrial` is original WGSL under its included MIT license. Its industrial visual direction is inspired by Satisfactory; it includes no code, art or assets from Satisfactory or other shader packs. Its material lighting, weather, analytical sky and depth-based water use the documented Horizon shader API 0.1 and existing renderer resources.
 
 Since Veio 0.7, every texture in `content/assets/veio/textures` is original 16x16 pixel art made for this project. The drawings live as text in `tools/build_textures.py`, which writes the PNG files.
 

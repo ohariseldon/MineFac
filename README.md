@@ -149,20 +149,22 @@ Todas as texturas próprias são desenhadas em texto em `tools/build_textures.py
 
 ## Realismo leve opcional
 
-**Pacote com esta primeira versão visual:** [Veio-0.15.1-realismo.zip](release/Veio-0.15.1-realismo.zip). Extraia a pasta completa e abra `launcher.exe`; o executável da raiz do repositório também já oferece a escolha.
+**Atualização visual 1.1:** [Veio-Realismo-1.1-atualizacao.zip](release/Veio-Realismo-1.1-atualizacao.zip). Extraia sobre a pasta do Veio que já contém `launcher.exe`, mantendo `visuals/` ao lado de `content/` e `native/`. Abra o launcher e escolha Realismo leve. A atualização contém somente o visual, podendo acompanhar uma versão mais recente do jogo sem substituir seu código ou dados. A versão do pacote visual é independente da versão de conteúdo do Veio.
 
 O launcher agora oferece a escolha **antes de abrir o jogo**, sem precisar carregar shaders para chegar às opções:
 
-- **Realismo leve — 8 GB (padrão):** luz natural, sombras próximas de 1024 × 1024 até 48 blocos, céu ajustado, brilho discreto em metais e água. Usa as texturas e modelos existentes, com um único pós-processamento para cor e suavização. É uma primeira direção visual industrial inspirada em Satisfactory.
+- **Realismo leve — 8 GB (padrão):** sol e luar, sombras próximas de 1024 × 1024 até 48 blocos, céu e névoa suaves, brilho diferente para metal, pintura e vidro, superfícies molhadas e água com transparência pela profundidade. A ondulação de luz diminui à distância; cobre oxidado mantém o aspecto fosco. Usa as texturas e modelos existentes, com um único pós-processamento para cor, atmosfera e suavização. A direção visual industrial é inspirada em Satisfactory.
 - **Leve — sem shaders:** abre pelo caminho normal do Horizon, com menos distância de visão e sem carregar o pacote visual. Abra `Jogar-Leve.cmd` para escolher esse modo diretamente, inclusive na primeira partida.
 
 Abra `Escolher-Visual.cmd` para mudar ou restaurar um dos perfis. A escolha fica salva em `launcher.ini`. Também pode desligar o pacote em Opções > Vídeo > Shaders; alterações feitas no jogo continuam valendo nas próximas aberturas normais. O launcher guarda as opções originais da instância em `options.txt.antes-do-veio` e `horizon-graphics.txt.antes-do-veio`, sem alterar mundos, controles ou pacotes de recursos.
 
 O perfil Realismo começa com visão de 8 chunks, simulação de 5, até 60 FPS, resolução interna de 85%, dois trabalhadores de preparação de terreno e orçamento de texturas de 256 MiB. Leve começa com visão de 6 chunks, resolução interna de 75%, partículas mínimas e nuvens desligadas. A resolução interna é uma porcentagem da janela; ambos permitem ajustes posteriores. As compilações jogáveis agora usam o perfil otimizado `performance`, e a marca de compilação distingue esse perfil de uma compilação antiga de desenvolvimento.
 
-O shader é original e opcional, em `visuals/veio-industrial`, sob MIT. Não acrescenta trabalho à simulação, luzes dinâmicas ou texturas. Não usa reflexos de cena, bloom, SSAO, luz volumétrica, traçado de raios ou geometria extra. Sombras, metais, detalhe da água e suavização podem ser ajustados nas opções do próprio pacote.
+O shader é original e opcional, em `visuals/veio-industrial`, sob MIT. Não acrescenta trabalho à simulação, luzes dinâmicas ou texturas de recursos. A água e a névoa reutilizam a profundidade já disponibilizada pelo Horizon. Não usa reflexos de cena, bloom, SSAO, luz volumétrica, traçado de raios ou geometria extra. Sombras, metais, água, chuva, atmosfera e suavização podem ser ajustados nas opções do próprio pacote; placas mais limitadas podem reduzir as sombras para 512 e 32 blocos. O tratamento de materiais é uma aproximação econômica, sem carregar mapas PBR adicionais.
 
 **8 GB é a meta para o computador inteiro, não uma reserva de memória para o jogo nem uma garantia em qualquer placa gráfica.** O orçamento de 2 ms declarado pelo shader é um objetivo; FPS, consumo total e comportamento em fábricas grandes precisam ser medidos no Horizon real. Mais detalhes em [visuals/veio-industrial/README.md](visuals/veio-industrial/README.md).
+
+A revisão visual 1.1 foi implementada sem retomar o teste da fábrica grande ou executar o jogo, conforme solicitado; os resultados parciais anteriores não validam o desempenho desta revisão.
 
 ## Desempenho
 
