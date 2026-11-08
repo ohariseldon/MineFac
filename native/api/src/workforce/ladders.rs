@@ -135,10 +135,11 @@ pub(super) fn route(entity: &ModBlockEntity, post_y: i32, at: [f64; 3], goal: [f
 
 /// Subida ou descida física. O objetivo `Work` chama antes de entregar o passo ao cérebro:
 /// com o aldeão na escada e o passo na mesma coluna, mais alto ou mais baixo, dirige o mob.
-pub(super) fn climb(m: &mut horizon_client::mobs::Mob, goal: [f64; 3]) -> bool {
+/// `on_ladder` vem de `Mob::on_climbable(cx.w)`, que no Horizon lê o bloco sob o mob.
+pub(super) fn climb(m: &mut horizon_client::mobs::Mob, goal: [f64; 3], on_ladder: bool) -> bool {
     let (dx, dz) = (goal[0] - m.position.x, goal[2] - m.position.z);
     let dy = goal[1] - m.position.y;
-    if dx.hypot(dz) > 0.6 || dy.abs() < 0.5 || !m.on_climbable {
+    if dx.hypot(dz) > 0.6 || dy.abs() < 0.5 || !on_ladder {
         return false;
     }
     m.velocity.x = dx * 0.2;
@@ -211,14 +212,12 @@ mod tests {
     #[test]
     fn climbing_pushes_the_villager_along_the_ladder() {
         let mut mob = Mob { rider: None, id: 1, kind: Arc::new(MobType { id: VILLAGER.into() }), position: Vec3 { x: 3.5, y: 65.0, z: 0.5 },
-            velocity: Vec3::default(), on_climbable: true, ai: Ai::default(), extra: Default::default() };
-        assert!(climb(&mut mob, [3.5, 68.0, 0.5]));
+            velocity: Vec3::default(), climbing: true, ai: Ai::default(), extra: Default::default() };
+        assert!(climb(&mut mob, [3.5, 68.0, 0.5], true));
         assert_eq!(mob.velocity.y, 0.2);
-        assert!(climb(&mut mob, [3.5, 64.0, 0.5]));
+        assert!(climb(&mut mob, [3.5, 64.0, 0.5], true));
         assert_eq!(mob.velocity.y, -0.15);
-        mob.on_climbable = false;
-        assert!(!climb(&mut mob, [3.5, 68.0, 0.5]), "fora da escada, a navegação cuida");
-        mob.on_climbable = true;
-        assert!(!climb(&mut mob, [8.5, 68.0, 0.5]), "passo longe da coluna não é subida");
+        assert!(!climb(&mut mob, [3.5, 68.0, 0.5], false), "fora da escada, a navegação cuida");
+        assert!(!climb(&mut mob, [8.5, 68.0, 0.5], true), "passo longe da coluna não é subida");
     }
 }
