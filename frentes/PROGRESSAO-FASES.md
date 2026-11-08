@@ -119,6 +119,12 @@ pedidos nem as recompensas.
   sobrepõem. Os arquivos gerados (`guide.json`, traduções, `data.rs`) devem ser
   regerados depois da fusão: `python tools/build_production.py` e
   `python tools/build_tutorial.py`.
+- Fusão testada localmente com `grok/mission-balance`: os conflitos são o de
+  `presentation.rs` que já existia entre a main e aquela branch, e as páginas
+  numeradas do guia (resolver regerando). Depois de regerar, um teste do Grok,
+  `productivity_reserves_the_bonus_without_consuming_inputs_or_power_while_blocked`,
+  usa o ciclo antigo da prensa com produtividade: trocar `35` por `46`
+  (40 ticks × 1,15) nas quatro ocorrências. Com isso: 144 testes aprovados.
 - As tabelas de taxa em `BALANCEAMENTO-ECONOMIA.md` (Grok) para prensa, aço e
   circuito ficam desatualizadas; os números desta página as substituem.
 - Sem novos IDs, slots, campos NBT ou contratos. `Info` da extratora passa a
