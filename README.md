@@ -149,7 +149,7 @@ Todas as texturas próprias são desenhadas em texto em `tools/build_textures.py
 
 ## Realismo leve opcional
 
-**Pacote visual 1.1:** [Veio-Realismo-1.1.zip](release/Veio-Realismo-1.1.zip). Extraia a pasta completa e abra `launcher.exe`; o executável da raiz do repositório também já oferece a escolha. A versão do pacote visual é independente da versão de conteúdo do Veio.
+**Atualização visual 1.1:** [Veio-Realismo-1.1-atualizacao.zip](release/Veio-Realismo-1.1-atualizacao.zip). Extraia sobre a pasta do Veio que já contém `launcher.exe`, mantendo `visuals/` ao lado de `content/` e `native/`. Abra o launcher e escolha Realismo leve. A atualização contém somente o visual, podendo acompanhar uma versão mais recente do jogo sem substituir seu código ou dados. A versão do pacote visual é independente da versão de conteúdo do Veio.
 
 O launcher agora oferece a escolha **antes de abrir o jogo**, sem precisar carregar shaders para chegar às opções:
 
