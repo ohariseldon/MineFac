@@ -1526,16 +1526,17 @@ fn money_circulates_without_appearing_or_vanishing() {
     assert_eq!(number(&house, "Rate"), 3, "três moradores");
     let pantry: u32 = house.items.iter().flatten().filter(|stack| stack.item.as_ref() == "minecraft:bread").map(|stack| stack.count).sum();
     assert_eq!(pantry, 10, "a família comprou todo o pão");
-    assert_eq!(number(&house, "Wallet"), 40, "60 moedas de pão; o comerciante não teve caixa para o próprio salário");
-    // Varejo: 60, com 4% de imposto retido na fonte.
-    assert_eq!(balance(SHOPS, &village, [20, 64, 0]), 58);
-    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 2);
-    // No ciclo seguinte a loja paga o atacado (40) à companhia, com 4% retido.
+    // Pão a 9 (valor de referência da bolsa: 6 x 1,5); o comerciante não tinha caixa para o salário.
+    assert_eq!(number(&house, "Wallet"), 10, "90 moedas de pão");
+    // Varejo: 90, com 4% de imposto retido na fonte.
+    assert_eq!(balance(SHOPS, &village, [20, 64, 0]), 87);
+    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 3);
+    // No ciclo seguinte a loja paga o atacado (75%: 6 por pão, 60) à companhia, com 4% retido.
     let mut shop = village.stations.get(&[20, 64, 0]).unwrap().clone();
     society::shop_cycle(&mut village, [20, 64, 0], &mut shop, 10);
-    assert_eq!(balance(SHOPS, &village, [20, 64, 0]), 18, "o comerciante fica com a margem");
-    assert_eq!(balance(COMPANY, &village, [30, 64, 30]), 120 + 39, "a indústria recebe o atacado líquido");
-    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 3);
+    assert_eq!(balance(SHOPS, &village, [20, 64, 0]), 27, "o comerciante fica com a margem");
+    assert_eq!(balance(COMPANY, &village, [30, 64, 30]), 120 + 58, "a indústria recebe o atacado líquido");
+    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 5);
     let after = balance(COMPANY, &village, [30, 64, 30]) + balance(PUBLIC, &village, [60, 64, 0])
         + balance(SHOPS, &village, [20, 64, 0]) + number(&house, "Wallet");
     assert_eq!(after, before, "identidade contábil: nada some, nada aparece");
@@ -1551,10 +1552,10 @@ fn the_mayor_is_paid_from_public_funds_and_poor_families_get_assistance() {
     let mut house = block(society::HOUSE);
     society::house_turn(&mut village, [57, 64, 0], &mut house, 1000);
     assert_eq!(number(&house, "Rate"), 1, "o prefeito mora perto da prefeitura");
-    // Salário do prefeito (2) e assistência (1 por morador): ambos da conta pública.
-    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 237);
+    // Salário do prefeito e assistência (1 por morador): ambos da conta pública.
+    assert_eq!(balance(PUBLIC, &village, [60, 64, 0]), 240 - society::WAGE_PER_TURN - 1);
     assert_eq!(balance(COMPANY, &village, [30, 64, 30]), 120, "a companhia não paga funcionário público");
-    assert_eq!(number(&house, "Wallet"), 3);
+    assert_eq!(number(&house, "Wallet"), society::WAGE_PER_TURN + 1);
 }
 
 #[test]
@@ -1571,11 +1572,11 @@ fn company_workers_are_paid_by_the_company_and_the_cost_lands_on_their_business(
     }
     let mut house = block(society::HOUSE);
     society::house_turn(&mut village, [80, 64, 80], &mut house, 1000);
-    assert_eq!(number(&house, "Wallet"), 2, "salário da companhia");
-    assert_eq!(balance(COMPANY, &village, [30, 64, 30]), 118);
+    assert_eq!(number(&house, "Wallet"), society::WAGE_PER_TURN, "salário da companhia");
+    assert_eq!(balance(COMPANY, &village, [30, 64, 30]), 120 - society::WAGE_PER_TURN);
     super::super::holding::roll(dimension, 1200);
     let agro = super::super::holding::summary(dimension, super::super::holding::AGRO);
-    assert_eq!(agro[7], 2, "o salário do lavrador é gasto do agro");
+    assert_eq!(agro[7], society::WAGE_PER_TURN, "o salário do lavrador é gasto do agro");
 }
 
 #[test]
@@ -1620,7 +1621,7 @@ fn the_merchant_offers_the_stock_at_the_local_price() {
     let Some(Tag::Compound(offers)) = offers else { panic!("o comerciante não recebeu ofertas") };
     let Some(Tag::List(recipes)) = offers.get(&"Recipes".into()) else { panic!("sem receitas") };
     assert_eq!(recipes.len(), 1, "uma oferta por item");
-    assert_eq!(society::bundle("minecraft:bread"), Some((10, 1)), "10 pães por esmeralda");
+    assert_eq!(society::bundle("minecraft:bread"), Some((6, 1)), "6 pães (54 moedas) por esmeralda");
 }
 
 #[test]
@@ -1706,7 +1707,7 @@ fn the_world_market_pays_for_complexity_and_reputation_opens_markets() {
     assert!(import_price("minecraft:bread", 0).unwrap() > quote(dimension, "minecraft:bread", 0).unwrap(),
         "importar custa mais que exportar: o preço local fica entre os dois");
     assert_eq!(quote(dimension, WAGE, 0), None, "a esmeralda é a moeda");
-    let contract = issue(1, 0, 10, &[]);
+    let contract = issue(unlocked_tier(1), 0, 10, &[]);
     assert_eq!(PRODUCTS[contract.product].3, 2, "contratos pedem a camada mais alta liberada");
     assert!(contract.need >= 16 && contract.due >= 13);
 }
@@ -1849,4 +1850,69 @@ fn locked_cargo_waits_at_the_port_and_reputation_survives_a_reload() {
     persist("veio:test_trade_reloaded", &mut office, 0);
     assert_eq!(state("veio:test_trade_reloaded").0, 4);
     assert_eq!(state("veio:test_trade_reloaded").1.len(), state(dimension).1.len());
+}
+
+// ---------- Equilíbrio (as regras de `tools/sim_economy.py`, com o código do jogo) ----------
+
+#[test]
+fn balance_a_wage_feeds_two_people_at_reference_prices() {
+    let bread = society::market::base_price("minecraft:bread").unwrap();
+    let food_day = 20 * bread / 6;
+    assert_eq!(bread, 9, "pão: valor de referência 6 x 1,5, igual dentro e fora da vila");
+    assert!(society::WAGE_PER_TURN * society::TURNS_PER_DAY as i32 >= 2 * (food_day + 10),
+        "um salário paga comida e conforto de duas pessoas");
+    assert!(society::LIVING_COST >= food_day + 10, "o custo de vida cobre o pão e os bens");
+    // Processar compensa: pão (2 trigos) vale muito mais que os 2 trigos.
+    assert!(bread >= 4 * 2 * society::market::base_price("minecraft:wheat").unwrap());
+}
+
+#[test]
+fn balance_importing_never_loses_money_and_the_ceiling_keeps_food_at_home() {
+    use society::{market, trade};
+    for day in 0..10 {
+        for phase in 1..=4 {
+            let tax = society::mayor::tax_rate(phase);
+            let base = market::base_price("minecraft:bread").unwrap();
+            let ceiling = base * market::import_ceiling("minecraft:bread", day, tax).unwrap() / 100;
+            let landed = trade::import_price("minecraft:bread", day).unwrap();
+            assert!(ceiling * (100 - tax) / 100 >= landed, "fase {phase}, dia {day}: o comerciante cobre a importação");
+            // No teto, o atacado local rende tanto quanto exportar sem saturação: a vila não fica sem comida.
+            let product = trade::product("minecraft:bread").unwrap();
+            let export = trade::world_cents(product, day) * (100 - tax) / 10_000;
+            assert!(ceiling * market::WHOLESALE / 100 >= export * 95 / 100, "fase {phase}, dia {day}: atacado no teto x exportação");
+        }
+    }
+}
+
+#[test]
+fn balance_freight_weighs_on_raw_goods_and_saturation_has_a_floor() {
+    use society::trade::*;
+    let (base, stack, stacks, _) = (schedule(STATION).2, schedule(STATION).3, schedule(STATION).0, ());
+    let per_unit = (base + stack * stacks as i32) * 100 / (64 * stacks as i32);
+    let ore = reference_cents(product("minecraft:raw_iron").unwrap());
+    let gear = reference_cents(product("veio:gear").unwrap());
+    assert!(per_unit * 100 / ore > 5 * (per_unit * 100 / gear), "o frete pesa mais no minério que na engrenagem");
+    let plate = product("veio:iron_plate").unwrap();
+    assert!(spot_cents(plate, 0, 1_000_000) >= world_cents(plate, 0) * SCRAP / 100, "piso de sucata");
+    assert!(spot_cents(plate, 0, absorb(1)) * 2 <= world_cents(plate, 0) + 1, "no volume de absorção, metade do preço");
+}
+
+#[test]
+fn balance_contracts_are_a_separate_buyer_and_open_markets_stay_open() {
+    use society::trade::*;
+    let (mut village, _, _) = society_town("veio:test_balance_contracts", 14);
+    let dimension = village.dimension;
+    roll(dimension, 0);
+    let (_, contracts) = state(dimension);
+    let contract = contracts.iter().find(|contract| PRODUCTS[contract.product].3 <= 1).cloned().unwrap();
+    let item = PRODUCTS[contract.product].0;
+    let before = quote(dimension, item, 0).unwrap();
+    export(dimension, [40, 64, 40], item, contract.need as u32, 0, 1);
+    assert_eq!(quote(dimension, item, 0).unwrap(), before, "entregar contrato não derruba a cotação à vista");
+    assert_eq!(tier_open(dimension), 2, "contrato cumprido abre componentes");
+    // Os outros contratos vencem: a reputação cai, mas o mercado aberto continua aberto.
+    roll(dimension, 24_000 * 10);
+    assert_eq!(state(dimension).0, 0, "contratos perdidos tiram reputação");
+    assert_eq!(tier_open(dimension), 2, "mercado conquistado não fecha");
+    let _ = &mut village;
 }

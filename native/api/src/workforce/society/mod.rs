@@ -38,14 +38,23 @@ pub(crate) const TURNS_PER_DAY: i64 = 24000 / TURN;
 pub(crate) const DAY: i64 = 24000;
 /// Moedas por esmeralda (o mesmo preço da despensa: 60 pontos de comida).
 pub(crate) const COINS_PER_EMERALD: i32 = 60;
-/// Salário por turno de cada morador empregado.
-pub(crate) const WAGE_PER_TURN: i32 = 2;
+/// Salário por turno de cada morador empregado. Vem do custo de vida (`LIVING_COST`): um salário
+/// sustenta duas pessoas (o trabalhador e um dependente), 80 moedas por dia.
+pub(crate) const WAGE_PER_TURN: i32 = 2 * LIVING_COST / TURNS_PER_DAY as i32;
 /// Comida por morador por turno (20 pontos por dia: pouco mais de 3 pães).
 pub(crate) const FOOD_PER_TURN: i32 = 1;
 /// Conforto gasto por morador por turno; bens repõem.
 pub(crate) const COMFORT_PER_TURN: i32 = 1;
-/// Custo de vida por morador por dia (comida + bens), base do índice de renda.
-pub(crate) const LIVING_COST: i32 = 30;
+/// Custo de vida por morador por dia, a preços de referência: 20 pontos de comida em pão
+/// (3,3 pães x 9 = 30 moedas) mais 20 pontos de conforto em bens (lã: 2 pontos por moeda = 10).
+pub(crate) const LIVING_COST: i32 = 40;
+/// Dias de custo de vida que a família guarda antes de gastar a poupança em bens.
+pub(crate) const SAVINGS_DAYS: i32 = 2;
+/// Conforto máximo por morador (bens comprados acima disso não rendem mais).
+pub(crate) const COMFORT_CAP: i32 = 80;
+/// Capital de giro que a loja guarda para pagar o atacado e importar; acima disso, o lucro vai para a
+/// família do comerciante.
+pub(crate) const SHOP_RESERVE: i32 = 600;
 /// Assistência pública: 1 moeda por morador por turno às famílias pobres, se o cofre passar disto.
 pub(crate) const ASSIST_RESERVE: i32 = 200;
 
@@ -449,7 +458,11 @@ fn wages(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, residents:
             public_jobs += 1;
         } else if let Some((_, shop)) = merchants.iter().find(|(merchant, _)| merchant == id) {
             employed += 1;
-            paid += ledger::take(Book::Shop, dimension, *shop, 0, WAGE_PER_TURN, ledger::WAGES, now);
+            // Salário e, acima da reserva de giro, 10% do caixa por turno como lucro: o dinheiro do
+            // comércio volta às famílias em vez de parar no caixa.
+            let cash = ledger::balance(Book::Shop, dimension, *shop).unwrap_or(0);
+            let profit = (cash - WAGE_PER_TURN - SHOP_RESERVE).max(0) / 10;
+            paid += ledger::take(Book::Shop, dimension, *shop, 0, WAGE_PER_TURN + profit, ledger::WAGES, now);
         } else if let Some((_, post)) = employers.iter().find(|(worker, _)| worker == id) {
             company.push(super::super::holding::division_at(dimension, *post));
         }
@@ -560,15 +573,26 @@ pub(crate) fn house_turn(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
                 errand = Some(shop.pos);
             }
         }
-        if comfort < people * 10 && wallet > 0 {
-            for (item, count, cost) in market::buy(host, shop.pos, is_goods, wallet / 2, 2, 0, now) {
+        // Bens: o necessário quando o conforto baixa e, com poupança acima de `SAVINGS_DAYS` dias de
+        // custo de vida, um quarto do excedente por turno. Sem isso, a margem do comércio virava
+        // poupança parada e a companhia sangrava; com isso, o dinheiro volta às lojas e à indústria.
+        let savings = wallet - people * LIVING_COST * SAVINGS_DAYS;
+        let (budget, units) = if savings > 0 {
+            (savings / 4, 4)
+        } else if comfort < people * 10 {
+            (wallet / 2, 2)
+        } else {
+            (0, 0)
+        };
+        if budget > 0 && comfort < people * COMFORT_CAP {
+            for (item, count, cost) in market::buy(host, shop.pos, is_goods, budget, units, 0, now) {
                 comfort += goods(&item).map_or(0, |(_, points)| points) * count as i32;
                 wallet -= cost;
                 errand = Some(shop.pos);
             }
         }
     }
-    set_number(entity, "Comfort", comfort.min(people.max(1) * 40));
+    set_number(entity, "Comfort", comfort.min(people.max(1) * COMFORT_CAP));
     set_number(entity, "Wallet", wallet.max(0));
     // Um morador sem emprego vai até a loja (só visual: a compra já foi feita).
     if let Some(shop) = errand {

@@ -222,8 +222,8 @@ help["house"] = (
  "Lar de até 4 aldeões a até 10\nblocos. Recebe o salário dos\nque trabalham, come da\ndespensa e compra na loja.\nO prefeito dá o alvará.",
  "Home for up to 4 villagers\nwithin 10 blocks. Gets the\nworkers' wages, eats from the\npantry and buys at the shop.\nThe mayor grants the permit.")
 help["shop"] = (
- "Esmeralda: contrata o\ncomerciante (independente).\nO que você entrega ele compra\nno atacado (70%) e paga com\nas vendas. Imposto na fonte.",
- "Emerald: hires the merchant\n(independent). What you\ndeliver they buy wholesale\n(70%) and pay from sales.\nTax withheld at source.")
+ "Esmeralda: contrata o\ncomerciante (independente).\nO que você entrega ele compra\nno atacado (75%) e paga com\nas vendas. Imposto na fonte.",
+ "Emerald: hires the merchant\n(independent). What you\ndeliver they buy wholesale\n(75%) and pay from sales.\nTax withheld at source.")
 help["town_hall"] = (
  "Esmeralda: contrata o\nprefeito. Vive do imposto na\nfonte (4% a 16%); paga o\nprefeito e a assistência.\nMede IDH e libera as fases.",
  "Emerald: hires the mayor.\nLives on tax at source (4% to\n16%); pays the mayor and\nassistance. Measures HDI and\nunlocks phases.")
@@ -530,7 +530,7 @@ slothelp={
  "barn":["Estoque."]*27,
  "silo":["Grãos, sementes, ração ou comida."]*18,
  "house":["Despensa: comida que a família comprou (ou que você doa).","Despensa.","Despensa."],
- "shop":["Comida do comerciante.","Entrega da indústria: o comerciante paga 70% no atacado.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Antigo caixa (até a 0.20): retire as esmeraldas."],
+ "shop":["Comida do comerciante.","Entrega da indústria: o comerciante paga 75% no atacado.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Antigo caixa (até a 0.20): retire as esmeraldas."],
  "town_hall":["Comida do prefeito.","Aporte voluntário à conta pública (60 moedas por esmeralda)."],
  "well":["Balde vazio: sai cheio de água."],
  "export_dock":["Carga do navio: produtos para exportar."]*9,
@@ -573,7 +573,7 @@ slot_en={
  "barn":["Stock."]*27,
  "silo":["Grain, seeds, feed or food."]*18,
  "house":["Pantry: food the family bought (or you donate).","Pantry.","Pantry."],
- "shop":["Merchant food.","Industry delivery: the merchant pays 70% wholesale.","Industry delivery.","Industry delivery.","Industry delivery.","Industry delivery.","Industry delivery.","Old till (up to 0.20): take the emeralds out."],
+ "shop":["Merchant food.","Industry delivery: the merchant pays 75% wholesale.","Industry delivery.","Industry delivery.","Industry delivery.","Industry delivery.","Industry delivery.","Old till (up to 0.20): take the emeralds out."],
  "town_hall":["Mayor food.","Voluntary contribution to public funds (60 coins per emerald)."],
  "well":["Empty bucket: comes out full of water."],
  "export_dock":["Ship cargo: goods to export."]*9,
@@ -846,7 +846,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.24.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.25.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -951,8 +951,8 @@ v_society=vpage(
  "8. Casas e famílias\n\nCasa: até 4 aldeões a até 10 blocos. Os que trabalham ganham salário; a família come da despensa e compra na loja.\n\nSem comida, sem serviços ou sem renda, o IDH cai. Espalhe bairros: casa apertada vive pior.",
  "8. Homes and families\n\nHouse: up to 4 villagers within 10 blocks. Workers earn wages; the family eats from the pantry and buys at the shop.\n\nWithout food, services or income, HDI drops. Spread districts: crowded homes live worse.")
 v_shop=vpage(
- "9. Loja\n\nO comerciante é independente. O que você entrega no estoque ele compra no atacado (70% do preço) e paga com as vendas; sem caixa, fica fiado.\n\nAs casas compram de dia; você compra trocando com ele.",
- "9. Shop\n\nThe merchant is independent. What you deliver to the stock they buy wholesale (70% of price) and pay from sales; without cash, on credit.\n\nHomes buy during the day; you buy by trading with them.")
+ "9. Loja\n\nO comerciante é independente. O que você entrega no estoque ele compra no atacado (75% do preço) e paga com as vendas; sem caixa, fica fiado.\n\nAs casas compram de dia; você compra trocando com ele.",
+ "9. Shop\n\nThe merchant is independent. What you deliver to the stock they buy wholesale (75% of price) and pay from sales; without cash, on credit.\n\nHomes buy during the day; you buy by trading with them.")
 v_mayor=vpage(
  "10. Prefeito e contas\n\nCompanhia (sua): cofre do centro. Paga seus trabalhadores; recebe o atacado.\nPrefeitura: imposto retido na fonte em cada venda (4%, 8%, 12%, 16%). Paga o prefeito e a assistência aos pobres.",
  "10. Mayor and accounts\n\nCompany (yours): center vault. Pays your workers; receives wholesale.\nTown hall: tax withheld at source on every sale (4%, 8%, 12%, 16%). Pays the mayor and assistance.")

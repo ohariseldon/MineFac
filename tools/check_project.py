@@ -122,6 +122,13 @@ def check_assets(languages):
         unlocked.update(read_json(advancement).get("rewards", {}).get("recipes", []))
     for recipe in (data / "recipe").glob("*.json"):
         assert f"veio:{recipe.stem}" in unlocked, f"Nenhum avanço libera a receita {recipe.stem}"
+    # Equilíbrio da economia: as regras do simulador (salário, teto, frete, saturação, contratos).
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("sim_economy", ROOT / "tools/sim_economy.py")
+    sim = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sim)
+    failures = sim.invariants()
+    assert not failures, f"Economia desequilibrada: {failures}"
     return len(textures)
 
 

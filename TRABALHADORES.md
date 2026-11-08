@@ -32,6 +32,18 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## 0.25.0: balanceamento da economia
+
+Números, princípios e resultados em [frentes/ECONOMIA.md](frentes/ECONOMIA.md).
+
+- **Preço-âncora único:** o preço base local de um produto da bolsa é o valor de referência mundial (base x complexidade); comida fora da bolsa vale pontos x 1,5 (preparada) ou x 1 (crua). Antes, pão valia 6 na loja e 9 lá fora: a indústria exportava tudo e a vila passava fome.
+- **Salário = 2 x custo de vida / 20** (4 por turno), custo de vida 40/dia.
+- **Teto do preço local** = custo de importar + 10% de margem, contando o imposto da fase (`market::import_ceiling`); atacado a 75%; lote ao jogador = o maior que cabe em 1 esmeralda (6 pães).
+- **Dinheiro circula:** lucro do comerciante acima da reserva de giro (600) vai para a família dele; poupança acima de 2 dias de custo de vida vira compra de bens.
+- **Comércio exterior:** absorção maior (256/512/512/256/128) com pressão = metade da média recente + hoje, piso de sucata de 25%, frete por pilha (porto 6, estação 12), contrato pago a preço cheio + 50% sem saturar o mercado à vista, camada aberta que nunca fecha (formato de salvamento v3). Preços em centésimos.
+- **Defeitos corrigidos:** a camada conquistada podia fechar com a queda de reputação.
+- **Simulador** `tools/sim_economy.py` com 4 cenários e regras de equilíbrio, que também rodam em `check_project.py`; 4 testes `balance_*` com o código do jogo.
+
 ## 0.24.0: acabamento do comércio exterior
 
 - Avisos no chat (contrato novo, cumprido com prêmio, perdido, mercado aberto) e partidas com buzina ou trilho, fumaça e aviso na barra para quem está perto.
@@ -331,7 +343,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0, 149 na 0.18.0, 160 na 0.19.0, 162 na 0.20.0, 164 na 0.21.0, 166 na 0.22.0, 169 na 0.23.0 e 172 na 0.24.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0, 149 na 0.18.0, 160 na 0.19.0, 162 na 0.20.0, 164 na 0.21.0, 166 na 0.22.0, 169 na 0.23.0, 172 na 0.24.0 e 176 na 0.25.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
