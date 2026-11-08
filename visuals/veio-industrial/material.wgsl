@@ -1,6 +1,42 @@
 override metal_highlights: f32 = 0.65;
 override water_detail: bool = true;
 override wet_surfaces: bool = true;
+override reflections: bool = false;
+override colored_lights: bool = true;
+
+// Colour of the light given by torches, lava, lanterns and Veio's working machines:
+// the pack's [[lights]] colours and the frame's coloured lights (mods, held items).
+fn veio_block_light(input: MaterialInput) -> vec3<f32> {
+    if !colored_lights || quality == 0u {
+        return vec3<f32>(1.0);
+    }
+    let tint = block_light_color(input.position);
+    // Untinted sources stay a warm white rather than vanilla's neutral.
+    let base = mix(vec3<f32>(1.10, 0.92, 0.72), tint.rgb, min(tint.a, 1.0));
+    return base;
+}
+
+// Seasons on foliage: autumn colours vary block by block, winter dulls and frosts.
+fn veio_seasonal_foliage(color: vec3<f32>, input: MaterialInput, leaves: bool) -> vec3<f32> {
+    if !seasons || !veio_has_mod() {
+        return color;
+    }
+    let w = veio_season_weights();
+    let world = floor(input.position + frame.camera_position - floor(frame.camera_position / 1024.0) * 1024.0 + 0.0001);
+    let h = veio_hash3(world);
+    let luma = veio_luma(color);
+    // Autumn: leaves turn yellow, orange or red; grass dries to straw.
+    let autumn_leaf = mix(mix(vec3<f32>(1.05, 0.78, 0.22), vec3<f32>(0.98, 0.45, 0.12), smoothstep(0.30, 0.65, h)),
+        vec3<f32>(0.70, 0.16, 0.08), smoothstep(0.80, 0.95, h)) * luma * 1.9;
+    let autumn_grass = mix(color, vec3<f32>(0.78, 0.70, 0.40) * luma * 1.6, 0.45);
+    let autumn = select(autumn_grass, mix(color, autumn_leaf, 0.35 + 0.55 * smoothstep(0.10, 0.40, h)), leaves);
+    // Winter: dull and frosty, colder biomes and heights more so.
+    let cold = clamp(0.6 - frame.temperature * 0.5, 0.2, 1.0);
+    let winter = mix(color, vec3<f32>(luma) * vec3<f32>(0.92, 0.96, 1.02) * 1.05, 0.55 * cold);
+    // Spring: fresher, slightly brighter green.
+    let spring = color * vec3<f32>(0.97, 1.06, 0.95);
+    return spring * w.x + color * w.y + autumn * w.z + winter * w.w;
+}
 
 fn veio_visibility(position: vec3<f32>, normal: vec3<f32>, light: vec3<f32>) -> f32 {
     if !shadows || frame.has_shadow == 0u {
@@ -58,12 +94,16 @@ fn material(input: MaterialInput) -> Surface {
     var color = vanilla * mix(vec3<f32>(1.0), lighting, sky_light * (1.0 - input.emission));
     // Warm only light already supplied by the game. No gathered or newly created light sources.
     let local_light = clamp(input.light.x - input.light.y * day, 0.0, 1.0) * (1.0 - input.emission);
-    color *= mix(vec3<f32>(1.0), vec3<f32>(1.035, 0.995, 0.94), local_light);
+    color *= mix(vec3<f32>(1.0), veio_block_light(input), local_light);
+    if colored_lights {
+        // Mods' visual lights (Veio's furnaces) and held light sources, already coloured.
+        color += surface.rgb * input.colored_light * 0.85 * (1.0 - input.emission);
+    }
 
     let metal = input.material == 1u || input.material == 2u;
     let painted = input.material == 3u;
     let glass = input.material == 4u;
-    let foliage = input.material == 5u;
+    let foliage = input.material == 5u || input.material >= 7u && input.material <= 9u;
     let patina = input.material == 6u;
     var wet = 0.0;
     if wet_surfaces && !input.translucent && !foliage && input.emission < 0.1 {
@@ -103,6 +143,7 @@ fn material(input: MaterialInput) -> Surface {
             * highlight * amount * exposure * visibility * facing * key_strength * metal_highlights;
     }
     if foliage {
+        color = veio_seasonal_foliage(color, input, input.material == 7u);
         let backlight = max(dot(-normal, light), 0.0) * sky_light * key_strength;
         color += vanilla * vec3<f32>(0.075, 0.065, 0.025) * backlight * visibility;
     }
@@ -126,7 +167,13 @@ fn material(input: MaterialInput) -> Surface {
         color = mix(color, deep, absorption * 0.62);
         alpha = mix(surface.a * 0.52, max(surface.a, 0.84), absorption);
         let fresnel = 0.02 + 0.68 * veio_pow5(1.0 - clamp(dot(water_normal, view), 0.0, 1.0));
-        let sky = veio_environment(reflect(-view, water_normal));
+        var sky = veio_environment(reflect(-view, water_normal));
+        if reflections && quality >= 1u && frame.has_reflection == 1u && input.face == 1u {
+            // The mirrored world, nudged by the ripples; the analytic sky stays where it shows.
+            let offset = water_normal.xz * 0.04 * (1.0 - smoothstep(8.0, 64.0, distance));
+            let mirrored = textureSampleLevel(reflection, reflection_sampler, input.screen + offset, 0.0);
+            sky = mix(sky, mirrored.rgb, 0.85);
+        }
         color = mix(color, sky, fresnel * sky_light);
         alpha = max(alpha, fresnel * sky_light * 0.85);
         let half_raw = view + light;

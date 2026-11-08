@@ -1,6 +1,8 @@
 override edge_smoothing: bool = true;
 override color_strength: f32 = 0.65;
 
+// The last pass: smooth edges, then air (distance haze and factory smog), light shafts and
+// bloom, the eye's adaptation, a gentle film curve, the grade and a vignette.
 fn post(input: PostInput) -> vec4<f32> {
     var color = input.color.rgb;
     if edge_smoothing {
@@ -22,28 +24,67 @@ fn post(input: PostInput) -> vec4<f32> {
         let blend = smoothstep(0.055, 0.20, hi - lo) * (0.08 + 0.24 * subpixel);
         color = mix(color, filtered, blend);
     }
-    if atmosphere > 0.0 && frame.dimension == 0 && frame.eye_in == 0u && input.depth > 0.000001 {
-        // Distance haze for the whole scene, including native animated machinery.
-        // Depth already exists: no volume, ray march or additional pass.
+    let overworld = frame.dimension == 0 && frame.eye_in == 0u;
+    if overworld && input.depth > 0.000001 {
+        // Distance haze and smog from depth already drawn: no volume, ray march or extra pass.
         let clip = vec4<f32>(input.uv.x * 2.0 - 1.0, 1.0 - input.uv.y * 2.0, input.depth, 1.0);
         let projected = frame.projection_inverse * clip;
         let distance = length(projected.xyz / max(abs(projected.w), 0.00001));
-        let near = min(24.0, frame.render_distance * 0.25);
-        let far = max(near + 16.0, frame.render_distance * 0.88);
         let exposed = frame.eye_light_smooth.y * frame.eye_light_smooth.y;
         let effects = (1.0 - frame.blindness) * (1.0 - frame.darkness) * (1.0 - 0.6 * frame.night_vision);
-        let haze = smoothstep(near, far, distance) * atmosphere * exposed * effects
-            * (0.11 + 0.09 * frame.rain) * mix(0.30, 1.0, veio_daylight());
-        let air = mix(frame.fog_color, veio_environment(vec3<f32>(0.0, 0.0, 1.0)), 0.22);
-        color = mix(color, air, clamp(haze, 0.0, 0.24));
+        if atmosphere > 0.0 {
+            let near = min(24.0, frame.render_distance * 0.25);
+            let far = max(near + 16.0, frame.render_distance * 0.88);
+            // Aerial perspective: far terrain takes the colour of the air toward it.
+            let view_dir = normalize((frame.view_inverse * vec4<f32>(projected.xyz, 0.0)).xyz);
+            let air = mix(frame.fog_color, veio_atmosphere(vec3<f32>(view_dir.x, max(view_dir.y, 0.02), view_dir.z)), 0.55);
+            let haze = smoothstep(near, far, distance) * atmosphere * exposed * effects
+                * (0.14 + 0.10 * frame.rain) * mix(0.30, 1.0, veio_daylight());
+            color = mix(color, air, clamp(haze, 0.0, 0.30));
+        }
+        let smog = veio_smog();
+        if smog > 0.0 {
+            // Factory smog: a brownish grey that thickens fast with distance.
+            let thickness = 1.0 - exp(-distance * 0.018 * smog);
+            let smog_colour = vec3<f32>(0.46, 0.43, 0.37) * mix(0.18, 1.0, veio_daylight());
+            color = mix(color, smog_colour, thickness * 0.65 * exposed * effects);
+        }
     }
+    if quality >= 1u {
+        if overworld {
+            color += textureSampleLevel(rays, linear_sampler, input.uv, 0.0).rgb;
+        }
+        let halo = textureSampleLevel(glow, linear_sampler, input.uv, 0.0).rgb;
+        color += halo * bloom * 0.55;
+    }
+    // Eye adaptation: dark interiors open up a little, bright outdoors stays as it is.
+    let indoor = 1.0 - frame.eye_light_smooth.y;
+    let lit = max(frame.eye_light_smooth.x, frame.eye_light_smooth.y * veio_daylight());
+    color *= 1.0 + 0.12 * indoor * (1.0 - lit);
+    // Film shoulder: values above 0.8 roll off instead of clipping (the bloom adds light).
+    let over = max(color - vec3<f32>(0.8), vec3<f32>(0.0));
+    color = min(color, vec3<f32>(0.8)) + 0.2 * (vec3<f32>(1.0) - exp(-over / 0.2));
     // Fixed exposure and luminance-based contrast keep hues and dark interiors stable.
     // Gamma-space API: an HDR tone map here would double-correct the image.
     let bounded = clamp(color, vec3<f32>(0.0), vec3<f32>(1.0));
     let luma = veio_luma(bounded);
     let curve = luma * luma * (3.0 - 2.0 * luma);
-    let target_luma = mix(luma, curve, 0.10 * color_strength);
-    let graded = bounded * select(1.0, target_luma / max(luma, 0.00001), luma > 0.00001);
-    let saturation = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + 0.025 * color_strength);
-    return vec4<f32>(clamp(saturation, vec3<f32>(0.0), vec3<f32>(1.0)), input.color.a);
+    let target_luma = mix(luma, curve, 0.12 * color_strength);
+    var graded = bounded * select(1.0, target_luma / max(luma, 0.00001), luma > 0.00001);
+    // Time of day: warm golden hours, cool blue nights; the seasons tint the light a little.
+    if frame.dimension == 0 {
+        let golden = veio_low_sun() * veio_daylight();
+        let night = 1.0 - veio_daylight();
+        let w = veio_season_weights();
+        var tint = vec3<f32>(1.0) + vec3<f32>(0.045, 0.012, -0.040) * golden + vec3<f32>(-0.030, -0.008, 0.040) * night;
+        tint += vec3<f32>(0.010, 0.006, -0.012) * w.y + vec3<f32>(0.018, 0.004, -0.018) * w.z + vec3<f32>(-0.016, -0.004, 0.020) * w.w;
+        graded *= mix(vec3<f32>(1.0), tint, color_strength);
+    }
+    graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + 0.06 * color_strength);
+    if vignette > 0.0 {
+        let centred = input.uv - 0.5;
+        let fall = dot(centred, centred) * 1.6;
+        graded *= 1.0 - vignette * 0.35 * fall * fall;
+    }
+    return vec4<f32>(clamp(graded, vec3<f32>(0.0), vec3<f32>(1.0)), input.color.a);
 }
