@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:campfire",
+    "minecraft:barrel",
+    "minecraft:flower_pot",
+    "minecraft:bricks"
+  ],
+  "result": {
+    "id": "veio:home",
+    "count": 1
+  }
+}

@@ -36,6 +36,9 @@ pub(super) fn draw_labels(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
 }
 
 pub(super) fn screen_tooltip(event: &mut ScreenTooltipEvent<'_>) {
+    if workforce::screen_tooltip(event) {
+        return;
+    }
     let Some(name) = event.block.strip_prefix("veio:") else { return; };
     let Some(layout) = presentation::screen(event.block) else { return; };
     let [x, y] = event.at;

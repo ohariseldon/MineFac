@@ -10,6 +10,7 @@ langs={code:read(f"{A}/lang/{code}.json") for code in ("pt_br","en_us")}
 def label(key,pt,en):
  langs["pt_br"][key]=pt;langs["en_us"][key]=en
 vanilla={
+ "campfire":("Fogueira","Campfire"),"flower_pot":("Vaso de flor","Flower pot"),"bricks":("Tijolos","Bricks"),
  "copper_ingot":("Lingote de cobre","Copper ingot"),"iron_ingot":("Lingote de ferro","Iron ingot"),
  "piston":("Pistão","Piston"),"smooth_stone":("Pedra lisa","Smooth stone"),
  "furnace":("Fornalha","Furnace"),"stick":("Graveto","Stick"),
@@ -209,8 +210,14 @@ help["silo"] = (
  "18 espaços: grãos, sementes,\nração e comida. Também faz\nparte da fila do capataz.",
  "18 slots: grain, seeds, feed\nand food. Also part of the\nforeman's queue.")
 help["control_center"] = (
- "Sede da companhia: painel,\nmetas e o cofre que paga os\nsalários e impostos. Contrate\num administrador.\nLivro no centro: relatório.",
- "Company headquarters: panel,\ngoals and the vault that pays\nwages and taxes. Hire an\nadministrator.\nBook on the center: report.")
+ "Sede da companhia e da vila:\nresumo, pendências, obras,\npedidos e as empresas (setas).\nCofre: salários. Obra: entregas.\nDecreto: sino, papel ou feno.",
+ "Company and village HQ:\nsummary, issues, projects,\nrequests and businesses (arrows).\nVault: wages. Build: deliveries.\nDecree: bell, paper or hay.")
+help["home"] = (
+ "Sua casa na vila. Lenha:\nlareira; comida: despensa.\nTigela: refeição em casa.\nMelhorias com itens da fábrica.\nVocê renasce aqui.",
+ "Your house in the village.\nFuel: hearth; food: pantry.\nBowl: eat at home.\nUpgrade with factory goods.\nYou respawn here.")
+help["site"] = (
+ "Canteiro: o prédio da obra\nsai do papel em volta dele.\nChave: trocar a planta.\nEsmeralda: mestre de obras.\nComida no slot.",
+ "Site: the project's building\nrises around it.\nWrench: switch blueprint.\nEmerald: master builder.\nFood in the slot.")
 help["foreman_desk"] = (
  "Esmeralda: contrata o capataz.\nCuida de até 6 postos a\naté 12 blocos: leva comida\ne recontrata com esmeraldas\nda mesa. Monta a fila.",
  "Emerald: hires the foreman.\nManages up to 6 posts within\n12 blocks: brings food and\nrehires with the desk's\nemeralds. Queues transfers.")
@@ -430,6 +437,168 @@ for key, pt, en in [
  ('veio.guide.role.output', 'Saída', 'Output'),
 ]:
  label(key, pt, en)
+
+# ---------- Painel executivo, foco, obras da vila e lar (frente Cloud) ----------
+for key, pt, en in [
+ ("block.veio.home", "Lar", "Home Hearth"),
+ ("veio.center.page.0", "Resumo", "Summary"),
+ ("veio.center.page.1", "Atenção", "Attention"),
+ ("veio.center.page.2", "Obras", "Projects"),
+ ("veio.center.page.3", "Pedidos", "Requests"),
+ ("veio.center.prestige", "Prestígio: %s (%s/%s)", "Prestige: %s (%s/%s)"),
+ ("veio.center.prestige_max", "Prestígio: %s (%s)", "Prestige: %s (%s)"),
+ ("veio.center.treasury", "Caixa: %s esm. · decreto: %s", "Treasury: %s em. · decree: %s"),
+ ("veio.center.served", "Pedidos atendidos hoje: %s", "Requests served today: %s"),
+ ("veio.center.hint.deliver", "Entregas no slot Obra", "Deliver in the Build slot"),
+ ("veio.center.hint.cash", "Agachar + esmeralda: sacar", "Sneak + emerald: withdraw"),
+ ("veio.center.project.locked", "%s: exige %s", "%s: needs %s"),
+ ("veio.center.project.built", "Prontas: %s (cursor: efeitos)", "Built: %s (hover: effects)"),
+ ("veio.center.tip.prestige", "Prestígio: pedidos +10, obras +25, festa +10,\nbanquete +5, dia em ordem no lar +2, manhã sem\npendências +3. Cada nível: teto +5, obras novas\ne pedidos mais ricos.", "Prestige: requests +10, projects +25, festival +10,\nbanquet +5, tidy day at home +2, morning with\nno issues +3. Each tier: cap +5, new projects\nand richer requests."),
+ ("veio.center.tip.treasury", "O caixa recebe as recompensas e as esmeraldas\nque sobram no slot Obra. Paga as esmeraldas das\nobras e das zonas. Agachar + esmeralda: sacar 16.", "The treasury gets rewards and leftover emeralds\nfrom the Build slot. It pays project and zone\nemeralds. Sneak + emerald: withdraw 16."),
+ ("veio.center.tip.served", "Atendidos hoje. Amanhã, viram pedidos novos.", "Served today. Tomorrow they become new requests."),
+ ("veio.request.empty", "(sem pedido)", "(no request)"),
+ ("veio.request.line", "%s/%s %s → %s esm.", "%s/%s %s → %s em."),
+ ("veio.request.line_done", "Pronto: %s %s (novo amanhã)", "Done: %s %s (new tomorrow)"),
+ ("veio.request.tip", "Recompensa: %s esmeraldas no caixa e %s de prestígio.", "Reward: %s emeralds to the treasury and %s prestige."),
+ ("veio.request.tip_keep", "Entregue pelo slot Obra. Nada entregue se perde:\no pedido espera até ser atendido.", "Deliver through the Build slot. Nothing delivered\nis lost: the request waits until served."),
+ ("veio.request.done", "Pedidos atendidos: %s. +%s esmeraldas no caixa da vila.", "Requests served: %s. +%s emeralds to the village treasury."),
+ ("veio.treasury.out", "Sacou %s esmeraldas do caixa.", "Withdrew %s emeralds from the treasury."),
+ ("veio.treasury.empty", "O caixa está vazio.", "The treasury is empty."),
+ ("veio.prestige.up", "A vila agora é %s! Teto maior, obras e pedidos novos.", "The village is now a %s! Higher cap, new projects and requests."),
+ ("veio.prestige.tier.0", "Aldeia", "Hamlet"), ("veio.prestige.tier.1", "Vila", "Village"),
+ ("veio.prestige.tier.2", "Vila próspera", "Thriving village"), ("veio.prestige.tier.3", "Cidade operária", "Worker city"),
+ ("veio.decree.0", "nenhum", "none"), ("veio.decree.1", "Convocação", "Call-up"),
+ ("veio.decree.2", "Racionamento", "Rationing"), ("veio.decree.3", "Fartura", "Plenty"),
+ ("veio.decree.0.effect", "Decreto: ponha um sino, papel ou fardo de feno no slot Decreto.", "Decree: put a bell, paper or hay bale in the Decree slot."),
+ ("veio.decree.1.effect", "Convocação (sino): postos contratam aldeões a até 16 blocos.", "Call-up (bell): posts hire villagers within 16 blocks."),
+ ("veio.decree.2.effect", "Racionamento (papel): tarefas custam 1 ponto de comida, mas ninguém nasce.", "Rationing (paper): tasks cost 1 food point, but nobody is born."),
+ ("veio.decree.3.effect", "Fartura (feno): tarefas custam 3 pontos; zonas ganham o dobro e nascem mais.", "Plenty (hay): tasks cost 3 points; zones gain double and more are born."),
+ ("veio.bulletin.title", "☀ Bom dia! Dia %s da vila (%s).", "☀ Good morning! Village day %s (%s)."),
+ ("veio.bulletin.yesterday", "Ontem: %s tarefas · aldeões %s de %s (%s) · %s pedido(s) atendido(s).", "Yesterday: %s tasks · villagers %s of %s (%s) · %s request(s) served."),
+ ("veio.bulletin.extra", "Caixa rendeu %s esm. · viajantes chegando: %s.", "Treasury earned %s em. · travelers arriving: %s."),
+ ("veio.bulletin.requests", "Pedidos de hoje: %s.", "Today's requests: %s."),
+ ("veio.bulletin.calm", "Nenhuma pendência. Vila em ordem (+3 de prestígio).", "No issues. Village in order (+3 prestige)."),
+ ("veio.bulletin.issues", "Pendências: %s. Bússola no centro para resolver.", "Issues: %s. Compass on the center to solve them."),
+ ("veio.project.tier", "Exige prestígio: %s.", "Needs prestige: %s."),
+ ("veio.project.library.name", "Biblioteca", "Library"),
+ ("veio.project.library.effect", "Zonas ganham o dobro de trabalho por tarefa.", "Zones gain double work per task."),
+ ("veio.project.post_office.name", "Correio", "Post office"),
+ ("veio.project.post_office.effect", "4 pedidos por dia e +50% de esmeraldas.", "4 requests a day and +50% emeralds."),
+ ("veio.project.inn.name", "Estalagem", "Inn"),
+ ("veio.project.inn.effect", "Teto +20; um viajante chega toda manhã se houver lugar.", "Cap +20; a traveler arrives each morning if there is room."),
+ ("veio.project.hall.name", "Prefeitura", "Town hall"),
+ ("veio.project.hall.effect", "Prestígio +50% e o caixa rende 1 a cada 16 (até 8/dia).", "Prestige +50% and the treasury earns 1 per 16 (up to 8/day)."),
+ ("veio.home.banquet", "Banquete! %s aldeões vêm jantar na sua casa. Você é o herói da vila.", "Banquet! %s villagers come to dinner at your house. You are the village hero."),
+ ("veio.home.banquet_cold", "Acenda a lareira antes de receber convidados.", "Light the hearth before hosting guests."),
+ ("veio.home.banquet_done", "Já houve banquete hoje. Amanhã tem mais.", "There was a banquet today already. More tomorrow."),
+ ("veio.home.banquet_alone", "Nenhum aldeão livre por perto para convidar.", "No free villager nearby to invite."),
+ ("veio.center.population", "Aldeões: %s de %s", "Villagers: %s of %s"),
+ ("veio.center.food", "Comida guardada: %s tarefas", "Food stored: %s tasks"),
+ ("veio.center.issues", "Pendências: %s", "Issues: %s"),
+ ("veio.center.no_issues", "Vila em ordem: nada pendente", "Village in order: nothing pending"),
+ ("veio.center.issue", "%s: %s · %s m %s", "%s: %s · %s m %s"),
+ ("veio.center.projects", "Obras da vila", "Village projects"),
+ ("veio.center.project.done", "%s: pronta", "%s: built"),
+ ("veio.center.project.active", "%s: ativa por %s dia(s)", "%s: on for %s day(s)"),
+ ("veio.center.project.progress", "%s: %s%% · falta %s %s", "%s: %s%% · %s %s left"),
+ ("veio.center.hint.compass", "Bússola no centro: ir até lá", "Compass on center: go there"),
+ ("veio.center.hint.hover", "Cursor na linha: detalhes", "Hover a line: details"),
+ ("veio.center.hint.site", "Materiais no slot Obra →", "Materials in the Build slot →"),
+ ("veio.center.hint.page", "Chave: próxima página", "Wrench: next page"),
+ ("veio.center.page_title", "%s %s/%s", "%s %s/%s"),
+ ("veio.center.tip.population", "Aldeões a até 48 blocos e o teto da vila.\nO teto cresce com postos, zonas, armazéns,\no centro e a escola (+15).", "Villagers within 48 blocks and the village cap.\nThe cap grows with posts, zones, storage,\nthe center and the school (+15)."),
+ ("veio.center.tip.workers", "Postos com trabalhador e quantos estão\nandando ou trabalhando agora.", "Staffed posts and how many are walking\nor working right now."),
+ ("veio.center.tip.waiting", "Postos parados por algo que você resolve.\nVeja a página Atenção (chave).", "Posts stopped by something you fix.\nSee the Attention page (wrench)."),
+ ("veio.center.tip.food", "Comida nos armazéns da área, em tarefas\n(2 pontos cada). Menos de 16: abasteça.", "Food in the area's storage, in tasks\n(2 points each). Under 16: restock."),
+ ("veio.center.tip.zones", "Zonas e quantas já têm trabalho e aldeões\npara crescer: leve esmeraldas ao marco.", "Zones and how many have the work and villagers\nto grow: bring emeralds to the marker."),
+ ("veio.center.tip.storage", "Ocupação dos celeiros e silos e tarefas\nna fila dos capatazes.", "Barn and silo usage and tasks\nin the foremen's queues."),
+ ("veio.center.tip.offset", "Posição a partir do centro: x %s, y %s, z %s", "Offset from the center: x %s, y %s, z %s"),
+ ("veio.center.problem.zone_ready", "pode crescer", "ready to grow"),
+ ("veio.center.problem.store_full", "quase cheio", "almost full"),
+ ("veio.center.kind.0", "Bloco", "Block"), ("veio.center.kind.1", "Lavrador", "Farmhand"),
+ ("veio.center.kind.2", "Carregador", "Hauler"), ("veio.center.kind.3", "Capataz", "Foreman"),
+ ("veio.center.kind.4", "Pastor", "Shepherd"), ("veio.center.kind.5", "Centro", "Center"),
+ ("veio.center.kind.6", "Lavoura", "Field"), ("veio.center.kind.7", "Cercado", "Pen"),
+ ("veio.center.kind.8", "Celeiro", "Barn"), ("veio.center.kind.9", "Silo", "Silo"),
+ ("veio.dir.0", "N", "N"), ("veio.dir.1", "NE", "NE"), ("veio.dir.2", "L", "E"), ("veio.dir.3", "SE", "SE"),
+ ("veio.dir.4", "S", "S"), ("veio.dir.5", "SO", "SW"), ("veio.dir.6", "O", "W"), ("veio.dir.7", "NO", "NW"),
+ ("veio.report.compass", "Dica: use uma bússola no centro para ir até cada pendência.", "Tip: use a compass on the center to walk to each issue."),
+ # Foco.
+ ("veio.focus.set", "Foco %s de %s: %s em %s. Siga a barra de ação.", "Focus %s of %s: %s at %s. Follow the action bar."),
+ ("veio.focus.bar", "➤ %s · %s m %s", "➤ %s · %s m %s"),
+ ("veio.focus.here", "Aqui: %s", "Here: %s"),
+ ("veio.focus.resolved", "Resolvido: %s", "Solved: %s"),
+ ("veio.focus.next", "Próxima de %s: %s", "Next of %s: %s"),
+ ("veio.focus.all_clear", "Vila em ordem. Bom trabalho!", "Village in order. Well done!"),
+ ("veio.focus.none", "Nada pendente na vila agora.", "Nothing pending in the village right now."),
+ ("veio.focus.cleared", "Foco desligado.", "Focus cleared."),
+ ("veio.focus.expired", "O foco acabou. Use a bússola no centro de novo.", "Focus ended. Use the compass on the center again."),
+ ("veio.focus.advice.zone_ready", "Clique no marco com esmeraldas para o próximo nível.", "Click the marker with emeralds for the next level."),
+ ("veio.focus.advice.store_full", "Esvazie, use as sobras ou construa outro celeiro.", "Empty it, use the surplus or build another barn."),
+ # Obras.
+ ("veio.project.done", "Obra pronta: %s. %s", "Project built: %s. %s"),
+ ("veio.project.needs", "Materiais: %s", "Materials: %s"),
+ ("veio.project.repeat", "Pode ser feita de novo.", "Can be done again."),
+ ("veio.project.canteen.name", "Refeitório", "Canteen"),
+ ("veio.project.canteen.effect", "Toda 4ª tarefa dos postos não gasta comida.", "Every 4th post task costs no food."),
+ ("veio.project.school.name", "Escola", "School"),
+ ("veio.project.school.effect", "Nascem mais aldeões (1/3) e o teto sobe 15.", "More villagers are born (1/3) and the cap rises by 15."),
+ ("veio.project.smithy.name", "Ferraria", "Smithy"),
+ ("veio.project.smithy.effect", "Carregadores levam 24 itens e recolhem 48 por viagem.", "Haulers carry 24 items and collect 48 per trip."),
+ ("veio.project.market.name", "Praça do mercado", "Market square"),
+ ("veio.project.market.effect", "Expandir zonas custa 25% menos esmeraldas.", "Growing zones costs 25% fewer emeralds."),
+ ("veio.project.festival.name", "Festa da colheita", "Harvest festival"),
+ ("veio.project.festival.effect", "Hoje e amanhã: tarefas sem comida e nascem\nmais aldeões (1/2).", "Today and tomorrow: tasks cost no food and\nmore villagers are born (1/2)."),
+ # Lar.
+ ("veio.home.claimed", "Este é o seu lar. Você renasce aqui.", "This is your home. You respawn here."),
+ ("veio.home.lit", "Lareira acesa · %s", "Hearth lit · %s"),
+ ("veio.home.cold", "Lareira apagada: ponha lenha", "Hearth out: add fuel"),
+ ("veio.home.comfort", "Conforto %s/100 · nível %s: %s", "Comfort %s/100 · level %s: %s"),
+ ("veio.home.level.1", "Casa simples", "Simple house"),
+ ("veio.home.level.2", "Casa de tijolos", "Brick house"),
+ ("veio.home.level.3", "Casa elétrica", "Electric house"),
+ ("veio.home.level.4", "Casa de engenheiro", "Engineer's house"),
+ ("veio.home.perk.2", "A lareira cozinha carne, peixe e batata crus.\nEfeitos das refeições e do descanso +50%.", "The hearth cooks raw meat, fish and potatoes.\nMeal and rest effects +50%."),
+ ("veio.home.perk.3", "Escritório: o painel mostra a vila e a bússola\nno lar dá o foco das pendências.", "Office: the panel shows the village and a compass\non the hearth gives issue focus."),
+ ("veio.home.perk.4", "Refeições variadas dão pressa II e o descanso\ntambém dá pressa.", "Varied meals give haste II and resting\nalso gives haste."),
+ ("veio.home.level_up", "Sua casa subiu para o nível %s: %s.", "Your house reached level %s: %s."),
+ ("veio.home.today", "Hoje: %s", "Today: %s"),
+ ("veio.home.task.meal", "coma em casa (tigela)", "eat at home (bowl)"),
+ ("veio.home.task.fire", "acenda a lareira", "light the hearth"),
+ ("veio.home.task.pantry", "abasteça a despensa (3+)", "stock the pantry (3+)"),
+ ("veio.home.day_done", "Dia em ordem · sequência: %s dia(s)", "Day in order · streak: %s day(s)"),
+ ("veio.home.day_done_chat", "Dia em ordem em casa! Sequência: %s dia(s).", "A tidy day at home! Streak: %s day(s)."),
+ ("veio.home.meal_ready", "Refeição pronta · despensa %s · cardápio %s/5", "Meal ready · pantry %s · menu %s/5"),
+ ("veio.home.meal_wait", "Próxima refeição em %s s · cardápio %s/5", "Next meal in %s s · menu %s/5"),
+ ("veio.home.meal_wait_bar", "Ainda satisfeito. Próxima refeição em %s s.", "Still full. Next meal in %s s."),
+ ("veio.home.meal", "Refeição em casa: %s · cardápio %s/5 · conforto %s", "Meal at home: %s · menu %s/5 · comfort %s"),
+ ("veio.home.meal_cold", "Comida fria (%s). Acenda a lareira para os efeitos.", "Cold food (%s). Light the hearth for the effects."),
+ ("veio.home.no_food", "A despensa está vazia.", "The pantry is empty."),
+ ("veio.home.missing", "Falta: %s", "Missing: %s"),
+ ("veio.home.cozy", "Casa completa e aconchegante", "Complete, cozy house"),
+ ("veio.home.upgrade", "Nível %s: %s%% · falta %s %s", "Level %s: %s%% · %s %s left"),
+ ("veio.home.max", "Casa no nível máximo", "House at top level"),
+ ("veio.home.village", "Vila: %s/%s · %s pendência(s) · %s pedido(s)", "Village: %s/%s · %s issue(s) · %s request(s)"),
+ ("veio.home.office_locked", "Nível 3: escritório da vila", "Level 3: village office"),
+ ("veio.home.no_village", "Sem centro de controle por perto", "No control center nearby"),
+ ("veio.home.hint", "Tigela: comer · bolo: banquete · bússola: foco", "Bowl: eat · cake: banquet · compass: focus"),
+ ("veio.home.rested", "Você acordou descansado em casa (conforto %s).", "You woke up rested at home (comfort %s)."),
+ ("veio.home.cat.bed", "cama", "bed"), ("veio.home.cat.door", "porta", "door"),
+ ("veio.home.cat.window", "janela", "window"), ("veio.home.cat.light", "luz", "light"),
+ ("veio.home.cat.storage", "baú", "chest"), ("veio.home.cat.stove", "fogão", "stove"),
+ ("veio.home.cat.workshop", "bancada", "workbench"), ("veio.home.cat.decor", "enfeites", "decor"),
+ ("veio.home.cat.finish", "acabamento", "finish"),
+ ("veio.home.tip.fire", "Carvão e carvão vegetal: 4 min; biomassa: 2 min;\ntroncos: 80 s. Acesa à noite = acordar descansado.", "Coal and charcoal: 4 min; biomass: 2 min;\nlogs: 80 s. Lit at night = wake up rested."),
+ ("veio.home.tip.comfort", "O lar lê a casa em 9x9, de 1 abaixo a 3 acima:", "The hearth reads the house in 9x9, 1 below to 3 above:"),
+ ("veio.home.tip.today", "Comer em casa, lareira acesa e 3+ comidas\nna despensa: dia em ordem, experiência e sequência.", "Eat at home, hearth lit and 3+ food\nin the pantry: day in order, XP and streak."),
+ ("veio.home.tip.meal", "Tigela no lar: enche a fome. Com a lareira acesa:\nregeneração; 3 pratos diferentes: pressa; 5: resistência.\nConforto e nível aumentam a duração.", "Bowl on the hearth: fills hunger. With the hearth lit:\nregeneration; 3 different dishes: haste; 5: resistance.\nComfort and level extend the duration."),
+ ("veio.home.tip.build", "Ponha os materiais no slot Obra, um de cada vez.", "Put the materials in the Build slot, one at a time."),
+ ("veio.home.tip.office", "No nível 3, o lar acompanha o centro de controle\nmais próximo: aldeões, pendências e pedidos abertos.\nBússola no lar: ir até a pendência.", "At level 3 the hearth follows the nearest control\ncenter: villagers, issues and open requests.\nCompass on the hearth: go to the issue."),
+ ("veio.home.tip.hint", "Bolo no lar (1 por dia, lareira acesa): até 6 aldeões\nlivres vêm jantar; você vira herói da vila (descontos\nno comércio) e a vila ganha prestígio.\nBússola (nível 3): foco nas pendências da vila.\nAgachar + chave: o lar passa a ser seu.", "Cake on the hearth (once a day, lit): up to 6 free\nvillagers come to dinner; you become the village hero\n(trade discounts) and the village gains prestige.\nCompass (level 3): focus on village issues.\nSneak + wrench: make this hearth yours."),
+ ("advancement.veio.homestead.title", "Lar, doce lar", "Home Sweet Home"),
+ ("advancement.veio.homestead.description", "Faça um lar na vila: lareira, despensa e uma casa de verdade.", "Make a home in the village: hearth, pantry and a real house."),
+]:
+ label(key, pt, en)
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
@@ -439,7 +608,7 @@ categories=[
 ]
 order=[name for _,_,names in categories for name in names]
 # Blocos da vila operária: consulta no Guia da Vila Operária (fim deste arquivo).
-village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center","barracks","house","shop","town_hall","well"]
+village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center","site","barracks","house","shop","town_hall","well","home"]
 assert set(order)|set(village_order)==set(help), (set(order)|set(village_order))^set(help)
 for name,(pt,en) in help.items():
  label(f"veio.help.{name}",pt,en)
@@ -481,7 +650,9 @@ slothelp={
  "shop":["Comida do comerciante.","Estoque à venda: comida e bens.","Estoque à venda.","Estoque à venda.","Estoque à venda.","Estoque à venda.","Estoque à venda.","Caixa: esmeraldas das vendas."],
  "town_hall":["Comida do prefeito.","Aporte voluntário à conta pública (60 moedas por esmeralda)."],
  "well":["Balde vazio: sai cheio de água."],
- "control_center":["Comida do administrador.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Cofre da companhia: esmeraldas para salários e impostos (60 moedas cada)."],
+ "control_center":["Comida do administrador.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Cofre da companhia: esmeraldas viram moedas para salários e impostos.","Obra: entregas dos pedidos, materiais das obras; esmeraldas vão para o caixa.","Decreto: sino (convocação), papel (racionamento) ou fardo de feno (fartura)."],
+ "site":["Comida do mestre de obras: cada leva de blocos custa uma tarefa."],
+ "home":["Lenha: carvão, carvão vegetal, biomassa, troncos ou tábuas.","Despensa: comida para as refeições em casa.","Despensa: comida para as refeições em casa.","Despensa: comida para as refeições em casa.","Obra: materiais da próxima melhoria da casa."],
  "foreman_desk":["Comida do capataz e dos postos.","Comida do capataz e dos postos.","Comida do capataz e dos postos.","Esmeraldas para recontratar."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
 }
@@ -522,7 +693,9 @@ slot_en={
  "shop":["Merchant food.","Stock for sale: food and goods.","Stock for sale.","Stock for sale.","Stock for sale.","Stock for sale.","Stock for sale.","Till: emeralds from sales."],
  "town_hall":["Mayor food.","Voluntary contribution to public funds (60 coins per emerald)."],
  "well":["Empty bucket: comes out full of water."],
- "control_center":["Administrator food.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Company vault: emeralds for wages and taxes (60 coins each)."],
+ "control_center":["Administrator food.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Company vault: emeralds become coins for wages and taxes.","Build: request deliveries, project materials; emeralds go to the treasury.","Decree: bell (call-up), paper (rationing) or hay bale (plenty)."],
+ "site":["Master builder food: each batch of blocks costs one task."],
+ "home":["Fuel: coal, charcoal, biomass, logs or planks.","Pantry: food for meals at home.","Pantry: food for meals at home.","Pantry: food for meals at home.","Build: materials for the next house upgrade."],
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
@@ -546,6 +719,36 @@ label("veio.guide.role.input2","Ent.2","In 2")
 label("veio.guide.role.output1","Sai.1","Out 1")
 label("veio.guide.role.output2","Sai.2","Out 2")
 label("veio.guide.role.fertilizer","Adubo","Fertilizer")
+label("veio.guide.role.pantry","Despensa","Pantry")
+label("veio.guide.role.build","Obra","Build")
+label("veio.guide.role.decree","Decreto","Decree")
+for key, pt, en in [
+ ("block.veio.site", "Canteiro de obras", "Construction Site"),
+ ("veio.status.site_plan", "Preparando a obra", "Preparing the project"),
+ ("veio.status.site_blocked", "Terreno ocupado", "Ground occupied"),
+ ("veio.status.site_building", "Construindo", "Building"),
+ ("veio.status.site_done", "Prédio de pé", "Building standing"),
+ ("veio.site.picked", "Planta: %s", "Blueprint: %s"),
+ ("veio.site.started", "A obra já começou: a planta não muda mais.", "Construction has started: the blueprint is locked."),
+ ("veio.site.plan", "%s · %sx%s, %s de altura", "%s · %sx%s, %s tall"),
+ ("veio.site.reserved", "Falta: %s x %s nos lugares que piscam", "Missing: %s x %s at the blinking spots"),
+ ("veio.site.standing", "De pé! O efeito vale para a vila.", "Standing! The effect applies to the village."),
+ ("veio.site.progress", "Construído: %s%% · %s blocos assentados", "Built: %s%% · %s blocks placed"),
+ ("veio.site.blocker", "Bloco do jogador em x %s, y %s, z %s do canteiro", "Player block at x %s, y %s, z %s from the site"),
+ ("veio.site.surveying", "Conferindo o terreno...", "Surveying the ground..."),
+ ("veio.site.wait.0", "Pronto para começar", "Ready to start"),
+ ("veio.site.wait.1", "Sem centro de controle a até 64 blocos", "No control center within 64 blocks"),
+ ("veio.site.wait.2", "Pague a obra no centro (slot Obra)", "Pay for the project at the center (Build slot)"),
+ ("veio.site.wait.3", "Este prédio já está de pé na vila", "This building already stands in the village"),
+ ("veio.site.wait.4", "Outro canteiro já constrói este prédio", "Another site is already building it"),
+ ("veio.site.done", "Obra de pé: %s! %s", "Building complete: %s! %s"),
+ ("veio.hint.site", "Chave: planta · esmeralda: mestre de obras", "Wrench: blueprint · emerald: master builder"),
+ ("veio.center.project.paid", "%s: paga · faça o canteiro", "%s: paid · set up a site"),
+ ("veio.project.building", "Paga, a obra vira prédio num canteiro de obras.", "Once paid, it becomes a building at a construction site."),
+ ("veio.center.kind.10", "Canteiro", "Site"),
+]:
+ label(key, pt, en)
+
 
 components={
  "copper_plate":("Feita na prensa com cobre bruto. Vai para engrenagens e fiação.","Press raw copper. Used for gears and wiring."),
@@ -874,8 +1077,32 @@ v_foreman=vpage(
  "6. Capataz e fila\n\nA mesa do capataz cuida de 6 postos a até 12 blocos: leva comida e recontrata com esmeraldas.\n\nEla monta uma fila de entregas entre postos, máquinas e armazéns, feita pelos carregadores.",
  "6. Foreman and queue\n\nThe foreman desk manages 6 posts within 12 blocks: brings food and rehires with emeralds.\n\nIt queues deliveries between posts, machines and storage, done by haulers.")
 v_center=vpage(
- "7. Centro de controle\n\nContrate um administrador. O painel mostra trabalhadores, esperas, zonas, armazéns e metas.\n\nItem num slot de meta: x16 guardados. Livro no centro: relatório. O spawn vai para o centro.",
- "7. Control center\n\nHire an administrator. The panel shows workers, waits, zones, storage and goals.\n\nItem in a goal slot: x16 stored. Book on the center: report. Spawn moves to the center.")
+ "7. Centro de controle\n\nContrate um administrador. Três páginas (a chave troca): Resumo, Atenção e Obras.\n\nItem num slot de meta: x16 guardados. Livro no centro: relatório. O spawn vai para o centro.",
+ "7. Control center\n\nHire an administrator. Three pages (wrench switches): Summary, Attention and Projects.\n\nItem in a goal slot: x16 stored. Book on the center: report. Spawn moves to the center.")
+v_focus=vpage(
+ "Gerenciar de perto\n\nA página Atenção lista o que parou, da mais urgente. Cursor na linha: o que fazer.\n\nBússola no centro: a barra de ação leva você até lá e explica o que fazer. Resolvido, vem a próxima.",
+ "Manage up close\n\nThe Attention page lists what stopped, most urgent first. Hover a line: what to do.\n\nCompass on the center: the action bar takes you there and explains. Once solved, the next one comes.")
+v_requests=vpage(
+ "Pedidos e prestígio\n\nToda manhã a vila faz 3 pedidos (página 4 do centro). Entregue no slot Obra: esmeraldas para o caixa e +10 de prestígio.\n\nNíveis: Aldeia, Vila (60), Vila próspera (200), Cidade operária (500).",
+ "Requests and prestige\n\nEach morning the village makes 3 requests (center page 4). Deliver in the Build slot: emeralds to the treasury and +10 prestige.\n\nTiers: Hamlet, Village (60), Thriving (200), Worker city (500).")
+v_decrees=vpage(
+ "Decretos e caixa\n\nItem no slot Decreto:\nSino: contrata a 16.\nPapel: tarefa a 1 ponto, sem bebês.\nFeno: tarefa a 3, zonas em dobro, mais bebês.\n\nO caixa paga zonas e obras. Agachar + esmeralda: sacar.",
+ "Decrees and treasury\n\nItem in the Decree slot:\nBell: hire within 16.\nPaper: tasks at 1, no babies.\nHay: tasks at 3, zones double, more babies.\n\nThe treasury pays zones and projects. Sneak + emerald: withdraw.")
+v_projects2=vpage(
+ "Obras maiores\n\nVila: Biblioteca (zonas em dobro) e Correio (4 pedidos, +50%).\nPróspera: Estalagem (teto +20, viajantes).\nCidade: Prefeitura (prestígio +50%, juros).",
+ "Bigger projects\n\nVillage: Library (zones double) and Post office (4 requests, +50%).\nThriving: Inn (cap +20, travelers).\nCity: Town hall (prestige +50%, interest).")
+v_projects=vpage(
+ "Obras da vila\n\nMateriais no slot Obra:\nRefeitório: 4ª tarefa grátis.\nEscola: mais bebês, teto +15.\nFerraria: carregador leva 24.\nMercado: zonas -25%.\nFesta: 2 dias sem gastar comida.",
+ "Village projects\n\nMaterials in the Build slot:\nCanteen: every 4th task free.\nSchool: more babies, cap +15.\nSmithy: haulers carry 24.\nMarket: zones -25%.\nFestival: 2 days of free food.")
+v_home=vpage(
+ "8. Seu lar\n\nPonha o lar dentro da sua casa: você renasce ali.\n\nLenha na lareira, comida na despensa. Tigela no lar: refeição em casa, com efeitos maiores se a comida variar e a casa for confortável.",
+ "8. Your home\n\nPlace the hearth inside your house: you respawn there.\n\nFuel in the hearth, food in the pantry. Bowl on the hearth: meal at home, with stronger effects for varied food and a cozy house.")
+v_banquet=vpage(
+ "Banquete\n\nBolo no lar, com a lareira acesa, uma vez por dia: até 6 aldeões livres vêm jantar na sua casa por um minuto.\n\nVocê vira herói da vila (descontos no comércio) e a vila ganha prestígio.",
+ "Banquet\n\nCake on the hearth, with the fire lit, once a day: up to 6 free villagers come to dinner at your house for a minute.\n\nYou become the village hero (trade discounts) and the village gains prestige.")
+v_home2=vpage(
+ "Uma casa de verdade\n\nConforto: cama, porta, janela, luz, baú, fogão, bancada, enfeites, acabamento.\n\nNoite em casa, lareira acesa: acorda descansado.\n\nMelhore com tijolos, circuitos e aço.",
+ "A real house\n\nComfort: bed, door, window, light, chest, stove, workbench, decor, finish.\n\nA night home, hearth lit: wake up rested.\n\nUpgrade with bricks, circuits and steel.")
 v_expand=vpage(
  "Expandir as zonas\n\nEsmeralda no marco libera o próximo nível:\n13x13: 8 esm., 32 tarefas, 6 aldeões\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nA chave escolhe o tamanho entre os liberados.",
  "Grow the zones\n\nEmerald on the marker unlocks the next level:\n13x13: 8 emer., 32 tasks, 6 villagers\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nThe wrench picks the size among unlocked ones.")
@@ -912,7 +1139,25 @@ v_phases=vpage(
 v_numbers=vpage(
  "Indicadores\n\nIDH: comida, moradia, serviços e renda de cada família (0 a 1).\nGini: desigualdade da renda.\nPIB: tarefas feitas e vendas do último dia.\nEmprego: adultos com posto.\n\nLivro na prefeitura: relatório com bairros e pedidos.",
  "Indicators\n\nHDI: food, housing, services and income of each family (0 to 1).\nGini: income inequality.\nGDP: tasks done and sales in the last day.\nEmployment: adults with a post.\n\nBook on the town hall: report with districts and requests.")
+import blueprints as _plans
+v_site=vpage(
+ "Canteiro de obras\n\nPaga a obra no centro, ponha o canteiro onde quer o prédio: a borda azul mostra o tamanho e a seta, a entrada.\n\nChave troca a planta. Contrate um mestre de obras e dê comida: ele ergue o prédio.",
+ "Construction site\n\nPay at the center, then place the site where you want the building: the blue border shows its size, the arrow the door.\n\nWrench switches blueprint. Hire a master builder and feed him: he raises it.")
+v_plans={}
+for _key in ["canteen","school","smithy","market","library","post_office","inn","hall"]:
+ _p=_plans.BLUEPRINTS[_key]; _l=_p["layers"]
+ _size=(len(_l[0][0]),len(_l[0]),len(_l))
+ _res=("\n\nLugares para: "+{"veio:shop":"loja","veio:town_hall":"prefeitura (bloco)"}[_p["reserved"]]) if "reserved" in _p else ""
+ _res_en=("\n\nSpots for: "+{"veio:shop":"a shop","veio:town_hall":"the town hall block"}[_p["reserved"]]) if "reserved" in _p else ""
+ v_plans[_key]=vpage(f"Planta: {_p['name'][0]}\n\n{_p['about'][0]}\n\n{_size[0]}x{_size[1]}, {_size[2]} de altura.{_res}",
+  f"Blueprint: {_p['name'][1]}\n\n{_p['about'][1]}\n\n{_size[0]}x{_size[1]}, {_size[2]} tall.{_res_en}")
+v_shortcuts=vpage(
+ "Atalhos da fábrica\n\n3 chapas de ferro: balde\n4 chapas + baú: funil\nchapa + tocha: lanternas\n3 chapas de cobre: para-raios\ncircuito + chapa: bússola\ncircuito + ouro: relógio\naço + graveto: 16 trilhos",
+ "Factory shortcuts\n\n3 iron plates: bucket\n4 plates + chest: hopper\nplate + torch: lanterns\n3 copper plates: lightning rod\ncircuit + plate: compass\ncircuit + gold: clock\nsteel + stick: 16 rails")
 v_blocks=len(vpages)+1;vpages.append(None)
+v_manage=len(vpages)+1;vpages.append(None)
+v_reference=len(vpages)+1;vpages.append(None)
+v_planlist=len(vpages)+1;vpages.append(None)
 vrefs={}
 for name in village_order:
  reference_labels(name)
@@ -927,11 +1172,30 @@ for name in village_order:
   "click_event":{"action":"change_page","page":vrefs[name]}},{"text":"\n"}])
 extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
 vpages[v_blocks-1]={"text":"","extra":extra}
-vlinks=[("Começar","Start here",v_intro),("1. Trabalhador","1. Worker",v_hire),("2. Lavoura","2. Field",v_field),
+def subindex(page,key,pt,en,links):
+ label(key,pt,en)
+ extra=[{"translate":key,"bold":True},{"text":"\n"}]
+ for n,(lpt,len_,target) in enumerate(links):
+  k=f"{key}.{n}";label(k,lpt,len_)
+  extra.extend([{"translate":k,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
+ extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
+ vpages[page-1]={"text":"","extra":extra}
+MANAGE=[("Começar","Start here",v_intro),("Holding","Holding",v_holding),("Preços","Prices",v_prices),("Foco e obras","Focus and projects",v_focus),("Obras da vila","Village projects",v_projects),
+ ("Pedidos e prestígio","Requests and prestige",v_requests),("Decretos e caixa","Decrees and treasury",v_decrees),
+ ("Obras maiores","Bigger projects",v_projects2),("Fases e indicadores","Phases and indicators",v_phases)]
+REFERENCE=[("Expandir zonas","Grow zones",v_expand),("A vila cresce","Village growth",v_grow),("Quartel","Barracks",v_barracks),
+ ("Uma casa de verdade","A real house",v_home2),("Banquete","Banquet",v_banquet),("Problemas e comida","Problems and food",v_trouble),
+ ("Atalhos da fábrica","Factory shortcuts",v_shortcuts),("Blocos","Blocks",v_blocks)]
+MANAGE.append(("Plantas das obras","Project blueprints",v_planlist))
+subindex(v_planlist,"veio.village.plans","Plantas das obras","Project blueprints",[("Canteiro de obras","Construction site",v_site)]+
+ [(_plans.BLUEPRINTS[k]["name"][0],_plans.BLUEPRINTS[k]["name"][1],v_plans[k]) for k in ["canteen","school","smithy","market","library","post_office","inn","hall"]])
+subindex(v_manage,"veio.village.manage","Gestão da vila","Running the village",MANAGE)
+subindex(v_reference,"veio.village.reference","Consulta","Reference",REFERENCE)
+vlinks=[("1. Trabalhador","1. Worker",v_hire),("2. Lavoura","2. Field",v_field),
  ("3. Cercados","3. Pens",v_pen),("4. Armazéns","4. Storage",v_store),("5. Carregadores","5. Haulers",v_haul),
- ("6. Capataz","6. Foreman",v_foreman),("7. Centro","7. Center",v_center),("Expandir zonas","Grow zones",v_expand),
- ("A vila cresce","Village growth",v_grow),("8. Casas","8. Homes",v_society),("9. Loja","9. Shop",v_shop),
- ("10. Prefeito e contas","10. Mayor and accounts",v_mayor),("Preços","Prices",v_prices),("Holding","Holding",v_holding),("Fases e indicadores","Phases and indicators",v_phases),("Quartel","Barracks",v_barracks),("Problemas e comida","Problems and food",v_trouble),("Blocos","Blocks",v_blocks)]
+ ("6. Capataz","6. Foreman",v_foreman),("7. Centro","7. Center",v_center),("8. Casas","8. Homes",v_society),
+ ("9. Loja","9. Shop",v_shop),("10. Prefeito e contas","10. Mayor and accounts",v_mayor),("11. Seu lar","11. Your home",v_home),
+ ("Gestão da vila","Running the village",v_manage),("Consulta","Reference",v_reference)]
 label("veio.village.title","Guia da Vila Operária","Worker Village Guide")
 extra=[{"translate":"veio.village.title","bold":True},{"text":"\n"}]
 for n,(pt,en,target) in enumerate(vlinks):
@@ -959,7 +1223,7 @@ write(f"{D}/advancement/village/root.json",{
  "description":{"translate":"veio.village.tab.description"},"background":"minecraft:gui/advancements/backgrounds/husbandry",
  "announce_to_chat":False,"show_toast":False},
  "criteria":{"welcome":{"trigger":"minecraft:tick"}},
- "rewards":{"loot":["veio:tutorial/village_guide"],"recipes":["veio:village_guide"],"function":"veio:village/welcome"}})
+ "rewards":{"loot":["veio:tutorial/village_guide"],"recipes":["veio:village_guide","veio:home"],"function":"veio:village/welcome"}})
 p=root/D/"function/village/welcome.mcfunction";p.parent.mkdir(parents=True,exist_ok=True)
 p.write_text('tellraw @s {"translate":"veio.village.welcome","color":"gold"}\n',encoding="utf-8")
 vstages=[
@@ -973,6 +1237,7 @@ vstages=[
  ("home","veio:house","8. Casa","8. House","Uma família mora, ganha salário e compra comida.","A family lives, earns wages and buys food."),
  ("market","veio:shop","9. Loja","9. Shop","Um comerciante vende comida e bens às casas e a você.","A merchant sells food and goods to homes and to you."),
  ("mayor","veio:town_hall","10. Prefeitura","10. Town hall","O prefeito paga salários, mede o IDH e libera as fases.","The mayor pays wages, measures HDI and unlocks phases."),
+ ("hearth","veio:home","11. Seu lar","11. Your home","Lareira, despensa e uma casa de verdade. Você renasce ali.","Hearth, pantry and a real house. You respawn there."),
 ]
 vparent="veio:village/root"
 for name,item,pt,en,pdesc,edesc in vstages:

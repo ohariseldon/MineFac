@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "veio:gear",
+    "veio:iron_plate",
+    "minecraft:cobblestone",
+    "minecraft:redstone"
+  ],
+  "result": {
+    "id": "minecraft:piston",
+    "count": 1
+  }
+}

@@ -74,9 +74,13 @@ BLOCKS = {
     # Zonas, armazenagem e gestão da vila.
     "field_marker": ("marker", None, 1, [], 1.0),
     "pen_marker": ("marker", None, 1, [], 1.0),
+    # Canteiro de obras: estaca com a planta azul; o prédio cresce em volta.
+    "site": ("marker", None, 1, [], 1.0),
     "barn": ("machine", "wood", 27, [], 2.0),
     "silo": ("machine", "iron", 18, [], 2.0),
-    "control_center": ("machine", "steel", 5, [], 2.0),
+    "control_center": ("machine", "steel", 7, [], 2.0),
+    # Lar do jogador: lareira, despensa e melhorias da casa.
+    "home": ("hearth", None, 5, [], 2.0),
     "barracks": ("machine", "iron", 2, [], 2.0),
     # Sociedade (0.18): casas, lojas, prefeitura e saneamento.
     "house": ("machine", "wood", 3, [], 1.5),
@@ -118,7 +122,7 @@ TABS = {
         "minecraft:coal", "minecraft:lava_bucket"]),
     "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench"]),
     "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
-        "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
+        "field_marker", "pen_marker", "barn", "silo", "control_center", "site", "home", "mill", "kitchen",
         "pantry", "flour", "biomass", "tesla", "barracks", "house", "shop", "town_hall", "well", "repair_kit", "minecraft:bone_meal"]),
 }
 
@@ -178,6 +182,19 @@ def model(kind, name, tier):
                             uv={"side": [0, 0, 3, 4], "up": [0, 0, 3, 3]}))
         textures["chimney_top"] = "minecraft:block/furnace_top"
         return textures, elements
+    if kind == "hearth":
+        # Lareira de tijolos com cornija de madeira e chaminé; a boca acesa fica na frente.
+        textures = {"bricks": "minecraft:block/bricks", "front": "veio:block/home_front",
+                    "mantel": "minecraft:block/stripped_oak_log", "top": "minecraft:block/stripped_oak_log_top",
+                    "base": "minecraft:block/smooth_stone", "base_side": "minecraft:block/smooth_stone_slab_side",
+                    "particle": "minecraft:block/bricks"}
+        return textures, [
+            plinth(),
+            box([1, 2, 2], [15, 12, 15], {"south": "#front", "*": "#bricks"}),
+            box([0, 12, 1], [16, 14, 16], {"up": "#mantel", "*": "#mantel"}),
+            box([3, 14, 3], [13, 16, 12], "#bricks"),
+            box([9, 16, 4], [13, 22, 8], {"up": "#bricks", "*": "#bricks"}, uv={"side": [0, 0, 4, 6], "up": [0, 0, 4, 4]}),
+        ]
     if kind == "tesla":
         textures = {
             "base": "minecraft:block/smooth_stone", "base_side": "minecraft:block/smooth_stone_slab_side",
@@ -221,7 +238,7 @@ def model(kind, name, tier):
                 box([0, 2, 14], [16, 5, 16], {"up": "#rail", "*": "#iron"})]
         return textures, elements
     if kind == "marker":
-        sign = "minecraft:block/brown_wool" if name == "pen_marker" else "minecraft:block/lime_wool"
+        sign = {"pen_marker": "minecraft:block/brown_wool", "site": "minecraft:block/light_blue_wool"}.get(name, "minecraft:block/lime_wool")
         textures = {"wood": "minecraft:block/stripped_oak_log", "sign": sign, "particle": "minecraft:block/stripped_oak_log"}
         return textures, [
             box([7, 0, 7], [9, 14, 9], "#wood", uv={"side": [7, 2, 9, 16], "up": [7, 7, 9, 9]}),
@@ -303,6 +320,7 @@ def model(kind, name, tier):
 SHAPES = {
     "inserter": [[0, 0, 0, 1, 0.25, 1], [.3125, .25, .3125, .6875, .625, .6875]],
     "machine": [[0, 0, 0, 1, 1, 1]],
+    "hearth": [[0, 0, 0, 1, 1, 1]],
     "generator": [[0, 0, 0, 1, 1, 1]],
     "tesla": [[0, 0, 0, 1, 1, 1]],
     "belt": [[0, 0, 0, 1, 0.25, 1]],

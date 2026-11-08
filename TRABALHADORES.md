@@ -72,6 +72,192 @@ Partindo do que o Grok fez (ondas e quartel), o inimigo ficou mais justo e mais 
 - API: `Host::living` e `Host::living_set_equipment(living, EquipmentSlot::MainHand, stack)`, com `LivingRef` e `EquipmentSlot` (`horizon_world::player_inventory`), conferidos no Horizon `66f3981` (`game/native_living_refs.rs`) e acrescentados ao substituto offline.
 - Teste: `worker_holds_what_it_carries_and_empties_the_hand_after_delivery`.
 
+## Nona entrega: plantas prontas e canteiro de obras
+
+As obras com prédio (refeitório, escola, ferraria, praça do mercado, biblioteca, correio, estalagem e prefeitura) agora têm **plantas prontas**, desenhadas em texto camada por camada em `tools/blueprints.py` (o mesmo jeito das texturas). `python tools/build_blueprints.py` confere e gera `native/api/src/workforce/blueprint_data.rs`. A festa continua sendo só festa.
+
+### As plantas
+
+| Obra | Tamanho | Personalidade |
+| --- | --- | --- |
+| Refeitório | 9x7, 9 de altura | Salão de tijolos, mesa comprida para 10, cozinha com defumadores e caldeirão, chaminé com fogueira no alto |
+| Escola | 9x9, 11 | Bétula com telhado vermelho, quadro-negro, púlpito, dez carteiras e campanário com sino |
+| Ferraria | 9x7, 10 | Pedra e ardósia, alto-forno, caldeirão de lava, bigorna e rebolo na frente aberta, chaminé alta |
+| Praça do mercado | 11x11, 4 | Calçamento xadrez, chafariz, quatro bancas de toldo colorido com um lugar para **loja** em cada, bancos e postes |
+| Biblioteca | 9x9, 6 | Carvalho-escuro forrado de estantes, mesas com velas, tapete vermelho, lanternas e claraboia |
+| Correio | 7x8, 8 | Tijolo e abeto, faixa amarela e azul, balcão, barris de triagem, caixa de correio e bandeira |
+| Estalagem | 11x9, 10 | Enxaimel: salão com lareira, mesa e barris; dormitório com **8 camas**; chaminé |
+| Prefeitura | 11x11, 9 | Pedra e quartzo, pórtico de colunas, escadaria, frontão, tapete até a mesa, campanário e o lugar do **bloco da prefeitura** (0.18) |
+
+### Como se constrói
+
+1. **Pagar:** os materiais vão ao slot Obra do centro, como antes. Paga, a obra aparece como "paga · faça o canteiro" e ainda **não tem efeito**.
+2. **Canteiro de obras** (`veio:site`, receita: bancada, cerca, papel e corante azul, liberada com o centro de controle): o jogador põe onde quer o prédio. A borda azul aparece no chão e a seta amarela mostra a entrada, virada para onde o canteiro olha. O canteiro fica dentro do prédio, no lugar marcado na planta. **Chave** troca a planta.
+3. **Terreno:** com a obra paga no centro a até 64 blocos, o canteiro confere a área (48 blocos por ciclo, cota de trabalhadores). Terra, pedra, grama, árvores e água saem; baús, camas, portas, máquinas e outros blocos do jogador param a obra, e o painel mostra onde está o bloco (borda vermelha). Conferido, a obra começa.
+4. **Mestre de obras:** contratado com esmeralda (o capataz também o alimenta e recontrata). Anda até cada parte e assenta 10 blocos por tarefa (cada tarefa gasta comida). Primeiro o chão embaixo do piso é completado com pedregulho onde houver ar, água ou plantas; depois, de baixo para cima, as paredes, o telhado e o ar a limpar; por último os móveis e enfeites (portas, camas, lanternas, vasos, sinos). Uma parte que ele não alcança andando é feita do próprio canteiro.
+5. **De pé:** o mestre é dispensado, quem está perto recebe o aviso, e o centro passa a contar o prédio: o efeito da obra liga. Os lugares reservados (lojas da praça, bloco da prefeitura) piscam até o jogador pôr o bloco do Veio ali.
+
+O prédio vale enquanto o canteiro existir. Dois canteiros não constroem o mesmo prédio na mesma vila. Na página Atenção, canteiro sem mestre ou com terreno ocupado vira pendência (e entra no foco da bússola).
+
+### Contratos tocados
+
+- `projects.rs`: `Built` passa a significar **paga**; o efeito usa `standing` (paga e com prédio de pé, `Standing` atualizado pelo centro a partir de `site::near`). `Village.funded` publica as obras pagas.
+- `site.rs` (novo) é um posto (`is_post`) com fases em `ContractStage`; registro em memória `BUILDINGS`. `blueprints.rs` gira plantas e propriedades (`facing`, `axis`).
+- `presentation.rs`: estados 32-35 (`site_plan`, `site_blocked`, `site_building`, `site_done`); `operations.rs`: canteiro no setor de coordenação, bloqueio "ambiente" no terreno ocupado.
+- Mundo: só `edit_blocks` (com o filtro `#minecraft:replaceable` no alicerce) e `set_block_property`, que já existiam.
+
+### A conferir no jogo
+
+- Se `edit_blocks` cria os blocos com entidade (baús, barris, púlpitos, sinos, camas, fogueiras) e se `set_block_property` acerta portas e camas de duas partes.
+- Cercas e vidros não se conectam sozinhos depois de `edit_blocks` (sem atualização de vizinhos); por isso as plantas usam vidro inteiro e cercas só como postes.
+- O mestre de obras andando dentro do prédio em construção.
+
+### Números para revisão (Grok)
+
+10 blocos por tarefa; conferência 48 blocos por ciclo; reconferência de terreno ocupado a cada 200 ticks; alcance do mestre 5 blocos; alicerce até 3 blocos. As plantas têm de 300 a 700 células (4.090 no total).
+
+## Oitava entrega: prestígio, pedidos, decretos, boletim, obras maiores e banquete
+
+Continuação direta da sétima entrega, feita sem teste no jogo e sem assinaturas novas do Horizon (além das usadas antes: `summon`, `entity_nbt`, `give_items`/`take_items`, `run_command`).
+
+### Prestígio da vila
+
+Pontos guardados no centro (`Prestige`): pedido atendido +10, obra pronta +25, festa +10, banquete no lar +5, dia em ordem no lar +2, manhã sem pendências +3 (prefeitura: +50%). Níveis: **Aldeia** (0), **Vila** (60), **Vila próspera** (200), **Cidade operária** (500). Cada nível soma 5 ao teto da vila, libera obras e deixa os pedidos mais ricos. Subir de nível é anunciado a quem está na vila.
+
+### Pedidos da vila (página 4 do centro)
+
+- Toda manhã a vila tem 3 pedidos abertos (4 com o correio), sorteados pelo dia e pela posição do centro, sem repetir item: pão, chapas, vidro, tijolos, lã, tochas... e, com prestígio, engrenagens, aço, fiação, lanternas, circuitos, módulos, bolos, cenouras douradas, trilhos, maçãs douradas.
+- Entrega pelo slot **Obra** do centro; os pedidos têm prioridade sobre as obras. Cada pedido atendido paga esmeraldas ao **caixa** da vila (correio: +50%) e +10 de prestígio.
+- **Nada entregue se perde:** um pedido espera até ser atendido. Na manhã seguinte, os atendidos viram pedidos novos; um pedido sem nenhuma entrega há 3 dias é trocado.
+
+### Caixa da vila
+
+- Recebe as recompensas dos pedidos e as esmeraldas que sobram no slot Obra.
+- Paga sozinho as esmeraldas das obras (praça do mercado) e as **expansões de zona** a até 64 blocos do centro (o jogador completa o que faltar; se não completar, o caixa é devolvido).
+- **Agachar + esmeralda no centro:** saca até 16. Com a prefeitura, rende 1 a cada 16 por dia (até 8).
+
+### Decretos (slot novo do centro)
+
+O item fica no slot e não é gasto; vale enquanto estiver lá e o administrador estiver contratado.
+
+| Item | Decreto | Efeito |
+| --- | --- | --- |
+| Sino | Convocação | Postos contratam aldeões a até 16 blocos (em vez de 8) |
+| Papel | Racionamento | Tarefas custam 1 ponto de comida; ninguém nasce |
+| Fardo de feno | Fartura | Tarefas custam 3 pontos; zonas ganham o dobro de trabalho; natalidade 1/4 |
+
+Decretos de horário (turno estendido) ficaram de fora de propósito: à noite o cérebro vanilla entra em descanso e o objetivo `Work` não interfere nele.
+
+### Obras maiores (liberadas pelo prestígio)
+
+| Obra | Prestígio | Materiais | Efeito |
+| --- | --- | --- | --- |
+| Biblioteca | Vila | 8 estantes, 16 livros, 4 lanternas | Zonas ganham o dobro de trabalho por tarefa |
+| Correio | Vila | 16 papéis, 4 baús, 8 chapas de cobre | 4 pedidos por dia e +50% de esmeraldas |
+| Estalagem | Vila próspera | 8 camas brancas, 32 tábuas de carvalho, 4 chapas de aço | Teto +20; toda manhã chega um viajante se houver lugar |
+| Prefeitura | Cidade operária | 4 blocos de ouro, 1 sino, 8 circuitos | Prestígio +50%; juros no caixa |
+
+Material de uma obra bloqueada fica no slot até ela liberar. A página Obras mostra primeiro as em andamento, depois as liberadas, as bloqueadas (com o prestígio exigido) e uma linha com as prontas (cursor: efeitos de todas).
+
+### Boletim da manhã
+
+Quando o dia vira, quem está a até 64 blocos do centro recebe no chat: dia da vila e nível, tarefas de ontem, aldeões e teto (com a variação), pedidos atendidos, juros e viajantes, os pedidos de hoje e as pendências (ou "vila em ordem", +3 de prestígio).
+
+### Banquete no lar
+
+**Bolo no lar**, com a lareira acesa, uma vez por dia: até 6 aldeões adultos livres a até 32 blocos vêm à sua casa por um minuto (as mesmas ordens dos postos; o cérebro vanilla os leva). Aldeões contratados não são chamados, e quem for contratado durante o banquete vai trabalhar. Quem oferece ganha **Herói da Vila** por 20 minutos (descontos no comércio vanilla; nível II na casa de engenheiro) e a vila ganha +5 de prestígio. O escritório do lar (nível 3) passa a mostrar também os pedidos abertos.
+
+### Contratos tocados
+
+- Centro de controle: **6 slots** (menu e `build_content.py`; o 6º é o decreto). Dados da página 4 em `DD*`; página Obras com 9 obras, os efeitos e o prestígio.
+- `projects::Village` ganhou `requests`; efeitos novos no mesmo registro (`PERKS`): bits de obra, decreto e nível de prestígio.
+- `PostInfo.total` (tarefas do posto) para o boletim.
+- `mod.rs`: custo de comida por `projects::food_cost` (comer antes da tarefa cobre esse custo; na festa, 0); raio de contratação por `projects::hire_radius`; agachar + esmeralda no centro saca o caixa.
+- `zones.rs`: crédito de trabalho por `projects::zone_credit`; expansão paga primeiro pelo caixa. `village.rs`: racionamento impede nascimentos.
+- Chaves NBT novas na tabela de `nbt_key` (o teste de alocação continua zerado).
+
+### Números para revisão (Grok)
+
+Prestígio e níveis acima; 27 itens de pedido com faixas e recompensas em `requests.rs`; pedido parado troca em 3 dias; decretos 1/2/3 pontos; juros 1/16 até 8; banquete 6 convidados, 32 blocos, 1.200 ticks, herói por 1.200 s.
+
+### Teste sugerido ao usuário
+
+1. Centro com administrador: chave até a página 4. Entregue um pedido pelo slot Obra e veja o caixa e o prestígio. Agachar + esmeralda para sacar.
+2. Durma uma noite perto do centro: confira o boletim da manhã.
+3. Sino no slot Decreto: contrate um aldeão a ~12 blocos de um posto. Papel: confira que ninguém nasce.
+4. Lareira acesa, bolo no lar perto de aldeões: eles devem vir até a casa; veja os preços com o efeito de herói.
+5. Junte 60 de prestígio e confira a biblioteca e o correio liberados.
+
+## Sétima entrega: lar do jogador, painel executivo, foco e obras da vila
+
+Feita sem teste no jogo. Nenhuma assinatura nova do Horizon: usa `tell`, `action_bar`, `run_command`, `server_players`, `day_time`, `text_width` e as partículas `Flame`, `Smoke` e `HappyVillager`, que já estavam no substituto.
+
+### Centro de controle: painel executivo em três páginas
+
+A **chave** (sem agachar) troca a página; o título mostra qual (ex.: "Atenção 2/3"). O painel atualiza também à noite, sempre que há administrador contratado.
+
+1. **Resumo:** aldeões perto e teto da vila, trabalhadores e ativos, esperas e sem comida, **comida guardada em tarefas** (soma dos armazéns), lavouras/cercados e quantas zonas **já podem crescer**, armazéns e fila, e as três metas.
+2. **Atenção:** pendências da vila em ordem de urgência (sem comida, ausente, sem trabalhador, sem esmeralda, caminho obstruído, saída cheia, zona pronta para crescer, armazém com 90%+), com distância e direção a partir do centro. Cursor na linha: o que fazer ali e o deslocamento x/y/z.
+3. **Obras:** cada obra da vila com o progresso e o próximo material que falta. Cursor na linha: efeito e lista de materiais.
+
+Cada linha do Resumo também explica o número ao passar o cursor.
+
+### Foco (bússola)
+
+- **Bússola no centro:** o jogador recebe a pendência mais urgente; cliques seguidos passam para a próxima. **Agachar + bússola** limpa.
+- A barra de ação mostra "➤ Lavrador: sem comida · 23 m NE"; partículas verdes marcam o bloco. Perto dele (3,5 blocos), a barra mostra a dica do que fazer ali.
+- Quando o problema some (o posto voltou a trabalhar, a zona subiu de nível, o armazém esvaziou), toca um sinal e vem a próxima pendência da mesma vila, até "Vila em ordem". O foco vence em 10 minutos.
+- Só lê os registros em memória (`POSTS`, `ZONES`, `STORES`), a cada 10 ticks do relógio e só no lado do servidor (a lista de jogadores vazia da janela não consome a vez).
+
+### Obras da vila (slot **Obra** do centro)
+
+O centro ganhou um 5º slot (o canteiro). Cada material vai para a primeira obra que ainda o pede; sobras ficam no slot. As obras valem para tudo a até 64 blocos do centro enquanto ele tiver administrador contratado.
+
+| Obra | Materiais | Efeito |
+| --- | --- | --- |
+| Refeitório | 24 tijolos, 8 chapas de ferro, 1 cozinha | Toda 4ª tarefa dos postos não gasta comida |
+| Escola | 24 papéis, 6 livros, 16 tijolos | Natalidade 1/3 (era 1/6) e teto +15 |
+| Ferraria | 8 chapas de aço, 8 engrenagens, 1 bigorna | Carregador leva 24 itens e recolhe 48 |
+| Praça do mercado | 16 vidros, 16 chapas de cobre, 8 esmeraldas | Expandir zonas custa 25% menos |
+| Festa da colheita (repetível) | 1 bolo, 16 biscoitos, 16 pães | Hoje e amanhã: tarefas sem comida, natalidade 1/2 |
+
+### Lar (`veio:home`)
+
+Receita (liberada desde o começo, pela aba Vila operária): fogueira, barril, vaso de flor e tijolos. Slots: lenha, despensa (3) e obra.
+
+- **Dono e renascer:** o primeiro jogador a até 8 blocos vira o dono (`spawnpoint`); ao renascer, ele vai para o lar em vez do centro da vila. Agachar + chave passa o lar para quem clicou.
+- **Lareira:** carvão/carvão vegetal 4 min, biomassa 2 min, troncos 80 s, tábuas 30 s, bloco de carvão e de alga seca. Fumaça e chamas quando acesa.
+- **Refeição em casa:** tigela no lar. Escolhe o prato mais valioso que não foi comido nas últimas 5 refeições. Sempre enche a fome; com a lareira acesa: regeneração (mais longa para comida melhor), **pressa** com 3 pratos diferentes, **resistência** com 5. Cenoura dourada dá visão noturna; maçã dourada, absorção. Duração x (0,5 + conforto/100), x1,5 a partir do nível 2. Uma refeição a cada 2 min.
+- **Conforto (0-100):** lê 9x9, de 1 abaixo a 3 acima, 27 blocos por ciclo (cota `Workforce` do orçamento global): cama 15, porta 10, janela 10, luz 10, baú 10, fogão 10, bancada 10, enfeites até 10 (3), acabamento até 15 (24 blocos de tábuas/tijolos/polidos/terracota).
+- **Descanso:** se a lareira esteve acesa durante a noite e o dono está a até 12 blocos de manhã: regeneração e velocidade (e pressa no nível 4).
+- **Dia em ordem:** comeu em casa, lareira acesa e 3+ comidas na despensa → experiência (10 + 5 por dia de sequência, até 40) e a sequência sobe.
+- **Melhorias:** nível 2 (24 tijolos, 12 vidros, 8 chapas de cobre: a lareira cozinha carne/peixe/batata crus da despensa e efeitos +50%); nível 3 (8 fiações, 2 circuitos, 8 chapas de ferro: **escritório** — o painel mostra aldeões, teto e pendências do centro mais próximo, e a bússola no lar dá o foco); nível 4 (4 chapas de aço, 4 engrenagens, 1 módulo: pressa II nas refeições e pressa no descanso).
+- O painel lista o que fazer: lareira, despensa, refeição de hoje, o que falta no conforto, a próxima melhoria e as pendências da vila.
+
+### Atalhos da fábrica
+
+Receitas sem posição, liberadas ao obter chapas, engrenagens ou circuitos (`advancement/shortcuts.json`): balde, funil, lanternas, para-raios, pistão, **bússola** (circuito + chapa), relógio, lâmpadas de redstone e trilhos (aço + graveto). Página nova no Guia da Vila Operária, junto de "Foco e obras" e "Seu lar" (29 páginas).
+
+### Contratos tocados
+
+- `lib.rs`: o `tick` chama `workforce::world_tick` (spawn e foco) no lugar de `spawn::tick`; chaves NBT novas na tabela de `nbt_key` (painel, obras, lar) para o publish continuar sem alocação.
+- `presentation.rs`: tela e dados próprios do lar; o lar não desenha luzes de máquina. `tutorial.rs`: `workforce::screen_tooltip` antes das dicas genéricas.
+- Centro de controle: 5 slots (menu e `build_content.py`); dados do painel por página (`DA*`, `DB*`, `DC*`; índice 12 = página). Saves antigos: o 5º slot entra vazio; `DWorkers` e afins ficam sem uso.
+- `village.rs`: teto + escola; sorteio da natalidade com a chance da obra (o 1/2 da festa filtra antes de ler a posição). **Conflito previsto** com `cursor/grok-vilas-c7d9` (camas): as duas mudanças são pequenas e independentes.
+- `hauler.rs`: tamanho da viagem por `projects::haul_batch`. `zones.rs`: preço com desconto (`Market` no NBT do marco). `spawn.rs`: renascer no lar.
+- Registros novos em memória: `projects::PERKS` (centros com administrador, efeitos e resumo), `home::HOMES` (lar por dono, sem vencimento: um lar quebrado continua valendo para renascer até reabrir o mundo), `focus::FOCUS`.
+
+### Números para revisão (Grok)
+
+Obras e efeitos acima; refeição a cada 2.400 ticks; lenha 4.800/2.400/1.600/600; conforto 9x9x5 a 27 blocos/ciclo; cozinhar 1 item a cada 400 ticks; XP diário 10 + 5/dia até 40.
+
+### Teste sugerido ao usuário
+
+1. Fabrique um lar, ponha dentro de casa com carvão e pão: confira dono, fumaça e o painel. Tigela no lar; varie a comida e veja os efeitos. Morra e veja se renasce em casa.
+2. Construa cama, porta, janela, luz etc. e acompanhe o conforto subir. Ponha tijolos, vidro e chapas no slot Obra.
+3. No centro: chave troca as páginas; deixe um posto sem comida e use uma bússola no centro; siga a barra e resolva.
+4. Ponha tijolos, chapas de ferro e uma cozinha no slot Obra do centro (refeitório) e um bolo, biscoitos e pão (festa).
+
 ## Sexta entrega: aldeões guiados pelo cérebro, noite, spawn conferido e vilas grandes
 
 Feita sem teste no jogo, a partir do código do Horizon `66f3981` (`mobs/ai.rs`, `mobs/villager.rs`, `mobs/villager_brain.rs`, `game/integrated.rs`, `game/commands*`).

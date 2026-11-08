@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "veio:iron_plate",
+    "minecraft:torch"
+  ],
+  "result": {
+    "id": "minecraft:lantern",
+    "count": 2
+  }
+}

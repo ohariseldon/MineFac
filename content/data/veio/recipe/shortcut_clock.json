@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "veio:circuit",
+    "minecraft:gold_ingot"
+  ],
+  "result": {
+    "id": "minecraft:clock",
+    "count": 1
+  }
+}

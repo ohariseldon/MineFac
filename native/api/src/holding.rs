@@ -215,8 +215,9 @@ pub(super) fn click(at: [f32; 2]) -> Option<i32> {
 
 /// O botão chegou ao servidor: troca a aba e recalcula na hora.
 pub(super) fn press(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity, id: i32) {
-    let step = match id { PREVIOUS => TABS - 1, NEXT => 1, _ => return };
-    set_number(entity, "Tab", (number(entity, "Tab") + step).rem_euclid(TABS));
+    // As setas passam pelas páginas da vila (aba 0) e depois pelas divisões.
+    let step = match id { PREVIOUS => -1, NEXT => 1, _ => return };
+    workforce::center::step_view(entity, step);
     refresh(dimension, pos, entity);
 }
 

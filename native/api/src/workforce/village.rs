@@ -43,23 +43,32 @@ pub(crate) fn cap(dimension: &str, at: [i32; 3], now: u64) -> usize {
     let control = posts.iter().any(|post| post.staffed && post.block == CONTROL_CENTER);
     let levels: i32 = zones::zones_near(dimension, at, DEVELOPMENT_RADIUS, now).iter().map(|zone| zone.level).sum();
     let stores = storage::stores_near(dimension, at, DEVELOPMENT_RADIUS, now).len();
-    let points = staffed * 3 + levels.max(0) as usize * 5 + stores * 2 + if control { 20 } else { 0 };
+    let points = staffed * 3 + levels.max(0) as usize * 5 + stores * 2 + if control { 20 } else { 0 }
+        + projects::extra_cap(projects::at(dimension, at, now));
     (BASE_CAP + points).min(MAX_CAP)
 }
 
 /// Chamado no tick de cada aldeão. Quase sempre sai na primeira comparação.
 pub(crate) fn observe(host: &mut dyn Host, dimension: &str, id: u32, now: u64) {
-    if (now + u64::from(id)) % CHECK != 0 || roll(id, now) % CHANCE != 0 {
+    // A chance mais alta (festa) é 1/2: quem não passa nela não passa em nenhuma.
+    let draw = roll(id, now);
+    if (now + u64::from(id)) % CHECK != 0 || draw % 2 != 0 {
         return;
     }
     let Some(handle) = host.entity(id) else { return };
     let Some(at) = handle.position(host) else { return };
+    let spot = [at[0].floor() as i32, at[1].floor() as i32, at[2].floor() as i32];
+    // Escola e festa (obras da vila) aumentam a chance; sem obras, 1 em `CHANCE`.
+    // Racionamento (decreto): ninguém nasce.
+    let Some(chance) = projects::birth_chance(projects::at(dimension, spot, now)) else { return };
+    if draw % chance != 0 {
+        return;
+    }
     let adult = host.entity_nbt(handle).is_some_and(|nbt| production::ranch::tag_int(&nbt, "Age") >= 0);
     if !adult {
         return;
     }
-    let block = [at[0].floor() as i32, at[1].floor() as i32, at[2].floor() as i32];
-    let limit = cap(dimension, block, now);
+    let limit = cap(dimension, spot, now);
     let near = production::ranch::villager_positions(host, dimension).iter().copied()
         .filter(|(_, other)| (0..3).all(|axis| (other[axis] - at[axis]).abs() <= COUNT_RADIUS))
         .take(limit)
@@ -68,7 +77,7 @@ pub(crate) fn observe(host: &mut dyn Host, dimension: &str, id: u32, now: u64) {
         return;
     }
     // O prefeito: teto da fase, licença em dia e vaga em casa com alvará.
-    if !society::birth_allowed(dimension, block, near, now) {
+    if !society::birth_allowed(dimension, spot, near, now) {
         return;
     }
     if let Ok(mut births) = BIRTHS.lock()

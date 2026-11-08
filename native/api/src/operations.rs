@@ -37,7 +37,7 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
         DRILL | DRILL_MK2 | DRILL_MK3 => Sector::Extraction,
         PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE
             | workforce::HAULER_POST => Sector::Industry,
-        workforce::FOREMAN_DESK | workforce::CONTROL_CENTER | workforce::SHOP | workforce::TOWN_HALL => Sector::Workforce,
+        workforce::FOREMAN_DESK | workforce::CONTROL_CENTER | workforce::SHOP | workforce::TOWN_HALL | workforce::SITE => Sector::Workforce,
         _ if workforce::society::is_society_block(block) => Sector::Workforce,
         HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH | workforce::FARM_POST | workforce::SHEPHERD_POST => Sector::Farming,
         MILL | KITCHEN | PANTRY => Sector::Food,
@@ -62,13 +62,13 @@ pub(crate) enum Blockage { None, Input, Output, Power, Fuel, Resource, Environme
 
 pub(crate) fn blockage(status: i32) -> Blockage {
     match status {
-        0 | 1 | 8 | 11 | 23 | 24 | 26 | 27 | 28 => Blockage::None,
+        0 | 1 | 8 | 11 | 23 | 24 | 26 | 27 | 28 | 32 | 34 | 35 => Blockage::None,
         2 | 16 | 21 | 25 => Blockage::Input,
         3 => Blockage::Output,
         4 | 12 => Blockage::Resource,
         5 => Blockage::Power,
         6 => Blockage::Fuel,
-        7 | 10 | 14 | 15 | 17 | 20 | 22 => Blockage::Environment,
+        7 | 10 | 14 | 15 | 17 | 20 | 22 | 33 => Blockage::Environment,
         18 | 19 => Blockage::Worker,
         9 => Blockage::Control,
         13 => Blockage::Damage,
