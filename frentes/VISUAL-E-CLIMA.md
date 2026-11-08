@@ -32,6 +32,28 @@ Usa o que a Shader API 0.1 já oferece e o pacote ainda não usava:
 
 Tudo some no Leve. Nada disso foi visto no jogo ainda: só validado pelo `naga`.
 
+## Pelo motor, sem depender do shader
+
+Luiz: "mexer no motor do jogo... realismo mais integrado, de um jeito nativo" (visual). Funciona
+também no visual Leve, sem pacote de shaders:
+
+- `scenery.rs` (cliente): gancho `biome_colors` pinta grama, folhas, serrapilheira e água de cada
+  bioma pela estação; `refresh_biome_colors` só quando a mistura das estações anda um quarto
+  (~4 reconstruções por virada; cada uma custa alguns segundos dos workers do Horizon).
+  Biomas nevados, quentes e de fora do Overworld não mudam. Gancho `render_fog`: neblina nas
+  manhãs úmidas (outono e primavera, mais nos vales) e fumaça parda perto de fábricas.
+- `winter.rs` (servidor): com chuva abaixo de 0 °C, neve cobre aos poucos o chão natural e as
+  copas perto dos jogadores (6 colunas por jogador a cada meio segundo, num raio de 40), engrossa
+  no frio forte e a água parada congela abaixo de −2 °C. Cada bloco que o Veio cobriu fica em
+  `<mundo>/veio/inverno.txt`; no degelo (acima de 2 °C) só esses voltam ao que eram, então a
+  neve dos biomas nevados do vanilla nunca é tocada. Biomas quentes ficam de fora pela cor da
+  grama da coluna. Edições em lote com filtro (`only`): nunca sobrescreve o que o jogador pôs.
+- O pacote de shaders recebe `frame.mods[1].x = 1` e então só varia a cor de árvore em árvore,
+  sem aplicar a estação de novo; a chuva abaixo de zero vira granizo e neve branca.
+
+Ganchos novos (`biome_colors`, `render_fog`, `refresh_biome_colors`) seguem o catálogo do
+Horizon (`native-hooks.json`) e o stub offline, mas ainda não foram compilados contra o Horizon real.
+
 ## O que o mod manda (native/api/src/ambience.rs)
 
 - `shader_params`: `frame.mods[0] = [fase do ano 0..4, temperatura/50, fumaça 0..1, 1]`.

@@ -1,4 +1,6 @@
 mod ambience;
+mod scenery;
+mod winter;
 mod blueprint;
 pub(crate) mod climate;
 mod budget;
@@ -331,6 +333,7 @@ impl Hooks for Factory {
         // fora de ordem, as cotas zerariam no meio do tick e um passo da poluição podia ser
         // gasto no cliente (onde não há jogadores nem `summon`), perdendo a onda da noite.
         if host.window() {
+            scenery::client_tick(host);
             return;
         }
         defense::advance_clock();
@@ -344,6 +347,7 @@ impl Hooks for Factory {
         home::tick(host, defense::clock());
         milestones::census::tick(host, defense::clock());
         ambience::maintain(host, defense::clock());
+        winter::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
             industry::maintain(host, time);
@@ -469,6 +473,18 @@ impl Hooks for Factory {
     #[allow(elided_lifetimes_in_paths)]
     fn shader_params(&self, host: &dyn Host, event: &mut horizon_client::mod_api::ShaderParamsEvent) {
         ambience::shader_params(host, event.params);
+    }
+
+    /// Grama, folhas e água de cada bioma com as cores da estação (cliente).
+    #[allow(elided_lifetimes_in_paths)]
+    fn biome_colors(&self, _host: &dyn Host, event: &mut horizon_client::mod_api::BiomeColorsEvent) {
+        scenery::biome_colors(event.biome, event.colors);
+    }
+
+    /// Neblina das manhãs úmidas e fumaça das fábricas na névoa do jogo (cliente).
+    #[allow(elided_lifetimes_in_paths)]
+    fn render_fog(&self, host: &dyn Host, event: &mut horizon_client::mod_api::RenderFogEvent) {
+        scenery::render_fog(host, event.camera, event.fog_type, event.fog);
     }
 
 }

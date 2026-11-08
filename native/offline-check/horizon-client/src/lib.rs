@@ -502,6 +502,10 @@ pub mod mod_api {
         fn player(&self) -> Option<NativePlayer> {
             unimplemented!("player")
         }
+        /// `native_biome_colors::Game::native_refresh_biome_colors` (API 107, cliente).
+        fn refresh_biome_colors(&mut self) {
+            unimplemented!("refresh_biome_colors")
+        }
         fn acting_player(&self) -> Option<NativeServerPlayer> {
             unimplemented!("acting_player")
         }
@@ -599,6 +603,50 @@ pub mod mod_api {
     pub struct VisualsEvent<'a> {
         pub rims: &'a mut Vec<NativeBlockRim>,
         pub lights: &'a mut Vec<NativeColoredLight>,
+    }
+
+    /// `horizon_client_render::biome::BiomeColors` (API 107).
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+    pub struct BiomeColors {
+        pub grass: u32,
+        pub foliage: u32,
+        pub dry_foliage: u32,
+        pub water: u32,
+    }
+
+    /// `native_biome_colors(biome, colors)` (API 107).
+    pub struct BiomeColorsEvent<'a> {
+        pub biome: &'a str,
+        pub colors: &'a mut BiomeColors,
+    }
+
+    /// `horizon_client_render::fog::FogType`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum FogType {
+        Atmospheric,
+        Water,
+        Lava,
+        PowderSnow,
+    }
+
+    /// `horizon_client_render::fog::FogData`.
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub struct FogData {
+        pub color: [f32; 4],
+        pub environmental_start: f32,
+        pub environmental_end: f32,
+        pub render_distance_start: f32,
+        pub render_distance_end: f32,
+        pub sky_end: f32,
+        pub cloud_end: f32,
+    }
+
+    /// `native_render_fog(partial, camera, fog_type, fog)`.
+    pub struct RenderFogEvent<'a> {
+        pub partial: f32,
+        pub camera: [f64; 3],
+        pub fog_type: FogType,
+        pub fog: &'a mut FogData,
     }
 
     /// `native_shader_params(partial, params)`: `frame.mods` of the mod's shader pack (API 84).
@@ -895,6 +943,8 @@ pub mod mod_api {
         fn block_entity_submit(&self, host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {}
         fn visuals(&self, host: &dyn Host, event: &mut VisualsEvent<'_>) {}
         fn shader_params(&self, host: &dyn Host, event: &mut ShaderParamsEvent<'_>) {}
+        fn biome_colors(&self, host: &dyn Host, event: &mut BiomeColorsEvent<'_>) {}
+        fn render_fog(&self, host: &dyn Host, event: &mut RenderFogEvent<'_>) {}
         fn entity_tick_pre(&self, host: &mut dyn Host, event: &mut EntityTickPreEvent<'_>) -> Flow {
             Flow::Continue
         }

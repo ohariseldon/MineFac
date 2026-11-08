@@ -38,6 +38,21 @@ pub(crate) fn season_day(day_time: i64) -> i64 {
     day_time.rem_euclid(SEASON_DAYS * DAY) / DAY + 1
 }
 
+/// Quanto de cada estação aparece agora (primavera, verão, outono, inverno), somando 1, com a
+/// troca suave nas viradas: a mesma conta do pacote de shaders (`veio_season_weights`).
+pub(crate) fn season_weights(day_time: i64) -> [f32; 4] {
+    let phase = season_phase(day_time);
+    let mut w = [0.0f32; 4];
+    for (i, slot) in w.iter_mut().enumerate() {
+        let d = (phase - (i as f32 + 0.5)).abs();
+        let wrapped = d.min(4.0 - d);
+        let t = ((wrapped - 0.35) / 0.30).clamp(0.0, 1.0);
+        *slot = 1.0 - t * t * (3.0 - 2.0 * t);
+    }
+    let sum: f32 = w.iter().sum();
+    w.map(|x| x / sum.max(0.001))
+}
+
 /// Temperatura média de cada estação ao nível do mar, em °C, interpolada entre os meios das
 /// estações para não haver salto na virada.
 fn seasonal_mean(phase: f32) -> f32 {
@@ -147,6 +162,16 @@ mod tests {
         assert!(solar_factor(summer, 40.0) < solar_factor(summer, 25.0), "painel quente rende menos");
         assert!(wind_factor(winter) > wind_factor(summer));
         assert!(river_factor(0) > river_factor(summer), "cheia na primavera");
+    }
+
+    #[test]
+    fn season_weights_sum_to_one_and_peak_mid_season() {
+        for day in (0..SEASON_DAYS * 4 * DAY).step_by(5000) {
+            let w = season_weights(day);
+            assert!((w.iter().sum::<f32>() - 1.0).abs() < 0.001);
+        }
+        let mid_autumn = season_weights(2 * SEASON_DAYS * DAY + SEASON_DAYS * DAY / 2);
+        assert!(mid_autumn[AUTUMN] > 0.99);
     }
 
     #[test]

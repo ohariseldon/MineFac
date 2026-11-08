@@ -58,12 +58,16 @@ fn veio_seasonal_foliage(color: vec3<f32>, input: MaterialInput, leaves: bool) -
     let autumn_leaf = mix(mix(vec3<f32>(1.05, 0.78, 0.22), vec3<f32>(0.98, 0.45, 0.12), smoothstep(0.30, 0.65, h)),
         vec3<f32>(0.70, 0.16, 0.08), smoothstep(0.80, 0.95, h)) * luma * 1.9;
     let autumn_grass = mix(color, vec3<f32>(0.78, 0.70, 0.40) * luma * 1.6, 0.45);
-    let autumn = select(autumn_grass, mix(color, autumn_leaf, 0.35 + 0.55 * smoothstep(0.10, 0.40, h)), leaves);
+    // With the mod the biome colours already carry the season (the game recolours grass and
+    // leaves): here only the variety from tree to tree is added, not the season again.
+    let native = select(1.0, 0.35, frame.mods[1].x > 0.5);
+    let autumn = select(mix(color, autumn_grass, native),
+        mix(color, autumn_leaf, (0.35 + 0.55 * smoothstep(0.10, 0.40, h)) * mix(0.55, 1.0, native)), leaves);
     // Winter: dull and frosty, colder biomes and heights more so.
     let cold = clamp(0.6 - frame.temperature * 0.5, 0.2, 1.0);
-    let winter = mix(color, vec3<f32>(luma) * vec3<f32>(0.92, 0.96, 1.02) * 1.05, 0.55 * cold);
+    let winter = mix(color, vec3<f32>(luma) * vec3<f32>(0.92, 0.96, 1.02) * 1.05, 0.55 * cold * native);
     // Spring: fresher, slightly brighter green.
-    let spring = color * vec3<f32>(0.97, 1.06, 0.95);
+    let spring = color * mix(vec3<f32>(1.0), vec3<f32>(0.97, 1.06, 0.95), native);
     return spring * w.x + color * w.y + autumn * w.z + winter * w.w;
 }
 

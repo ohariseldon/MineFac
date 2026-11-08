@@ -1841,7 +1841,7 @@
   "veio.climate.frozen": "%s · %s °C: water frozen",
   "veio.climate.frost": "%s · %s °C: frost, crops stopped",
   "veio.climate.unknown": "Reading the weather...",
-  "veio.industry.page.16": "Weather and seasons\n\nThe year has 4 seasons of 6 days. Solar yields more in summer, wind in winter, rivers run high in spring.\n\nIn frost crops stop and the water wheel freezes. A roof over the field makes a greenhouse: 20 °C.",
+  "veio.industry.page.16": "Weather and seasons\n\nThe year has 4 seasons of 6 days. Solar yields more in summer, wind in winter, rivers run high in spring.\n\nIn frost crops stop and the water wheel freezes; rain turns to snow and lakes freeze. A roof over the field makes a greenhouse: 20 °C.",
   "veio.industry.page.17": "Veio Realism\n\nThe game's shader pack shows the seasons on the leaves, factory smoke in the sky and the coloured glow of hot machines.\n\n8 GB PC: pick \"Leve (8 GB)\" in the pack options.",
   "veio.industry.contents.15": "Visuals",
   "veio.industry.contents.16": "Blocks"

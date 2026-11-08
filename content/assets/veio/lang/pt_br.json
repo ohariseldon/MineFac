@@ -1841,7 +1841,7 @@
   "veio.climate.frozen": "%s · %s °C: água congelada",
   "veio.climate.frost": "%s · %s °C: geada, lavoura parada",
   "veio.climate.unknown": "Medindo o clima...",
-  "veio.industry.page.16": "Clima e estações\n\nO ano tem 4 estações de 6 dias. Solar rende mais no verão, vento no inverno, rios cheios na primavera.\n\nNa geada a lavoura para e a roda d'água congela. Telhado sobre a plantação vira estufa: 20 °C.",
+  "veio.industry.page.16": "Clima e estações\n\nO ano tem 4 estações de 6 dias. Solar rende mais no verão, vento no inverno, rios cheios na primavera.\n\nNa geada a lavoura para e a roda d'água congela; com chuva neva e os lagos congelam. Telhado sobre a plantação vira estufa: 20 °C.",
   "veio.industry.page.17": "Veio Realismo\n\nO pacote de shaders do jogo mostra as estações nas folhas, a fumaça das fábricas no céu e a luz colorida das máquinas quentes.\n\nPC de 8 GB: escolha Leve nas opções do pacote.",
   "veio.industry.contents.15": "Visual",
   "veio.industry.contents.16": "Blocos"

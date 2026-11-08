@@ -169,7 +169,7 @@ pub(super) fn visuals(host: &dyn Host, lights: &mut Vec<NativeColoredLight>) {
 }
 
 /// Fumaça industrial em volta da câmera, 0..1, relida no máximo 4 vezes por segundo.
-fn smog(dimension: &str, pos: [i32; 3]) -> f32 {
+pub(crate) fn smog(dimension: &str, pos: [i32; 3]) -> f32 {
     static AT: AtomicU64 = AtomicU64::new(0);
     static VALUE: AtomicU32 = AtomicU32::new(0);
     let now = (seconds() * 1000.0) as u64 + 1;
@@ -198,6 +198,8 @@ pub(super) fn shader_params(host: &dyn Host, params: &mut [[f32; 4]; 8]) {
     let pos = [player.x.floor() as i32, y, player.z.floor() as i32];
     let temperature = climate::temperature(day_time, y, rain, player.dimension);
     params[0] = [climate::season_phase(day_time), temperature / 50.0, smog(player.dimension, pos), 1.0];
+    // x: o mod já pinta a grama e as folhas pela estação (`scenery`); o pacote só varia por bloco.
+    params[1] = [1.0, 0.0, 0.0, 0.0];
 }
 
 #[cfg(test)]
