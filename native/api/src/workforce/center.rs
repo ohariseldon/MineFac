@@ -24,7 +24,11 @@ const STALE: u64 = 200;
 const REPORT_LINES: usize = 8;
 
 pub(crate) fn accepts(slot: usize, stack: &ItemStack) -> bool {
-    plain(stack) && if slot == 0 { is_food(&stack.item) } else { GOAL_SLOTS.contains(&slot) }
+    plain(stack) && match slot {
+        0 => is_food(&stack.item),
+        society::ledger::COMPANY_VAULT => stack.item.as_ref() == WAGE,
+        _ => GOAL_SLOTS.contains(&slot),
+    }
 }
 
 /// Um posto como o centro o vê.
@@ -141,7 +145,7 @@ pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
     let keys = ["DWorkers", "DWorking", "DWaiting", "DHungry", "DFields", "DPens", "DStore", "DQueue",
         "DGoal1", "DGoal2", "DGoal3"];
     std::array::from_fn(|index| match index {
-        0 => number(entity, "Status"), 12 => number(entity, "Info"), _ => signed(entity, keys[index - 1]),
+        0 => number(entity, "Status"), 12 => number(entity, "Company"), _ => signed(entity, keys[index - 1]),
     })
 }
 
@@ -157,7 +161,7 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
         (tr(&format!("veio.status.{}", presentation::STATUS_KEYS[status]), &[]), presentation::text_color(status)),
         (tr("veio.center.workers", &[&read(1), &read(2)]), presentation::INK),
         (tr("veio.center.waiting", &[&read(3), &read(4)]), if read(3) > 0 { 0x9a5a00 } else { presentation::INK }),
-        (tr("veio.center.zones", &[&read(5), &read(6)]), presentation::INK),
+        (tr("veio.center.zones", &[&read(5), &read(6), &read(12)]), presentation::INK),
         (if read(7) < 0 { tr("veio.center.no_storage", &[&read(8)]) } else { tr("veio.center.storage", &[&read(7), &read(8)]) },
             presentation::INK),
     ];
@@ -179,17 +183,19 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
 }
 
 pub(crate) fn screen_slots() -> Vec<Option<[f32; 2]>> {
-    vec![Some([170.0, 82.0]), Some([17.0, 82.0]), Some([17.0, 100.0]), Some([17.0, 118.0])]
+    vec![Some([170.0, 82.0]), Some([17.0, 82.0]), Some([17.0, 100.0]), Some([17.0, 118.0]), Some([170.0, 118.0])]
 }
 
 /// Relatório no chat para o jogador mais próximo.
 pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow> {
     let mut admin = None;
     let mut targets = Vec::new();
+    let mut company = None;
     host.change_mod_block_entity(pos, &mut |entity| {
         if entity.id == CONTROL_CENTER {
             admin = Some(worker(entity).is_some() && number(entity, "Admin") == 1);
             targets = goals(entity);
+            company = Some(society::ledger::company_report(entity));
         }
     });
     let admin = admin?;
@@ -208,6 +214,9 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     let posts: Vec<PostInfo> = posts_near(dimension, pos, RADIUS, now).into_iter().filter(|post| post.pos != pos).collect();
     let working = posts.iter().filter(|post| post.staffed && matches!(post.status, 1 | WALKING)).count();
     host.tell(player, Text::tr("veio.report.title", &[&posts.len(), &working]));
+    if let Some(company) = company {
+        host.tell(player, company);
+    }
     for post in posts.iter().filter(|post| waiting(post.status)).take(REPORT_LINES) {
         let key = format!("veio.report.issue.{}", presentation::STATUS_KEYS.get(post.status as usize).copied().unwrap_or("idle"));
         host.tell(player, Text::tr(&key, &[&format_pos(post.pos)]));

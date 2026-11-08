@@ -132,7 +132,8 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         // Comida; ração para os animais; produtos (lã, ovos, penas).
         SHEPHERD_POST => (5, vec![0, 1], vec![2, 3, 4]),
         // Comida do administrador; três metas (sem automação).
-        CONTROL_CENTER => (4, vec![0], vec![]),
+        // Comida do administrador; três metas; cofre da companhia.
+        CONTROL_CENTER => (5, vec![0, society::ledger::COMPANY_VAULT], vec![]),
         BARRACKS => (2, vec![0, 1], vec![]),
         _ => return zones::layout(block).or_else(|| storage::layout(block)).or_else(|| society::layout(block)),
     })
@@ -947,6 +948,7 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         match entity.id.as_str() {
             SHOP => society::shop_cycle(host, pos, entity, time),
             TOWN_HALL => society::hall_cycle(host, pos, entity, time),
+            CONTROL_CENTER => society::company_cycle(host, pos, entity, time),
             _ => {}
         }
     }
@@ -1008,7 +1010,7 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     // Cada tarefa concluída entra no PIB da vila.
     let done = number(entity, "Total") - before;
     if done > 0 {
-        society::record(dimension, pos, time, done * society::TASK_VALUE, false);
+        society::record(dimension, pos, done * society::TASK_VALUE, false, now);
     }
     show_load(host, entity, id, true);
     set_number(entity, "Status", status);

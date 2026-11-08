@@ -76,7 +76,7 @@ BLOCKS = {
     "pen_marker": ("marker", None, 1, [], 1.0),
     "barn": ("machine", "wood", 27, [], 2.0),
     "silo": ("machine", "iron", 18, [], 2.0),
-    "control_center": ("machine", "steel", 4, [], 2.0),
+    "control_center": ("machine", "steel", 5, [], 2.0),
     "barracks": ("machine", "iron", 2, [], 2.0),
     # Sociedade (0.18): casas, lojas, prefeitura e saneamento.
     "house": ("machine", "wood", 3, [], 1.5),

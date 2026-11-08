@@ -1,4 +1,4 @@
-# Sociedade da vila (0.18.0)
+# Sociedade da vila (0.18.0, contas e preços na 0.19.0)
 
 A vila deixa de ser só mão de obra. Cada família mora numa **casa**, recebe **salário** dos postos onde
 seus adultos trabalham, compra **comida e bens** nas **lojas** e vive melhor ou pior conforme o que a
@@ -8,28 +8,45 @@ O objetivo é um planejador de automação com uma vila viva (Factorio/Satisfact
 Stardew Valley): o jogador continua livre para construir onde quiser, mas a geografia e o bem-estar
 viram restrições reais. Tudo é simulado por família e por bloco, nunca por aldeão a cada tick.
 
-## Ciclo da economia
+## Duas contas que não se misturam (0.19)
+
+O jogador é a **companhia**: um empresário que contrata e produz. A prefeitura é o **governo**.
+
+| | Companhia (sua) | Prefeitura (pública) |
+|---|---|---|
+| Onde fica | cofre do centro de controle (sede) | cofre da prefeitura |
+| Entra | esmeraldas que você deposita; as lojas devolvem esmeraldas no caixa | impostos; verba inicial de 300 moedas; aportes voluntários |
+| Sai | salário de quem trabalha nos seus postos (lavrador, carregador, pastor, capataz, quartel, comerciante, administrador) e os impostos | salário do prefeito (funcionário público), manutenção dos poços e assistência às famílias pobres |
+| Sem dinheiro | salários atrasados (a família fica sem renda) | prefeito sem salário; poços sem manutenção deixam de contar como saneamento |
 
 ```
-esmeraldas do jogador ─▶ cofre da prefeitura ─▶ salários ─▶ carteira da casa
-        ▲                                                         │
-        └──── caixa da loja (60 moedas = 1 esmeralda) ◀── compras ┘
-                         ▲
-        comida e bens que a fábrica e os trabalhadores põem na loja
+companhia ──salários──▶ famílias ──compras──▶ lojas (caixa: esmeraldas para você)
+    │
+    └──impostos (fase: 0%, 8%, 12%, 16% da produção e das vendas)──▶ prefeitura
+                                     prefeito, poços, assistência ◀──┘
 ```
 
-- **Moeda:** moedas virtuais. 1 esmeralda = 60 moedas (o mesmo preço da despensa: 60 pontos de comida
-  por esmeralda). Comida custa 1 moeda por ponto de comida (pão = 6). Bens custam o valor da tabela.
-- **Salário:** a cada turno da casa (1 min, 1/20 do dia), cada morador empregado ganha 2 moedas,
-  pagas pelo cofre da prefeitura. Sem dinheiro no cofre, o salário fica devendo e a renda cai.
-- **Consumo:** cada morador come 1 ponto de comida por turno (20 por dia) e gasta conforto
-  (bens) aos poucos. A casa compra quando a despensa baixa: vai à loja mais próxima com estoque, paga
-  da carteira e um morador ocioso anda até a loja.
-- **Loja:** posto com um comerciante contratado. Recebe estoque à mão, por funil ou por carregador.
-  Vende às casas e ao jogador. A cada 60 moedas no caixa sai 1 esmeralda no slot do caixa.
-- **Comércio com o jogador:** o comerciante tem a tela de troca do Minecraft com o que a loja tem
-  (uma oferta por item, preço em esmeraldas, estoque real). Cada troca tira o item da loja e põe o
-  valor no caixa.
+- **Moeda:** 1 esmeralda = 60 moedas, nas duas contas.
+- **Imposto:** a cada turno, a prefeitura cobra a taxa da fase sobre a produção (tarefas x 2) e as
+  vendas da sua área, da conta da companhia. O que faltar vira **dívida**, cobrada primeiro no
+  turno seguinte. Dívida maior que um dia de imposto suspende as licenças (zonas e nascimentos).
+- **Assistência:** com mais de 200 moedas no cofre público, famílias com renda baixa recebem 1 moeda
+  por morador por turno: o imposto volta como bem-estar e reduz o Gini.
+- **Funcionário público:** o prefeito. Os demais trabalhadores são da companhia.
+
+## Preços locais (oferta e procura)
+
+Cada loja guarda um fator de preço por item (50% a 200%). Uma vez por turno ele anda um quarto do
+caminho até o alvo, calculado pela **cobertura**: estoque / procura média do dia.
+
+- 1 dia de cobertura = 100%; metade do estoque necessário = ~140%; sem estoque = 200%.
+- Estoque parado (ninguém compra) barateia 5 pontos por turno até 70%.
+- Famílias que queriam comprar e não acharam (sem dinheiro ou sem estoque) somam 25 pontos ao alvo
+  da comida.
+- A procura vem das casas em volta, então cada vila tem seu mercado: o pão pode estar caro numa
+  vila e barato em outra, e vale a pena levar comida até onde falta.
+- O jogador compra pelo mesmo preço local (as ofertas do comerciante se refazem quando mudam).
+- O prefeito mostra o **custo de vida** (média dos preços da comida das lojas da área).
 
 ## Casas e bairros
 
