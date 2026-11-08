@@ -24,6 +24,16 @@
           }
         ]
       }
+    },
+    "permit": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:permit_workshop"
+          }
+        ]
+      }
     }
   },
   "rewards": {
@@ -34,5 +44,11 @@
       "veio:repair_kit",
       "veio:wind_turbine"
     ]
-  }
+  },
+  "requirements": [
+    [
+      "stock",
+      "permit"
+    ]
+  ]
 }

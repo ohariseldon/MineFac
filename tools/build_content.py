@@ -33,6 +33,8 @@ BLOCKS = {
     "assembler": ("machine", "copper", 2, [1], 1.5),
     "generator": ("generator", "copper", 1, [], 1.5),
     "contract_hub": ("machine", "wood", 4, [2, 3], 1.5),
+    # Quadro da fábrica: metas de fase, pedido do dia e gargalos (milestones/).
+    "factory_board": ("machine", "wood", 2, [1], 1.5),
     "cutter": ("machine", "iron", 2, [1], 1.5),
     "integrator": ("machine", "iron", 3, [2], 1.5),
     "crusher": ("machine", "iron", 2, [1], 1.5),
@@ -100,13 +102,17 @@ ITEMS = {
     "productivity_module": ("minecraft:echo_shard", 16),
     "flour": ("minecraft:sugar", 64),
     "biomass": ("minecraft:wheat", 64),
+    # Licenças de fase: o quadro entrega; o avanço da fase as aceita no lugar da pilha.
+    "permit_workshop": ("minecraft:paper", 16),
+    "permit_steel": ("minecraft:paper", 16),
+    "permit_electronics": ("minecraft:paper", 16),
 }
 
 TABS = {
     "industry": ("veio:press", ["drill", "drill_mk2", "drill_mk3", "press", "assembler", "cutter", "integrator",
-        "crusher", "alloy_furnace", "electronics", "electric_furnace", "contract_hub", "wrench", "copper_plate", "iron_plate",
+        "crusher", "alloy_furnace", "electronics", "electric_furnace", "factory_board", "contract_hub", "wrench", "copper_plate", "iron_plate",
         "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module", "speed_module",
-        "efficiency_module", "productivity_module"]),
+        "efficiency_module", "productivity_module", "permit_workshop", "permit_steel", "permit_electronics"]),
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
         "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
         "minecraft:coal", "minecraft:lava_bucket"]),

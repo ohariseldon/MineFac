@@ -136,6 +136,7 @@ pub(crate) fn inspect(entity: &ModBlockEntity) -> Option<StationView<'_>> {
 /// Material compatibility for planning. Does not check space, reach or side access.
 pub(crate) fn accepts_material(entity: &ModBlockEntity, slot: usize, stack: &ItemStack) -> bool {
     let compatible = if entity.id == HUB { contracts::accepts(entity, slot, stack) }
+        else if milestones::owns(&entity.id) { milestones::accepts(entity, slot, stack) }
         else { accepts(&entity.id, slot, stack) };
     if !compatible { return false; }
     // Preserve the slot fence, allocating its layout only for accepted candidates.

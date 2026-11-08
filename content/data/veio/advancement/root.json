@@ -31,7 +31,8 @@
       "veio:drill",
       "veio:belt",
       "veio:press",
-      "veio:mill"
+      "veio:mill",
+      "veio:factory_board"
     ]
   }
 }

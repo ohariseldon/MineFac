@@ -86,6 +86,12 @@ A progressão anda em fases, como no Satisfactory e no Factorio: dentro de uma f
 
 Ramos paralelos (molduras, módulos, lavoura, vila operária, braços) seguem pedindo uma peça. Os oito módulos do primeiro pedido continuam liberando o lote de 32 esteiras rápidas. Razões e justificativas em [frentes/PROGRESSAO-FASES.md](frentes/PROGRESSAO-FASES.md).
 
+### Quadro da fábrica
+
+O **Quadro da fábrica** chega com o guia. Ele mostra a fase atual, quanto falta entregar e o que ela libera. Entregue a pilha da fase na entrada, à mão ou por esteira: as fases 2 a 4 devolvem uma **licença** que libera os desbloqueios da fase, como se você juntasse a pilha. Na primeira fase, o quadro marca sozinho energia, extratora, prensa e montador quando eles aparecem por perto.
+
+Todo amanhecer a vila deixa um **pedido do dia** no quadro, que paga esmeraldas até o próximo amanhecer; ao anoitecer chega o balanço do dia. O quadro e a barra de ação avisam máquinas paradas por energia, combustível, saída cheia ou dano. Detalhes em [frentes/EXPERIENCIA-JOGADOR.md](frentes/EXPERIENCIA-JOGADOR.md).
+
 Os avanços entregam as receitas. Em um mundo anterior, recolha novamente os materiais do novo ramo para ativar os novos avanços.
 
 ## Construção e logística

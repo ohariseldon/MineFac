@@ -24,6 +24,16 @@
           }
         ]
       }
+    },
+    "permit": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:permit_steel"
+          }
+        ]
+      }
     }
   },
   "rewards": {
@@ -38,5 +48,11 @@
       "veio:tree_farm",
       "veio:ranch"
     ]
-  }
+  },
+  "requirements": [
+    [
+      "stock",
+      "permit"
+    ]
+  ]
 }
