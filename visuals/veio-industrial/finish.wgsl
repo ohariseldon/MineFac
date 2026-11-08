@@ -90,7 +90,7 @@ fn post(input: PostInput) -> vec4<f32> {
         }
         if screen_reflections {
             let mirrored = veio_sky_mirror(input.uv, true);
-            color = mix(color, mirrored.rgb, mirrored.a * 0.75);
+            color = mix(color, mirrored.rgb, mirrored.a * 0.55);
         }
     }
     let overworld = frame.dimension == 0 && frame.eye_in == 0u;
