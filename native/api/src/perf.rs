@@ -10,6 +10,9 @@ thread_local! {
     static COUNTS: Cell<Counts> = const { Cell::new(Counts { allocations: 0, bytes: 0, keys: 0, fallback: 0 }) };
 }
 struct Meter;
+/// Bytes vivos no processo inteiro (todas as threads): mede memória ocupada, não tráfego.
+static LIVE: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+fn live_bytes() -> usize { LIVE.load(std::sync::atomic::Ordering::Relaxed) }
 #[global_allocator]
 static ALLOCATOR: Meter = Meter;
 
@@ -21,16 +24,26 @@ fn count(update: impl FnOnce(&mut Counts)) {
 unsafe impl GlobalAlloc for Meter {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         count(|c| { c.allocations += 1; c.bytes += layout.size(); });
+        LIVE.fetch_add(layout.size(), std::sync::atomic::Ordering::Relaxed);
         unsafe { System.alloc(layout) }
     }
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
         count(|c| { c.allocations += 1; c.bytes += layout.size(); });
+        LIVE.fetch_add(layout.size(), std::sync::atomic::Ordering::Relaxed);
         unsafe { System.alloc_zeroed(layout) }
     }
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) { unsafe { System.dealloc(ptr, layout) } }
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        LIVE.fetch_sub(layout.size(), std::sync::atomic::Ordering::Relaxed);
+        unsafe { System.dealloc(ptr, layout) }
+    }
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, size: usize) -> *mut u8 {
         count(|c| { c.allocations += 1; c.bytes += size; });
-        unsafe { System.realloc(ptr, layout, size) }
+        let moved = unsafe { System.realloc(ptr, layout, size) };
+        if !moved.is_null() {
+            LIVE.fetch_add(size, std::sync::atomic::Ordering::Relaxed);
+            LIVE.fetch_sub(layout.size(), std::sync::atomic::Ordering::Relaxed);
+        }
+        moved
     }
 }
 pub(super) fn key_read() { count(|c| c.keys += 1); }

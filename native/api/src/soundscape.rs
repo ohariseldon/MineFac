@@ -38,6 +38,11 @@ impl Scene {
         self.warnings.retain(|w| tick.saturating_sub(w.2) < 400);
         self.refreshed.is_none_or(|last| tick.saturating_sub(last) >= 10)
     }
+    /// Algum ouvinte pode ouvir um som saído deste bloco (centro do bloco, mesma conta de `admit`).
+    fn near(&self, dimension: &str, pos: [i32; 3]) -> bool {
+        let at = pos.map(|n| f64::from(n) + 0.5);
+        self.listeners.iter().any(|l| l.dimension == dimension && distance(l.pos, at) <= RANGE * RANGE)
+    }
     fn admit(&mut self, dimension: &str, pos: [f64; 3], family: u8, ambient: bool) -> bool {
         // One representative per family in a small cell, <=2 new voices per
         // dimension/tick and <=4 overlapping sounds near each listener.
@@ -101,6 +106,10 @@ fn position(pos: [i32; 3], entity: &ModBlockEntity) -> [f64; 3] {
 }
 
 pub(super) fn after(host: &mut dyn Host, pos: [i32; 3], entity: &ModBlockEntity, previous: i32, previous_status: i32, time: i64) {
+    // Numa fábrica grande quase todo bloco está longe de qualquer jogador: `admit` recusaria o
+    // som de qualquer jeito. Decidir isso antes de ler o NBT tira o custo desses blocos.
+    // Drones voam até o destino; o som deles sai de outro lugar, então seguem o caminho normal.
+    if entity.id != freight::DRONE && !scene(|s| s.near(host.dimension(), pos)) { return; }
     if number(entity, "Status") == 13 && previous_status != 13 {
         let repair = Profile { family: 255, work: None, finish: None, interval: 400, volume: 0.16, ambient: false };
         play(host, pos, entity, repair, "veio:machine.repair", 0);
@@ -156,6 +165,19 @@ mod tests {
         let arm = data::profile("veio:inserter").unwrap();
         assert_eq!(cue(arm, 1, 0, 0, 0), None);
         assert_eq!(cue(arm, 1, 1, 0, 3), arm.finish);
+    }
+    #[test]
+    fn far_blocks_are_skipped_before_reading_nbt_exactly_where_admit_would_refuse() {
+        let mut s = Scene::default(); s.begin(1, 0); s.listeners = vec![listener(0.0)];
+        assert!(s.near("overworld", [11, 0, 0]));
+        assert!(!s.near("overworld", [12, 0, 0]));
+        assert!(!s.near("nether", [0, 0, 0]));
+        // Fora de `near`, `admit` também recusa: o atalho não cala nenhum som que tocaria.
+        for x in [12, 20, -14] {
+            let at = [f64::from(x) + 0.5, 0.5, 0.5];
+            assert!(!s.near("overworld", [x, 0, 0]) && !s.admit("overworld", at, 0, false));
+        }
+        assert!(s.admit("overworld", [11.5, 0.5, 0.5], 0, false));
     }
     #[test]
     fn dense_factories_share_voices_and_expire_without_stop_packets() {

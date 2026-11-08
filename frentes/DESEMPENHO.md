@@ -78,3 +78,74 @@ Quadro: 257 blocos redesenhados, 1223 alocações, 67 µs.
 3. `neighbor_signal` em todo consumidor, todo tick (resposta da redstone em 1 tick).
 4. Buscas restantes no NBT: `set_number_at` (12%) e a primeira assinatura visual (10%).
 5. `neighbor_changed` existe no Horizon e poderia substituir a releitura de 13 blocos das esteiras. Não cobre as diagonais de rampa e exige um gancho novo no substituto; fica para depois.
+
+## Depois da consolidação (PR #47, 8 de novembro de 2026)
+
+Medido no checkout de `claude/project-thread-l94frq` (`80980db`), Linux x86_64, Rust 1.97,
+callgrind sobre `bench_factory` (480 blocos, 600 + 4000 ticks). O resumo
+`CHECK factory_digest=6241941769725dda gears=1024` é o mesmo antes e depois de cada mudança.
+
+| Medida | Antes | Depois |
+|---|---|---|
+| Instruções (callgrind) | 17,88 bi | **16,51 bi (−7,7%)** |
+
+A consolidação subiu o custo de 12,58 bi para 17,88 bi (+42%): sons, censo do quadro,
+holding, indústria, medidor de produção e poluição passaram a rodar em todo bloco, todo tick.
+
+1. **Sons só perto de alguém.** `soundscape::after` lia o NBT de todo bloco antes de saber se
+   havia ouvinte. Agora pergunta primeiro se algum jogador está a até 12 blocos (a mesma conta
+   que `admit` já fazia para recusar o som). Drones seguem o caminho antigo, porque o som sai de
+   onde eles voam. Nenhum som que tocava deixa de tocar; o teste
+   `far_blocks_are_skipped_before_reading_nbt_exactly_where_admit_would_refuse` confere isso.
+2. **Mural da casa mais lento quando ninguém olha.** Eram 256 leituras de bloco a cada 2 ticks,
+   para sempre, por casa. Sem jogador a 24 blocos, passa a uma linha por segundo
+   (`IDLE_SCAN_EVERY`, 13 leituras por tick). Com alguém perto, volta ao ritmo de antes.
+3. **Medição mais fiel.** `change_mod_block_entity` do mundo simulado agora copia e compara os
+   itens do alvo, como o Horizon faz em `native_with_mod_block_entity`. Custa +1,4% no total
+   medido; os números de antes e depois acima não incluem essa cópia.
+
+### Escala e memória (`bench_factory_scale`)
+
+```
+cargo test --offline --release -p veio-check bench_factory_scale -- --ignored --nocapture --test-threads=1
+```
+
+A mesma linha de produção repetida. `memoria_mb` são bytes vivos depois do aquecimento,
+incluindo os mapas do mundo simulado: é um teto para o que o Veio ocupa.
+
+| Blocos | µs por tick | µs por bloco | % de um tick de 50 ms | Memória |
+|---|---|---|---|---|
+| 480 | 329 | 0,69 | 0,7% | 0,8 MB |
+| 4.080 | 3.731 | 0,91 | 7,5% | 6,9 MB |
+| 16.080 | 17.328 | 1,08 | 34,7% | 27,4 MB |
+
+Conclusões para um PC com 8 GB:
+
+- **Memória não é o gargalo do Veio**: cerca de 1,8 KB por bloco, 27 MB para 16 mil blocos.
+  A RAM do jogo vem dos chunks carregados e da renderização do Horizon, não da simulação.
+- **CPU é**: uma fábrica de 16 mil blocos carregados usa cerca de um terço do tick nesta
+  máquina de nuvem (ruidosa). O µs por bloco sobe com o tamanho por cache, não por algoritmo:
+  as instruções por bloco ficam quase iguais (8,1 mil a 480 blocos, 8,9 mil a 4.080).
+
+### Custo por tipo de bloco (480 blocos, medição temporária)
+
+| Bloco | ns por tick | Quantidade |
+|---|---|---|
+| poste | 1.358 | 80 |
+| extratora | 1.325–1.366 | 16 |
+| prensa | 1.235 | 16 |
+| montadora | 1.114 | 16 |
+| gerador | 939 | 16 |
+| esteira | 690–706 | 256 |
+| solar | 476 | 16 |
+| cabo | 258 | 64 |
+
+Postes e esteiras somam quase 90% do tempo. Próximos passos, que mudam o comportamento e
+por isso precisam de decisão antes:
+
+- **Postes** chamam `change_mod_block_entity` para cada bloco da área em todo tick, mesmo
+  cheio ou com o poste vazio. No Horizon, cada chamada copia os itens do alvo e marca o chunk
+  como modificado. Distribuir a cada N ticks com N vezes a vazão, ou guardar o tipo de cada
+  alvo junto da área para pular consumidores quando o poste está sem energia, corta isso.
+- **Máquinas paradas** (esteira cheia, montadora cheia) refazem todo o tick. Uma máquina que
+  não mudou em vários ticks poderia dormir até um vizinho mudar (`neighbor_changed`).
