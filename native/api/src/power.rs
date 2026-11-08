@@ -43,7 +43,7 @@ pub(super) fn tier(block: &str) -> Option<&'static Tier> {
 
 #[derive(Default)]
 struct PoleChunk { nodes: BTreeMap<[i32; 3], bool>, revision: u64 }
-type Chunks = HashMap<(i32, i32), PoleChunk>;
+type Chunks = HashMap<(i32, i32), PoleChunk, FastHash>;
 /// Postes conhecidos por dimensão e chunk. `true` marca o poste de aço.
 static POLES: Mutex<Vec<(String, Chunks)>> = Mutex::new(Vec::new());
 
@@ -56,7 +56,7 @@ fn register(dimension: &str, pos: [i32; 3], steel: bool) {
     let index = match all.iter().position(|(name, _)| name == dimension) {
         Some(index) => index,
         None => {
-            all.push((dimension.to_owned(), HashMap::new()));
+            all.push((dimension.to_owned(), HashMap::default()));
             all.len() - 1
         }
     };

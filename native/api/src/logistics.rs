@@ -6,9 +6,8 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
     let [x, _, z] = pos;
     // No transfer or topology operation can run outside this existing phase.
     if time.rem_euclid(8) != i64::from((x ^ z) & 1) * 4 { return; }
-    if is_belt(&entity.id) {
-        refresh_path(host, pos, entity);
-    }
+    // A esteira já leu a orientação ao revisar o caminho.
+    let belt_output = is_belt(&entity.id).then(|| refresh_path(host, pos, entity));
     if transport(&entity.id) {
         let paused = host.neighbor_signal(host.dimension(), pos) > 0;
         set_number(entity, "LogisticsPaused", i32::from(paused));
@@ -16,7 +15,7 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
     }
     let outputs = output_slots(&entity.id);
     if entity.items.get(outputs.clone()).is_some_and(|slots| slots.iter().any(Option::is_some))
-        && let Some(facing) = output_direction(host, pos)
+        && let Some(facing) = belt_output.unwrap_or_else(|| output_direction(host, pos))
     {
         if entity.id == MERGER {
             let moved = merge(host, pos, facing, entity, 2);
@@ -214,8 +213,10 @@ fn incoming(host: &dyn Host, pos: [i32; 3], side: Direction) -> Option<i32> {
 
 const HORIZONTAL: [Direction; 4] = [Direction::North, Direction::East, Direction::South, Direction::West];
 
-/// Assinatura da vizinhança: blocos ao redor, orientação e trava da chave.
-/// Quando não muda, a esteira não relê entradas nem reescreve `path`/`facing`.
+/// Assinatura da vizinhança: blocos ao redor, orientação dos vizinhos do Veio, a própria
+/// orientação e a trava da chave. Quando não muda, a esteira não relê entradas nem reescreve
+/// `path`/`facing`. A orientação dos vizinhos entra porque as entradas dependem dela: girar
+/// uma esteira vizinha com a chave refaz a curva desta.
 fn neighborhood_signature(host: &dyn Host, pos: [i32; 3], facing: &str, manual: i32) -> i32 {
     let mut hash: u32 = 2166136261;
     let mix = |hash: &mut u32, text: &str| {
@@ -232,19 +233,28 @@ fn neighborhood_signature(host: &dyn Host, pos: [i32; 3], facing: &str, manual: 
     mix(&mut hash, &host.block([pos[0], pos[1] + 1, pos[2]]));
     for side in HORIZONTAL {
         for dy in [0, 1, -1] {
-            mix(&mut hash, &host.block(adjacent(pos, side, dy)));
+            let at = adjacent(pos, side, dy);
+            let block = host.block(at);
+            mix(&mut hash, &block);
+            if is_factory_block(&block) {
+                mix(&mut hash, &host.block_property(at, "facing").unwrap_or_default());
+            }
         }
     }
     hash as i32
 }
 
-fn refresh_path(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
-    let Some(mut output) = output_direction(host, pos) else { return; };
+/// Revisa curva e rampa da esteira. Devolve a saída como ficou (a mesma que
+/// `output_direction` leria agora), para a transferência não reler a orientação.
+fn refresh_path(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) -> Option<Direction> {
     let facing = host.block_property(pos, "facing").unwrap_or_default();
+    let mut output = output_of(&facing)?;
     let manual = number(entity, "ManualDirection");
     let sig = neighborhood_signature(host, pos, &facing, manual);
-    if number(entity, "PathReady") == 1 && number(entity, "PathSig") == sig {
-        return;
+    // A assinatura pode ser negativa: compara o valor guardado, sem o piso 0 de `number`.
+    let same = with_nbt_key("PathSig", |key| matches!(entity.nbt.get(key), Some(Tag::Int(stored)) if *stored == sig));
+    if number(entity, "PathReady") == 1 && same {
+        return Some(output);
     }
     let inputs: Vec<_> = HORIZONTAL.into_iter().filter_map(|side| incoming(host, pos, side).map(|dy| (side, dy))).collect();
     // Snap a corner only when one line feeds us and one existing line leaves us.
@@ -281,6 +291,7 @@ fn refresh_path(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity)
     let stored = if facing_now == facing { sig } else { neighborhood_signature(host, pos, &facing_now, manual) };
     set_number(entity, "PathSig", stored);
     set_number(entity, "PathReady", 1);
+    output_of(&facing_now)
 }
 
 /// Coordinates follow the same path used by the generated belt models.
@@ -315,8 +326,12 @@ pub(super) fn turn(facing: Direction, right: bool) -> Direction {
 }
 
 pub(super) fn output_direction(host: &dyn Host, pos: [i32; 3]) -> Option<Direction> {
+    output_of(&host.block_property(pos, "facing")?)
+}
+
+fn output_of(facing: &str) -> Option<Direction> {
     // Glazed terracotta faces the player on placement. Belts run away from them.
-    Some(match host.block_property(pos, "facing")?.as_str() {
+    Some(match facing {
         "north" => Direction::South,
         "south" => Direction::North,
         "west" => Direction::East,

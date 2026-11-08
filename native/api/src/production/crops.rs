@@ -34,7 +34,7 @@ pub(crate) fn planted(item: &str) -> Option<(i32, &'static str)> {
 
 /// Fila de edições pendentes: x, y, z, altura, índice na paleta.
 fn queued(entity: &ModBlockEntity) -> Vec<[i32; 5]> {
-    match entity.nbt.get(&"Edits".into()) {
+    match entity.nbt.get(nbt_key("Edits")) {
         Some(Tag::IntArray(values)) => values.chunks_exact(5).map(|v| [v[0], v[1], v[2], v[3], v[4]]).collect(),
         _ => Vec::new(),
     }
@@ -129,7 +129,7 @@ pub(crate) fn remember_activity(entity: &mut ModBlockEntity, time: i64, acted: b
     if acted {
         set_number(entity, "BusyAt", now);
     }
-    let busy = entity.nbt.contains_key(&"BusyAt".into()) && now.wrapping_sub(number(entity, "BusyAt")) < 100;
+    let busy = entity.nbt.contains_key(nbt_key("BusyAt")) && now.wrapping_sub(number(entity, "BusyAt")) < 100;
     set_number(entity, "Status", if busy { 1 } else { 10 });
 }
 

@@ -194,7 +194,7 @@ fn int(tag: Option<&Tag>) -> i32 {
 }
 
 pub(super) fn queue(desk: &ModBlockEntity) -> Vec<Task> {
-    let Some(Tag::List(list)) = desk.nbt.get(&"Queue".into()) else { return Vec::new() };
+    let Some(Tag::List(list)) = desk.nbt.get(nbt_key("Queue")) else { return Vec::new() };
     list.iter().filter_map(|tag| {
         let Tag::Compound(task) = tag else { return None };
         let get = |key: &str| task.get(&key.into());
