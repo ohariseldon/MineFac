@@ -2,7 +2,7 @@
   "parent": "veio:modules",
   "display": {
     "icon": {
-      "id": "veio:freight_station"
+      "id": "veio:rail_terminal"
     },
     "title": {
       "translate": "advancement.veio.freight.title"
@@ -26,7 +26,7 @@
   },
   "rewards": {
     "recipes": [
-      "veio:freight_station",
+      "veio:rail_terminal",
       "veio:route_card"
     ]
   }

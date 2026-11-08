@@ -13,7 +13,7 @@ GROUPS = {
     "generator": "boiler", "biomass_generator": "boiler", "steam_engine": "boiler", "geothermal": "tanks",
     "planter": "planter", "harvester": "harvester", "tree_farm": "saw", "ranch": "ranch",
     "farm_post": "desk", "hauler_post": "loading", "foreman_desk": "desk", "shepherd_post": "ranch",
-    "control_center": "console", "freight_station": "loading", "drone_port": "landing",
+    "control_center": "console", "rail_terminal": "loading", "drone_port": "landing",
     "caravan_station": "hitch", "barn": "shelves", "silo": "silo", "battery": "cells",
 }
 

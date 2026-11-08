@@ -45,7 +45,7 @@ label("veio.status.caravan_feed", "Confira a ração do animal", "Check the anim
 label("veio.status.caravan_busy", "Animal ocupado ou preso", "Animal occupied or leashed")
 label("veio.freight.caravan", "Caravana: ração e caminho livre", "Caravan: feed and a clear road")
 label("veio.guide.role.cargo", "Carga", "Cargo")
-label("block.veio.freight_station", "Terminal ferroviário", "Rail freight terminal")
+label("block.veio.rail_terminal", "Terminal ferroviário", "Rail freight terminal")
 label("block.veio.drone_port", "Porto de drones", "Drone port")
 label("item.veio.route_card", "Cartão de rota", "Route card")
 label("veio.status.freight_route", "Confira o par e o canal", "Check pair and channel")
@@ -335,7 +335,7 @@ for key, pt, en in [
 help["caravan_station"] = (
  "Cor igual liga os terminais.\nLaço vincula animal próximo.\nAgachar + item: o que sai.\nColoque ração no slot de baixo.",
  "Match terminal dye colors.\nLead assigns a nearby animal.\nSneak + item: outgoing cargo.\nPut feed in the bottom slot.")
-help["freight_station"] = (
+help["rail_terminal"] = (
  "Corante igual liga a rota.\nAgachar + item: envio.\nItem sem agachar: recebimento.\nFunis ligam os vagões.",
  "Match terminal dye colors.\nSneak + item: outgoing filter.\nItem without sneak: receive.\nHoppers connect minecarts.")
 help["drone_port"] = (
@@ -345,7 +345,7 @@ categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
  ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
- ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","freight_station","drone_port","caravan_station","wrench"]),
+ ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","rail_terminal","drone_port","caravan_station","wrench"]),
  ("Projetos e defesa","Projects and defense",["contract_hub","tesla"]),
 ]
 order=[name for _,_,names in categories for name in names]
@@ -429,7 +429,7 @@ slot_en={
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
-for name in ("freight_station", "drone_port", "caravan_station"):
+for name in ("rail_terminal", "drone_port", "caravan_station"):
  slothelp[name] = ["Carga para enviar. O filtro é copiado com agachar + item."]*3 + ["Carga recebida. O carregador pode levar às máquinas."]*3
  slot_en[name] = ["Dispatch stock. Sneak + item copies its filter."]*3 + ["Received stock. Haulers can feed it to machines."]*3
  if name in ("drone_port", "caravan_station"):

@@ -844,7 +844,7 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.freight_station",
+                            "translate": "block.veio.rail_terminal",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
@@ -2390,20 +2390,20 @@
                         "text": "",
                         "extra": [
                           {
-                            "translate": "block.veio.freight_station",
+                            "translate": "block.veio.rail_terminal",
                             "bold": true
                           },
                           {
                             "text": "\n"
                           },
                           {
-                            "translate": "veio.guide.use.freight_station"
+                            "translate": "veio.guide.use.rail_terminal"
                           },
                           {
                             "text": "\n"
                           },
                           {
-                            "translate": "veio.guide.craft.freight_station",
+                            "translate": "veio.guide.craft.rail_terminal",
                             "color": "dark_gray"
                           },
                           {

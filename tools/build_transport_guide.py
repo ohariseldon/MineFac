@@ -69,7 +69,7 @@ def build(write, languages):
         "rolls": 1, "entries": [{"type": "minecraft:item", "name": "minecraft:written_book",
                                   "functions": [{"function": "minecraft:set_components", "components": components}]}]}]})
     criteria = {name: {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": f"veio:{name}"}]}}
-                for name in ("freight_station", "drone_port", "caravan_station")}
+                for name in ("rail_terminal", "drone_port", "caravan_station")}
     write("data/veio/advancement/transport_guide.json", {"parent": "veio:root", "criteria": criteria,
           "requirements": [list(criteria)], "rewards": {"recipes": ["veio:transport_guide"], "loot": ["veio:tutorial/transport_guide"]}})
     print("Transport guide pages:", len(pages))

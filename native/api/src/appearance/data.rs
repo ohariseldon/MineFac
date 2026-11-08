@@ -32,7 +32,7 @@ pub(super) fn profile(block: &str) -> Option<Profile> {
         "veio:barn" => Profile { lamp: [12.000, 12.250, 15.850, 14.000, 13.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::None, center: [8.000, 8.000, 8.000], marker: [8.000, 16.250, 8.000] },
         "veio:silo" => Profile { lamp: [12.000, 11.250, 15.850, 14.000, 12.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::None, center: [8.000, 8.000, 8.000], marker: [8.000, 15.250, 8.000] },
         "veio:control_center" => Profile { lamp: [12.000, 4.250, 15.850, 14.000, 5.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::None, center: [8.000, 8.000, 8.000], marker: [8.000, 15.250, 8.000] },
-        "veio:freight_station" => Profile { lamp: [12.000, 4.250, 15.850, 14.000, 5.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::None, center: [8.000, 8.000, 8.000], marker: [8.000, 12.250, 8.000] },
+        "veio:rail_terminal" => Profile { lamp: [12.000, 4.250, 15.850, 14.000, 5.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::None, center: [8.000, 8.000, 8.000], marker: [8.000, 12.250, 8.000] },
         "veio:caravan_station" => Profile { lamp: [12.000, 4.250, 15.850, 14.000, 5.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::None, center: [8.000, 8.000, 8.000], marker: [8.000, 8.250, 8.000] },
         "veio:drone_port" => Profile { lamp: [12.000, 4.250, 15.850, 14.000, 5.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::None, center: [8.000, 8.000, 8.000], marker: [8.000, 9.250, 8.000] },
         "veio:battery" => Profile { lamp: [12.000, 11.250, 15.850, 14.000, 12.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::None, center: [8.000, 8.000, 8.000], marker: [8.000, 16.250, 8.000] },

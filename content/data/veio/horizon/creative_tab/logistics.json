@@ -9,7 +9,7 @@
     "veio:inserter",
     "veio:fast_inserter",
     "veio:long_inserter",
-    "veio:freight_station",
+    "veio:rail_terminal",
     "veio:drone_port",
     "veio:caravan_station",
     "veio:route_card",

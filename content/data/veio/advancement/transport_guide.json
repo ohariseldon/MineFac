@@ -1,12 +1,12 @@
 {
   "parent": "veio:root",
   "criteria": {
-    "freight_station": {
+    "rail_terminal": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
-            "items": "veio:freight_station"
+            "items": "veio:rail_terminal"
           }
         ]
       }
@@ -34,7 +34,7 @@
   },
   "requirements": [
     [
-      "freight_station",
+      "rail_terminal",
       "drone_port",
       "caravan_station"
     ]

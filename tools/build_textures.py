@@ -387,11 +387,11 @@ MACHINE_TIER = {
     "biomass_generator": "copper", "steam_engine": "steel", "planter": "iron", "tree_farm": "iron", "ranch": "copper",
     "farm_post": "copper", "hauler_post": "iron", "foreman_desk": "copper", "shepherd_post": "copper",
     "barn": "copper", "silo": "iron", "control_center": "steel",
-    "freight_station": "iron", "drone_port": "steel", "caravan_station": "copper",
+    "rail_terminal": "iron", "drone_port": "steel", "caravan_station": "copper",
 }
 
 def front(name):
-    motif = MOTIFS[{"caravan_station": "ranch", "freight_station": "hauler_post", "drone_port": "control_center", "drill_mk2": "drill", "drill_mk3": "drill"}.get(name, name)]
+    motif = MOTIFS[{"caravan_station": "ranch", "rail_terminal": "hauler_post", "drone_port": "control_center", "drill_mk2": "drill", "drill_mk3": "drill"}.get(name, name)]
     rows = [list(row) for row in FRONT]
     for y, line in enumerate(motif):
         for x, char in enumerate(line):

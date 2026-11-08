@@ -9,7 +9,7 @@
     "accent": "minecraft:block/cut_copper",
     "wood": "minecraft:block/stripped_spruce_log",
     "glass": "minecraft:block/tinted_glass",
-    "front": "veio:block/freight_station_front",
+    "front": "veio:block/rail_terminal_front",
     "port": "veio:block/port",
     "particle": "minecraft:block/iron_block"
   },

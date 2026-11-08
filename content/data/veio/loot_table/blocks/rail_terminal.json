@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "veio:freight_station"
+          "name": "veio:rail_terminal"
         }
       ],
       "conditions": [
@@ -16,5 +16,5 @@
       ]
     }
   ],
-  "random_sequence": "veio:blocks/freight_station"
+  "random_sequence": "veio:blocks/rail_terminal"
 }

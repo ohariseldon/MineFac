@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shapeless",
   "category": "redstone",
   "ingredients": [
-    "veio:freight_station",
+    "veio:rail_terminal",
     "veio:circuit",
     "veio:circuit",
     "veio:circuit",

@@ -4,7 +4,7 @@ use super::*;
 use horizon_client::mod_api::{BlockEntitySubmitEvent, CubeFace, Text};
 use std::sync::Mutex;
 
-pub(super) const RAIL: &str = "veio:freight_station";
+pub(super) const RAIL: &str = "veio:rail_terminal";
 pub(super) const DRONE: &str = "veio:drone_port";
 pub(super) mod caravan;
 
