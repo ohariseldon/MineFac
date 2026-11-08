@@ -92,6 +92,7 @@ impl Hooks for Factory {
         home::reset();
         milestones::census::reset();
         blueprint::reset();
+        workforce::ruins::reset();
     }
 
     fn block_entity(
@@ -355,6 +356,23 @@ impl Hooks for Factory {
 
     fn place_block(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlaceBlockEvent<'_>) {
         onboarding::select(host, event.pos, &host.block(event.pos), false);
+    }
+
+    // Território das obras (`workforce::territory`): ruínas e obras em construção ou de pé.
+    fn destroy_block(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::DestroyBlockEvent) -> Flow {
+        workforce::territory::destroy(host, event.pos, true)
+    }
+
+    fn left_click_block(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::LeftClickBlockEvent) -> Flow {
+        workforce::territory::destroy(host, event.pos, false)
+    }
+
+    fn use_item_on(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::UseItemOnEvent<'_>) -> Flow {
+        workforce::territory::use_item(host, &event.stack.item, event.pos)
+    }
+
+    fn explosion_detonate(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::ExplosionDetonateEvent<'_>) {
+        workforce::territory::explosion(host, event.dimension, event.blocks);
     }
 
     fn player_logged_out(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedOutEvent<'_>) {
@@ -738,6 +756,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Work" => key!("Work"),
         // Painel do centro, obras da vila e lar do jogador.
         "Rot" => key!("Rot"),
+        "Fixed" => key!("Fixed"),
         "Survey" => key!("Survey"),
         "Wait" => key!("Wait"),
         "Cursor" => key!("Cursor"),

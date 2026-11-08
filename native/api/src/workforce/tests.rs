@@ -280,6 +280,10 @@ impl Host for Village {
     fn level(&self, _: &str) -> Option<horizon_client::mod_api::LevelRef> {
         None
     }
+    /// Sem pasta de mundo: as ruínas (`ruins.rs`) não são postas.
+    fn world_dir(&self) -> Option<std::path::PathBuf> {
+        None
+    }
     fn day_time(&self) -> i64 {
         self.day
     }
@@ -2760,4 +2764,348 @@ fn balance_contracts_are_a_separate_buyer_and_open_markets_stay_open() {
     assert_eq!(state(dimension).0, 0, "contratos perdidos tiram reputação");
     assert_eq!(tier_open(dimension), 2, "mercado conquistado não fecha");
     let _ = &mut village;
+}
+
+// ---------- Ruínas e território das obras ----------
+
+/// Terreno de teste para as ruínas e a proteção: alturas por coluna, blocos e um jogador.
+struct Terrain {
+    dimension: &'static str,
+    world: Option<std::path::PathBuf>,
+    time: i64,
+    /// (MotionBlockingNoLeaves, OceanFloor) de cada coluna.
+    ground: fn(i32, i32) -> (Option<i32>, Option<i32>),
+    blocks: HashMap<[i32; 3], String>,
+    entities: HashMap<[i32; 3], ModBlockEntity>,
+    commands: Vec<String>,
+    player: Option<horizon_client::mod_api::NativeServerPlayer>,
+    sneak: bool,
+    bar: Vec<String>,
+}
+
+impl Terrain {
+    fn new(dimension: &'static str, ground: fn(i32, i32) -> (Option<i32>, Option<i32>)) -> Self {
+        Self { dimension, world: None, time: 100, ground, blocks: HashMap::new(), entities: HashMap::new(),
+            commands: Vec::new(), player: None, sneak: false, bar: Vec::new() }
+    }
+}
+
+impl Host for Terrain {
+    fn dimension(&self) -> &'static str {
+        self.dimension
+    }
+    fn block(&self, pos: [i32; 3]) -> String {
+        self.blocks.get(&pos).cloned().unwrap_or_else(|| "minecraft:air".to_owned())
+    }
+    fn surface_heights(&self, _: &str, columns: &[(i32, i32)], map: horizon_client::mod_api::NativeHeightmap) -> Result<Vec<Option<i32>>, String> {
+        Ok(columns.iter().map(|(x, z)| {
+            let (top, floor) = (self.ground)(*x, *z);
+            if map == horizon_client::mod_api::NativeHeightmap::OceanFloor { floor } else { top }
+        }).collect())
+    }
+    fn run_command(&mut self, line: &str) -> bool {
+        self.commands.push(line.to_owned());
+        true
+    }
+    fn world_dir(&self) -> Option<std::path::PathBuf> {
+        self.world.clone()
+    }
+    fn level(&self, _: &str) -> Option<horizon_client::mod_api::LevelRef> {
+        Some(horizon_client::mod_api::LevelRef::new(self.dimension))
+    }
+    fn level_game_time(&self, _: horizon_client::mod_api::LevelRef) -> Option<i64> {
+        Some(self.time)
+    }
+    fn edit_blocks(&mut self, _: &str, edit: &horizon_client::mod_api::NativeBlockEdit) -> Result<u64, String> {
+        for run in &edit.runs {
+            for dy in 0..run.height as i32 {
+                self.blocks.insert([run.x, run.y + dy, run.z], edit.palette[run.block as usize].clone());
+            }
+        }
+        Ok(edit.runs.len() as u64)
+    }
+    fn acting_player(&self) -> Option<horizon_client::mod_api::NativeServerPlayer> {
+        self.player.clone()
+    }
+    fn action_bar(&mut self, _: u128, line: Text) -> bool {
+        self.bar.push(line.plain());
+        true
+    }
+    fn sneaking(&self) -> bool {
+        self.sneak
+    }
+    fn change_mod_block_entity(&mut self, pos: [i32; 3], change: &mut dyn FnMut(&mut ModBlockEntity)) -> bool {
+        self.entities.get_mut(&pos).map(change).is_some()
+    }
+    fn block_entity_sync(&mut self, _: [i32; 3]) {}
+    fn block_property(&self, _: [i32; 3], _: &str) -> Option<String> {
+        None
+    }
+    fn day_time(&self) -> i64 {
+        1000
+    }
+    fn server_players(&self) -> Vec<horizon_client::mod_api::NativeServerPlayer> {
+        Vec::new()
+    }
+}
+
+fn flat(_: i32, _: i32) -> (Option<i32>, Option<i32>) {
+    (Some(70), Some(70))
+}
+
+/// Lago a leste do centro (água: as duas alturas diferem) e um morro íngreme ao norte.
+fn lake_and_hill(x: i32, z: i32) -> (Option<i32>, Option<i32>) {
+    if x > 30 {
+        (Some(63), Some(58))
+    } else if z < -30 {
+        (Some(70 + (-z - 30) / 2), Some(70 + (-z - 30) / 2))
+    } else {
+        (Some(70), Some(70))
+    }
+}
+
+#[test]
+fn ruins_pick_firm_flat_spots_in_the_ring_facing_the_center() {
+    let center = [0, 70, 0];
+    let host = Terrain::new("veio:test_ruins_choose", flat);
+    let chosen = ruins::choose(&host, host.dimension, center);
+    assert_eq!(chosen.len(), ruins::COUNT, "terreno plano: todas as ruínas cabem");
+    assert_eq!(chosen, ruins::choose(&host, host.dimension, center), "mesmo terreno, mesmas ruínas");
+    let mut keys = std::collections::HashSet::new();
+    for ruin in &chosen {
+        let plan = &blueprints::BLUEPRINTS[ruin.plan];
+        assert!(keys.insert(plan.key), "uma ruína de cada prédio");
+        let tier = projects::PROJECTS.iter().find(|project| project.key == plan.key).unwrap().tier;
+        assert_eq!(tier, 0, "{}: só obras do começo viram ruína", plan.key);
+        let distance = f64::from(ruin.pos[0]).hypot(f64::from(ruin.pos[2]));
+        assert!((48.0..=80.0).contains(&distance), "{:?} fora do anel", ruin.pos);
+        assert_eq!(ruin.pos[1], 70, "o canteiro fica no chão");
+        assert_eq!(ruin.rot, ruins::facing_center(ruin.pos, center), "entrada virada para o centro");
+        // A entrada da planta aponta para o centro.
+        let (dx, dz) = blueprints::turn(0, 1, ruin.rot);
+        assert!(dx * -ruin.pos[0].signum() >= 0 && dz * -ruin.pos[2].signum() >= 0, "{:?} rot {}", ruin.pos, ruin.rot);
+    }
+    // Sem sobrepor, com a folga do território.
+    for (index, a) in chosen.iter().enumerate() {
+        let (alow, ahigh) = site::territory(&blueprints::BLUEPRINTS[a.plan], a.pos, a.rot);
+        for b in &chosen[index + 1..] {
+            let (blow, bhigh) = site::territory(&blueprints::BLUEPRINTS[b.plan], b.pos, b.rot);
+            assert!(ahigh[0] < blow[0] || bhigh[0] < alow[0] || ahigh[2] < blow[2] || bhigh[2] < alow[2],
+                "{:?} e {:?} se sobrepõem", a.pos, b.pos);
+        }
+    }
+
+    // Água e morro ficam de fora; sem chunk carregado, nada.
+    let host = Terrain::new("veio:test_ruins_terrain", lake_and_hill);
+    let chosen = ruins::choose(&host, host.dimension, center);
+    assert!(!chosen.is_empty());
+    for ruin in &chosen {
+        let (low, high) = blueprints::bounds(&blueprints::BLUEPRINTS[ruin.plan], ruin.pos, ruin.rot);
+        assert!(high[0] <= 30, "{:?} na água", ruin.pos);
+        let steep = |z: i32| z < -30 - 2 * ruins::SLOPE;
+        assert!(!steep(low[2]) || !steep(high[2]), "{:?} no morro", ruin.pos);
+    }
+    let host = Terrain::new("veio:test_ruins_unloaded", |_, _| (None, None));
+    assert!(ruins::choose(&host, host.dimension, center).is_empty());
+}
+
+#[test]
+fn ruin_stamp_keeps_low_layers_without_furniture_and_is_deterministic() {
+    let plan = blueprints::BLUEPRINTS.iter().find(|plan| plan.key == "canteen").unwrap();
+    let pos = [55, 70, 3];
+    let cells = ruins::ruin_cells(plan, pos, 1);
+    assert!(!cells.is_empty());
+    assert_eq!(cells, ruins::ruin_cells(plan, pos, 1), "a mesma ruína sempre");
+    let full = plan.cells.iter().filter(|cell| {
+        let (spot, index) = blueprints::decode(**cell);
+        spot[1] < 4 && index != 0
+    }).count();
+    assert!(cells.len() < full, "só parte das camadas de baixo sobra");
+    for (at, index) in &cells {
+        let block = blueprints::PALETTE[*index];
+        assert!(blueprints::PROPS[*index].is_empty() && !blueprints::protected(block) && *index != 0, "{block}");
+        assert!(at[1] - pos[1] + plan.site[1] < 4, "camada alta em {at:?}");
+    }
+    // O carimbo não toca no canteiro nem em blocos protegidos que já estão ali.
+    let mut host = Terrain::new("veio:test_ruins_stamp", flat);
+    let (chest, _) = cells[0];
+    host.blocks.insert(chest, "minecraft:chest".into());
+    host.blocks.insert(pos, site::SITE.into());
+    ruins::stamp(&mut host, pos, plan, 1);
+    assert_eq!(host.block(chest), "minecraft:chest");
+    assert_eq!(host.block(pos), site::SITE);
+    assert!(cells[1..].iter().all(|(at, index)| *at == pos || host.block(*at) == blueprints::PALETTE[*index]));
+}
+
+#[test]
+fn ruins_are_placed_once_per_new_world_and_their_sites_keep_a_fixed_plan() {
+    let unique = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
+    let world = std::env::temp_dir().join(format!("veio-ruins-{}-{unique}", std::process::id()));
+    let center = [0, 70, 0];
+    let mut host = Terrain::new("veio:test_ruins_world", flat);
+    host.world = Some(world.clone());
+    let dimension = host.dimension;
+    ruins::arrive(&mut host, dimension, center);
+    let placed: Vec<&String> = host.commands.iter().filter(|line| line.contains("setblock")).collect();
+    assert_eq!(placed.len(), ruins::COUNT, "{:?}", host.commands);
+    assert!(placed.iter().all(|line| line.contains("if block") && line.contains("#minecraft:replaceable")
+        && line.contains("veio:site[facing=")), "só onde o bloco é substituível");
+    assert!(host.commands.iter().any(|line| line.contains("veio.spawn.ruins")));
+    let expected = ruins::choose(&host, host.dimension, center);
+    // De novo (outro jogador, mundo reaberto): nada se repete.
+    let before = host.commands.len();
+    let dimension = host.dimension;
+    ruins::arrive(&mut host, dimension, center);
+    assert_eq!(host.commands.len(), before, "as ruínas só aparecem uma vez por mundo");
+
+    // O primeiro tick do canteiro pega a planta escolhida, fixa, e carimba a ruína.
+    let ruin = &expected[0];
+    let mut entity = block(SITE);
+    let now = defense::clock();
+    let due = 10 - i64::from((ruin.pos[0] ^ ruin.pos[2]) & 7);
+    site::tick(&mut host, ruin.pos, &mut entity, due, now);
+    assert_eq!(site::plan_index(&entity), ruin.plan);
+    assert_eq!(number(&entity, "Rot"), ruin.rot);
+    assert!(site::fixed(&entity));
+    let walls = ruins::ruin_cells(&blueprints::BLUEPRINTS[ruin.plan], ruin.pos, ruin.rot);
+    assert!(walls.iter().all(|(at, index)| host.block(*at) == blueprints::PALETTE[*index]), "a ruína está no chão");
+    // A chave não troca a planta da ruína.
+    host.entities.insert(ruin.pos, entity);
+    assert_eq!(site::cycle(&mut host, ruin.pos), Some(Flow::Cancel));
+    assert_eq!(site::plan_index(&host.entities[&ruin.pos]), ruin.plan);
+    // Ruína à espera: o território vale, mas a obra não conta como ocupada na vila.
+    let guard = site::guard_at(host.dimension, walls[0].0, now).expect("território da ruína");
+    assert!(guard.fixed && guard.site == ruin.pos);
+    assert_eq!(site::near(host.dimension, ruin.pos, 8, now, None), site::Near::default());
+    // Outro canteiro qualquer não vira ruína.
+    let mut other = block(SITE);
+    site::tick(&mut host, [500, 70, 500], &mut other, 0, now);
+    assert!(!site::fixed(&other));
+
+    // Mundo que já existia (primeiro dia passou): sem ruínas, nem depois.
+    let old = std::env::temp_dir().join(format!("veio-ruins-old-{}-{unique}", std::process::id()));
+    let mut host = Terrain::new("veio:test_ruins_old", flat);
+    host.world = Some(old.clone());
+    host.time = ruins::FRESH + 1;
+    let dimension = host.dimension;
+    ruins::arrive(&mut host, dimension, center);
+    host.time = 0;
+    let dimension = host.dimension;
+    ruins::arrive(&mut host, dimension, center);
+    assert!(!host.commands.iter().any(|line| line.contains("setblock")));
+    let _ = std::fs::remove_dir_all(world);
+    let _ = std::fs::remove_dir_all(old);
+}
+
+fn publish_site(host: &mut Terrain, pos: [i32; 3], phase: i32, fixed: bool) -> ModBlockEntity {
+    let mut entity = block(SITE);
+    set_number(&mut entity, "Rot", 0);
+    set_number(&mut entity, "ContractStage", phase);
+    if fixed {
+        set_number(&mut entity, "Fixed", 1);
+    }
+    // Ciclo do registro: a cada 10 ticks.
+    let time = 10 - i64::from((pos[0] ^ pos[2]) & 7);
+    if phase == site::BUILDING {
+        // Sem mestre de obras: só publica.
+        set_number(&mut entity, "Cursor", 0);
+    }
+    site::tick(host, pos, &mut entity, time, defense::clock());
+    entity
+}
+
+#[test]
+fn territory_covers_the_plan_plus_margin_only_for_ruins_and_real_works() {
+    let plan = &blueprints::BLUEPRINTS[0];
+    let pos = [0, 70, 0];
+    let (low, high) = site::territory(plan, pos, 0);
+    let (inner_low, inner_high) = blueprints::bounds(plan, pos, 0);
+    assert_eq!(low, inner_low.map(|value| value - site::MARGIN));
+    assert_eq!(high, inner_high.map(|value| value + site::MARGIN));
+    assert!(site::guards(true, site::PLAN) && site::guards(false, site::BUILDING) && site::guards(false, site::DONE));
+    assert!(!site::guards(false, site::PLAN) && !site::guards(false, site::SURVEYING), "planta do jogador não protege");
+
+    // Canteiro do jogador na planta: nada protegido. Em obra: protegido e conta como ocupado.
+    let mut host = Terrain::new("veio:test_territory_registry", flat);
+    let now = defense::clock();
+    publish_site(&mut host, pos, site::PLAN, false);
+    assert!(site::guard_at(host.dimension, [low[0], 70, low[2]], now).is_none());
+    publish_site(&mut host, pos, site::DONE, false);
+    let corner = site::guard_at(host.dimension, low, now).expect("canto do território");
+    assert_eq!(corner, site::Guard { site: pos, fixed: false, reserved: plan.reserved_block });
+    assert!(site::guard_at(host.dimension, [high[0] + 1, 70, 0], now).is_none(), "fora da folga");
+    assert_eq!(site::near(host.dimension, pos, 8, now, None).erected, blueprints::project_bit(plan));
+}
+
+#[test]
+fn protection_frees_natural_ground_creative_players_and_food() {
+    for natural in ["minecraft:grass_block", "minecraft:dirt", "minecraft:poppy", "minecraft:oak_leaves", "minecraft:sand",
+        "minecraft:gravel", "minecraft:snow", "minecraft:short_grass", "minecraft:red_tulip"]
+    {
+        assert!(territory::natural(natural), "{natural}");
+    }
+    for built in ["minecraft:bricks", "minecraft:sandstone", "minecraft:flower_pot", "minecraft:oak_planks", "veio:site",
+        "minecraft:spruce_door", "minecraft:white_carpet"]
+    {
+        assert!(!territory::natural(built), "{built}");
+    }
+    assert!(territory::harmless("minecraft:bread", "") && territory::harmless("minecraft:cooked_beef", ""));
+    assert!(territory::harmless(WAGE, "") && territory::harmless("veio:wrench", ""));
+    assert!(territory::harmless("veio:shop", "veio:shop"), "a loja vai no lugar reservado da praça");
+    for refused in ["minecraft:cobblestone", "minecraft:water_bucket", "minecraft:lava_bucket", "minecraft:flint_and_steel",
+        "minecraft:iron_axe", "veio:shop", "veio:press", "minecraft:cake"]
+    {
+        assert!(!territory::harmless(refused, ""), "{refused}");
+    }
+    let guard = site::Guard { site: [0, 70, 0], fixed: false, reserved: "" };
+    assert!(territory::may_break(&guard, [2, 70, 2], "minecraft:dirt", false));
+    assert!(!territory::may_break(&guard, [2, 71, 2], "minecraft:bricks", false));
+    assert!(territory::may_break(&guard, [0, 70, 0], SITE, false), "o canteiro do jogador sai");
+    let ruin = site::Guard { fixed: true, ..guard };
+    assert!(!territory::may_break(&ruin, [0, 70, 0], SITE, true), "o canteiro da ruína fica");
+    assert!(territory::may_break(&ruin, [2, 71, 2], "minecraft:chest", true), "baú no caminho da obra sai");
+    assert!(!territory::may_break(&ruin, [2, 71, 2], "minecraft:chest", false), "na obra, os móveis ficam");
+}
+
+#[test]
+fn protection_hooks_cancel_breaking_building_and_explosions_inside_the_grounds() {
+    let mut host = Terrain::new("veio:test_territory_hooks", flat);
+    let pos = [0, 70, 0];
+    let plan = &blueprints::BLUEPRINTS[0];
+    let entity = publish_site(&mut host, pos, site::DONE, false);
+    host.entities.insert(pos, entity);
+    let (low, high) = site::territory(plan, pos, 0);
+    let wall = [low[0] + site::MARGIN, 71, low[2] + site::MARGIN];
+    host.blocks.insert(wall, "minecraft:bricks".into());
+    host.blocks.insert([wall[0], 69, wall[2]], "minecraft:grass_block".into());
+    let outside = [high[0] + 2, 71, 0];
+    host.blocks.insert(outside, "minecraft:bricks".into());
+    host.player = Some(horizon_client::mod_api::NativeServerPlayer { uuid: 5, game_mode: 0, ..Default::default() });
+
+    assert_eq!(territory::destroy(&mut host, wall, false), Flow::Cancel);
+    assert_eq!(territory::destroy(&mut host, wall, true), Flow::Cancel);
+    assert_eq!(host.bar.last().map(String::as_str), Some("veio.site.protected"));
+    assert_eq!(territory::destroy(&mut host, [wall[0], 69, wall[2]], true), Flow::Continue, "grama é livre");
+    assert_eq!(territory::destroy(&mut host, outside, true), Flow::Continue, "fora do território");
+    assert_eq!(territory::use_item(&mut host, "minecraft:cobblestone", [wall[0], 69, wall[2]]), Flow::Cancel);
+    assert_eq!(territory::use_item(&mut host, "minecraft:bread", wall), Flow::Continue, "comer passa");
+    assert_eq!(territory::use_item(&mut host, "minecraft:cobblestone", outside), Flow::Continue);
+    // Abrir o canteiro com um item na mão passa; agachado (pôr bloco), não.
+    host.blocks.insert(pos, SITE.into());
+    assert_eq!(territory::use_item(&mut host, "veio:iron_plate", pos), Flow::Continue);
+    host.sneak = true;
+    assert_eq!(territory::use_item(&mut host, "veio:iron_plate", pos), Flow::Cancel);
+    host.sneak = false;
+    // Criativo passa em tudo.
+    host.player.as_mut().unwrap().game_mode = 1;
+    assert_eq!(territory::destroy(&mut host, wall, true), Flow::Continue);
+    assert_eq!(territory::use_item(&mut host, "minecraft:lava_bucket", wall), Flow::Continue);
+    host.player.as_mut().unwrap().game_mode = 0;
+    // Explosão: os tijolos ficam, a grama e o que está fora voam.
+    let mut blocks = vec![wall, [wall[0], 69, wall[2]], outside];
+    territory::explosion(&host, host.dimension, &mut blocks);
+    assert_eq!(blocks, vec![[wall[0], 69, wall[2]], outside]);
+    // O jogador tira o próprio canteiro: o prédio sai do registro na hora.
+    assert_eq!(territory::destroy(&mut host, pos, true), Flow::Continue);
+    assert!(site::guard_at(host.dimension, wall, defense::clock()).is_none());
 }

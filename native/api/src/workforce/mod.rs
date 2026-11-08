@@ -46,6 +46,8 @@ pub(super) mod requests;
 pub(super) mod blueprints;
 mod blueprint_data;
 pub(super) mod site;
+pub(super) mod ruins;
+pub(super) mod territory;
 pub(super) mod staff;
 pub(super) mod focus;
 pub(super) mod home;
