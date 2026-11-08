@@ -4,17 +4,18 @@ use super::*;
 
 pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, time: i64) {
     let [x, _, z] = pos;
-    if is_belt(&entity.id) && time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4 {
+    // No transfer or topology operation can run outside this existing phase.
+    if time.rem_euclid(8) != i64::from((x ^ z) & 1) * 4 { return; }
+    if is_belt(&entity.id) {
         refresh_path(host, pos, entity);
     }
-    if transport(&entity.id) && time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4 {
+    if transport(&entity.id) {
         let paused = host.neighbor_signal(host.dimension(), pos) > 0;
         set_number(entity, "LogisticsPaused", i32::from(paused));
         if paused { return; }
     }
     let outputs = output_slots(&entity.id);
-    if time.rem_euclid(8) == i64::from((x ^ z) & 1) * 4
-        && entity.items.get(outputs.clone()).is_some_and(|slots| slots.iter().any(Option::is_some))
+    if entity.items.get(outputs.clone()).is_some_and(|slots| slots.iter().any(Option::is_some))
         && let Some(facing) = output_direction(host, pos)
     {
         if entity.id == MERGER {
@@ -120,17 +121,16 @@ pub(super) fn split(
     entity: &mut ModBlockEntity,
     batch: u32,
 ) {
-    let key = "PreferRight".into();
-    let was_right = matches!(entity.nbt.get(&key), Some(Tag::Byte(1)));
+    let was_right = with_nbt_key("PreferRight", |key| matches!(entity.nbt.get(key), Some(Tag::Byte(1))));
     let mut prefer_right = was_right;
     let priority = logistics_controls::priority(entity);
-    let filter = logistics_controls::filter(entity);
+    let filtered = logistics_controls::has_filter(entity);
     for _ in 0..batch {
         let Some(stack) = entity.items[0].as_ref() else {
             break;
         };
-        let right = if let Some(filter) = filter.as_deref() {
-            stack.item.as_ref() != filter
+        let right = if filtered {
+            !logistics_controls::allows(entity, stack.item.as_ref())
         } else { match priority { 1 => false, 2 => true, _ => prefer_right } };
         let preferred = turn(facing, right);
         let moved = send(host, pos, preferred, stack, 1);
@@ -139,7 +139,7 @@ pub(super) fn split(
             consume(&mut entity.items[0], moved);
         } else {
             // A sorting filter never spills into the wrong lane.
-            if filter.is_some() { break; }
+            if filtered { break; }
             let moved = send(host, pos, preferred.opposite(), stack, 1);
             if moved == 0 {
                 break;
@@ -148,7 +148,9 @@ pub(super) fn split(
         }
     }
     if was_right != prefer_right {
-        entity.nbt.insert(key, Tag::Byte(i8::from(prefer_right)));
+        with_nbt_key("PreferRight", |key| {
+            entity.nbt.insert(key.clone(), Tag::Byte(i8::from(prefer_right)));
+        });
     }
 }
 

@@ -16,6 +16,7 @@
 //! não renovada vence e a tarefa volta a ficar livre. Ao pegar os itens na origem, o carregador
 //! tira a tarefa da fila (`complete`).
 use super::*;
+mod planning;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
@@ -33,7 +34,7 @@ const EMERALD_SLOT: usize = 3;
 const MAX_NETWORK: usize = 24;
 /// Tarefas na fila.
 pub(super) const MAX_QUEUE: usize = 8;
-/// A fila é refeita a cada 4 ciclos do capataz (40 ticks).
+/// Solicita uma fila a cada 4 ciclos; sua preparação pode avançar por vários ticks.
 const ORGANIZE_EVERY: i32 = 4;
 /// Uma tarefa marcada por um carregador volta a ficar livre se a marca não for renovada.
 const TASK_STALE: u64 = 200;
@@ -260,11 +261,34 @@ fn queue_outputs(block: &str) -> Vec<usize> {
     }
 }
 
-/// Varre a rede e, a cada `ORGANIZE_EVERY` ciclos, refaz a fila. Tarefas já pegas por um
-/// carregador (e renovadas) são mantidas; as demais são recalculadas do estado atual.
+/// Descobre a rede e solicita a fila incremental a cada `ORGANIZE_EVERY` ciclos.
+/// A fila anterior permanece disponível até a publicação de um plano completo.
 pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
+    register_desk(host.dimension(), pos, now);
+    if number(entity, "PlanningPending") != 0 {
+        planning::advance(host, pos, entity, now);
+        return;
+    }
+    let Some(network) = scan_named(host, pos, entity, "Area", RADIUS, SCAN, MAX_NETWORK, &networked, true) else { return };
+    let round = (number(entity, "Organize") + 1) % ORGANIZE_EVERY;
+    set_number(entity, "Organize", round);
+    if round != 0 { return; }
+    planning::start(host.dimension(), pos, entity, network, now);
+    planning::advance(host, pos, entity, now);
+}
+
+pub(super) fn continue_planning(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
+    planning::advance(host, pos, entity, now);
+}
+
+pub(super) fn maintenance(now: u64) { planning::maintenance(now); }
+
+// Original whole-job planner: offline equivalence oracle and historical benchmark.
+#[cfg(test)]
+pub(super) fn reference_organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
     let dimension = host.dimension();
     register_desk(dimension, pos, now);
+    if !budget::request(budget::Lane::Planning, dimension, pos, 1) { return; }
     let Some(network) = scan_named(host, pos, entity, "Area", RADIUS, SCAN, MAX_NETWORK, &networked, true) else { return };
     let round = (number(entity, "Organize") + 1) % ORGANIZE_EVERY;
     set_number(entity, "Organize", round);
@@ -292,17 +316,17 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
     nodes.sort_by_key(|(_, node)| storage::is_store(&node.id));
     let stores: Vec<[i32; 3]> = nodes.iter().filter(|(_, node)| storage::is_store(&node.id)).map(|(spot, _)| *spot).collect();
     // Produtos disponíveis: (bloco, slot, item, quantidade).
-    let mut sources: Vec<([i32; 3], usize, String, u32)> = Vec::new();
+    let mut sources: Vec<([i32; 3], usize, ItemStack)> = Vec::new();
     for (spot, node) in &nodes {
         for slot in queue_outputs(&node.id) {
             if let Some(stack) = node.items.get(slot).and_then(Option::as_ref).filter(|stack| plain(stack)) {
-                sources.push((*spot, slot, stack.item.to_string(), stack.count));
+                sources.push((*spot, slot, stack.clone()));
             }
         }
     }
-    sources.retain(|(spot, slot, _, _)| !tasks.iter().any(|task| task.from == *spot && task.slot == *slot));
+    sources.retain(|(spot, slot, _)| !tasks.iter().any(|task| task.from == *spot && task.slot == *slot));
     let mut next_id = number(entity, "TaskId");
-    let mut plan_for = |sink: &ModBlockEntity, spot: [i32; 3], tasks: &mut Vec<Task>, sources: &mut Vec<([i32; 3], usize, String, u32)>| {
+    let mut plan_for = |sink: &ModBlockEntity, spot: [i32; 3], tasks: &mut Vec<Task>, sources: &mut Vec<([i32; 3], usize, ItemStack)>| {
         // A mesa só pede comida quando está acabando; o resto da comida segue para as máquinas.
         let desk_food: u32 = if sink.id == FOREMAN_DESK {
             food_slots(&sink.id).filter_map(|slot| sink.items[slot].as_ref()).map(|stack| stack.count).sum()
@@ -320,11 +344,13 @@ pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlock
                 continue;
             }
             let current = sink.items.get(into).and_then(Option::as_ref);
-            let Some(index) = sources.iter().position(|(from, _, item, _)| *from != spot
+            let Some(index) = sources.iter().position(|(from, _, stack)| *from != spot
                 && !(store && stores.contains(from))
-                && current.is_none_or(|present| is_plain(present, item) && present.count < top_up(&sink.id))
-                && operations::accepts_material(sink, into, &ItemStack::new(item, 1))) else { continue };
-            let (from, slot, item, available) = sources.remove(index);
+                && current.is_none_or(|present| is_plain(present, &stack.item) && present.count < top_up(&sink.id))
+                && operations::accepts_material(sink, into, stack)) else { continue };
+            let (from, slot, stack) = sources.remove(index);
+            let available = stack.count;
+            let item = stack.item.to_string();
             let have = current.map_or(0, |present| present.count);
             let count = available.min(hauler::BATCH).min(top_up(&sink.id) - have);
             next_id += 1;

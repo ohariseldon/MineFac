@@ -3,6 +3,24 @@ use super::*;
 use horizon_client::mod_api::{BlockStateId, ParticleOptions};
 use std::collections::HashMap;
 
+#[test]
+fn numeric_updates_preserve_legacy_tag_and_clamping_semantics() {
+    let mut n = ModBlockEntity::default();
+    n.nbt.insert("energy".into(), Tag::Int(-7));
+    set_number(&mut n, "energy", 0);
+    assert!(matches!(n.nbt.get(nbt_key("energy")), Some(Tag::Int(-7))));
+    n.nbt.insert("Status".into(), Tag::String("legacy".into()));
+    set_number(&mut n, "Status", 0);
+    assert!(matches!(n.nbt.get(nbt_key("Status")), Some(Tag::String(_))));
+    set_number(&mut n, "Status", 3);
+    set_number(&mut n, "energy", 120);
+    assert_eq!(number(&n, "Status"), 3);
+    assert_eq!(number(&n, "energy"), 120);
+    let count = n.nbt.len();
+    set_number(&mut n, "energy", 121);
+    assert_eq!(n.nbt.len(), count);
+}
+
 fn entity(id: &str, slots: usize) -> ModBlockEntity {
     let mut entity = ModBlockEntity::default();
     entity.id = id.to_owned();

@@ -133,16 +133,16 @@ pub(crate) fn refresh(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntit
 }
 
 fn signed(entity: &ModBlockEntity, key: &str) -> i32 {
-    match entity.nbt.get(&key.into()) { Some(Tag::Int(value)) => *value, _ => 0 }
+    match entity.nbt.get(nbt_key(key)) { Some(Tag::Int(value)) => *value, _ => 0 }
 }
 
 /// Os 13 valores do painel do centro.
-pub(crate) fn data(entity: &ModBlockEntity) -> Vec<i32> {
-    let mut data: Vec<i32> = ["DWorkers", "DWorking", "DWaiting", "DHungry", "DFields", "DPens", "DStore", "DQueue",
-        "DGoal1", "DGoal2", "DGoal3"].iter().map(|key| signed(entity, key)).collect();
-    data.insert(0, number(entity, "Status"));
-    data.push(number(entity, "Info"));
-    data
+pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
+    let keys = ["DWorkers", "DWorking", "DWaiting", "DHungry", "DFields", "DPens", "DStore", "DQueue",
+        "DGoal1", "DGoal2", "DGoal3"];
+    std::array::from_fn(|index| match index {
+        0 => number(entity, "Status"), 12 => number(entity, "Info"), _ => signed(entity, keys[index - 1]),
+    })
 }
 
 const BAR: u32 = 0xff2b2b2b;

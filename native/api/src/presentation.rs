@@ -218,25 +218,25 @@ fn lamp_icon(host: &dyn Host, event: &mut ScreenDrawEvent<'_>, [lx, ly]: [f32; 2
 pub(super) const DATA_SLOTS: usize = 13;
 
 pub(super) fn publish(entity: &mut ModBlockEntity) {
+    // These blocks have no menu; rendering and electricity read their NBT directly.
+    if matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE) { return; }
     logistics_controls::publish(entity);
-    let (progress, duration) = match entity.id.as_str() {
-        GENERATOR | GEOTHERMAL => (number(entity, "Burn"), number(entity, "BurnTotal").max(1)),
-        _ => (number(entity, "Progress"), number(entity, "Duration").max(1)),
+    let values = if entity.id == workforce::CONTROL_CENTER {
+        workforce::center::data(entity)
+    } else if workforce::zones::is_marker(&entity.id) {
+        workforce::zones::data(entity)
+    } else {
+        let (progress, duration) = match entity.id.as_str() {
+            GENERATOR | GEOTHERMAL => (number(entity, "Burn"), number(entity, "BurnTotal").max(1)),
+            _ => (number(entity, "Progress"), number(entity, "Duration").max(1)),
+        };
+        [number(entity, "Status"), progress, duration,
+            number(entity, "energy"), number(entity, "Burn"), capacity(&entity.id), number(entity, "Rate"),
+            number(entity, "Utilization"), number(entity, "ContractStage"), number(entity, "Total"),
+            number(entity, "Damage"), number(entity, "Module"),
+            if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") }]
     };
-    let values = [
-        number(entity, "Status"), progress, duration,
-        number(entity, "energy"), number(entity, "Burn"), capacity(&entity.id), number(entity, "Rate"),
-        number(entity, "Utilization"), number(entity, "ContractStage"), number(entity, "Total"),
-        number(entity, "Damage"), number(entity, "Module"),
-        // Slot 12: poluição local na torre Tesla; nas máquinas de produção, a leitura própria
-        // (pureza, FE/t gerado, animais, aldeões).
-        if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") },
-    ];
     debug_assert_eq!(values.len(), DATA_SLOTS);
-    // Centro de controle e marcos de zona publicam os próprios números.
-    let own = if entity.id == workforce::CONTROL_CENTER { Some(workforce::center::data(entity)) }
-        else if workforce::zones::is_marker(&entity.id) { Some(workforce::zones::data(entity)) } else { None };
-    let values: [i32; DATA_SLOTS] = own.and_then(|own| own.try_into().ok()).unwrap_or(values);
     if entity.data.len() != DATA_SLOTS {
         entity.data.resize(DATA_SLOTS, 0);
     }

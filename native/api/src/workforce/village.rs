@@ -60,7 +60,7 @@ pub(crate) fn observe(host: &mut dyn Host, dimension: &str, id: u32, now: u64) {
     }
     let block = [at[0].floor() as i32, at[1].floor() as i32, at[2].floor() as i32];
     let limit = cap(dimension, block, now);
-    let near = production::ranch::villager_positions(host, dimension).into_iter()
+    let near = production::ranch::villager_positions(host, dimension).iter().copied()
         .filter(|(_, other)| (0..3).all(|axis| (other[axis] - at[axis]).abs() <= COUNT_RADIUS))
         .take(limit)
         .count();

@@ -183,9 +183,9 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
 }
 
 /// Dados do painel do marco (13 valores, como os demais painéis).
-pub(crate) fn data(entity: &ModBlockEntity) -> Vec<i32> {
+pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
     let (cost, work, villagers) = requirement(unlocked(entity)).map_or((0, 0, 0), |(c, w, v)| (c as i32, w, v));
-    vec![number(entity, "Status"), level(entity), unlocked(entity), side(entity), number(entity, "Work"), work,
+    [number(entity, "Status"), level(entity), unlocked(entity), side(entity), number(entity, "Work"), work,
         number(entity, "Villagers"), villagers, cost, number(entity, "Work"), 0, 0, i32::from(entity.id == PEN_MARKER)]
 }
 

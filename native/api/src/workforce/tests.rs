@@ -6,6 +6,32 @@ use super::*;
 use horizon_client::mod_api::{BlockStateId, EntityRef, NativeItemEntity};
 use std::cell::Cell;
 
+#[test]
+fn worker_discovery_keeps_cached_targets_and_cursor_while_globally_deferred() {
+    struct Probe { reads: Cell<usize> }
+    impl Host for Probe {
+        fn dimension(&self) -> &'static str { "veio:worker-budget-test" }
+        fn block(&self, _: [i32; 3]) -> String {
+            self.reads.set(self.reads.get() + 1);
+            "minecraft:air".into()
+        }
+    }
+    let host = Probe { reads: Cell::new(0) };
+    let mut entity = ModBlockEntity::default();
+    set_list(&mut entity, "Area", &[[3, 64, 3]]);
+    set_number(&mut entity, "AreaScan", 7);
+    budget::begin_tick(0);
+    assert!(budget::request(budget::Lane::Workforce, host.dimension(), [999; 3], 512));
+    let cached = scan_named(&host, POST, &mut entity, "Area", 2, 1, 8, &|_| false, true);
+    assert_eq!(cached, Some(vec![[3, 64, 3]]));
+    assert_eq!(number(&entity, "AreaScan"), 7);
+    assert_eq!(host.reads.get(), 0);
+    budget::begin_tick(1);
+    scan_named(&host, POST, &mut entity, "Area", 2, 1, 8, &|_| false, true);
+    assert_eq!(number(&entity, "AreaScan"), 8);
+    assert_eq!(host.reads.get(), 1);
+}
+
 const POST: [i32; 3] = [0, 64, 0];
 /// Fora do alcance de entrega do posto: colher exige ir até lá.
 const WHEAT: [i32; 3] = [3, 64, 3];

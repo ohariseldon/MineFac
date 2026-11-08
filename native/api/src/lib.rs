@@ -1,3 +1,4 @@
+mod budget;
 mod presentation;
 mod contracts;
 mod logistics;
@@ -15,8 +16,14 @@ mod workforce;
 
 use horizon_client::mod_api::{
     BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
-    Compound, ContainerAcceptsEvent, Direction, Flow, Hooks, Host, ItemStack, JavaString, ModBlockEntity, ModContainer, ModEnergyBuffer, Tag,
+    Compound, ContainerAcceptsEvent, Direction, Flow, Hooks, Host, ItemStack, ModBlockEntity, ModContainer, ModEnergyBuffer, Tag,
 };
+
+// Horizon exports Compound but not its UTF-16 key type. Derive that type from
+// the public map instead of requiring an engine patch or a second dependency.
+pub(super) trait CompoundKey { type Key; }
+impl<K, V> CompoundKey for std::collections::BTreeMap<K, V> { type Key = K; }
+type JavaString = <Compound as CompoundKey>::Key;
 
 const DRILL: &str = "veio:drill";
 const PRESS: &str = "veio:press";
@@ -235,6 +242,9 @@ impl Hooks for Factory {
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
         defense::advance_clock();
+        budget::begin_tick(defense::clock());
+        power::maintenance(defense::clock());
+        workforce::maintenance(defense::clock());
         workforce::spawn::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
@@ -394,6 +404,7 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
 
 /// Chaves NBT lidas todo tick. A primeira vez monta o `JavaString`; as seguintes reaproveitam.
 fn nbt_key(name: &str) -> &'static JavaString {
+    #[cfg(test)] perf::key_read();
     macro_rules! key {
         ($lit:literal) => {{
             static KEY: std::sync::OnceLock<JavaString> = std::sync::OnceLock::new();
@@ -416,15 +427,43 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Herd" => key!("Herd"),
         "Info" => key!("Info"),
         "Level" => key!("Level"),
+        "LogisticsFilter" => key!("LogisticsFilter"),
+        "LogisticsPaused" => key!("LogisticsPaused"),
         "Links" => key!("Links"),
         "LocalSmog" => key!("LocalSmog"),
         "ManualDirection" => key!("ManualDirection"),
+        "MeterTicks" => key!("MeterTicks"),
+        "MeterActive" => key!("MeterActive"),
+        "MeterItems" => key!("MeterItems"),
+        "MeterReady" => key!("MeterReady"),
+        "Swing" => key!("Swing"),
+        "RoutingPriority" => key!("RoutingPriority"),
+        "AreaScan" => key!("AreaScan"),
+        "TopologyPending" => key!("TopologyPending"),
+        "PlanningPending" => key!("PlanningPending"),
+        "TerrainPending" => key!("TerrainPending"),
+        "AreaFound" => key!("AreaFound"),
+        "Posts" => key!("Posts"),
+        "Queue" => key!("Queue"),
+        "DWorkers" => key!("DWorkers"),
+        "DWorking" => key!("DWorking"),
+        "DWaiting" => key!("DWaiting"),
+        "DHungry" => key!("DHungry"),
+        "DFields" => key!("DFields"),
+        "DPens" => key!("DPens"),
+        "DStore" => key!("DStore"),
+        "DQueue" => key!("DQueue"),
+        "DGoal1" => key!("DGoal1"),
+        "DGoal2" => key!("DGoal2"),
+        "DGoal3" => key!("DGoal3"),
+        "Side" => key!("Side"),
         "Module" => key!("Module"),
         "MovedAt" => key!("MovedAt"),
         "NextInput" => key!("NextInput"),
         "Organize" => key!("Organize"),
         "PathReady" => key!("PathReady"),
         "PathSig" => key!("PathSig"),
+        "PreferRight" => key!("PreferRight"),
         "Pick" => key!("Pick"),
         "Port" => key!("Port"),
         "Produced" => key!("Produced"),
@@ -449,6 +488,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "energy" => key!("energy"),
         _ => {
             // Chave rara: vive até o fim do processo, para o tick seguinte não alocar de novo.
+            #[cfg(test)] perf::fallback_lock();
             use std::collections::HashMap;
             use std::sync::Mutex;
             static EXTRA: Mutex<Option<HashMap<String, &'static JavaString>>> = Mutex::new(None);
@@ -483,12 +523,10 @@ fn number(entity: &ModBlockEntity, key: &str) -> i32 {
 
 fn set_number(entity: &mut ModBlockEntity, key: &str, value: i32) {
     with_nbt_key(key, |key| {
-        let current = match entity.nbt.get(key) {
-            Some(Tag::Int(stored)) => Some((*stored).max(0)),
-            Some(_) => Some(0),
-            None => None,
-        };
-        if current != Some(value) {
+        if let Some(tag) = entity.nbt.get_mut(key) {
+            let current = match tag { Tag::Int(stored) => (*stored).max(0), _ => 0 };
+            if current != value { *tag = Tag::Int(value); }
+        } else {
             entity.nbt.insert(key.clone(), Tag::Int(value));
         }
     });
@@ -648,3 +686,5 @@ fn consume(slot: &mut Option<ItemStack>, count: u32) {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod perf;
