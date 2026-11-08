@@ -19,7 +19,8 @@
   },
   "rewards": {
     "loot": [
-      "veio:tutorial/guide"
+      "veio:tutorial/guide",
+      "veio:tutorial/board"
     ],
     "recipes": [
       "veio:guide",
@@ -27,7 +28,8 @@
       "veio:cable",
       "veio:drill",
       "veio:belt",
-      "veio:press"
+      "veio:press",
+      "veio:factory_board"
     ],
     "function": "veio:tutorial/welcome"
   }

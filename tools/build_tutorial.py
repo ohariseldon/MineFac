@@ -86,6 +86,9 @@ help={
  "splitter":(
  "Divide entre saídas laterais.\nAlterna se ambas estão livres.\nDesvia se um lado encher.\nUse a chave para orientar.",
  "Splits into the side outputs.\nAlternates when both are free.\nDiverts if one side fills.\nOrient it with the wrench."),
+ "factory_board":(
+ "Mostra a fase, o que falta\ne o que ela libera.\nEntregue a pilha da fase ou\no pedido do dia na entrada.\nAvisa máquinas paradas.",
+ "Shows the phase, what is left\nand what it unlocks.\nDeliver the phase stack or\nthe daily order to the input.\nFlags stalled machines."),
  "contract_hub":(
  "Entradas 1 e 2 à esquerda.\nRecompensas 1 e 2 à direita.\nEntregue o pedido exibido.\nRetire sobras ao mudar pedido.",
  "Inputs 1 and 2 on the left.\nRewards 1 and 2 on the right.\nDeliver the displayed order.\nClear leftovers for the next."),
@@ -303,12 +306,57 @@ for key, pt, en in [
  ("advancement.veio.coordination.description", "Um capataz alimenta e recontrata os trabalhadores dos postos.", "A foreman feeds and rehires the workers of your posts."),
 ]:
  label(key, pt, en)
+
+# Quadro da fábrica (milestones/): fases, pedido do dia, censo de gargalos e ritmo do dia.
+for key, pt, en in [
+ ("block.veio.factory_board", "Quadro da fábrica", "Factory board"),
+ ("item.veio.permit_workshop", "Licença da oficina", "Workshop permit"),
+ ("item.veio.permit_steel", "Licença do aço", "Steel permit"),
+ ("item.veio.permit_electronics", "Licença da eletrônica", "Electronics permit"),
+ ("veio.componenthelp.permit_workshop", "Dada pelo quadro: abre a chave, o triturador e o forno de ligas.", "From the board: unlocks the wrench, crusher and alloy furnace."),
+ ("veio.componenthelp.permit_steel", "Dada pelo quadro: abre a caldeira, os acumuladores e a geotermia.", "From the board: unlocks steam, batteries and geothermal."),
+ ("veio.componenthelp.permit_electronics", "Dada pelo quadro: abre a Mk.II, o solar e a torre Tesla.", "From the board: unlocks Mk.II mining, solar and the Tesla tower."),
+ ("veio.board.phase", "Fase %s de %s: %s", "Phase %s of %s: %s"),
+ ("veio.board.phase.first", "Primeira fábrica", "First factory"),
+ ("veio.board.phase.workshop", "Oficina", "Workshop"),
+ ("veio.board.phase.steel", "Aço", "Steel"),
+ ("veio.board.phase.electronics", "Eletrônica", "Electronics"),
+ ("veio.board.phase.depth", "Profundidade", "Depth"),
+ ("veio.board.deliver", "%s/%s %s", "%s/%s %s"),
+ ("veio.board.reward", "Recompensa: %sx %s", "Reward: %sx %s"),
+ ("veio.board.unlocks", "Libera: %s", "Unlocks: %s"),
+ ("veio.board.next", "Depois: %s", "Next: %s"),
+ ("veio.board.setup.power", "Energia", "Power"),
+ ("veio.board.setup.drill", "Extratora", "Extractor"),
+ ("veio.board.setup.press", "Prensa", "Press"),
+ ("veio.board.setup.assembler", "Montador", "Assembler"),
+ ("veio.board.hint.workshop", "Próximo gargalo: energia. Uma linha de 30 engrenagens por minuto pede um gerador inteiro.", "Next bottleneck: power. A 30 gears a minute line needs a whole generator."),
+ ("veio.board.hint.steel", "Próximo gargalo: carvão. Cada forno de ligas queima 15 por minuto.", "Next bottleneck: coal. Each alloy furnace burns 15 a minute."),
+ ("veio.board.hint.electronics", "Próximo gargalo: silício. Quartzo do Nether, ou areia no forno de ligas.", "Next bottleneck: silicon. Nether quartz, or sand in the alloy furnace."),
+ ("veio.board.hint.depth", "Próximo gargalo: transporte. Uma Mk.III num veio de 16+ blocos passa de uma esteira rápida.", "Next bottleneck: transport. A Mk.III on a 16+ block vein outruns a fast belt."),
+ ("veio.board.done", "Fases concluídas. A vila segue com pedidos.", "All phases done. The village keeps ordering."),
+ ("veio.board.order", "Dia %s: %s/%s %s", "Day %s: %s/%s %s"),
+ ("veio.board.order_reward", "Pedido da vila: %s esmeraldas até amanhecer.", "Village order: %s emeralds until dawn."),
+ ("veio.board.order_paid", "Pedido da vila pago. Outro amanhã.", "Village order paid. A new one tomorrow."),
+ ("veio.board.order_elsewhere", "Pedido de hoje já pago em outro quadro.", "Today's order was paid at another board."),
+ ("veio.board.no_machines", "Nenhuma máquina perto do quadro.", "No machines near the board."),
+ ("veio.board.ok", "%s de %s máquinas trabalhando.", "%s of %s machines working."),
+ ("veio.board.issues", "Paradas: %s energia, %s cheias, %s danificadas", "Stalled: %s power, %s full, %s damaged"),
+ ("veio.board.complete", "Fase concluída: %s! Retire a recompensa no quadro.", "Phase complete: %s! Take the reward from the board."),
+ ("veio.board.order_complete", "Pedido do dia entregue: %s esmeraldas no quadro.", "Daily order delivered: %s emeralds on the board."),
+ ("veio.alert.near", "Máquinas paradas perto: %s sem energia, %s sem combustível, %s com saída cheia, %s danificadas", "Stalled nearby: %s no power, %s no fuel, %s output full, %s damaged"),
+ ("veio.day.dawn", "Dia %s. Pedido da vila no quadro: %s %s, paga %s esmeraldas até o próximo amanhecer.", "Day %s. Village order at the board: %s %s, pays %s emeralds until next dawn."),
+ ("veio.day.dusk", "Fim do dia %s: a fábrica produziu %s itens.", "End of day %s: the factory made %s items."),
+ ("veio.day.dusk_order", "Pedido da vila: %s/%s %s. Termina ao amanhecer.", "Village order: %s/%s %s. Ends at dawn."),
+ ("veio.day.dusk_paid", "Pedido da vila: pago.", "Village order: paid."),
+ ("veio.day.dusk_issue", "Para amanhã: %s máquinas sem energia, %s com saída cheia, %s danificadas.", "For tomorrow: %s machines without power, %s with full output, %s damaged."),
+]: label(key, pt, en)
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
  ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
  ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","wrench"]),
- ("Projetos e defesa","Projects and defense",["contract_hub","tesla"]),
+ ("Projetos e defesa","Projects and defense",["factory_board","contract_hub","tesla"]),
 ]
 order=[name for _,_,names in categories for name in names]
 # Blocos da vila operária: consulta no Guia da Vila Operária (fim deste arquivo).
@@ -352,6 +400,7 @@ slothelp={
  "silo":["Grãos, sementes, ração ou comida."]*18,
  "control_center":["Comida do administrador.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar.","Meta: o item e a quantidade x16 a guardar."],
  "foreman_desk":["Comida do capataz e dos postos.","Comida do capataz e dos postos.","Comida do capataz e dos postos.","Esmeraldas para recontratar."],
+ "factory_board":["Entrega: pilha da fase ou pedido do dia. Aceita esteira.","Recompensas: licenças, esteiras, esmeraldas."],
  "contract_hub":["Primeiro material do pedido exibido.","Segundo material do pedido exibido.","Primeira recompensa do pedido.","Segunda recompensa do pedido."],
 }
 slot_en={
@@ -389,6 +438,7 @@ slot_en={
  "silo":["Grain, seeds, feed or food."]*18,
  "control_center":["Administrator food.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store.","Goal: the item and its count x16 to store."],
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
+ "factory_board":["Delivery: the phase stack or the daily order. Belts welcome.","Rewards: permits, belts, emeralds."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
 for block,lines in slothelp.items():
@@ -440,8 +490,8 @@ def page(pt,en):
  pages.append({"translate":key})
  return len(pages)
 intro=page(
- "Primeira fábrica\n\nA meta é obter uma engrenagem.\nVocê vai extrair cobre, fazer chapas e montar peças.\n\nAvance uma página por vez. O restante fica como consulta.",
- "First factory\n\nYour goal is one gear.\nExtract copper, press plates and assemble parts.\n\nFollow one page at a time. Later pages are a reference.")
+ "Primeira fábrica\n\nA meta: 16 chapas de cobre no Quadro da fábrica, que veio com este guia.\nO quadro mostra cada fase, o que falta e o que trava.\n\nAvance uma página por vez.",
+ "First factory\n\nYour goal: 16 copper plates on the Factory board that came with this guide.\nThe board shows each phase, what is left and what stalls.\n\nFollow one page at a time.")
 materials=page(
  "Prepare os materiais\n\n6 lingotes de cobre\n3 lingotes de ferro\n3 pistões\n1 bancada extra\n1 fornalha\n1 pedra lisa\n3 gravetos\n1 baú e carvão\n\nSão peças já prontas.",
  "Gather the parts\n\n6 copper ingots\n3 iron ingots\n3 pistons\n1 spare crafting table\n1 furnace\n1 smooth stone\n3 sticks\n1 chest and coal\n\nThese are finished parts.")
@@ -670,9 +720,12 @@ start={"display":{"icon":{"id":"minecraft:written_book"},"title":{"translate":"v
  "description":{"translate":"veio.tutorial.start"},"background":"minecraft:gui/advancements/backgrounds/stone",
  "announce_to_chat":False},
  "criteria":{"welcome":{"trigger":"minecraft:tick"}},
- "rewards":{"loot":["veio:tutorial/guide"],"recipes":["veio:guide","veio:generator","veio:cable","veio:drill","veio:belt","veio:press"],
+ "rewards":{"loot":["veio:tutorial/guide","veio:tutorial/board"],"recipes":["veio:guide","veio:generator","veio:cable","veio:drill","veio:belt","veio:press","veio:factory_board"],
  "function":"veio:tutorial/welcome"}}
 write(f"{D}/advancement/tutorial/start.json",start)
+# O quadro chega com o guia: a primeira meta fica visível desde o primeiro minuto.
+write(f"{D}/loot_table/tutorial/board.json",{"type":"minecraft:generic",
+ "pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"veio:factory_board"}]}]})
 label("veio.guide.path_welcome", "Guia atualizado: esteiras agora fazem curvas e rampas. Consulte as páginas antes das categorias.", "Updated guide: belts now turn and climb. Read the pages before the categories.")
 write(f"{D}/advancement/tutorial/belt_paths.json", {
  "parent":"veio:tutorial/start",
