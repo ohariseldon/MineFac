@@ -1,38 +1,45 @@
 //! Quartel: um aldeão treinado defende a vila.
 //!
-//! Um prédio, um soldado. Agachar com a mão vazia troca a classe; com alguém
-//! contratado, a troca gasta uma esmeralda do slot de salário. Comida no slot
-//! da esquerda: cada golpe custa uma tarefa. Sem comida, ninguém sai do posto.
+//! Um prédio, um soldado. Agachar com uma esmeralda na mão troca a classe; com alguém
+//! contratado, a troca gasta uma esmeralda do slot de salário. Comida no slot da esquerda:
+//! cada golpe custa uma tarefa. Sem comida, ninguém sai do posto.
 //!
-//! Milícia chega antes e mata em três golpes. O guarda é curto e tanque: os
-//! monstros vão nele antes dos outros aldeões, e ele aguenta o dobro. O arqueiro
-//! atira de longe. O mago mata em dois golpes e fere um segundo monstro perto.
+//! O soldado fica de plantão também à noite e não foge de medo (`super::duty`). Os golpes tiram
+//! vida de verdade do monstro (`Host::set_mob_health`); no último, ele morre e solta o saque.
+//!
+//! - **Milícia:** chega rápido, 7 de dano.
+//! - **Guarda:** curto, 5 de dano, mas se cura a cada golpe: é o tanque da vila.
+//! - **Arqueiro:** atira de longe (16 blocos), 5 de dano.
+//! - **Mago:** 10 de dano e metade disso num segundo monstro perto do alvo.
 use super::*;
 use horizon_client::mod_api::{ParticleOptions, ParticleType};
 
 pub(super) const BARRACKS: &str = "veio:barracks";
 const PATROL: f64 = 18.0;
-const TAUNT: f64 = 20.0;
-const FRESH: u64 = 40;
 const SWING: i32 = 20;
 const SPLASH: f64 = 5.0;
-const HEIGHT: f64 = 8.0;
+/// Vida que o guarda recupera a cada golpe.
+pub(crate) const GUARD_HEAL: f32 = 3.0;
+/// Vida de um aldeão (vanilla).
+const VILLAGER_LIFE: f32 = 20.0;
+/// Sem vida legível no NBT, o golpe conta como uma fração destes pontos.
+const FALLBACK_LIFE: f32 = 20.0;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct Class {
     pub role: i32,
     pub reach: f64,
-    pub blows: i32,
-    pub life: i32,
+    pub damage: f32,
+    pub heal: f32,
     pub splash: bool,
 }
 
 pub(crate) fn class(role: i32) -> Class {
     match role {
-        2 => Class { role: 2, reach: 5.0, blows: 5, life: 8, splash: false },
-        3 => Class { role: 3, reach: 16.0, blows: 4, life: 4, splash: false },
-        4 => Class { role: 4, reach: 12.0, blows: 2, life: 4, splash: true },
-        _ => Class { role: 1, reach: 8.0, blows: 3, life: 4, splash: false },
+        2 => Class { role: 2, reach: 5.0, damage: 5.0, heal: GUARD_HEAL, splash: false },
+        3 => Class { role: 3, reach: 16.0, damage: 5.0, heal: 0.0, splash: false },
+        4 => Class { role: 4, reach: 12.0, damage: 10.0, heal: 0.0, splash: true },
+        _ => Class { role: 1, reach: 8.0, damage: 7.0, heal: 0.0, splash: false },
     }
 }
 
@@ -63,86 +70,40 @@ fn next_role(role: i32) -> i32 {
     }
 }
 
-#[derive(Clone, Copy)]
-struct Guard {
-    id: u32,
-    role: i32,
-    at: [f64; 3],
-    seen: u64,
-}
+/// Golpes que já acertaram cada monstro, para quando o NBT não diz a vida.
+static WOUNDS: Mutex<Vec<(u32, f32)>> = Mutex::new(Vec::new());
 
-static GUARDS: Mutex<Vec<Guard>> = Mutex::new(Vec::new());
-static WOUNDS: Mutex<Vec<(u32, i32)>> = Mutex::new(Vec::new());
-
-fn remember(id: u32, role: i32, at: [f64; 3], seen: u64) {
-    let Ok(mut guards) = GUARDS.lock() else { return };
-    if let Some(guard) = guards.iter_mut().find(|guard| guard.id == id) {
-        *guard = Guard { id, role, at, seen };
-        return;
+/// Vida atual de uma entidade, lida do NBT (`Health`).
+fn health(host: &mut dyn Host, id: u32) -> Option<f32> {
+    let handle = host.entity(id)?;
+    match host.entity_nbt(handle)?.get(&"Health".into())? {
+        Tag::Float(bits) => Some(f32::from_bits(*bits)),
+        Tag::Double(bits) => Some(f64::from_bits(*bits) as f32),
+        _ => None,
     }
-    if guards.len() >= 64 {
-        let now = seen;
-        guards.retain(|guard| now.saturating_sub(guard.seen) <= FRESH);
+}
+
+/// Vida depois de levar `damage`, com o contador como reserva quando não há vida legível.
+pub(crate) fn after_blow(current: Option<f32>, id: u32, damage: f32) -> f32 {
+    if let Some(life) = current {
+        return life - damage;
     }
-    if guards.len() >= 64 {
-        guards.remove(0);
-    }
-    guards.push(Guard { id, role, at, seen });
-}
-
-/// O defensor que o monstro deve perseguir: guarda dentro de 20 blocos, senão o soldado mais perto.
-pub(crate) fn shield(at: [f64; 3]) -> Option<(u32, [f64; 3])> {
-    let now = defense::clock();
-    let guards = GUARDS.lock().ok()?;
-    let fresh: Vec<(u32, i32, [f64; 3])> = guards.iter()
-        .filter(|guard| now.saturating_sub(guard.seen) <= FRESH)
-        .map(|guard| (guard.id, guard.role, guard.at))
-        .collect();
-    pick(at, &fresh)
-}
-
-pub(crate) fn pick(at: [f64; 3], guards: &[(u32, i32, [f64; 3])]) -> Option<(u32, [f64; 3])> {
-    let distance = |pos: [f64; 3]| (pos[0] - at[0]).hypot(pos[2] - at[2]);
-    let tanks = guards.iter().filter(|(_, role, pos)| *role == 2 && distance(*pos) <= TAUNT);
-    if let Some(guard) = tanks.min_by(|a, b| distance(a.2).total_cmp(&distance(b.2))) {
-        return Some((guard.0, guard.2));
-    }
-    guards.iter()
-        .filter(|(_, _, pos)| distance(*pos) <= TAUNT)
-        .min_by(|a, b| distance(a.2).total_cmp(&distance(b.2)))
-        .map(|guard| (guard.0, guard.2))
-}
-
-/// Este aldeão é soldado de um quartel ativo?
-pub(crate) fn is_soldier(id: u32) -> bool {
-    let now = defense::clock();
-    GUARDS.lock().is_ok_and(|guards| guards.iter().any(|guard| guard.id == id && now.saturating_sub(guard.seen) <= FRESH))
-}
-
-/// Vida da classe, se este aldeão está registrado como defensor agora.
-pub(crate) fn toughness(id: u32) -> Option<i32> {
-    GUARDS.lock().ok()?.iter().find(|guard| guard.id == id).map(|guard| class(guard.role).life)
-}
-
-/// `true` quando o golpe mata.
-fn wound(id: u32, need: i32) -> bool {
-    let Ok(mut wounds) = WOUNDS.lock() else { return false };
-    let hits = if let Some((_, hits)) = wounds.iter_mut().find(|(seen, _)| *seen == id) {
-        *hits += 1;
-        *hits
+    let Ok(mut wounds) = WOUNDS.lock() else { return 0.0 };
+    let taken = if let Some((_, taken)) = wounds.iter_mut().find(|(seen, _)| *seen == id) {
+        *taken += damage;
+        *taken
     } else {
         if wounds.len() >= 128 {
             wounds.drain(0..64);
         }
-        wounds.push((id, 1));
-        1
+        wounds.push((id, damage));
+        damage
     };
-    if hits >= need {
+    let left = FALLBACK_LIFE - taken;
+    if left <= 0.0 {
         wounds.retain(|(seen, _)| *seen != id);
-        true
-    } else {
-        false
     }
+    left
 }
 
 fn take_wage(entity: &mut ModBlockEntity) -> bool {
@@ -154,7 +115,7 @@ fn take_wage(entity: &mut ModBlockEntity) -> bool {
     true
 }
 
-/// Agachar com a mão vazia: escolhe a próxima classe. Treinar quem já trabalha gasta uma esmeralda.
+/// Agachar com uma esmeralda na mão: escolhe a próxima classe. Treinar quem já trabalha gasta uma esmeralda.
 pub(super) fn cycle(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow> {
     let mut trained = false;
     let mut paid = true;
@@ -178,11 +139,16 @@ pub(super) fn cycle(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow> {
     Some(Flow::Cancel)
 }
 
-fn strike(host: &mut dyn Host, dimension: &str, id: u32, at: [f64; 3], kind: Class) -> bool {
-    let killed = wound(id, kind.blows);
-    if killed {
-        host.kill_mob(dimension, id);
-    }
+/// Um golpe de `damage`. `true` quando mata.
+fn strike(host: &mut dyn Host, dimension: &str, id: u32, at: [f64; 3], kind: Class, damage: f32) -> bool {
+    let current = health(host, id);
+    let left = after_blow(current, id, damage);
+    let killed = if left <= 0.0 {
+        host.kill_mob(dimension, id)
+    } else {
+        host.set_mob_health(dimension, id, left);
+        false
+    };
     let sound = if kind.splash {
         "minecraft:entity.evoker.cast_spell"
     } else if kind.reach >= 12.0 {
@@ -196,6 +162,19 @@ fn strike(host: &mut dyn Host, dimension: &str, id: u32, at: [f64; 3], kind: Cla
     killed
 }
 
+/// O guarda se recupera a cada golpe (a comida do posto paga).
+fn heal(host: &mut dyn Host, dimension: &str, id: u32, amount: f32) {
+    if amount <= 0.0 {
+        return;
+    }
+    if let Some(life) = health(host, id)
+        && life > 0.0
+        && life < VILLAGER_LIFE
+    {
+        host.set_mob_health(dimension, id, (life + amount).min(VILLAGER_LIFE));
+    }
+}
+
 /// Persegue um hostil perto do quartel e golpeia. Sem alvo, volta para a porta.
 pub(super) fn fight(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32, at: [f64; 3], now: u64) -> i32 {
     let role = match number(entity, "Role") {
@@ -205,7 +184,7 @@ pub(super) fn fight(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
     let kind = class(role);
     set_number(entity, "Role", kind.role);
     set_number(entity, "Rate", kind.role);
-    remember(id, kind.role, at, defense::clock());
+    duty(id, now);
     let home = post_center(pos);
     let dimension = host.dimension().to_owned();
     let candidates = defense::recent(&dimension);
@@ -214,8 +193,7 @@ pub(super) fn fight(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
         let reader: &dyn Host = host;
         for mob in candidates {
             let Some(spot) = reader.entity(mob).and_then(|entity| entity.position(reader)) else { continue };
-            // Na altura da vila: um monstro na caverna embaixo do quartel não é alvo.
-            if (spot[0] - home[0]).hypot(spot[2] - home[2]) <= PATROL && (spot[1] - home[1]).abs() <= HEIGHT {
+            if (spot[0] - home[0]).hypot(spot[2] - home[2]) <= PATROL {
                 nearby.push((mob, spot));
             }
         }
@@ -246,12 +224,13 @@ pub(super) fn fight(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
         return WALKING;
     }
     set_number(entity, "Cooldown", SWING);
-    let killed = strike(host, &dimension, mob, spot, kind);
+    let killed = strike(host, &dimension, mob, spot, kind, kind.damage);
+    heal(host, &dimension, id, kind.heal);
     if kind.splash
         && let Some((other, other_at)) = nearby.iter().find(|(other, other_at)| {
             *other != mob && (other_at[0] - spot[0]).hypot(other_at[2] - spot[2]) <= SPLASH
         })
-        && strike(host, &dimension, *other, *other_at, kind)
+        && strike(host, &dimension, *other, *other_at, kind, kind.damage / 2.0)
     {
         set_number(entity, "Produced", number(entity, "Produced").saturating_add(1));
     }

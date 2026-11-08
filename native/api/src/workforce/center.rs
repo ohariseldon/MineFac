@@ -93,7 +93,7 @@ pub(crate) fn perform(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
     set_number(entity, "Admin", 1);
     let round = number(entity, "Refresh") + 1;
     set_number(entity, "Refresh", round % (REFRESH_EVERY * CHARGE_EVERY));
-    if round % REFRESH_EVERY == 1 || !entity.nbt.contains_key(&"DWorkers".into()) {
+    if round % REFRESH_EVERY == 1 || !entity.nbt.contains_key(nbt_key("DWorkers")) {
         refresh(host.dimension(), pos, entity, now);
         // Com administrador, o centro de controle é o centro da vila: spawn e renascimento aqui.
         spawn::control_center(host, pos);

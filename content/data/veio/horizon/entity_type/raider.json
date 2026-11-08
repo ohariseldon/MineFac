@@ -2,6 +2,7 @@
   "template": "minecraft:zombie",
   "attributes": {
     "minecraft:max_health": 24.0,
-    "minecraft:movement_speed": 0.25
+    "minecraft:movement_speed": 0.25,
+    "minecraft:follow_range": 40.0
   }
 }

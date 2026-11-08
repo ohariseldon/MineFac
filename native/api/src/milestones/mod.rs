@@ -158,7 +158,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     if delivered && status != 3 { status = 1; }
     set_number(entity, "Status", status);
     let dimension = host.dimension();
-    if (now + ((pos[0] ^ pos[2]) & 15) as u64).is_multiple_of(REFRESH) || !entity.nbt.contains_key(&"DTotal".into()) {
+    if (now + ((pos[0] ^ pos[2]) & 15) as u64).is_multiple_of(REFRESH)
+        || !with_nbt_key("DTotal", |key| entity.nbt.contains_key(key)) {
         let seen = census::summary(dimension, pos, RADIUS, now);
         for (key, value) in [("DWorking", seen.working), ("DPower", seen.power + seen.fuel), ("DBlocked", seen.blocked),
             ("DDamaged", seen.damaged), ("DSetup", seen.setup), ("DTotal", seen.total)] {

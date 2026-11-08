@@ -234,7 +234,7 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             in_love: tag_int(&nbt, "InLove") > 0,
             sheared: tag_int(&nbt, "Sheared") != 0,
             color: tag_int(&nbt, "Color"),
-            named: nbt.contains_key(&"CustomName".into()),
+            named: nbt.contains_key(nbt_key("CustomName")),
         });
     }
     set_number(entity, "Info", animals.len() as i32);

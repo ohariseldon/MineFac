@@ -1,14 +1,15 @@
-# Veio 0.16.1 consolidada
+# Veio — candidata consolidada
 
 
-Esta versão reúne a 0.16.0 fornecida, todas as branches remotas conferidas, os commits `13758bd` e `fd2a446`, o tutorial interativo, o realismo opcional e os pacotes de fases e Quadro da fábrica. Registro da integração: [CONSOLIDACAO.md](CONSOLIDACAO.md).
+Candidata ainda em integração, aguardando todas as frentes terminarem. Reúne a base remota 0.17.2, a 0.16.0 fornecida, todas as branches remotas conferidas, os commits `13758bd` e `fd2a446`, o tutorial interativo, o realismo opcional e os pacotes de fases e Quadro da fábrica. Registro da integração: [CONSOLIDACAO.md](CONSOLIDACAO.md).
 
 - **Aprender fazendo:** um objetivo na tela por vez, cumprido por máquinas funcionando e entregas reais. Braços, funis e carregadores também comprovam automação.
 - **Progressão por fases:** 32 engrenagens abrem a oficina; 16 chapas de aço e 16 circuitos abrem as fases seguintes. Jazidas de minério são medidas por conexão em 3D, com classe industrial a partir de 16 blocos. As linhas básicas usam razões inteiras de máquinas.
+- **Megafábricas:** copiadora, marco de obra, elevador de carga e carregadores usando escadas entre andares. Projetos pagam os materiais e preservam orientação e ajustes, sem copiar inventários.
 - **Quadro da fábrica:** fases, licenças, entregas automatizáveis, pedidos diários e diagnóstico de gargalos. Os alertas respeitam o objetivo do tutorial.
 - **Aldeões:** caminhada guiada pelo cérebro vanilla, descanso dos trabalhadores civis e itens da carga visíveis na mão.
 - **Realismo 1.1:** opção de iluminação industrial leve antes de jogar, alternativa sem shaders e silhuetas próprias para as máquinas.
-- **Desempenho e continuidade:** planejamento incremental dos capatazes e limpeza dos estados temporários ao trocar de mundo; casa do fundador e correções de respawn preservadas.
+- **Desempenho e continuidade:** planejamento incremental dos capatazes, busca retomável dos carregadores, leituras de painel em uma passada e menos sincronizações de esteiras e limpeza dos estados temporários ao trocar de mundo; casa do fundador e correções de respawn preservadas.
 
 **Conteúdo integrado da base 0.16.0:**
 
@@ -22,11 +23,11 @@ A 0.15.0 foi a build consolidada anterior: vila operária completa (Cloud), bra�
 
 Histórico: a 0.14.0 fez as vilas crescerem com a fábrica até 150 aldeões (com um censo de posições para manter o custo baixo), põe o jogador no centro da vila ao entrar e ao renascer, e leva os sistemas da vila para um segundo livro, o Guia da Vila Operária, com sua própria aba de avanços; inclui o lote 6 do Grok. A 0.13.0 trouxe zonas de lavoura e de cercado com níveis de expansão, celeiro e silo, o centro de controle (painel de gestão com metas) e vilas que crescem até 30 aldeões, além dos lotes 4 e 5 do Grok. A 0.12.0 acrescentou a fila de tarefas do capataz e o posto do pastor, e inclui o [lote 3 do Grok](frentes/GROK-LOTE3.md) (varreduras mais baratas e comida que custa 2 pontos por tarefa). A 0.11.0 trouxe o carregador e o capataz, e a 0.10.0 consolidou as três frentes da rodada sobre a 0.9.1:
 
-- **Cloud — trabalhadores:** [aldeões contratados](TRABALHADORES.md). Zonas de lavoura e cercado, celeiro, silo e centro de controle; posto do lavrador (ara, planta e colhe), posto do pastor (cuida dos animais), posto do carregador (abastece máquinas e recolhe produtos) e mesa do capataz (alimenta e recontrata os postos e monta uma fila de transferências que os carregadores executam). As entregas da 0.11.0 à 0.16.1 aguardam teste no jogo.
+- **Cloud — trabalhadores:** [aldeões contratados](TRABALHADORES.md). Zonas de lavoura e cercado, celeiro, silo e centro de controle; posto do lavrador (ara, planta e colhe), posto do pastor (cuida dos animais), posto do carregador (abastece máquinas e recolhe produtos) e mesa do capataz (alimenta e recontrata os postos e monta uma fila de transferências que os carregadores executam). As entregas da 0.11.0 à 0.17.2 aguardam teste no jogo.
 - **Codex — interface de postos:** [consulta comum de estações](frentes/INTERFACE_POSTOS.md), com setor, inventários, motivo de espera e dica ao passar o cursor sobre o estado da máquina. O posto do lavrador já está registrado nela.
 - **Grok — lote 1:** [ticks mais leves e energia renovável utilizável](frentes/GROK-LOTE.md): roda d'água, cata-vento e biomassa reforçados; menos trabalho repetido em cabos, esteiras e sensores. **Lote 3:** [postos da 0.11.0](frentes/GROK-LOTE3.md): varredura por fileira, pão paga 3 tarefas, trigo cru não fecha o ciclo. **Lote 4:** [inspeções do carregador e NBT do pastor](frentes/GROK-LOTE4.md): 3 máquinas por ciclo; o pastor relê só o alvo. **Lote 5:** [fila do capataz](frentes/GROK-LOTE5.md): uma leitura por bloco da rede; 3 postos por ciclo. **Lote 6:** [zonas da 0.13.0](frentes/GROK-LOTE6.md): 9 blocos/ciclo na lavoura grande; um teste de água por ciclo. **Lote 7:** [tick sem alocação repetida](frentes/GROK-LOTE7.md): chaves NBT reaproveitadas; a difusão da poluição corre uma vez por dimensão.
 
-**Para jogar no Windows:** depois de clonar, abra `launcher.exe` na raiz do repositório (ou extraia `release/Veio-0.16.1.zip` em qualquer pasta e abra o `launcher.exe` de dentro). Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Se a instância não existir, ele a cria (`horizon-launcher instance create Veio`) e depois abre o jogo direto. Antes, instale o Horizon Launcher, entre com a conta e faça o Prepare uma vez. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo. Para gerar de novo: `python tools/package.py`.
+**Para jogar no Windows:** depois de clonar, abra `launcher.exe` na raiz do repositório (ou extraia `release/Veio-0.17.2.zip` em qualquer pasta e abra o `launcher.exe` de dentro). Ele compila o código nativo pelo Horizon Launcher quando a versão muda, instala o conteúdo na instância **Veio** e abre o launcher. Se a instância não existir, ele a cria (`horizon-launcher instance create Veio`) e depois abre o jogo direto. Antes, instale o Horizon Launcher, entre com a conta e faça o Prepare uma vez. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo. Para gerar de novo: `python tools/package.py`.
 
 **Na mesma rede:** quem hospeda abre o mundo, aperta Esc, escolhe **Abrir para a LAN** e **Iniciar mundo LAN**. O mundo continua no computador dele. Quem entra, no mesmo Wi-Fi, abre **Multijogador**: o mundo aparece na lista. Cada pessoa usa a própria conta do Minecraft e a mesma versão do Veio. As máquinas, a vila e os itens são os do anfitrião. Quem chega pela primeira vez vai para a vila que já existe, em vez de ganhar outra.
 
@@ -280,7 +281,7 @@ Máquinas trabalhando poluem o chunk onde estão: gerador 6 por segundo, forno d
 4. Eles correm até o jogador e batem como zumbi. Sem luta corpo a corpo, vão aos defensores do quartel (o guarda primeiro) e, sem soldado por perto, aos outros aldeões: quatro golpes matam um trabalhador, o guarda aguenta oito, e o posto fica parado até outra contratação. Sem jogador nem aldeão a 28 blocos, golpeiam a máquina no mesmo ritmo. À noite, zumbis, esqueletos e aranhas também caçam aldeões na mesma altura (os da caverna não sobem atrás deles), e um aldeão que passa 30 s sem apanhar se recupera. Esqueletos com o jogador a até 16 blocos continuam atirando nele. Lavradores e pastores dormem em casa à noite e voltam ao amanhecer. Eles queimam ao sol.
 5. Máquina com integridade zerada para, sem perder estoque. Um **kit de reparo**, com o botão direito, recupera 50%.
 
-Muros vanilla barram o caminho, a torre Tesla abate Saqueadores, o quartel treina milícia, guarda, arqueiro e mago, e lavouras e módulos de eficiência reduzem a poluição. No modo pacífico não há ataques. A poluição fica em memória e recomeça ao reabrir o mundo.
+Muros vanilla barram o caminho, a torre Tesla abate Saqueadores, o **quartel** treina milícia, guarda, arqueiro e mago (troca de classe: agachar com uma esmeralda; os golpes tiram vida de verdade, o guarda se cura, e o soldado fica de plantão à noite sem fugir), e lavouras e módulos de eficiência reduzem a poluição. No modo pacífico não há ataques. A poluição fica em memória e recomeça ao reabrir o mundo.
 
 ## A fábrica no mundo
 

@@ -244,6 +244,8 @@ fn put_trace(trace: &mut HashMap<Pos, Token>, to: Pos, count: u32, now: u64) {
     token.count = (token.count + count).min(64); token.seen = now;
 }
 
+pub(super) fn tracking() -> bool { ACTIVE.load(Ordering::Relaxed) }
+
 pub(super) fn visible_goal(uuid: u128) -> bool {
     SESSION.lock().ok().and_then(|slot| slot.as_ref().and_then(|session|
         session.players.get(&uuid).map(|progress| progress.step < DONE && !progress.hidden)))

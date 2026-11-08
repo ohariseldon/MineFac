@@ -69,7 +69,7 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let area = (radius * 2 + 1).pow(2) * 3;
     // Zona nova ou de outro tamanho: recomeça a varredura.
     let shape = vec![center[0], center[1], center[2], radius];
-    if !matches!(entity.nbt.get(&"ScanArea".into()), Some(Tag::IntArray(old)) if *old == shape) {
+    if !matches!(entity.nbt.get(nbt_key("ScanArea")), Some(Tag::IntArray(old)) if *old == shape) {
         entity.nbt.insert("ScanArea".into(), Tag::IntArray(shape));
         set_number(entity, "Scan", 0);
         set_number(entity, "Searched", 0);

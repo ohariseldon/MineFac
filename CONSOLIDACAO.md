@@ -11,8 +11,10 @@ Aguardando o encerramento de todas as frentes antes de gerar a build única fina
 - Realismo opcional, opção sem shaders e identidade visual das máquinas.
 - `MineFac-progressao-fases.zip`: os dois patches foram aplicados sobre sua base `cf37004`, preservando autoria, e a branch resultante foi fundida à consolidada.
 - `MineFac-quadro-da-fabrica.zip`: pacote substituto de fases aplicado em branch própria sobre `6f8a64b`; inclui quadro, licenças, pedidos do dia e censo.
-- Cloud até `a5f0eb5` / `7208324`: aldeões guiados pelo cérebro vanilla, descanso e carga visível na mão.
+- Cloud inicialmente em `a5f0eb5` / `7208324`: aldeões guiados pelo cérebro vanilla, descanso e carga visível na mão.
 - Realismo 1.1: `3106849` e `2bc62ec`, incluídos por merge; não exige recompilar código nativo.
+- `MineFac-megafabricas.zip`: importado sobre `a5f0eb5`. Os quatro patches anteriores foram confirmados equivalentes por `git range-diff`; o quinto acrescenta copiadora, marco, elevador e escadas (`e0ee148` na branch importada).
+- Cloud até `5217b62`, incluindo `494d3e7` e `604369d`: combate baseado em vida real, plantão do quartel, otimização de ticks e painéis, sincronia de esteiras e busca incremental de tarefas dos carregadores.
 - Branches remotas: todas as pontas conferidas são ancestrais desta build. Lista de nomes e hashes em `frentes/branches-consolidadas.json`.
 
 ## Decisões de integração
@@ -31,9 +33,9 @@ O mapa finito em `work-in-progress/finite-world` é apenas checkpoint de desenvo
 
 ## Verificações
 
-- Conteúdo: 535 JSON, traduções e 67 texturas 16×16; quatro livros com ajuste de página.
+- Conteúdo: 558 JSON, traduções e 68 texturas 16×16; quatro livros com ajuste de página.
 - Formas de máquinas: 34 registros e 27 silhuetas distintas.
-- Regras Rust e progressão: 218 testes aprovados, zero falhas. Seis cenários são opcionais na execução comum; os cenários de tutorial abaixo foram executados separadamente e aprovados.
+- Regras Rust e progressão: 248 testes aprovados, zero falhas. Oito cenários são opcionais na execução comum; os cenários de tutorial abaixo foram executados separadamente e aprovados.
 - Cenários isolados: tutorial salvo/reaberto/troca de mundo, transporte misto com braços, funis e carregadores sem esteiras, e prioridade do objetivo do tutorial sobre os alertas do quadro.
 - Launcher: seis testes, incluindo escolha de gráficos, preservação das opções pessoais e cópias dos arquivos originais.
 - Executável nativo da integração anterior, antes das novas entregas do quadro e dos aldeões: compilado pelo Horizon Launcher sobre 66f3981, perfil performance (fast, otimizado), incluindo mod-veio 0.16.1 e horizon-native-game. Etapa de compilação concluída em 7 min 14 s, sem falhas. O jogo não foi aberto.
@@ -48,3 +50,15 @@ O tutorial continua com um objetivo por vez. Os alertas e as mensagens diárias 
 O censo e os pagamentos temporários do quadro são limpos ao iniciar outro mundo, junto do estado temporário da casa. O quartel mantém o turno noturno para defender a vila; os postos civis seguem o descanso introduzido pela nova frente de aldeões. O cancelamento das ordens limpa a navegação e o destino do cérebro; a consulta das ordens mantém o intervalo limitado da otimização.
 
 As entregas de fase do quadro, os contratos da central e os exercícios do tutorial têm funções distintas. A conclusão dos exercícios encaminha ao quadro para continuar a progressão.
+
+## Revisão da leva 0.17.2 e megafábricas
+
+A rotina de tick única da frente de desempenho também executa as observações do tutorial e do censo. A observação detalhada de ciclos do tutorial é ativada apenas enquanto há jogadores em exercícios. O painel mantém as leituras específicas de caravanas, drones, quadro e farol opcional, sem perder a atualização eficiente da base 0.17.2.
+
+As chaves de estado introduzidas por quadro, elevadores e copiadora entraram na tabela de chaves compiladas. O quadro reaproveita a chave de presença do censo. A animação de transporte mantém seus campos próprios; as esteiras preservam a otimização que evita sincronizar mudanças apenas de quantidade.
+
+O quartel usa o modelo de combate da 0.17.0 em diante: dano real, cura do guarda e memória de plantão para não fugir nem dormir em serviço. As ordens mantêm o cancelamento de navegação e a limpeza do alvo antigo. A troca de classe usa agachar com esmeralda, conforme o comportamento mais recente. A correção anterior de ondas sem local carregado foi preservada: não anuncia nem conta uma onda que não conseguiu criar inimigos.
+
+Projetos e ajustes de máquinas em espera são limpos ao trocar de mundo. O retorno da copiadora vai ao jogador que clicou, mesmo se outra pessoa estiver mais perto em LAN. Há testes específicos para os dois casos, além dos testes de cobrança e recusa sem gastar materiais.
+
+A candidata recebeu código novo desde a última compilação nativa completa. A compilação e o ZIP únicos finais aguardam o encerramento de todas as frentes, como solicitado.

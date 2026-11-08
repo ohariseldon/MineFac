@@ -271,12 +271,12 @@ for key, pt, en in [
  ("veio.metric.tasks", "Colheitas feitas: %s", "Harvests done: %s"),
  ("veio.metric.ration", "Comida: %s tarefas", "Food: %s tasks"),
  ("veio.hint.farm_post", "Esmeralda: contratar aldeão", "Emerald: hire a villager"),
- ("veio.hint.barracks.militia", "Milícia: alcance médio, três golpes", "Militia: medium range, three blows"),
- ("veio.hint.barracks.guard", "Guarda: tanque, os monstros vão nele", "Guard: tank, monsters come for them"),
+ ("veio.hint.barracks.militia", "Milícia: rápida, 7 de dano", "Militia: quick, 7 damage"),
+ ("veio.hint.barracks.guard", "Guarda: tanque, se cura a cada golpe", "Guard: tank, heals on every blow"),
  ("veio.hint.barracks.archer", "Arqueiro: atira de longe", "Archer: shoots from far away"),
- ("veio.hint.barracks.mage", "Mago: dois golpes e fere outro", "Mage: two blows and wounds another"),
+ ("veio.hint.barracks.mage", "Mago: 10 de dano e fere outro", "Mage: 10 damage and wounds another"),
  ("veio.barracks.militia", "Milícia pronta.", "Militia ready."),
- ("veio.barracks.guard", "Guarda pronto. Os monstros vão nele.", "Guard ready. Monsters come for them."),
+ ("veio.barracks.guard", "Guarda pronto. Ele aguenta a linha de frente.", "Guard ready. They hold the front line."),
  ("veio.barracks.archer", "Arqueiro pronto.", "Archer ready."),
  ("veio.barracks.mage", "Mago pronto.", "Mage ready."),
  ("veio.barracks.need_emerald", "Uma esmeralda no quartel treina a classe.", "An emerald in the barracks trains the class."),
@@ -801,7 +801,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.16.1"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.17.2"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",

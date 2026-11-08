@@ -4,9 +4,16 @@
 //!   espalha aos chunks vizinhos e uma parte se dissipa.
 //! - O primeiro aviso chega pelo chat quando um chunk passa de `NOTICE`. Ataques só começam um dia
 //!   inteiro depois desse aviso, e só à noite, com alerta ao anoitecer.
-//! - Saqueadores (`veio:raider`, um zumbi) vêm à noite atrás de quem está na fábrica. Se ninguém
-//!   os enfrenta, golpeiam a máquina mais próxima: quatro golpes e ela para, até um kit de reparo.
-//!   Eles queimam ao sol.
+//! - Uma onda chega à noite pela borda da fábrica, junta e de um lado (a direção muda a cada noite),
+//!   com o toque de corneta. Ela traz **saqueadores** (`veio:raider`, zumbi com faro de 40 blocos),
+//!   **arqueiros** (esqueletos, a partir da 3ª noite de ataque) e **brutos**
+//!   (`veio:raider_brute`, zumbi grande e lento, a partir da 5ª). Todos queimam ao sol.
+//! - O combate é o do Minecraft: saqueadores e brutos atacam jogadores, aldeões e golens como
+//!   zumbis; arqueiros atiram neles. Esqueletos e aranhas da noite também passam a caçar aldeões
+//!   (alvo vanilla `NearestTarget`), com dano de verdade: o aldeão foge, golens defendem.
+//! - Sem ninguém por perto para atacar, saqueadores golpeiam a máquina poluidora mais próxima
+//!   (quatro golpes param a máquina, até um kit de reparo). O Bruto vai primeiro às máquinas e
+//!   bate o dobro.
 //!
 //! O estado fica em memória e recomeça ao reabrir o mundo; a poluição volta em poucos minutos.
 use super::*;
@@ -29,9 +36,15 @@ const MAX_WAVE: u32 = 12;
 const RAIDER: &str = "veio:raider";
 /// Dano de um golpe. Quatro golpes (4 s) param a máquina.
 pub(super) const BLOW: i32 = 25;
-/// O saqueador corre até o jogador neste raio; mais perto, o ataque vanilla assume.
-const CHASE: f64 = 40.0;
-const HAND: f64 = 2.8;
+const BRUTE: &str = "veio:raider_brute";
+const ARCHER: &str = "minecraft:skeleton";
+/// O Bruto derruba uma máquina em dois golpes.
+pub(super) const BRUTE_BLOW: i32 = 50;
+/// Noites de ataque a partir das quais a onda traz arqueiros e brutos.
+pub(super) const ARCHERS_FROM: u32 = 3;
+pub(super) const BRUTES_FROM: u32 = 5;
+/// A onda nasce a esta distância da máquina-alvo.
+const ARRIVAL: f64 = 26.0;
 
 /// Emissão por segundo de trabalho.
 pub(super) fn emission(block: &str) -> f32 {
@@ -225,14 +238,17 @@ pub(super) fn wave_size(level: f32, waves: u32) -> u32 {
     (4 + waves.saturating_sub(1) + extra).min(MAX_WAVE)
 }
 
+/// Noites de ataque já vividas nesta dimensão (a onda de hoje incluída).
+fn waves_so_far(dimension: &str) -> u32 {
+    with_world(dimension, |world| world.waves).unwrap_or(1)
+}
+
 fn act(host: &mut dyn Host, dimension: &str, plan: Plan, time: i64) {
     let (anchor, key) = match plan {
         Plan::Notice(anchor) => (anchor, "veio.raid.notice"),
         Plan::Warning(anchor) => (anchor, "veio.raid.warning"),
         Plan::Wave(anchor, size) => {
-            if spawn_wave(host, dimension, anchor, size, time) == 0 {
-                // Nenhum saqueador coube (chunks em volta descarregados): a noite não conta e o
-                // próximo passo tenta de novo, sem anunciar uma onda que não veio.
+            if spawn_wave(host, dimension, anchor, size, waves_so_far(dimension), time) == 0 {
                 with_world(dimension, |world| {
                     world.wave_day = -1;
                     world.waves = world.waves.saturating_sub(1);
@@ -258,34 +274,38 @@ fn act(host: &mut dyn Host, dimension: &str, plan: Plan, time: i64) {
     }
 }
 
-/// Quantos saqueadores apareceram.
-fn spawn_wave(host: &mut dyn Host, dimension: &str, anchor: [i32; 3], size: u32, time: i64) -> u32 {
+/// Quem vem numa onda de `size` na noite de ataque `waves`: (saqueadores, arqueiros, brutos).
+pub(super) fn wave_mix(size: u32, waves: u32) -> (u32, u32, u32) {
+    let archers = if waves >= ARCHERS_FROM { size / 4 } else { 0 };
+    let brutes = if waves >= BRUTES_FROM { (size / 6).max(1) } else { 0 };
+    (size - archers - brutes, archers, brutes)
+}
+
+fn spawn_wave(host: &mut dyn Host, dimension: &str, anchor: [i32; 3], size: u32, waves: u32, time: i64) -> u32 {
     let factory = [f64::from(anchor[0]) + 0.5, f64::from(anchor[1]), f64::from(anchor[2]) + 0.5];
-    let player = host.server_players().into_iter()
-        .filter(|player| player.dimension == dimension)
-        .map(|player| {
-            let distance = (0..3).map(|axis| (player.position[axis] - factory[axis]).powi(2)).sum::<f64>();
-            (distance, player.position)
-        })
-        .filter(|(distance, _)| *distance < 64.0 * 64.0)
-        .min_by(|a, b| a.0.total_cmp(&b.0))
-        .map(|(_, at)| at);
-    // Na cara de quem está na fábrica; senão, a 18 blocos da máquina, para chegar rápido.
-    let (center, radius) = player.map_or((factory, 18.0), |at| (at, 14.0));
-    let angle = (time.rem_euclid(7919) as f64) * 0.0123;
+    // Uma frente: um arco de 90 graus num lado da fábrica, que muda a cada noite. Os saqueadores
+    // farejam o jogador a 40 blocos; quem está na fábrica os vê chegar.
+    let angle = (time.div_euclid(DAY).rem_euclid(97) as f64) * 2.399;
+    let (raiders, archers, brutes) = wave_mix(size, waves);
+    let kinds = std::iter::repeat_n(RAIDER, raiders as usize)
+        .chain(std::iter::repeat_n(ARCHER, archers as usize))
+        .chain(std::iter::repeat_n(BRUTE, brutes as usize));
+    let mut first = None;
     let mut spawned = 0;
-    for index in 0..size {
-        let spread = f64::from(index) * (std::f64::consts::TAU / f64::from(size.max(1)));
-        let x = center[0] + ((angle + spread).cos() * radius);
-        let z = center[2] + ((angle + spread).sin() * radius);
-        let Ok(heights) = host.surface_heights(dimension, &[(x.floor() as i32, z.floor() as i32)], NativeHeightmap::MotionBlockingNoLeaves) else { continue };
+    for (index, kind) in kinds.enumerate() {
+        let spread = (index as f64 / f64::from(size.max(1)) - 0.5) * std::f64::consts::FRAC_PI_2;
+        let x = factory[0] + (angle + spread).cos() * ARRIVAL;
+        let z = factory[2] + (angle + spread).sin() * ARRIVAL;
+        let Ok(heights) = host.surface_heights(dimension, &[(x.floor() as i32, z.floor() as i32)], NativeHeightmap::MotionBlocking) else { continue };
         let Some(Some(y)) = heights.first().copied() else { continue };
-        if host.summon(dimension, RAIDER, [x, f64::from(y), z], Compound::default()).is_some() {
+        let at = [x, f64::from(y), z];
+        if host.summon(dimension, kind, at, Compound::default()).is_some() {
+            first.get_or_insert(at);
             spawned += 1;
         }
     }
-    if spawned > 0 {
-        host.play_sound("minecraft:event.raid.horn", center, 16, 1.2, 0.7);
+    if let Some(at) = first {
+        host.play_sound("minecraft:event.raid.horn", at, 16, 4.0, 0.7);
     }
     spawned
 }
@@ -329,14 +349,10 @@ pub(super) fn wear(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     number(entity, "Damage") >= 100
 }
 
-/// Saqueadores só nascem no Overworld; máquinas de outras dimensões com as mesmas coordenadas
-/// não são alvo.
-const RAID_WORLD: &str = "minecraft:overworld";
-
 /// Alvo de um saqueador: a máquina poluidora mais próxima a até 48 blocos.
 fn target_near(at: [f64; 3]) -> Option<[i32; 3]> {
     let worlds = WORLDS.lock().ok()?;
-    worlds.iter().filter(|world| world.name == RAID_WORLD).flat_map(|world| world.anchors.keys())
+    worlds.iter().flat_map(|world| world.anchors.keys())
         .map(|pos| {
             let distance = (0..3).map(|axis| (f64::from(pos[axis]) + 0.5 - at[axis]).powi(2)).sum::<f64>();
             (distance, *pos)
@@ -347,15 +363,25 @@ fn target_near(at: [f64; 3]) -> Option<[i32; 3]> {
 }
 
 fn still_polluting(pos: [i32; 3]) -> bool {
-    WORLDS.lock().is_ok_and(|worlds| worlds.iter().any(|world| world.name == RAID_WORLD && world.anchors.contains_key(&pos)))
+    WORLDS.lock().is_ok_and(|worlds| worlds.iter().any(|world| world.anchors.contains_key(&pos)))
 }
 
-/// Objetivo do saqueador: andar até a máquina e golpeá-la. Fica abaixo do ataque ao jogador,
-/// então um jogador por perto continua sendo a prioridade do zumbi.
+/// Objetivo do saqueador: andar até a máquina poluidora e golpeá-la. Para o saqueador fica abaixo
+/// dos ataques do zumbi, então jogadores, aldeões e golens por perto vêm primeiro; o Bruto o
+/// tem acima: máquinas primeiro.
 #[derive(Clone, Debug, Default)]
 pub(super) struct Sabotage {
     target: Option<[i32; 3]>,
     cooldown: i32,
+    blow: i32,
+    /// Chamadas até procurar de novo uma máquina (meio segundo a um segundo).
+    wait: u8,
+}
+
+impl Sabotage {
+    fn new(blow: i32) -> Self {
+        Self { blow, ..Self::default() }
+    }
 }
 
 impl Goal for Sabotage {
@@ -363,10 +389,21 @@ impl Goal for Sabotage {
         goals::MOVE
     }
     fn can_use(&mut self, m: &mut Mob, _cx: &mut Cx) -> bool {
+        // A lista de máquinas tem trava: um saqueador não a consulta em todo tick.
+        if self.wait > 0 {
+            self.wait -= 1;
+            return false;
+        }
+        self.wait = 19;
         self.target = target_near([m.position.x, m.position.y, m.position.z]);
         self.target.is_some()
     }
     fn can_continue(&mut self, _m: &mut Mob, _cx: &mut Cx) -> bool {
+        if self.wait > 0 {
+            self.wait -= 1;
+            return self.target.is_some();
+        }
+        self.wait = 19;
         self.target.is_some_and(still_polluting)
     }
     fn start(&mut self, m: &mut Mob, cx: &mut Cx) {
@@ -380,9 +417,9 @@ impl Goal for Sabotage {
         let close = (m.position.x - goal[0]).powi(2) + (m.position.z - goal[2]).powi(2) < 2.4 * 2.4
             && (m.position.y - goal[1]).abs() < 2.0;
         self.cooldown -= 1;
-            if close {
+        if close {
             if self.cooldown <= 0 {
-                hit([x, y, z], BLOW);
+                hit([x, y, z], if self.blow > 0 { self.blow } else { BLOW });
                 self.cooldown = 20;
             }
         } else if m.ai.nav.is_done() && self.cooldown <= 0 {
@@ -395,243 +432,26 @@ impl Goal for Sabotage {
     }
 }
 
-static PLAYERS: Mutex<Vec<(String, [f64; 3])>> = Mutex::new(Vec::new());
-static VILLAGERS: Mutex<Vec<(u32, [f64; 3])>> = Mutex::new(Vec::new());
-static STRIKES: Mutex<Vec<u32>> = Mutex::new(Vec::new());
-/// Aldeões feridos: id, golpes levados e quando foi o último.
-static WOUNDS: Mutex<Vec<(u32, i32, u64)>> = Mutex::new(Vec::new());
-/// Golpes até matar um aldeão. O posto fica sem trabalhador.
-pub(super) const VILLAGER_BLOWS: i32 = 4;
-
-/// Noite no Overworld: os monstros comuns só caçam aldeões nesse horário.
-static NIGHT: AtomicBool = AtomicBool::new(false);
-/// Os registros de jogadores e aldeões se refazem a cada `NOTE_EVERY` ticks.
-const NOTE_EVERY: u64 = 10;
-/// Um aldeão ferido se recupera se não apanhar de novo nesse tempo (30 s).
-const HEAL: u64 = 600;
-/// Distância vertical máxima até a presa: um esqueleto da caverna não caça a vila lá em cima.
-const PREY_HEIGHT: f64 = 6.0;
-const PREY_RANGE: f64 = 28.0;
-
-/// Posições de quem está no mundo, para os saqueadores caçarem sem consultar o host no objetivo.
-pub(super) fn note_players(host: &dyn Host, now: u64) {
-    if !now.is_multiple_of(NOTE_EVERY) {
-        return;
-    }
-    // As outras dimensões leem o mesmo relógio do dia do Overworld.
-    NIGHT.store(night_at(host.day_time()), Ordering::Relaxed);
-    let list = host.server_players().into_iter().map(|player| (player.dimension, player.position)).collect();
-    if let Ok(mut players) = PLAYERS.lock() {
-        *players = list;
-    }
-    let people = production::ranch::villager_positions(host, RAID_WORLD);
-    if let Ok(mut villagers) = VILLAGERS.lock() {
-        villagers.clear();
-        villagers.extend(people.iter().copied());
-    }
-}
-
-/// Do anoitecer (13000) ao amanhecer (23000), quando monstros aparecem e aldeões dormem.
-pub(super) fn night_at(day_time: i64) -> bool {
-    (13000..23000).contains(&day_time.rem_euclid(DAY))
-}
-
-pub(super) fn is_night() -> bool {
-    NIGHT.load(Ordering::Relaxed)
-}
-
-/// A presa de um monstro em `at`: o defensor do quartel que o provoca, senão o aldeão mais
-/// próximo a até `PREY_RANGE` blocos e na mesma altura. De dia, só os saqueadores caçam.
-fn nearest_villager(at: [f64; 3], always: bool) -> Option<(u32, [f64; 3])> {
-    if let Some(guard) = workforce::barracks::shield(at) {
-        return Some(guard);
-    }
-    if !always && !is_night() {
-        return None;
-    }
-    VILLAGERS.lock().ok()?.iter()
-        .filter(|(_, pos)| (pos[1] - at[1]).abs() <= PREY_HEIGHT)
-        .map(|(id, pos)| ((pos[0] - at[0]).hypot(pos[2] - at[2]), *id, *pos))
-        .filter(|(distance, _, _)| *distance <= PREY_RANGE)
-        .min_by(|a, b| a.0.total_cmp(&b.0))
-        .map(|(_, id, pos)| (id, pos))
-}
-
-/// Um jogador ao alcance do ataque do próprio monstro: corpo a corpo, ou flecha para os atiradores.
-fn player_in_reach(at: [f64; 3], kind: &str) -> bool {
-    let reach = if matches!(kind, "minecraft:skeleton" | "minecraft:stray" | "minecraft:bogged" | "minecraft:pillager") {
-        16.0
-    } else {
-        6.0
-    };
-    PLAYERS.lock().is_ok_and(|players| players.iter().any(|(dimension, pos)| {
-        dimension == RAID_WORLD && (pos[0] - at[0]).hypot(pos[2] - at[2]) <= reach && (pos[1] - at[1]).abs() <= 8.0
-    }))
-}
-
-fn strike(id: u32) {
-    if let Ok(mut queue) = STRIKES.lock()
-        && queue.len() < 64
-    {
-        queue.push(id);
-    }
-}
-
-/// Aplica os golpes nos aldeões. No quarto, o aldeão morre e o posto dele fica vazio. Quem
-/// passa `HEAL` ticks sem apanhar se recupera.
-pub(super) fn harm_villagers(host: &mut dyn Host, now: u64) {
-    let queue = STRIKES.lock().map(|mut queue| std::mem::take(&mut *queue)).unwrap_or_default();
-    if queue.is_empty() {
-        return;
-    }
-    let mut dead = Vec::new();
-    let mut hurt = Vec::new();
-    if let Ok(mut wounds) = WOUNDS.lock() {
-        wounds.retain(|(_, _, last)| now.saturating_sub(*last) <= HEAL);
-        for id in queue {
-            let hits = if let Some((_, hits, last)) = wounds.iter_mut().find(|(seen, _, _)| *seen == id) {
-                *hits += 1;
-                *last = now;
-                *hits
-            } else {
-                wounds.push((id, 1, now));
-                1
-            };
-            if hits >= workforce::barracks::toughness(id).unwrap_or(VILLAGER_BLOWS) {
-                wounds.retain(|(seen, _, _)| *seen != id);
-                dead.push(id);
-            } else {
-                hurt.push(id);
-            }
-        }
-    }
-    let place = |id: u32| VILLAGERS.lock().ok().and_then(|list| list.iter().find(|(seen, _)| *seen == id).map(|(_, at)| *at));
-    for id in hurt {
-        if let Some(at) = place(id) {
-            host.play_sound("minecraft:entity.villager.hurt", at, 6, 0.8, 1.0);
-        }
-    }
-    for id in dead {
-        let at = place(id).unwrap_or([0.0, 64.0, 0.0]);
-        if host.kill_mob("minecraft:overworld", id) {
-            host.play_sound("minecraft:entity.villager.death", at, 8, 1.0, 1.0);
-            for player in host.server_players() {
-                if player.dimension == "minecraft:overworld"
-                    && (player.position[0] - at[0]).hypot(player.position[2] - at[2]) < 64.0
-                {
-                    host.action_bar(player.uuid, Text::tr("veio.raid.villager_down", &[]));
-                }
-            }
-        }
-    }
-}
-
-fn nearest_player(at: [f64; 3]) -> Option<[f64; 3]> {
-    PLAYERS.lock().ok()?.iter()
-        .filter(|(dimension, _)| dimension == "minecraft:overworld")
-        .map(|(_, pos)| {
-            let distance = (pos[0] - at[0]).hypot(pos[2] - at[2]);
-            (distance, *pos)
-        })
-        .filter(|(distance, _)| *distance <= CHASE && *distance > HAND)
-        .min_by(|a, b| a.0.total_cmp(&b.0))
-        .map(|(_, pos)| pos)
-}
-
-/// Corre até o jogador. Perto dele, sai de cena e o ataque do zumbi acerta.
-#[derive(Clone, Debug, Default)]
-struct Hunt {
-    goal: Option<[f64; 3]>,
-}
-
-impl Goal for Hunt {
-    fn flags(&self) -> u8 {
-        goals::MOVE
-    }
-    fn can_use(&mut self, m: &mut Mob, _cx: &mut Cx) -> bool {
-        self.goal = nearest_player([m.position.x, m.position.y, m.position.z]);
-        self.goal.is_some()
-    }
-    fn start(&mut self, m: &mut Mob, cx: &mut Cx) {
-        if let Some(goal) = self.goal {
-            m.nav_move_to(cx.w, goal, 1.25);
-        }
-    }
-    fn tick(&mut self, m: &mut Mob, cx: &mut Cx) {
-        let Some(goal) = self.goal else { return };
-        if m.ai.nav.is_done() {
-            m.nav_move_to(cx.w, goal, 1.25);
-        }
-    }
-    fn box_clone(&self) -> Box<dyn Goal> {
-        Box::new(self.clone())
-    }
-}
-
-/// Zumbi, esqueleto, aranha (à noite) e saqueador vão até o aldeão e batem. O jogador em luta
-/// corpo a corpo vem primeiro.
-#[derive(Clone, Debug, Default)]
-struct Prey {
-    id: u32,
-    at: [f64; 3],
-    cooldown: i32,
-}
-
-impl Goal for Prey {
-    fn flags(&self) -> u8 {
-        goals::MOVE
-    }
-    fn can_use(&mut self, m: &mut Mob, _cx: &mut Cx) -> bool {
-        let here = [m.position.x, m.position.y, m.position.z];
-        if player_in_reach(here, &m.kind.id) {
-            return false;
-        }
-        if let Some((id, at)) = nearest_villager(here, m.kind.id == RAIDER) {
-            self.id = id;
-            self.at = at;
-            true
-        } else {
-            false
-        }
-    }
-    fn start(&mut self, m: &mut Mob, cx: &mut Cx) {
-        m.nav_move_to(cx.w, self.at, 1.15);
-    }
-    fn tick(&mut self, m: &mut Mob, cx: &mut Cx) {
-        let close = (m.position.x - self.at[0]).hypot(m.position.z - self.at[2]) < 2.2
-            && (m.position.y - self.at[1]).abs() < 2.0;
-        self.cooldown -= 1;
-        if close {
-            if self.cooldown <= 0 {
-                strike(self.id);
-                self.cooldown = 20;
-            }
-        } else if m.ai.nav.is_done() && self.cooldown <= 0 {
-            m.nav_move_to(cx.w, self.at, 1.15);
-            self.cooldown = 10;
-        }
-    }
-    fn box_clone(&self) -> Box<dyn Goal> {
-        Box::new(self.clone())
-    }
-}
-
-fn night_hunter(kind: &str) -> bool {
-    matches!(kind,
-        "minecraft:zombie" | "minecraft:husk" | "minecraft:drowned" | "minecraft:zombie_villager"
-        | "minecraft:skeleton" | "minecraft:stray" | "minecraft:bogged"
-        | "minecraft:spider" | "minecraft:cave_spider"
-        | "minecraft:pillager" | "minecraft:vindicator" | "veio:raider")
+/// Mobs noturnos que não caçam aldeões no vanilla e passam a caçar. Zumbis, saqueadores e
+/// pillagers já caçam.
+pub(super) fn villager_hunter(kind: &str) -> bool {
+    matches!(kind, "minecraft:skeleton" | "minecraft:stray" | "minecraft:bogged" | "minecraft:spider" | "minecraft:cave_spider")
 }
 
 pub(super) fn register_goals(mob: &mut Mob) {
-    if mob.kind.id == RAIDER {
-        // 1: caça o jogador. 2: aldeão, e o zumbi bate no jogador quando chega. 3: máquina.
-        mob.ai.goals.add(1, Hunt::default());
-        mob.ai.goals.add(2, Prey::default());
-        mob.ai.goals.add(3, Sabotage::default());
-    } else if night_hunter(&mob.kind.id) {
-        mob.ai.goals.add(3, Prey::default());
+    use horizon_client::mobs::Species;
+    use horizon_client::mobs::goals::{NearestTarget, Prey};
+    match mob.kind.id.as_str() {
+        // Abaixo do ataque corpo a corpo do zumbi (2) e acima do passeio (7).
+        RAIDER => mob.ai.goals.add(3, Sabotage::new(BLOW)),
+        // Acima do ataque: o Bruto só briga quando não há máquina poluidora perto.
+        BRUTE => mob.ai.goals.add(1, Sabotage::new(BRUTE_BLOW)),
+        kind if villager_hunter(kind) => {
+            // O alvo vanilla (`NearestAttackableTargetGoal`): o ataque do próprio mob (arco,
+            // mordida) faz o resto, com dano de verdade. Depois de jogador e golem.
+            mob.ai.targets.add(3, NearestTarget::new(Prey::Species(vec![Species::Villager]), true));
+        }
+        _ => {}
     }
 }
 
