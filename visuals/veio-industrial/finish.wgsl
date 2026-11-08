@@ -36,11 +36,13 @@ fn veio_sky_mirror(uv: vec2<f32>, want_reflection: bool) -> vec4<f32> {
     let f = at - base;
     var sum = vec4<f32>(0.0);
     var weights = 0.0;
-    for (var i = 0; i < 4; i++) {
-        let corner = vec2<f32>(f32(i & 1), f32(i >> 1u));
+    // A 3 by 3 tent (bilinear widened by one texel) smooths the half-size edges of the clouds.
+    for (var i = 0; i < 16; i++) {
+        let corner = vec2<f32>(f32(i & 3), f32(i >> 2u)) - 1.0;
         let texel = vec2<i32>(clamp(base + corner, vec2<f32>(0.0), size - 1.0));
         let tap = textureLoad(sky_mirror, texel, 0);
-        let w = mix(1.0 - f.x, f.x, corner.x) * mix(1.0 - f.y, f.y, corner.y);
+        let d = abs(corner - f);
+        let w = max(1.5 - d.x, 0.0) * max(1.5 - d.y, 0.0);
         let kind = select(tap.a >= 0.0, tap.a <= 0.0, want_reflection);
         if kind {
             sum += vec4<f32>(tap.rgb, abs(tap.a)) * w;
@@ -129,12 +131,18 @@ fn post(input: PostInput) -> vec4<f32> {
         let halo = textureSampleLevel(glow, linear_sampler, input.uv, 0.0).rgb;
         color += halo * bloom * 0.45;
     }
-    // Eye adaptation: dark interiors open up a little, and under the open night sky the eye
-    // opens more, as it does outdoors at night (moonlit scenes stay readable, not black).
-    let indoor = 1.0 - frame.eye_light_smooth.y;
-    let lit = max(frame.eye_light_smooth.x, frame.eye_light_smooth.y * veio_daylight());
+    // Eye adaptation from the light around the eye, eased over about 2 seconds by the game
+    // (eye_light_smooth), as BSL and Complementary do with eyeBrightnessSmooth: in a cave, a
+    // dark room or outdoors at night the eye opens up to about twice the light; in daylight it
+    // stays at 1. Leaving a cave into the sun the picture starts bright and settles.
+    let sky_here = frame.eye_light_smooth.y * frame.eye_light_smooth.y * mix(0.10, 1.0, veio_daylight());
+    let lamps_here = frame.eye_light_smooth.x * frame.eye_light_smooth.x * 0.55;
+    let surround = max(sky_here, lamps_here);
+    let opened = select(1.0 + 1.0 * (1.0 - smoothstep(0.02, 0.75, surround)), 1.0, frame.dimension != 0);
     let night_out = (1.0 - veio_daylight()) * frame.eye_light_smooth.y * (1.0 - frame.eye_light_smooth.x);
-    color *= 1.0 + 0.12 * indoor * (1.0 - lit) + 0.55 * night_out * select(1.0, 0.0, frame.dimension != 0);
+    // Exposure works on light, not on the encoded picture.
+    color = pow(max(color, vec3<f32>(0.0)), vec3<f32>(2.2)) * opened;
+    color = pow(color, vec3<f32>(1.0 / 2.2));
     // Night vision of the eye (Purkinje): colours fade at night outdoors.
     let grey = veio_luma(color);
     color = mix(color, vec3<f32>(grey) * vec3<f32>(0.96, 0.99, 1.06), 0.30 * night_out);

@@ -33,6 +33,13 @@ material, que este shader lê. O original é 256x; o Veio reduz para 128x para c
 pacote em `resourcepacks/`, liga por último na lista (os seus pacotes continuam) e sobe o
 orçamento de texturas para 1024 MiB. No Leve ele sai.
 
+**Adaptação do olho e nuvens lisas (3.2):** o brilho segue o lugar onde o jogador está, pela luz
+em volta do olho que o jogo suaviza em ~2 s (a mesma técnica do BSL e do Complementary com
+`eyeBrightnessSmooth`): em caverna, quarto escuro ou ao ar livre à noite a exposição abre até 2×
+(em luz, não na imagem codificada); de dia fica em 1. Ao sair da caverna para o sol, a imagem
+começa clara e assenta. As nuvens trocaram o deslocamento por célula (que serrilhava) por um
+ruído suave, e a ampliação da meia tela passou a um filtro 3×3.
+
 **Céu estável (3.1.3):** o Luiz viu o céu "bugar" ao andar e pular. A causa: as passadas de
 nuvens e de luz no ar montavam a direção do olhar com um ponto a 0,1 bloco do olho, e o balanço
 da câmera ao andar (que o Horizon põe na projeção) desloca o olho alguns centímetros; a direção

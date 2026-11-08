@@ -48,10 +48,10 @@ fn veio_volumetric_clouds(input: PostInput) -> vec4<f32> {
     let step_length = span / f32(steps);
     let origin = vec3<f32>(veio_cloud_origin().x, camera_y, veio_cloud_origin().y);
     // The step offset is tied to the clouds, not to the screen: with no history to average a
-    // per-pixel noise, that noise crawled over the sky whenever the view moved or bobbed. Cells
-    // grow with distance to stay about a pixel wide.
+    // per-pixel noise, that noise crawled over the sky whenever the view moved or bobbed. A
+    // smooth noise (not a per-cell hash) keeps the slices from showing as jagged blocks.
     let entry = (origin + direction * t0).xz;
-    let jitter = veio_hash2(floor(entry / (2.0 + t0 * 0.002)));
+    let jitter = veio_noise(entry / (60.0 + t0 * 0.015));
 
     let sun = veio_key_direction();
     let day = veio_daylight();

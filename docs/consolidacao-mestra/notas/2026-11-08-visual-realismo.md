@@ -75,3 +75,17 @@ direção é `view_position(uv, 1e-6) - view_position(uv, 1.0)`, dois pontos do 
 translação se cancela. Também: jitter das nuvens preso ao mundo (não à tela), 24/36 passos em até
 3.000 blocos, saída pré-multiplicada com desbotamento por distância (o céu real aparece por trás),
 luz ambiente das nuvens à noite sem o piso de 0,03. Nuvens volumétricas ligadas de novo.
+
+## 3.2.0 (commit desta seção)
+
+Pedido do Luiz: shaders "super realistas" como os melhores gratuitos, brilho e contraste que
+dependam de onde o jogador está, nuvens menos serrilhadas, sempre leve (8 GB).
+
+- Exposição automática por `eye_light_smooth` (técnica do BSL/Complementary): até 2× em caverna e
+  à noite, 1× de dia, em luz linear (`finish.wgsl`). Substitui os dois ajustes antigos.
+- Nuvens: deslocamento de passos por ruído suave em vez de hash por célula; ampliação 3×3 tenda.
+- Shaders de terceiros: o Horizon roda packs Iris/OptiFine (README do Horizon; a spec dele cita
+  BSL 10.1.8, Complementary Reimagined r5.9.3 e Sildur's). Licenças: Complementary e Photon
+  "custom", BSL e Bliss "all rights reserved"; nenhum pode ir dentro do nosso zip. Plano: o
+  launcher baixa do Modrinth no PC do jogador. Pedido de teste no PC do Luiz (Complementary
+  Reimagined, Photon, BSL: carrega? FPS? capturas) antes de ligar isso no launcher.
