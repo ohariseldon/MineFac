@@ -77,6 +77,7 @@ BLOCKS = {
     "barn": ("machine", "wood", 27, [], 2.0),
     "silo": ("machine", "iron", 18, [], 2.0),
     "control_center": ("machine", "steel", 4, [], 2.0),
+    "barracks": ("machine", "iron", 2, [], 2.0),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
 }
@@ -113,7 +114,7 @@ TABS = {
     "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench"]),
     "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
-        "pantry", "flour", "biomass", "tesla", "repair_kit", "minecraft:bone_meal"]),
+        "pantry", "flour", "biomass", "tesla", "barracks", "repair_kit", "minecraft:bone_meal"]),
 }
 
 FACES = ("down", "up", "north", "south", "west", "east")
@@ -351,8 +352,21 @@ def main():
         if stack:
             entry["max_stack_size"] = stack
         write(D / f"horizon/item/{name}.json", entry)
+    # Saqueadores: zumbis com mais alcance de visão, para acharem a fábrica e os aldeões.
     write(D / "horizon/entity_type/raider.json", {"template": "minecraft:zombie",
-        "attributes": {"minecraft:max_health": 24.0, "minecraft:movement_speed": 0.25}})
+        "attributes": {"minecraft:max_health": 24.0, "minecraft:movement_speed": 0.25,
+            "minecraft:follow_range": 40.0}})
+    # O Bruto (da 5ª onda): lento, duro, quebra máquinas rápido e empurra pouco.
+    write(D / "horizon/entity_type/raider_brute.json", {"template": "minecraft:zombie",
+        "attributes": {"minecraft:max_health": 40.0, "minecraft:movement_speed": 0.2,
+            "minecraft:attack_damage": 6.0, "minecraft:knockback_resistance": 0.6,
+            "minecraft:follow_range": 40.0}})
+    write(D / "loot_table/entities/raider_brute.json", {"type": "minecraft:entity", "pools": [
+        {"rolls": 1, "entries": [{"type": "minecraft:item", "name": "minecraft:iron_ingot",
+            "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 1, "max": 3}}]}]},
+        {"rolls": 1, "entries": [{"type": "minecraft:item", "name": "minecraft:emerald",
+            "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 0, "max": 1}}]}]},
+    ], "random_sequence": "veio:entities/raider_brute"})
     write(D / "loot_table/entities/raider.json", {"type": "minecraft:entity", "pools": [
         {"rolls": 1, "entries": [{"type": "minecraft:item", "name": "minecraft:rotten_flesh",
             "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 0, "max": 2}}]}]},

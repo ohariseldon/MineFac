@@ -346,6 +346,9 @@ pub mod mod_api {
         fn kill_mob(&mut self, dimension: &str, id: u32) -> bool {
             unimplemented!("kill_mob")
         }
+        fn set_mob_health(&mut self, dimension: &str, id: u32, health: f32) -> bool {
+            unimplemented!("set_mob_health")
+        }
         fn play_sound(&mut self, sound: &str, at: [f64; 3], source: usize, volume: f32, pitch: f32) -> bool {
             unimplemented!("play_sound")
         }
@@ -792,6 +795,10 @@ pub mod mobs {
         #[derive(Debug, Default)]
         pub struct Memories {
             pub walk_target: Slot<WalkTarget>,
+            pub hurt_by: Slot<i64>,
+            /// No Horizon é `Slot<Who>`; o Veio só chama `clear`.
+            pub hurt_by_entity: Slot<u32>,
+            pub nearest_hostile: Slot<u32>,
         }
         #[derive(Debug)]
         pub struct Brain {
@@ -812,8 +819,43 @@ pub mod mobs {
         }
     }
 
+    /// `mobs::Species` (Horizon 66f3981): só as espécies que o Veio cita.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Species {
+        Villager,
+        IronGolem,
+    }
+
     pub mod goals {
-        use super::{Mob, MobWorld};
+        use super::{Mob, MobWorld, Species};
+        /// `goals::Prey` (Horizon 66f3981): o que um objetivo de alvo caça.
+        #[derive(Clone, Debug)]
+        pub enum Prey {
+            Player,
+            Species(Vec<Species>),
+        }
+        /// `goals::NearestTarget` (`NearestAttackableTargetGoal`, Horizon 66f3981).
+        #[derive(Clone, Debug)]
+        pub struct NearestTarget {
+            pub prey: Prey,
+            pub must_see: bool,
+        }
+        impl NearestTarget {
+            pub fn new(prey: Prey, must_see: bool) -> Self {
+                Self { prey, must_see }
+            }
+        }
+        impl Goal for NearestTarget {
+            fn flags(&self) -> u8 {
+                TARGET
+            }
+            fn can_use(&mut self, _m: &mut Mob, _cx: &mut Cx) -> bool {
+                false
+            }
+            fn box_clone(&self) -> Box<dyn Goal> {
+                Box::new(self.clone())
+            }
+        }
         pub const MOVE: u8 = 1;
         pub const LOOK: u8 = 2;
         pub const JUMP: u8 = 4;

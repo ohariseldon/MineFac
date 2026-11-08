@@ -297,6 +297,16 @@ MOTIFS.update({
         "..pkkp..",
         "........",
     ],
+    "barracks": [
+        "..xx....",
+        ".xRRx...",
+        "xRRRRx.a",
+        ".xRRx.aa",
+        "..xx.aa.",
+        "....aa..",
+        "....aa..",
+        "....a...",
+    ],
     "farm_post": [
         "..VWWV..",
         ".VWWWWV.",
@@ -386,6 +396,7 @@ MACHINE_TIER = {
     "drill_mk3": "steel", "electric_furnace": "copper", "mill": "copper", "kitchen": "iron", "pantry": "copper",
     "biomass_generator": "copper", "steam_engine": "steel", "planter": "iron", "tree_farm": "iron", "ranch": "copper",
     "farm_post": "copper", "hauler_post": "iron", "foreman_desk": "copper", "shepherd_post": "copper",
+    "barracks": "iron",
     "barn": "copper", "silo": "iron", "control_center": "steel",
 }
 
