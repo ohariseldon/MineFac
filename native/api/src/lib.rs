@@ -642,6 +642,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Known" => key!("Known"),
         "Payable" => key!("Payable"),
         "Revenue" => key!("Revenue"),
+        "DExport" => key!("DExport"),
         _ => rare_nbt_key(name),
     }
 }

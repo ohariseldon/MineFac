@@ -32,6 +32,13 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## 0.22.0: comércio exterior
+
+- **Porto de exportação** (`society/export.rs`, empresa de logística): 9 espaços, um navio por turno. Preço mundial por complexidade (1x a 4x) e saturação diária por item; sem centro de controle (cofre da companhia), o navio não sai.
+- A venda é moeda de fora: entra como borda (contada à parte como exportação), com imposto na fonte, e a receita vai para a empresa que faz o item. O PIB da prefeitura passa a ser consumo + exportação.
+- O relatório do centro de controle sugere os 3 itens guardados que mais rendem lá fora hoje; a visão geral da holding mostra a exportação do dia.
+- Testes: preços por camada e saturação; o navio sai na hora certa, leva tudo e a identidade contábil fecha com a moeda de fora.
+
 ## 0.21.0: economia fechada
 
 - **Imposto na fonte:** cada venda (varejo e atacado) já manda a parte da prefeitura (4%, 8%, 12%, 16%). Saíram a dívida de imposto, a verba inicial da prefeitura e a manutenção dos poços: nada cria nem destrói moeda.
@@ -308,7 +315,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0, 149 na 0.18.0, 160 na 0.19.0, 162 na 0.20.0 e 164 na 0.21.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0, 149 na 0.18.0, 160 na 0.19.0, 162 na 0.20.0, 164 na 0.21.0 e 166 na 0.22.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.

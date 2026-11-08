@@ -1671,3 +1671,48 @@ fn the_mayor_phase_sets_the_zone_limit_and_house_permits_need_a_well() {
     assert_eq!(number(&house, "Status"), society::NO_PERMIT);
     assert_eq!(number(&house, "Rate"), 0, "sem alvará, ninguém se muda");
 }
+
+#[test]
+fn world_prices_reward_value_added_and_saturate() {
+    use society::export::world_price;
+    assert_eq!(world_price("minecraft:raw_iron"), Some(2), "matéria-prima vale pouco");
+    assert_eq!(world_price("veio:iron_plate"), Some(6), "processado: 1,5x");
+    assert_eq!(world_price("veio:gear"), Some(14), "componente: 2x");
+    assert_eq!(world_price("veio:circuit"), Some(42), "avançado: 3x");
+    assert_eq!(world_price("veio:speed_module"), Some(160), "módulo: 4x");
+    assert_eq!(world_price(WAGE), None, "a esmeralda é a moeda, não se exporta");
+    let dimension = "veio:test_export_saturation";
+    let day = 0;
+    assert_eq!(society::export::quote(dimension, "veio:gear", day), Some(14));
+    let first = society::export::sell(dimension, [0, 64, 0], "veio:gear", 64, 0, 0);
+    assert_eq!(first, 0, "sem companhia, o navio não vende");
+}
+
+#[test]
+fn the_export_dock_ships_every_turn_and_foreign_money_closes_the_books() {
+    let (mut village, _, _) = society_town("veio:test_export_dock", 8);
+    let dimension = village.dimension;
+    let total = |village: &Village| balance(COMPANY, village, [30, 64, 30]) + balance(PUBLIC, village, [60, 64, 0])
+        + balance(SHOPS, village, [20, 64, 0]);
+    let before = total(&village);
+    let (entered, _) = society::ledger::borders(dimension);
+    let mut dock = block(society::export::DOCK);
+    dock.items[0] = Some(ItemStack::new("veio:gear", 8));
+    dock.items[1] = Some(ItemStack::new("minecraft:raw_iron", 8));
+    // Fase 0 em [40, 64, 40]: (40 ^ 40) & 63 = 0; o navio sai no começo de cada turno.
+    society::tick_block(&mut village, [40, 64, 40], &mut dock, 1180);
+    assert!(dock.items[0].is_some(), "ainda não é hora do navio");
+    society::tick_block(&mut village, [40, 64, 40], &mut dock, 1200);
+    assert!(dock.items.iter().all(Option::is_none), "o navio levou tudo");
+    let gross = number(&dock, "Total");
+    // 8 engrenagens (~14 cada, um pouco menos com a saturação) e 8 minérios (~2 cada).
+    assert!((100..=130).contains(&gross), "a engrenagem vale 7 vezes o minério ({gross})");
+    let (after_entered, _) = society::ledger::borders(dimension);
+    assert_eq!(after_entered - entered, i64::from(gross), "a venda lá fora é moeda nova");
+    assert_eq!(total(&village) - before, gross, "identidade: o que entrou está nas contas (companhia + imposto)");
+    assert!(balance(PUBLIC, &village, [60, 64, 0]) > 0, "imposto retido na fonte");
+    // Um segundo navio com as mesmas engrenagens no mesmo dia rende menos.
+    dock.items[0] = Some(ItemStack::new("veio:gear", 8));
+    society::tick_block(&mut village, [40, 64, 40], &mut dock, 2400);
+    assert!(number(&dock, "Total") - gross < gross, "o mercado externo satura");
+}
