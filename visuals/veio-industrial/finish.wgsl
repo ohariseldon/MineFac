@@ -127,7 +127,7 @@ fn post(input: PostInput) -> vec4<f32> {
             color += veio_rays_colour() * textureSampleLevel(light, linear_sampler, input.uv, 0.0).b;
         }
         let halo = textureSampleLevel(glow, linear_sampler, input.uv, 0.0).rgb;
-        color += halo * bloom * 0.55;
+        color += halo * bloom * 0.45;
     }
     // Eye adaptation: dark interiors open up a little, bright outdoors stays as it is.
     let indoor = 1.0 - frame.eye_light_smooth.y;
@@ -141,28 +141,19 @@ fn post(input: PostInput) -> vec4<f32> {
     let bounded = clamp(color, vec3<f32>(0.0), vec3<f32>(1.0));
     let luma = veio_luma(bounded);
     let curve = luma * luma * (3.0 - 2.0 * luma);
-    let target_luma = mix(luma, curve, select(0.12, 0.26, quality >= 1u) * color_strength);
+    let target_luma = mix(luma, curve, 0.10 * color_strength);
     var graded = bounded * select(1.0, target_luma / max(luma, 0.00001), luma > 0.00001);
     // Time of day: warm golden hours, cool blue nights; the seasons tint the light a little.
     if frame.dimension == 0 {
         let golden = veio_low_sun() * veio_daylight();
         let night = 1.0 - veio_daylight();
         let w = veio_season_weights();
-        let warmth = select(1.0, 2.1, quality >= 1u);
+        let warmth = 1.0;
         var tint = vec3<f32>(1.0) + vec3<f32>(0.045, 0.012, -0.040) * golden * warmth + vec3<f32>(-0.030, -0.008, 0.040) * night * warmth;
         tint += vec3<f32>(0.010, 0.006, -0.012) * w.y + vec3<f32>(0.018, 0.004, -0.018) * w.z + vec3<f32>(-0.016, -0.004, 0.020) * w.w;
         graded *= mix(vec3<f32>(1.0), tint, color_strength);
     }
-    graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + select(0.06, 0.16, quality >= 1u) * color_strength);
-    if quality >= 1u {
-        // Split toning, as film: shadows lean cool teal, highlights warm. Kept small so
-        // Minecraft's own colours still read.
-        let l = veio_luma(graded);
-        let shade = 1.0 - smoothstep(0.05, 0.45, l);
-        let high = smoothstep(0.55, 0.95, l);
-        graded *= mix(vec3<f32>(1.0), vec3<f32>(0.955, 1.0, 1.05), shade * 0.6 * color_strength);
-        graded *= mix(vec3<f32>(1.0), vec3<f32>(1.04, 1.0, 0.94), high * 0.6 * color_strength);
-    }
+    graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + 0.10 * color_strength);
     if vignette > 0.0 {
         let centred = input.uv - 0.5;
         let fall = dot(centred, centred) * 1.6;

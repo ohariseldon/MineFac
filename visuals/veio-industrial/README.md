@@ -9,6 +9,26 @@ O launcher oferece **Realismo leve — pensado para 8 GB** e **Leve — sem shad
 `Escolher-Visual.cmd` abre essa escolha de novo; `Jogar-Leve.cmd` inicia sem o pacote.
 Também dá para desligar o pacote em Opções > Vídeo > Shaders.
 
+## 3.1: céu físico e cor limpa
+
+Depois do primeiro teste no jogo (céu "quebrado", brilho e contraste esquisitos), o céu e a cor
+foram refeitos com técnicas publicadas e usadas há anos, em vez de fórmulas próprias:
+
+- **Céu físico:** dispersão simples numa atmosfera esférica com ar (Rayleigh), névoa (Mie) e
+  ozônio, com os coeficientes da Terra de Hillaire (EGSR 2020) e Bruneton. A luz até o sol
+  também é calculada, então o pôr do sol avermelha sozinho e a sombra da Terra sobe no
+  anoitecer. Depois, exposição fixa e a curva de filme ACES (ajuste de Narkowicz).
+- **Brilho (bloom):** o céu claro do dia não brilha mais; só o sol e o que passa do branco. No
+  chão, lâmpadas, lava, fogo e janelas acesas.
+- **Cor:** sem a curva de contraste forte, sem tonalização dividida e com o tom dourado mais
+  leve. A imagem fica perto das cores do Minecraft, com um pouco mais de saturação.
+- Água e sombras não mudaram.
+
+**Texturas:** o shader não troca texturas. Para relevo e brilho por material, use um pacote
+LabPBR. Indicado: [Vanilla Normals Renewed](https://github.com/Poudingue/Vanilla-Normals-Renewed),
+gratuito e com cara de Minecraft. Instale-o como pacote de recursos (Opções > Pacotes de
+recursos); o Veio não o redistribui.
+
 ## 3.0.1
 
 O jogo recusava o pacote ("a pack may write 4"): os efeitos agora cabem em quatro alvos de pós.
