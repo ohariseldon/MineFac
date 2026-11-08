@@ -324,3 +324,19 @@ fn redstone_pauses_belts_without_consuming_and_success_counts_the_real_flow() {
     assert_eq!(world.delivered.len(), 1);
     assert_eq!(entity.items[0].as_ref().unwrap().count, 3);
 }
+
+#[test]
+fn an_arriving_item_waiting_for_its_turn_counts_as_moving() {
+    let mut entity = belt();
+    set_number(&mut entity, "Status", 0);
+    set_number(&mut entity, "MovedAt", 0);
+    update_status(&mut entity, 1000);
+    assert_eq!(number(&entity, "Status"), 1, "acabou de chegar: andando, sem luz laranja");
+    update_status(&mut entity, 1004);
+    assert_eq!(number(&entity, "Status"), 1, "ainda esperando a vez");
+    update_status(&mut entity, 1009);
+    assert_eq!(number(&entity, "Status"), 3, "parado de verdade: bloqueada");
+    entity.items = vec![None; entity.items.len()];
+    update_status(&mut entity, 1010);
+    assert_eq!(number(&entity, "Status"), 0);
+}

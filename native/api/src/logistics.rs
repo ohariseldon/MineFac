@@ -52,11 +52,22 @@ fn record_moved(entity: &mut ModBlockEntity, count: u32, time: i64) {
     if transport(&entity.id) { set_number(entity, "Produced", number(entity, "Produced") + count as i32); }
 }
 
+/// Um item que acaba de chegar a uma esteira vazia espera a vez de andar (até `BLOCKED_AFTER`
+/// ticks): isso conta como andando, não como bloqueada. Assim a luz não pisca laranja a cada
+/// item e a esteira não manda duas atualizações de bloco por item.
+const BLOCKED_AFTER: i32 = 8;
+
 pub(super) fn update_status(entity: &mut ModBlockEntity, time: i64) -> bool {
     if matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
+        let empty = entity.items.iter().all(Option::is_none);
+        let now = stamp(time);
+        if !empty && number(entity, "Status") == 0 {
+            set_number(entity, "HeldSince", now);
+        }
+        let since = number(entity, "MovedAt").max(number(entity, "HeldSince"));
         let status = if number(entity, "LogisticsPaused") != 0 { 9 }
-            else if entity.items.iter().all(Option::is_none) { 0 }
-            else if stamp(time) - number(entity, "MovedAt") > 8 { 3 }
+            else if empty { 0 }
+            else if now - since > BLOCKED_AFTER { 3 }
             else { 1 };
         set_number(entity, "Status", status);
         return true;
