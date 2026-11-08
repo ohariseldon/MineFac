@@ -287,8 +287,13 @@ impl Goal for Work {
         goals::MOVE | goals::LOOK
     }
     fn can_use(&mut self, m: &mut Mob, _cx: &mut Cx) -> bool {
-        self.target = order_for(m.id, defense::clock());
+        let next = order_for(m.id, defense::clock());
+        if self.target != next { self.cooldown = 0; }
+        self.target = next;
         self.target.is_some()
+    }
+    fn stop(&mut self, m: &mut Mob, _cx: &mut Cx) {
+        m.ai.nav.stop(); self.target = None; self.cooldown = 0;
     }
     fn start(&mut self, m: &mut Mob, cx: &mut Cx) {
         self.cooldown = 0;

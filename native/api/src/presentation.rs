@@ -16,15 +16,13 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 30] = [
+pub(super) const STATUS_KEYS: [&str; 33] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
     "no_worker", "absent", "no_task", "no_food", "path", "walking", "idle_work", "no_wage",
     // Zonas e armazéns.
-    "zone", "storing", "freight_route",
-    // Lavrador e pastor à noite.
-    "resting",
+    "zone", "storing", "freight_route", "resting", "caravan_animal", "caravan_feed", "caravan_busy",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
@@ -152,7 +150,7 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     }
     let limit = read(5).max(capacity(event.block)).max(1);
     let energy = read(3).clamp(0, limit);
-    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) && event.block != production::PANTRY && event.block != freight::RAIL && !post {
+    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) && event.block != production::PANTRY && event.block != freight::RAIL && event.block != freight::caravan::ID && !post {
         let energy_text = Text::tr("veio.energy", &[&energy, &limit]).plain();
         host.text(event.batch, &energy_text, [x + 10.0, y + 85.0], INK, false);
         gauge(host, event, [10.0, 95.0], 174.0, energy as f32 / limit as f32, 0xffe0a020);
@@ -329,6 +327,10 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     }
     if inserters::is_arm(event.block) { return inserters::draw(host, event); }
     if freight::owns(event.block) { freight::draw(host, event); return; }
+    if let Some(dynamic) = appearance::draw(host, event) {
+        if !dynamic { event.draw.keep(); }
+        return;
+    }
     if production::draw(host, event) || workforce::zones::draw(host, event) {
         return;
     }

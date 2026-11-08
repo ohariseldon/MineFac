@@ -1,0 +1,50 @@
+{
+  "parent": "veio:root",
+  "criteria": {
+    "freight_station": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:freight_station"
+          }
+        ]
+      }
+    },
+    "drone_port": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:drone_port"
+          }
+        ]
+      }
+    },
+    "caravan_station": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:caravan_station"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "freight_station",
+      "drone_port",
+      "caravan_station"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "veio:transport_guide"
+    ],
+    "loot": [
+      "veio:tutorial/transport_guide"
+    ]
+  }
+}

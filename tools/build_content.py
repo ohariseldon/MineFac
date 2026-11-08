@@ -8,6 +8,7 @@ e as texturas 16x16 de `tools/build_textures.py`.
 """
 import json
 from pathlib import Path
+from machine_forms import form as machine_form, shapes as machine_shapes, native_profiles
 
 ROOT = Path(__file__).resolve().parents[1] / "content"
 A, D = ROOT / "assets/veio", ROOT / "data/veio"
@@ -79,6 +80,7 @@ BLOCKS = {
     "control_center": ("machine", "steel", 4, [], 2.0),
     "barracks": ("machine", "iron", 2, [], 2.0),
     "freight_station": ("machine", "iron", 6, [3, 4, 5], 2.0),
+    "caravan_station": ("machine", "wood", 8, [3, 4, 5, 6], 1.5),
     "drone_port": ("machine", "steel", 7, [3, 4, 5, 6], 2.0),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
@@ -114,7 +116,7 @@ TABS = {
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
         "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
         "minecraft:coal", "minecraft:lava_bucket"]),
-    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "freight_station", "drone_port", "route_card", "wrench", "minecraft:rail", "minecraft:powered_rail", "minecraft:chest_minecart", "minecraft:hopper"]),
+    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "freight_station", "drone_port", "caravan_station", "route_card", "wrench", "minecraft:rail", "minecraft:powered_rail", "minecraft:chest_minecart", "minecraft:hopper"]),
     "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
         "pantry", "flour", "biomass", "tesla", "barracks", "repair_kit", "minecraft:bone_meal"]),
@@ -157,6 +159,9 @@ def machine(name, tier):
     return textures, elements
 
 def model(kind, name, tier):
+    profile = machine_form(name, tier, box)
+    if profile:
+        return profile["textures"], profile["elements"]
     if kind == "inserter":
         motor = {"fast_inserter": "minecraft:block/prismarine_bricks", "long_inserter": "minecraft:block/red_terracotta"}.get(name, "minecraft:block/cut_copper")
         return {"iron": "minecraft:block/iron_block", "base": "minecraft:block/smooth_stone",
@@ -334,7 +339,8 @@ def main():
         write(A / f"items/{name}.json", {"model": {"type": "minecraft:model", "model": f"veio:block/{name}"}})
         # Sem menu, um template sem tela própria: a terracota esmaltada só gira com o jogador.
         template = "minecraft:black_glazed_terracotta" if kind in ("cable", "pole", "steel_pole") else "minecraft:stonecutter"
-        shape = {"default": SHAPES[kind]}
+        profile = machine_form(name, tier, box)
+        shape = machine_shapes(profile) if profile else {"default": SHAPES[kind]}
         properties = {"hardness": hardness, "occludes": False}
         if kind == "grow_lamp":
             properties["light"] = 15  # A lâmpada ilumina a lavoura à noite.
@@ -367,6 +373,7 @@ def main():
     for tab, (icon, members) in TABS.items():
         write(D / f"horizon/creative_tab/{tab}.json", {"title": f"itemGroup.veio.{tab}", "icon": icon,
             "items": [name if ":" in name else f"veio:{name}" for name in members]})
+    native_profiles(ROOT, BLOCKS, box)
     print(f"{len(BLOCKS)} blocos e {len(ITEMS)} itens gerados")
 
 if __name__ == "__main__":

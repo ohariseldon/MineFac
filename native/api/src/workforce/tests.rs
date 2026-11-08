@@ -1384,3 +1384,37 @@ fn sneaking_with_an_empty_hand_on_the_barracks_switches_the_class() {
     village.sneak = false;
     assert_eq!(right_click(&mut village, POST, ""), None, "sem agachar, abre o painel");
 }
+
+
+#[test]
+fn worker_orders_reset_navigation_on_cancel_and_refresh_changed_destinations() {
+    use horizon_client::mobs::{Ai, Extra, Mob, MobType, MobWorld, Vec3, goals::{Cx, Goal}};
+    let mut mob = Mob { id: 98001, rider: None, extra: Extra::default(),
+        kind: std::sync::Arc::new(MobType { id: VILLAGER.into() }), position: Vec3::default(), ai: Ai::default() };
+    let world = MobWorld::fixture(); let mut cx = Cx { w: &world };
+    let mut goal = Work::default();
+    order(mob.id, [1.0, 64.0, 1.0], defense::clock());
+    assert!(goal.can_use(&mut mob, &mut cx));
+    goal.cooldown = 15;
+    order(mob.id, [10.0, 64.0, 10.0], defense::clock());
+    assert!(goal.can_use(&mut mob, &mut cx));
+    assert_eq!(goal.cooldown, 0);
+    assert_eq!(goal.target, Some([10.0, 64.0, 10.0]));
+    mob.ai.nav.done = false;
+    cancel(mob.id); goal.stop(&mut mob, &mut cx);
+    assert!(mob.ai.nav.is_done()); assert!(goal.target.is_none());
+}
+
+
+#[test]
+fn shepherd_keeps_riding_pigs_out_of_the_breeding_queue() {
+    let mut village = Village::new("veio:saddled_pig_shepherd");
+    let mut post = shepherd_with_worker(&mut village, 98011, [98, 0, 0, 11], [2.5, 64.0, 2.5]);
+    post.items[1] = Some(ItemStack::new("minecraft:carrot", 5));
+    for id in [98012, 98013] {
+        animal(&mut village, id, "minecraft:pig", [2.5, 64.0, 2.5], &[("Age", Tag::Int(0)), ("Saddle", Tag::Byte(1))]);
+    }
+    assert_eq!(cycle(&mut village, &mut post, 1), IDLE_WORK);
+    assert_eq!(post.items[1], Some(ItemStack::new("minecraft:carrot", 5)));
+    assert!(village.animals.values().all(|(_, nbt)| !nbt.contains_key(&"InLove".into())));
+}

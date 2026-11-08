@@ -25,6 +25,7 @@ def main():
     check_book(languages, "village_guide")
     check_page_fit(languages, "guide")
     check_page_fit(languages, "village_guide")
+    check_book(languages, "transport_guide")
     textures = check_assets(languages)
     print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas; "
           f"{textures} texturas 16x16 encontradas.")

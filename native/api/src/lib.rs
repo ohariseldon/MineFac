@@ -1,5 +1,6 @@
 mod budget;
 mod presentation;
+mod appearance;
 mod contracts;
 mod freight;
 mod logistics;
@@ -92,6 +93,7 @@ impl Hooks for Factory {
         let (slots, mut inputs, mut outputs) = layout(event.block)?;
         if freight::owns(event.block) {
             inputs = (0..6).collect();
+            if event.block == freight::caravan::ID { inputs.push(7); }
             // Hoppers load trains from dispatch stock; workers use received stock.
             outputs = if event.block == freight::RAIL { (0..3).collect() } else { (3..6).collect() };
         }
@@ -226,6 +228,7 @@ impl Hooks for Factory {
     fn entity_tick_pre(&self, host: &mut dyn Host,
         event: &mut horizon_client::mod_api::EntityTickPreEvent<'_>) -> Flow
     {
+        freight::caravan::observe(host, event.dimension, event.entity, event.kind);
         defense::observe(event.dimension, event.entity, event.kind);
         production::ranch::observe(event.dimension, event.entity, event.kind);
         if event.kind == "minecraft:villager" {
@@ -286,6 +289,7 @@ impl Hooks for Factory {
     fn register_goals(&self, event: &mut horizon_client::mod_api::RegisterGoalsEvent<'_>) {
         pollution::register_goals(event.mob);
         workforce::register_goals(event.mob);
+        freight::caravan::register_goals(event.mob);
     }
 
     fn block_entity_render_bounding_box(&self, _host: &dyn Host,
@@ -433,7 +437,7 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (HUB, _) => contracts::valid_input(slot, stack),
         (BELT | FAST_BELT | SPLITTER, 0) => true,
         (MERGER, 0 | 1) => true,
-        _ if freight::owns(block) => slot < 6 && stack.damage == 0 && stack.extra.is_none(),
+        _ if freight::owns(block) => (slot < 6 || block == freight::caravan::ID && slot == 7 && freight::caravan::feed(&stack.item)) && stack.damage == 0 && stack.extra.is_none(),
         _ if workforce::owns(block) => workforce::accepts(block, slot, stack),
         // Entradas das máquinas de produção, pela tabela de receitas e combustíveis.
         _ => production::accepts(block, slot, stack),
@@ -466,6 +470,12 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "FreightImport" => key!("FreightImport"),
         "FreightChannel" => key!("FreightChannel"),
         "FreightManualImport" => key!("FreightManualImport"),
+        "CaravanAnimal" => key!("CaravanAnimal"),
+        "CaravanEntity" => key!("CaravanEntity"),
+        "CaravanProbe" => key!("CaravanProbe"),
+        "CaravanLastPos" => key!("CaravanLastPos"),
+        "CaravanStall" => key!("CaravanStall"),
+
 
         "Cooldown" => key!("Cooldown"),
         "Damage" => key!("Damage"),
@@ -589,7 +599,7 @@ fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, Option<ItemStack
     } else {
         None
     };
-    (number(entity, "Status"), number(entity, "Module"), if entity.id == freight::DRONE { number(entity, "FlightPhase") * 1_000_000 + number(entity, "Progress") / 4 }
+    (number(entity, "Status"), number(entity, "Module"), if matches!(entity.id.as_str(), freight::DRONE | freight::caravan::ID) { number(entity, "FlightPhase") * 1_000_000 + number(entity, "Progress") / 4 }
         else { number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }) }, cargo)
 }
 

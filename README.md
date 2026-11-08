@@ -30,7 +30,7 @@ A fábrica faz parte do mundo do Minecraft: extrai das jazidas vanilla, queima c
 
 ## Transporte entre zonas
 
-A integração de [terminais ferroviários e portos de drones](TRANSPORTES.md) permite definir o produto enviado e recebido por zona. O capataz cria as tarefas dos carregadores para abastecer os terminais e usar o que chega. Vagões com baú conectam-se por funis; drones levam até 16 itens entre portos a até 64 blocos, com energia, ida e volta. A entrega aguarda compilação pelo launcher e teste no jogo; consulte o documento para configuração, circuitos e limites.
+A integração de [terminais, drones e caravanas](TRANSPORTES.md) permite ligar zonas por cor e definir os produtos de ida e volta. Aldeões abastecem e retiram as cargas pela fila do capataz. Vagões com baú usam funis; drones levam até 16 itens a até 64 blocos; cavalos, burros/mulas e porcos caminham entre terminais com capacidades e rações diferentes. Um Guia de Transportes é entregue ao obter o primeiro terminal. A entrega aguarda compilação pelo launcher e teste no jogo; rotas terrestres de até 512 blocos dependem de áreas simuladas.
 
 ## Tutorial dentro do jogo
 
@@ -103,11 +103,13 @@ Uma receita inicial entrega 16 esteiras. Com aço, uma chapa de aço, uma de cob
 
 ## Visual
 
-As máquinas têm o formato e a escala dos blocos do Minecraft: base de pedra lisa, corpo e tampa com as texturas do próprio jogo para cada nível (cobre cortado, bloco de ferro, ardósia polida e barril na central) e uma face frontal em pixel art 16x16 que mostra a função. A saída fica atrás, com bico e faixa de segurança. O gerador tem chaminé de tijolos, o painel solar usa as células do sensor de luz do dia, o cabo é isolado com lã preta e emenda de cobre.
+As máquinas têm [formas próprias por função](VISUAL-MAQUINAS.md): prensa aberta com pistão, cortadora de bancada, triturador com funil, forno, caldeira, tanques, prateleiras e consoles. São 34 modelos revisados, mantendo um ponto de colocação por máquina. Cobre, ferro, madeira e ardósia combinam com detalhes discretos em verde, azul e terracota. As caixas de seleção e colisão acompanham os formatos e sua orientação.
+
+As luzes de estado e a placa do módulo ficam em alojamentos frontais. As máquinas que escoam produtos têm bico traseiro; as demais usam conexões metálicas. O painel solar usa as células do sensor de luz do dia, e o cabo mantém isolamento de lã preta e emenda de cobre.
 
 Os painéis seguem as telas de baú e fornalha: fundo cinza em relevo, slots rebaixados, seta de progresso entre entrada e saída e texto escuro. Uma luz na tela e nas quatro faces da máquina indica o estado.
 
-Todas as texturas próprias são desenhadas em texto em `tools/build_textures.py`, e os modelos saem de `tools/build_content.py`. As referências a texturas do Minecraft são resolvidas pela instalação do jogador. Créditos em [CREDITS.md](CREDITS.md).
+Todas as texturas próprias são desenhadas em texto em `tools/build_textures.py`, e os modelos saem de `tools/build_content.py`, com as formas definidas em `tools/machine_forms.py`. As referências a texturas do Minecraft são resolvidas pela instalação do jogador. Créditos em [CREDITS.md](CREDITS.md).
 
 ## Desempenho
 
@@ -202,7 +204,7 @@ Os **módulos** entram com o botão direito numa máquina de receita ou extrator
 
 Produtividade reserva espaço para o lote extra antes de trabalhar: saída cheia pausa sem perder o bônus. A fração pertence ao produto e reinicia ao concluir uma receita de outro produto. O painel conta itens produzidos, incluindo lotes e bônus; o contador interno de ciclos permanece separado.
 
-O painel mostra o módulo, a poluição emitida por minuto e a integridade. Um selo colorido na tampa da máquina indica o módulo instalado.
+O painel mostra o módulo, a poluição emitida por minuto e a integridade. Uma placa colorida no suporte frontal indica o módulo instalado.
 
 ## Poluição e Saqueadores
 

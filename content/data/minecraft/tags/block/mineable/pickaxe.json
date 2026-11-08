@@ -48,6 +48,7 @@
     "veio:control_center",
     "veio:barracks",
     "veio:freight_station",
+    "veio:caravan_station",
     "veio:drone_port",
     "veio:solar",
     "veio:battery"

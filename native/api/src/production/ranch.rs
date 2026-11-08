@@ -226,6 +226,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             continue;
         }
         let Some(nbt) = host.entity_nbt(handle) else { continue };
+        // Riding/transport pigs are companions, not surplus meat or breeding stock.
+        if kind == 2 && freight::caravan::saddled(&nbt) { continue; }
         animals.push(Animal {
             id, kind,
             adult: tag_int(&nbt, "Age") >= 0,

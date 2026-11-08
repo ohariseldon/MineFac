@@ -1,8 +1,7 @@
 # Transporte entre zonas
 
-Primeira integração sobre a `main` 65cab50: terminais ferroviários, portos de
-drones e a fila existente do capataz/carregador compartilham os mesmos filtros
-e inventários. Esta entrega está em código e testes offline; aguarda compilação
+Integração atualizada com a `main` cf37004: terminais ferroviários, portos de
+drones, caravanas e a fila do capataz/carregador compartilham filtros e inventários. Esta entrega está em código e testes offline; aguarda compilação
 pelo launcher e validação no jogo. Não inclui os PRs separados de balanceamento
 ou pesquisa de jazidas, ainda não integrados à base.
 
@@ -16,7 +15,7 @@ carregadores. Produtos recebidos podem abastecer as máquinas locais.
 Zona da mina                             Zona da oficina
 Extratora -> carregador -> terminal A     terminal B -> carregador -> prensa
                            |                  ^
-                           +-- vagão/drone ---+
+                           +-- trem/drone/caravana --+
 
 Volta: terminal B envia chapas; terminal A recebe as chapas.
 ```
@@ -30,16 +29,17 @@ posto e recolher para ele; não cria sozinho toda a fila entre máquinas.
 
 ## Configurar
 
-1. Fabrique o **Terminal ferroviário** ou o **Porto de drones**. Receitas
-   liberadas ao obter módulo mecânico e circuitos, respectivamente.
-2. Use o **Cartão de rota** no terminal: percorre os canais 0–16; agachado
-   percorre no sentido contrário. Canal 0 desativa a associação automática.
-   O cartão é uma ferramenta reutilizável, não é consumido.
+1. Fabrique um terminal: caravanas abrem com engrenagens; ferrovia, com módulo
+   mecânico; drones, com circuitos. Ao obter qualquer terminal, recebe uma vez
+   o **Guia de Transportes**, com sumário clicável. Livro + trilho fabrica outro.
+2. Clique com o **mesmo corante** nas duas pontas. Uma cor liga a rota sem gastar
+   o corante. O painel mostra a cor da rota. O cartão continua como alternativa:
+   percorre os canais 0–16; agachado volta. Canal 0 desliga a associação.
 3. Agache e clique com o produto que deve **sair**. Copia o filtro sem gastar
    o item. Agachar com mão vazia ou chave limpa o filtro de envio.
 4. Dois terminais do mesmo tipo, dimensão e canal reconhecem o filtro de
    saída do parceiro como produto de recebimento. Mais de dois torna a
-   associação ambígua; drones aguardam em vez de escolher um destino arbitrário.
+   associação ambígua; drones e caravanas aguardam em vez de escolher um destino arbitrário.
 5. Para ferrovias longas ou uma associação manual, clique **sem agachar** com
    o produto que deve **chegar**. Isso fixa o filtro de recebimento. Não precisa
    manter o terminal distante carregado para preservar esse filtro. Trocar o
@@ -114,6 +114,53 @@ Os parâmetros da rota ficam bloqueados durante a viagem. Chame de volta antes
 de reconfigurar. O drone é uma animação de uma viagem persistida no porto,
 não uma entidade independente com vida, inventário ou combate próprio.
 
+## Caravanas: cavalos, burros, mulas e porcos
+
+O terminal de caravanas usa animais reais, explicitamente vinculados pelo
+jogador. O animal não é criado nem teleportado pelo terminal. Aproximar um
+adulto livre a até oito blocos e usar um **laço** no terminal o vincula, sem
+consumir o laço. Cada animal atende um terminal vivo de cada vez.
+
+| Animal | Requisito | Carga por viagem | Papel | Ração por ida/volta |
+|---|---|---:|---|---|
+| Cavalo | domado, com sela | 16 | entrega leve mais rápida | 1 trigo, maçã ou bloco de feno |
+| Burro ou mula | domado, com baú | 64 | mais carga por ração, sem trilhos | 1 trigo, maçã ou bloco de feno |
+| Porco | com sela | 8 | alternativa inicial de carga leve | 1 cenoura, batata ou beterraba |
+
+A ração fica no slot inferior. O terminal não usa FE. A ração é cobrada uma
+vez na partida, não a cada tentativa de descarregar ou na volta. A fila do
+capataz pode abastecer esse slot, como as outras entradas das máquinas.
+
+Configure dois terminais do mesmo tipo/cor. O aldeão leva o produto até Enviar;
+o animal caminha ao destino, descarrega no Recebido e retorna. A entrega exige
+que o animal chegue fisicamente a até três blocos do terminal. Não é um timer
+que entrega à distância. O cavalo usa um fator de navegação maior que o burro,
+e o porco, menor; a velocidade real também depende dos atributos do animal.
+
+As rotas aceitam até **512 blocos**. O objetivo de navegação trabalha em trechos
+de até 16 blocos, usando a navegação de mobs do Horizon. Prepare uma estrada
+larga, sem quedas e com rampas. Não constrói pontes, evita quedas por conta
+própria ou garante chegar por qualquer terreno. Após verificações sucessivas
+sem mudança de posição, o painel pede para liberar o caminho.
+
+Montar ou prender o animal pausa a direção automática. Agachar + chave no
+terminal pede retorno. Agachar + laço desvincula, cancela a ordem e recupera
+no estoque de envio a parte não entregue, desde que caiba; caso contrário,
+aguarda espaço. Isso também recupera mercadorias se o animal morrer ou sumir.
+Não altera o inventário nativo do animal: a carga continua conservada no
+terminal até a entrega ser aceita, assim como o mecanismo dos drones.
+
+**Limite de mundo:** origem, animal e destino precisam ser simulados nas fases
+que os usam. Se a origem descarrega, ela para de renovar a ordem; a caminhada
+pausa quando a ordem vence. Recarregar permite retomar por UUID, mesmo que o ID
+da sessão tenha mudado. O alcance 512 não equivale a carregar chunks distantes.
+Grandes rotas autônomas fora das áreas simuladas ainda precisam de uma solução
+específica de carregamento; não foram prometidas como resolvidas neste lote.
+
+Os porcos com sela ficam fora da seleção de reprodução e abate do rancho,
+mesmo sem nome; o pastor também não usa essas montarias na reprodução. A navegação de aldeões agora é parada quando uma ordem é
+cancelada; mudar de destino também zera o atraso para procurar o novo caminho.
+
 ## Conservação, saves e limites
 
 - Estoques, filtros, canal, destino, carga em voo, progresso e retorno ficam
@@ -140,6 +187,9 @@ não uma entidade independente com vida, inventário ou combate próprio.
 ## Validação
 
 Executar da raiz: `python3 tools/check_project.py` e `python3 tools/check_rust.py`.
+No último resultado, 150 testes Rust passaram, sem falhas, com dois opcionais
+ignorados. Conteúdo: 506 JSON, 97 páginas do guia geral, 23 do guia da vila,
+12 do Guia de Transportes e 62 texturas. Os três livros são conferidos.
 O conteúdo inclui modelos, receitas, avanços, traduções, ajuda e guia em ambos
 os idiomas. O gerador do guia continua dentro do limite de 100 páginas.
 
@@ -147,7 +197,12 @@ Testes novos: fluxo real de carregador máquina → terminal e recebido → máq
 separação dos filtros; voo com energia e tempo; retomada de save; descarga
 parcial; destino cheio/removido; redstone; cancelamento com estoque cheio;
 obstáculos; fronteira descarregada; alcance; ambiguidade; separação de mundos,
-dimensões e modos; cartão e amostra preservados; filtro ferroviário persistente.
+dimensões e modos; cartão, corantes e amostras preservados; filtro ferroviário
+persistente. Caravanas: capacidade por espécie, chegada física, UUID após save,
+ração, animal ausente/ocupado, exclusividade, descarga parcial e recuperação.
+Há testes da parada de navegação, da prioridade do jogador montado e da proteção
+de porcos com sela no rancho. As páginas do novo guia têm um orçamento conservador
+de linhas, que não substitui conferência visual da fonte no jogo.
 
 As assinaturas novas `LevelRef::epoch`, `level_block` e `level_is_loaded` foram
 conferidas na referência Horizon 66f3981. `native_entity_merge_nbt` documenta

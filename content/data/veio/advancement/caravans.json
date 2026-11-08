@@ -1,0 +1,32 @@
+{
+  "parent": "veio:gears",
+  "display": {
+    "icon": {
+      "id": "veio:caravan_station"
+    },
+    "title": {
+      "translate": "advancement.veio.caravan.title"
+    },
+    "description": {
+      "translate": "advancement.veio.caravan.description"
+    },
+    "announce_to_chat": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:gear"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:caravan_station"
+    ]
+  }
+}

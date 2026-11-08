@@ -6,14 +6,17 @@ use std::sync::Mutex;
 
 pub(super) const RAIL: &str = "veio:freight_station";
 pub(super) const DRONE: &str = "veio:drone_port";
+pub(super) mod caravan;
+
 pub(super) const CARD: &str = "veio:route_card";
 pub(super) const RANGE: i32 = 64;
 const CARGO: usize = 6;
 const STALE: u64 = 100;
 
-pub(super) fn owns(block: &str) -> bool { matches!(block, RAIL | DRONE) }
+pub(super) fn owns(block: &str) -> bool { matches!(block, RAIL | DRONE | caravan::ID) }
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
-    owns(block).then(|| (if block == DRONE { 7 } else { 6 }, vec![0, 1, 2], vec![3, 4, 5]))
+    owns(block).then(|| (if block == caravan::ID { 8 } else if block == DRONE { 7 } else { 6 },
+        if block == caravan::ID { vec![0, 1, 2, 7] } else { vec![0, 1, 2] }, vec![3, 4, 5]))
 }
 
 fn text(entity: &ModBlockEntity, key: &str) -> Option<String> {
@@ -31,9 +34,11 @@ pub(super) fn channel(entity: &ModBlockEntity) -> i32 { number(entity, "FreightC
 
 /// Planning never treats received stock as a request to send it straight back.
 pub(super) fn accepts_plan(entity: &ModBlockEntity, slot: usize, stack: &ItemStack) -> bool {
+    if entity.id == caravan::ID && slot == 7 { return caravan::feed(&stack.item) && stack.damage == 0 && stack.extra.is_none(); }
     slot < 3 && export(entity).is_some_and(|item| is_plain(stack, &item))
 }
 pub(super) fn accepts_delivery(entity: &ModBlockEntity, slot: usize, stack: &ItemStack) -> bool {
+    if entity.id == caravan::ID && slot == 7 { return accepts_plan(entity, slot, stack); }
     let item = if slot < 3 { export(entity) }
         else if slot < 6 { text(entity, "FreightImport") } else { None };
     item.is_some_and(|item| is_plain(stack, &item))
@@ -57,12 +62,22 @@ fn register(endpoint: Endpoint) -> Option<Endpoint> {
     others.next().is_none().then_some(partner)
 }
 
+const DYES: [&str; 16] = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"];
+fn dye_channel(item: &str) -> Option<i32> {
+    let dye = item.strip_prefix("minecraft:")?.strip_suffix("_dye")?;
+    DYES.iter().position(|name| *name == dye).map(|index| index as i32 + 1)
+}
+
 pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], block: &str) -> Option<Flow> {
     if !owns(block) { return None; }
     let held = host.held().map(|(item, _, _)| item);
+    if block == caravan::ID && held.as_deref() == Some("minecraft:lead") {
+        let release = host.sneaking(); caravan::assign(host, pos, release); host.block_entity_sync(pos); return Some(Flow::Cancel);
+    }
     if held.as_deref() != Some(CARD) && !host.sneaking()
         && (held.is_none() || held.as_deref() == Some(WRENCH)) { return None; }
     let backwards = host.sneaking();
+    let color = if backwards { None } else { held.as_deref().and_then(dye_channel) };
     host.change_mod_block_entity(pos, &mut |entity| {
         if number(entity, "FlightPhase") != 0 {
             if backwards && held.as_deref() == Some(WRENCH) {
@@ -74,8 +89,8 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], block: &str) -> Op
             }
             return;
         }
-        if held.as_deref() == Some(CARD) {
-            let next = (channel(entity) + if backwards { 16 } else { 1 }) % 17;
+        if held.as_deref() == Some(CARD) || color.is_some() {
+            let next = color.unwrap_or_else(|| (channel(entity) + if backwards { 16 } else { 1 }) % 17);
             set_number(entity, "FreightChannel", next);
             set_number(entity, "Info", next);
             set_text(entity, "FreightImport", None);
@@ -116,6 +131,7 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let phase = number(entity, "FlightPhase");
     // No global scan: a loaded endpoint announces itself once per second.
     let due = (time + i64::from((pos[0] ^ pos[2]) & 15)).rem_euclid(20) == 0;
+    if entity.id == caravan::ID && !due { return; }
     if !due && phase == 0 { return; }
     let Some(level) = host.level(host.dimension()) else { return; };
     let epoch = level.epoch().get();
@@ -129,6 +145,12 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         partner
     } else { None };
     set_number(entity, "Info", channel(entity));
+    if entity.id == caravan::ID {
+        if budget::request(budget::Lane::Workforce, host.dimension(), pos, 4) {
+            caravan::tick(host, pos, entity, partner.as_ref(), epoch);
+        }
+        return;
+    }
     if entity.id == RAIL {
         set_number(entity, "Status", if partner.is_some() || text(entity, "FreightImport").is_some() { 27 } else { 28 });
         return;
@@ -224,22 +246,35 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
     owns(block).then(|| {
         let mut slots = vec![Some([26.0, 42.0]), Some([44.0, 42.0]), Some([62.0, 42.0]),
             Some([116.0, 42.0]), Some([134.0, 42.0]), Some([152.0, 42.0])];
-        if block == DRONE { slots.push(Some([89.0, 42.0])); }
+        if block == DRONE || block == caravan::ID { slots.push(Some([89.0, 42.0])); }
+        if block == caravan::ID { slots.push(Some([17.0, 80.0])); }
         slots
     })
 }
 pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
-    owns(block).then(|| vec![
-        Text::tr("veio.freight.channel", &[&data.get(12).copied().unwrap_or(0)]).plain(),
-        Text::tr(if block == RAIL { "veio.freight.rail" } else { match data.get(8).copied().unwrap_or(0) {
+    if !owns(block) { return None; }
+    let channel = data.get(12).copied().unwrap_or(0);
+    let color = if channel > 0 && channel <= 16 {
+        Text::tr(&format!("item.minecraft.{}_dye", DYES[channel as usize - 1]), &[]).plain()
+    } else { Text::tr("veio.freight.disabled", &[]).plain() };
+    let phase = data.get(8).copied().unwrap_or(0);
+    let state = if block == RAIL { "veio.freight.rail" }
+        else if block == caravan::ID { match phase {
+            1 => "veio.freight.caravan_outbound", 2 => "veio.freight.caravan_return", _ => "veio.freight.caravan",
+        } } else { match phase {
             1 => "veio.freight.outbound", 2 => "veio.freight.return", _ => "veio.freight.ready",
-        } }, &[]).plain(),
-    ])
+        } };
+    let mut lines = vec![Text::tr("veio.freight.route_color", &[&color]).plain(), Text::tr(state, &[]).plain()];
+    if block == caravan::ID {
+        lines.push(Text::tr("veio.freight.capacity", &[&data.get(6).copied().unwrap_or(0)]).plain());
+    }
+    Some(lines)
 }
 pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
     match block {
         RAIL => Some(&["dispatch", "", "", "received", "", ""]),
         DRONE => Some(&["dispatch", "", "", "received", "", "", "inflight"]),
+        caravan::ID => Some(&["dispatch", "", "", "received", "", "", "cargo", "feed"]),
         _ => None,
     }
 }
@@ -247,8 +282,9 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
 /// The visible drone is an animation of the port's durable flight, not a loose
 /// entity holding a second copy of the cargo. No target or inventory is teleported.
 pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
+    appearance::draw(host, event);
     if let Some(item) = export(event.entity) {
-        event.draw.push(); event.draw.translate([0.5, 1.02, 0.5]);
+        event.draw.push(); event.draw.translate(appearance::marker(event.block).unwrap_or([0.5, 1.02, 0.5]));
         event.draw.rotate_about([1.0, 0.0, 0.0], 90.0, [0.0; 3]); event.draw.scale([0.35; 3]);
         host.draw_item(event.draw, &ItemStack::new(&item, 1), horizon_client::mod_api::DisplayContext::Fixed, None, 0);
         event.draw.pop();
@@ -264,7 +300,7 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     event.draw.push();
     event.draw.translate([
         (to[0] - event.pos[0]) as f32 * fraction,
-        (to[1] - event.pos[1]) as f32 * fraction + if phase > 0 { 2.0 } else { 0.0 },
+        (to[1] - event.pos[1]) as f32 * fraction + if phase > 0 { 2.0 } else { appearance::marker(event.block).map_or(0.0, |point| point[1] - 1.0) },
         (to[2] - event.pos[2]) as f32 * fraction,
     ]);
     host.draw_cube(event.draw, [5.0, 17.0, 5.0], [11.0, 20.0, 11.0], faces, 0x47b9ce);
