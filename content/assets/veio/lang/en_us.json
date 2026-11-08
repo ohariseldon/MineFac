@@ -1053,6 +1053,8 @@
   "veio.village.need_houses": "%s villagers and %s beds. Build more houses.",
   "veio.contract.optional_beacon": "Beacon: star in slot 1",
   "veio.guide.more": "More >",
+  "veio.status.rest": "Resting (night)",
+  "veio.operation.advice.rest": "Night: the worker sleeps and returns in the morning.",
   "veio.village.contents.0": "Start here",
   "veio.village.contents.2": "Grow zones",
   "veio.village.contents.3": "Village growth",

@@ -40,6 +40,7 @@ def add_labels(langs):
         "idle_work": ("Nada a atender: abasteça o estoque ou aguarde produtos.", "Nothing to serve: stock the post or wait for products."),
         "no_wage": ("Coloque esmeraldas na mesa para recontratar trabalhadores.", "Put emeralds in the desk to rehire workers."),
         "zone": ("Postos perto da borda trabalham nesta zona.", "Posts near the border work in this zone."),
+        "rest": ("Noite: o trabalhador dorme e volta de manhã.", "Night: the worker sleeps and returns in the morning."),
         "storing": ("A fila do capataz guarda e retira itens daqui.", "The foreman's queue stores and takes items here."),
         "caravan_animal": ("Aproxime animal adulto equipado e use um laço no terminal; não precisa gastar o laço.", "Bring an equipped adult animal and use a lead on the terminal; the lead is kept."),
         "caravan_feed": ("Cavalo/burro: trigo, maçã ou feno; porco: cenoura, batata ou beterraba.", "Horse/donkey: wheat, apple or hay; pig: carrot, potato or beetroot."),

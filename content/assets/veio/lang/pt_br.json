@@ -1053,6 +1053,8 @@
   "veio.village.need_houses": "%s aldeões e %s camas. Construa mais casas.",
   "veio.contract.optional_beacon": "Farol: estrela no slot 1",
   "veio.guide.more": "Mais >",
+  "veio.status.rest": "Descansando (noite)",
+  "veio.operation.advice.rest": "Noite: o trabalhador dorme e volta de manhã.",
   "veio.village.contents.0": "Começar",
   "veio.village.contents.2": "Expandir zonas",
   "veio.village.contents.3": "A vila cresce",

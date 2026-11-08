@@ -248,6 +248,23 @@ pub mod mod_api {
             host.entity_position(self)
         }
     }
+    /// `mod_api::LivingRef` (Horizon 66f3981): uma entidade viva, de `Host::living`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct LivingRef(EntityRef);
+    impl LivingRef {
+        pub fn new(entity: EntityRef) -> Self {
+            Self(entity)
+        }
+        pub fn entity(self) -> EntityRef {
+            self.0
+        }
+        pub fn id(self) -> u32 {
+            self.0.id()
+        }
+    }
+    /// `horizon_world::player_inventory::EquipmentSlot`, reexportado por `mod_api`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum EquipmentSlot { MainHand, OffHand, Feet, Legs, Chest, Head, Body, Saddle }
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct LevelRef {
         dimension: &'static str,
@@ -458,6 +475,15 @@ pub mod mod_api {
         fn send_map(&mut self, uuid: u128, map_id: i32, colors: &[u8]) -> bool {
             unimplemented!("send_map")
         }
+        /// `native_living_refs::Game::native_living`: a entidade como ser vivo.
+        fn living(&self, entity: EntityRef) -> Option<LivingRef> {
+            unimplemented!("living")
+        }
+        /// `native_living_refs::Game::native_living_set_equipment`: põe `stack` (None esvazia) no
+        /// slot de equipamento, como `/item replace entity`.
+        fn living_set_equipment(&mut self, living: LivingRef, slot: EquipmentSlot, stack: Option<ItemStack>) -> bool {
+            unimplemented!("living_set_equipment")
+        }
     }
 
     /// `horizon_client::first_person::Hand`, reexportado em `mod_api`.
@@ -601,8 +627,20 @@ pub mod mod_api {
         pub entity: u32,
         pub kind: &'a str,
     }
+    impl<'a> EntityTickPreEvent<'a> {
+        /// Só no substituto: monta o evento para medições.
+        pub fn preview(dimension: &'a str, entity: u32, kind: &'a str) -> Self {
+            Self { dimension, entity, kind }
+        }
+    }
     #[non_exhaustive]
     pub struct TickEvent {}
+    impl TickEvent {
+        /// Só no substituto: monta o evento para medições.
+        pub fn preview() -> Self {
+            Self {}
+        }
+    }
     #[non_exhaustive]
     pub struct ServerAboutToStartEvent { pub dedicated: bool }
     #[non_exhaustive]
@@ -752,6 +790,7 @@ pub mod mobs {
     }
     impl<'w> MobWorld<'w> {
         /// Offline fixture, not a Horizon API method.
+        pub fn preview() -> Self { Self { _world: std::marker::PhantomData } }
         pub fn fixture() -> Self { Self { _world: std::marker::PhantomData } }
     }
     #[derive(Default)]
@@ -771,7 +810,7 @@ pub mod mobs {
         pub nav: Navigation,
     }
     #[derive(Default)]
-    pub struct Extra { pub rider: Option<u32>, pub leash: Option<()>, pub leash_pending: Option<()> }
+    pub struct Extra { pub rider: Option<u32>, pub leash: Option<()>, pub leash_pending: Option<()>, pub villager: Option<Box<villager::Ext>> }
     pub struct Mob {
         pub rider: Option<()>,
         pub extra: Extra,
@@ -779,6 +818,75 @@ pub mod mobs {
         pub kind: Arc<MobType>,
         pub position: Vec3,
         pub ai: Ai,
+    }
+    pub type MobExtra = Extra;
+
+    /// `mobs::villager` (Horizon 66f3981): só o acesso ao cérebro que o Veio usa.
+    pub mod villager {
+        use super::Mob;
+        #[derive(Default)]
+        pub struct Ext {
+            /// O cérebro do aldeão, criado no primeiro tick.
+            pub brain: Option<Box<super::villager_brain::Brain>>,
+        }
+        pub fn ext(m: &Mob) -> Option<&Ext> {
+            m.extra.villager.as_deref()
+        }
+        pub fn ext_mut(m: &mut Mob) -> &mut Ext {
+            m.extra.villager.get_or_insert_with(Box::default)
+        }
+    }
+
+    /// `mobs::villager_brain` (Horizon 66f3981): memórias e atividade que o Veio lê e escreve.
+    pub mod villager_brain {
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        pub enum Act { Core, Idle, Work, Play, Rest, Meet, Panic, Raid, PreRaid, Hide }
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        pub enum Tracker {
+            Block([i32; 3]),
+            Point([f64; 3]),
+        }
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        pub struct WalkTarget {
+            pub target: Tracker,
+            pub speed: f32,
+            pub close: i32,
+        }
+        #[derive(Debug)]
+        pub struct Slot<T> {
+            v: Option<T>,
+        }
+        impl<T> Default for Slot<T> {
+            fn default() -> Self {
+                Self { v: None }
+            }
+        }
+        impl<T> Slot<T> {
+            pub fn set(&mut self, v: T) {
+                self.v = Some(v);
+            }
+            pub fn clear(&mut self) {
+                self.v = None;
+            }
+            pub fn get(&self) -> Option<&T> {
+                self.v.as_ref()
+            }
+        }
+        #[derive(Debug, Default)]
+        pub struct Memories {
+            pub walk_target: Slot<WalkTarget>,
+        }
+        #[derive(Debug)]
+        pub struct Brain {
+            pub mem: Memories,
+            pub activity: Act,
+        }
+        impl Brain {
+            /// Só no substituto.
+            pub fn preview(activity: Act) -> Self {
+                Self { mem: Memories::default(), activity }
+            }
+        }
     }
     impl Mob {
         pub fn nav_move_to(&mut self, w: &MobWorld, at: [f64; 3], speed: f64) -> bool {

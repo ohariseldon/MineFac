@@ -56,6 +56,11 @@ struct Village {
     parts: HashMap<[i32; 3], String>,
     notices: Vec<String>,
     commands: Vec<String>,
+    /// Hora do dia (0 = manhã).
+    day: i64,
+    /// Item na mão de cada aldeão e NBT mesclado neles.
+    hands: HashMap<u32, Option<String>>,
+    villager_nbt: HashMap<u32, Compound>,
     players: Vec<horizon_client::mod_api::NativeServerPlayer>,
     edits: Cell<u32>,
     reads: Cell<u32>,
@@ -117,8 +122,22 @@ impl Host for Village {
             .or_else(|| self.animals.get(&entity.id()).map(|(at, _)| *at))
     }
     fn entity_merge_nbt(&mut self, entity: EntityRef, nbt: Compound) -> bool {
+        if self.villagers.contains_key(&entity.id()) {
+            self.villager_nbt.entry(entity.id()).or_default().extend(nbt);
+            return true;
+        }
         let Some((_, data)) = self.animals.get_mut(&entity.id()) else { return false };
         data.extend(nbt);
+        true
+    }
+    fn living(&self, entity: EntityRef) -> Option<horizon_client::mod_api::LivingRef> {
+        self.villagers.contains_key(&entity.id()).then(|| horizon_client::mod_api::LivingRef::new(entity))
+    }
+    fn living_set_equipment(&mut self, living: horizon_client::mod_api::LivingRef,
+        slot: horizon_client::mod_api::EquipmentSlot, stack: Option<ItemStack>) -> bool
+    {
+        assert_eq!(slot, horizon_client::mod_api::EquipmentSlot::MainHand);
+        self.hands.insert(living.id(), stack.map(|stack| stack.item.to_string()));
         true
     }
     fn item_entities(&self, _: &str, min: [f64; 3], max: [f64; 3]) -> Vec<NativeItemEntity> {
@@ -182,6 +201,12 @@ impl Host for Village {
         Ok(columns.iter().map(|_| Some(70)).collect())
     }
     fn block_entity_sync(&mut self, _: [i32; 3]) {}
+    fn level(&self, _: &str) -> Option<horizon_client::mod_api::LevelRef> {
+        None
+    }
+    fn day_time(&self) -> i64 {
+        self.day
+    }
     fn summon(&mut self, _: &str, _: &str, at: [f64; 3], _: Compound) -> Option<u32> {
         self.summoned.push(at);
         Some(90000 + self.summoned.len() as u32)
@@ -1219,11 +1244,13 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
         village.villager(16001 + index as u32, [*x, 64.0, *z], [70, 0, 0, index as i32]);
     }
     village.villager(16010, [180.5, 64.0, 100.5], [70, 0, 0, 10]);
-    village.players = vec![player(7, "Steve", [90.0, 64.0, 90.0]), player(9, "Alex", [5000.0, 64.0, 5000.0])];
-
     spawn::logged_in(7, "Steve", 0);
     spawn::logged_in(8, "bad name;kill", 0);
+    // A janela também roda o tick e não vê os jogadores do servidor: nada se perde.
     spawn::tick(&mut village, 20);
+    assert!(village.commands.is_empty());
+    village.players = vec![player(7, "Steve", [90.0, 64.0, 90.0]), player(9, "Alex", [5000.0, 64.0, 5000.0])];
+    spawn::tick(&mut village, 40);
     let joined = village.commands.join("\n");
     assert!(joined.contains("setworldspawn 100 70 100"), "centro da vila: média do grupo, altura do terreno\n{joined}");
     assert!(joined.contains("unless entity @s[tag=veio_village] run tp @s 100 70 100"), "só quem chega pela primeira vez");
@@ -1397,7 +1424,7 @@ fn worker_orders_reset_navigation_on_cancel_and_refresh_changed_destinations() {
     assert!(goal.can_use(&mut mob, &mut cx));
     goal.cooldown = 15;
     order(mob.id, [10.0, 64.0, 10.0], defense::clock());
-    assert!(goal.can_use(&mut mob, &mut cx));
+    for _ in 0..ORDER_POLL { assert!(goal.can_use(&mut mob, &mut cx)); }
     assert_eq!(goal.cooldown, 0);
     assert_eq!(goal.target, Some([10.0, 64.0, 10.0]));
     mob.ai.nav.done = false;
@@ -1417,4 +1444,133 @@ fn shepherd_keeps_riding_pigs_out_of_the_breeding_queue() {
     assert_eq!(cycle(&mut village, &mut post, 1), IDLE_WORK);
     assert_eq!(post.items[1], Some(ItemStack::new("minecraft:carrot", 5)));
     assert!(village.animals.values().all(|(_, nbt)| !nbt.contains_key(&"InLove".into())));
+}
+
+// ---------- Medição: vila grande ----------
+
+/// Custo do Veio numa vila grande, por tick do jogo: `entity_tick_pre` de cada aldeão e animal e
+/// o objetivo `Work` de cada aldeão (com ordens vivas no mapa). Mede só o código do Veio, no
+/// substituto. `cargo test --release -p veio-check bench_large_village -- --ignored --nocapture`
+#[test]
+#[ignore]
+fn bench_large_village() {
+    use horizon_client::mobs::{Ai, Mob, MobType, MobWorld, Vec3};
+    use horizon_client::mod_api::{EntityTickPreEvent, TickEvent};
+    use std::sync::Arc;
+    const VILLAGERS: u32 = 150;
+    const ANIMALS: u32 = 300;
+    const TICKS: u32 = 20000;
+    let dimension = "veio:bench_village";
+    let mut village = Village::new(dimension);
+    village.crops.clear();
+    for id in 0..VILLAGERS {
+        village.villagers.insert(200_000 + id, ([f64::from(id % 20), 64.0, f64::from(id / 20)], [99, 0, 0, id as i32], 0));
+    }
+    for id in 0..ANIMALS {
+        village.animals.insert(300_000 + id, ([f64::from(id % 30), 64.0, 30.0 + f64::from(id / 30)], Compound::new()));
+    }
+    let hooks = super::super::hooks();
+    let world = MobWorld::preview();
+    let kind = Arc::new(MobType { id: VILLAGER.to_owned() });
+    let mut mobs: Vec<(Mob, Work)> = (0..VILLAGERS).map(|id| (Mob { rider: None,
+        id: 200_000 + id, kind: kind.clone(), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 }, ai: Ai::default(), extra: Default::default(),
+    }, Work::default())).collect();
+    // Um posto em cada sete aldeões tem ordem viva.
+    for id in (0..VILLAGERS).step_by(7) {
+        order(200_000 + id, [5.0, 64.0, 5.0], defense::clock());
+    }
+    let animal_kinds = ["minecraft:cow", "minecraft:sheep", "minecraft:pig", "minecraft:chicken"];
+    let started = std::time::Instant::now();
+    for _ in 0..TICKS {
+        hooks.tick(&mut village, &mut TickEvent::preview());
+        for id in 0..VILLAGERS {
+            hooks.entity_tick_pre(&mut village, &mut EntityTickPreEvent::preview(dimension, 200_000 + id, VILLAGER));
+        }
+        for id in 0..ANIMALS {
+            hooks.entity_tick_pre(&mut village, &mut EntityTickPreEvent::preview(dimension, 300_000 + id, animal_kinds[(id % 4) as usize]));
+        }
+        let now = defense::clock();
+        for (mob, goal) in &mut mobs {
+            let mut cx = Cx { w: &world };
+            if goal.can_use(mob, &mut cx) {
+                goal.tick(mob, &mut cx);
+            }
+            // Mantém as ordens vivas, como os postos fazem a cada ciclo.
+            if mob.id % 7 == 200_000 % 7 && now % 10 == 0 {
+                order(mob.id, [5.0, 64.0, 5.0], now);
+            }
+        }
+    }
+    let per_tick = started.elapsed().as_secs_f64() * 1e6 / f64::from(TICKS);
+    eprintln!("vila grande: {VILLAGERS} aldeões + {ANIMALS} animais: {per_tick:.1} µs por tick do jogo (Veio)");
+}
+
+// ---------- Aldeões guiados pelo cérebro e descanso ----------
+
+#[test]
+fn work_goal_hands_the_order_to_the_villager_brain_and_respects_danger() {
+    use horizon_client::mobs::{Ai, Mob, MobType, MobWorld, Vec3, villager};
+    use horizon_client::mobs::villager_brain::{Act, Brain, Tracker};
+    use std::sync::Arc;
+    let world = MobWorld::preview();
+    let mut mob = Mob { rider: None, id: 17001, kind: Arc::new(MobType { id: VILLAGER.to_owned() }), position: Vec3 { x: 0.0, y: 64.0, z: 0.0 },
+        ai: Ai::default(), extra: Default::default() };
+    villager::ext_mut(&mut mob).brain = Some(Box::new(Brain::preview(Act::Idle)));
+    let mut goal = Work::default();
+    order(17001, [5.5, 64.0, 7.5], defense::clock());
+    let mut cx = Cx { w: &world };
+    assert!(goal.can_use(&mut mob, &mut cx));
+    goal.tick(&mut mob, &mut cx);
+    let walk = |mob: &Mob| villager::ext(mob).and_then(|ext| ext.brain.as_ref()).and_then(|brain| brain.mem.walk_target.get().copied());
+    assert_eq!(walk(&mob).map(|walk| walk.target), Some(Tracker::Block([5, 64, 7])), "o cérebro recebe a ordem como alvo");
+    // Em pânico, o objetivo não mexe no cérebro.
+    villager::ext_mut(&mut mob).brain.as_mut().unwrap().mem.walk_target.clear();
+    villager::ext_mut(&mut mob).brain.as_mut().unwrap().activity = Act::Panic;
+    goal.tick(&mut mob, &mut cx);
+    assert_eq!(walk(&mob), None, "fugindo de um zumbi, ele foge");
+    // Ao parar, o alvo da ordem sai do cérebro.
+    villager::ext_mut(&mut mob).brain.as_mut().unwrap().activity = Act::Work;
+    goal.tick(&mut mob, &mut cx);
+    assert!(walk(&mob).is_some());
+    goal.stop(&mut mob, &mut cx);
+    assert_eq!(walk(&mob), None);
+    cancel(17001);
+}
+
+#[test]
+fn workers_rest_at_night_and_resume_in_the_morning() {
+    let mut village = Village::new("veio:test_work_night");
+    village.villager(17101, [5.5, 64.0, 5.5], [80, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 10);
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    village.day = 13000;
+    assert_eq!(cycle(&mut village, &mut entity, 1), RESTING);
+    assert_eq!(order_for(17101, 1), None, "sem ordem: o aldeão vai dormir");
+    assert_eq!(worker(&entity), Some([80, 0, 0, 1]), "continua contratado");
+    village.day = 24000 + 1000;
+    assert_ne!(cycle(&mut village, &mut entity, 2), RESTING, "de manhã volta a trabalhar");
+    let now = cycles_at(&mut village, POST, &mut entity, 3, 40, |post| target(post) == Some(WHEAT));
+    assert_eq!(order_for(17101, now), Some(goal(WHEAT)), "e vai até o trigo");
+}
+
+#[test]
+fn worker_holds_what_it_carries_and_empties_the_hand_after_delivery() {
+    let mut village = Village::new("veio:test_work_hand");
+    village.villager(17201, [5.5, 64.0, 5.5], [81, 0, 0, 1]);
+    let mut entity = post();
+    set_number(&mut entity, "Ration", 10);
+    assert!(hire_at(&mut village, &mut entity, POST, 0));
+    let hand = |village: &Village| village.hands.get(&17201).cloned().flatten();
+    cycle(&mut village, &mut entity, 1);
+    assert_eq!(village.hands.get(&17201), Some(&None), "primeira vez: a mão é acertada (vazia)");
+    village.walk(17201, WHEAT);
+    let now = cycles_at(&mut village, POST, &mut entity, 2, 60, |post| !carried(post).is_empty());
+    assert_eq!(hand(&village).as_deref(), Some("minecraft:wheat"), "colheu: segura o trigo");
+    let chances = village.villager_nbt.get(&17201).and_then(|nbt| nbt.get(&"HandDropChances".into()).cloned());
+    assert_eq!(chances, Some(Tag::List(vec![Tag::Float(0), Tag::Float(0)])), "o item da mão não cai na morte");
+    village.walk(17201, [1, 64, 0]);
+    cycle(&mut village, &mut entity, now + 1);
+    assert_eq!(hand(&village), None, "entregou: mão vazia");
+    assert!(outputs_of(&entity).contains(&("minecraft:wheat".into(), 1)), "a colheita está no posto, não na mão");
 }

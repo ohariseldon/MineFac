@@ -126,11 +126,18 @@ pub(crate) fn tick(host: &mut dyn Host, now: u64) {
         return;
     }
     let players = host.server_players();
+    // A janela também chama o tick e pode não ver os jogadores do servidor: espera o servidor.
+    if players.is_empty() {
+        return;
+    }
     let Ok(mut arrivals) = ARRIVALS.lock().map(|mut list| std::mem::take(&mut *list)) else { return };
     let mut waiting = Vec::new();
     for mut arrival in arrivals.drain(..) {
         let Some(player) = players.iter().find(|player| player.uuid == arrival.player) else {
-            // Saiu antes de chegar; tenta de novo no próximo login.
+            // Ainda não listado (ou saiu): espera até o prazo; no próximo login tenta de novo.
+            if now < arrival.deadline + WAIT {
+                waiting.push(arrival);
+            }
             continue;
         };
         if player.dimension != OVERWORLD {

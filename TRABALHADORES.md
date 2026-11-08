@@ -117,6 +117,48 @@ Substituto offline: 135 testes, entre eles onda que não nasce, contratação po
 3. Tente dormir numa cama fora antes da da casa: recusada. Durma na da casa, depois numa fora, depois numa terceira: a terceira é recusada até você quebrar a segunda.
 4. Coma pão fora e um ensopado em casa: veja as mensagens e a pressa.
 5. Ande pela região e volte: o mural mostra o que você viu.
+## 0.16.1: o trabalhador segura o que carrega
+
+- Enquanto leva algo (trigo, lã, minério, insumos, a esmeralda do capataz), o aldeão segura na mão o primeiro item da carga; ao entregar, à noite e ao ser dispensado, a mão fica vazia.
+- É só visual: a carga continua no NBT do posto (`Carried`), então salvar, descarregar o chunk ou trocar de trabalhador não perde nem duplica nada. A chance de o item da mão cair na morte é zerada (`HandDropChances`), para a morte do aldeão não duplicar o que já está no posto.
+- O posto só chama o jogo quando o item muda (`Held` no NBT do posto). Um aldeão vindo de outro posto ou de um save antigo tem a mão acertada na primeira vez.
+- API: `Host::living` e `Host::living_set_equipment(living, EquipmentSlot::MainHand, stack)`, com `LivingRef` e `EquipmentSlot` (`horizon_world::player_inventory`), conferidos no Horizon `66f3981` (`game/native_living_refs.rs`) e acrescentados ao substituto offline.
+- Teste: `worker_holds_what_it_carries_and_empties_the_hand_after_delivery`.
+
+## Sexta entrega: aldeões guiados pelo cérebro, noite, spawn conferido e vilas grandes
+
+Feita sem teste no jogo, a partir do código do Horizon `66f3981` (`mobs/ai.rs`, `mobs/villager.rs`, `mobs/villager_brain.rs`, `game/integrated.rs`, `game/commands*`).
+
+### Aldeões andando até a tarefa
+
+- **O que o Horizon faz:** os objetivos registrados por mods (`register_goals`) rodam também nos aldeões, antes do cérebro, então o `Work` roda. O cérebro do aldeão roda depois e, sempre que tem um alvo de caminhada, refaz o caminho (`MoveToTargetSink`). Se o `Work` só usasse a navegação, os dois disputariam o caminho e o aldeão ficaria indo e voltando.
+- **Agora:** o `Work` grava a ordem como alvo de caminhada no cérebro (`villager::ext_mut(m).brain.mem.walk_target`) e o próprio cérebro leva o aldeão. Passear, ir ao sino e procurar emprego só escolhem alvo quando não há um, então não atrapalham. Quando a ordem acaba, o objetivo apaga só o alvo que ele mesmo deu.
+- **Segurança:** em pânico (zumbi), ataque, preparo de ataque, esconderijo ou sono, o objetivo não mexe no cérebro: o aldeão se protege e o posto espera.
+- **Noite:** a partir de 12000 (a hora em que o aldeão vanilla vai dormir), o posto mostra **Descansando (noite)**, retira a ordem e guarda carga e alvo; de manhã o trabalho continua. O centro de controle mantém o painel e o relatório durante a noite.
+
+### Spawn na vila, conferido no Horizon
+
+- `run_command` só roda onde há servidor (`lan`). No singleplayer, o servidor integrado roda numa thread própria com `lan` ativo, e os ganchos de login e renascimento disparam nele: o spawn funciona.
+- Os comandos usados existem: `execute ... as ... unless entity @s[tag=...] run`, `tp`, `setworldspawn`, `spawnpoint`, `tag`, `tellraw` e `place structure` (este ignora o bioma, como o vanilla, e exige os chunks carregados, o que vale em volta do jogador).
+- **Corrigido:** o tick também roda na janela, onde a lista de jogadores do servidor pode vir vazia; antes a chegada era descartada. Agora ela espera o servidor.
+
+### Desempenho com vilas grandes (medido)
+
+`bench_large_village` (teste ignorado; `cargo test --release -p veio-check bench_large_village -- --ignored --nocapture`): 150 aldeões, 300 animais, 20.000 ticks, ordens vivas para 1 a cada 7 aldeões. Mede só o código do Veio no substituto.
+
+| | Antes | Depois |
+| --- | --- | --- |
+| µs por tick do jogo (mediana de 5) | ~14,7 | ~3,5 |
+
+- **Registros de mobs por amostragem:** cada mob entra nos registros de defesa e rancho em 1 de cada 7 ticks do relógio do mod (as consultas aceitam marcas de até 40-60 ticks). Antes eram duas travas e várias comparações de texto por mob, por tick.
+- **`Work` consulta as ordens a cada 10 chamadas**, não em todo tick.
+- **Correção:** o relógio do mod pode avançar de 2 em 2 (janela e servidor). Com o intervalo par de 6000, metade dos aldeões nunca caía na fase de natalidade; agora são 5999 ticks. A amostragem usa 7 pelo mesmo motivo.
+
+### Contratos tocados
+
+- `lib.rs`: `entity_tick_pre` amostra os registros (`OBSERVE_EVERY = 7`).
+- Substituto: `mobs::villager::{Ext, ext, ext_mut}`, `mobs::villager_brain::{Brain, Memories, Slot, WalkTarget, Tracker, Act}` (só os campos usados) e `Mob::extra`, conferidos no Horizon `66f3981`; construtores de medição `EntityTickPreEvent::preview`, `TickEvent::preview` e `MobWorld::preview` (só no substituto).
+- `presentation.rs`: estado 28 (`rest`); `operations.rs`: sem bloqueio.
 
 ## Quinta entrega: vilas até 150, spawn na vila e Guia da Vila Operária
 
@@ -311,7 +353,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0 e 93 na 0.14.0, já com os lotes 3 a 6 do Grok; prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0 e 135 na 0.16.1 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
@@ -321,6 +363,14 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 - Dois pastores podem perseguir o mesmo animal (a reserva é por bloco, e o animal anda); o segundo só encontra o animal já atendido e procura outro.
 - A rede da mesa guarda os primeiros 24 blocos encontrados; numa base muito densa, postos podem ficar de fora.
 - O carregador, depois da primeira volta, ainda inspeciona até 12 máquinas a cada 10 ticks quando escolhe a próxima viagem; um teto de inspeções por ciclo fica para um lote seguinte.
+
+## Teste sugerido ao usuário (sexta entrega)
+
+1. Contrate um lavrador e acompanhe: ele deve ir direto às plantas maduras, sem ficar indo e voltando para o sino ou passeando.
+2. Solte um zumbi perto: o trabalhador deve fugir, e voltar ao trabalho depois.
+3. Espere a noite: o painel mostra "Descansando (noite)" e o aldeão vai para a cama; de manhã ele volta.
+4. Mundo novo no singleplayer: confira se você aparece no centro da vila.
+5. Vila com 100+ aldeões: compare o desempenho com a 0.15.0.
 
 ## Teste sugerido ao usuário (quinta entrega)
 

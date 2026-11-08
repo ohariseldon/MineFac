@@ -22,7 +22,8 @@ pub(crate) const BASE_CAP: usize = 30;
 pub(crate) const MAX_CAP: usize = 150;
 pub(crate) const COUNT_RADIUS: f64 = 48.0;
 pub(crate) const DEVELOPMENT_RADIUS: i32 = 64;
-pub(crate) const CHECK: u64 = 6000;
+/// Cerca de 5 min; ímpar para que todo id caia na fase mesmo com o relógio avançando de 2 em 2.
+pub(crate) const CHECK: u64 = 5999;
 pub(crate) const CHANCE: u64 = 6;
 pub(crate) const MIN_ADULTS: usize = 2;
 const MAX_PENDING: usize = 16;
