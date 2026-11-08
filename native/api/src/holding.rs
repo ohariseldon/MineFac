@@ -41,7 +41,7 @@ pub(super) fn division(block: &str) -> Option<u8> {
         workforce::society::HOUSE | workforce::society::WELL => URBAN,
         workforce::SHOP => COMMERCE,
         workforce::TOWN_HALL => return None,
-        workforce::FOREMAN_DESK => LOGISTICS,
+        workforce::FOREMAN_DESK | workforce::society::export::DOCK => LOGISTICS,
         _ => match operations::profile(block)?.sector {
             Sector::Extraction => MINING,
             Sector::Industry | Sector::Projects => MANUFACTURING,
@@ -73,7 +73,20 @@ struct World {
     cost_turn: [i32; TABS as usize],
     revenue_day: [i32; TABS as usize],
     cost_day: [i32; TABS as usize],
+    /// Exportações do turno e do dia.
+    export_turn: i32,
+    export_day: i32,
     rolled: i64,
+}
+
+/// Uma venda ao mercado externo (a receita já foi lançada na empresa do item).
+pub(super) fn exported(dimension: &str, coins: i32) {
+    with_world(dimension, |world| world.export_turn += coins.max(0));
+}
+
+/// Exportações do dia nesta dimensão.
+pub(super) fn exports_day(dimension: &str) -> i32 {
+    with_world(dimension, |world| world.export_day).unwrap_or(0)
 }
 
 /// A empresa que produz um item (quem recebe o atacado dele).
@@ -159,6 +172,8 @@ pub(super) fn roll(dimension: &str, time: i64) {
         }
         world.rolled = turn;
         let daily = workforce::society::ledger::daily;
+        world.export_day = daily(world.export_day, world.export_turn);
+        world.export_turn = 0;
         for division in 0..TABS as usize {
             world.day[division] = daily(world.day[division], world.turn[division]);
             world.revenue_day[division] = daily(world.revenue_day[division], world.revenue_turn[division]);
@@ -233,6 +248,7 @@ fn extras(dimension: &str, pos: [i32; 3], division: u8) -> [i32; 3] {
 pub(super) fn refresh(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity) {
     let tab = number(entity, "Tab").clamp(0, TABS - 1);
     if tab == 0 {
+        set_number(entity, "DExport", exports_day(dimension));
         return;
     }
     let [units, active, workers, made, status, count, revenue, cost] = summary(dimension, tab as u8);

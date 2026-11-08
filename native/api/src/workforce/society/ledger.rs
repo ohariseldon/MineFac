@@ -25,8 +25,8 @@ pub(crate) struct Account {
     pub pos: [i32; 3],
     pub coins: i32,
     pub seen: u64,
-    /// Fluxos do turno: [atacado, varejo, salários, impostos, recebido, assistência, saque].
-    pub flow: [i32; 7],
+    /// Fluxos do turno: [atacado, varejo, salários, impostos, recebido, assistência, saque, exportação].
+    pub flow: [i32; 8],
 }
 
 /// Valor entregue pela indústria às lojas (produção a preço de atacado).
@@ -38,12 +38,14 @@ pub(crate) const TAXES: usize = 3;
 pub(crate) const RECEIVED: usize = 4;
 pub(crate) const ASSIST: usize = 5;
 pub(crate) const REDEEM: usize = 6;
+/// Vendas ao mercado externo (entram no PIB).
+pub(crate) const EXPORTS: usize = 7;
 
 static COMPANY: Mutex<Vec<Account>> = Mutex::new(Vec::new());
 static PUBLIC: Mutex<Vec<Account>> = Mutex::new(Vec::new());
 static SHOP_BOOK: Mutex<Vec<Account>> = Mutex::new(Vec::new());
 /// Bordas por dimensão: (esmeraldas que viraram moeda, moedas que viraram esmeralda), em moedas.
-static BORDERS: Mutex<Vec<(String, i64, i64)>> = Mutex::new(Vec::new());
+static BORDERS: Mutex<Vec<(String, i64, i64, i64)>> = Mutex::new(Vec::new());
 
 fn book(which: Book) -> &'static Mutex<Vec<Account>> {
     match which { Book::Company => &COMPANY, Book::Public => &PUBLIC, Book::Shop => &SHOP_BOOK }
@@ -57,19 +59,19 @@ pub(crate) fn balance(which: Book, dimension: &str, pos: [i32; 3]) -> Option<i32
 
 /// Abre ou renova a conta do bloco dono. Na primeira vez, o saldo vem do NBT (`stored`); depois, a
 /// memória manda. Devolve (saldo, fluxos do turno) e zera os fluxos quando `close_turn`.
-pub(crate) fn open(which: Book, dimension: &str, pos: [i32; 3], stored: i32, now: u64, close_turn: bool) -> (i32, [i32; 7]) {
-    let Ok(mut accounts) = book(which).lock() else { return (stored, [0; 7]) };
+pub(crate) fn open(which: Book, dimension: &str, pos: [i32; 3], stored: i32, now: u64, close_turn: bool) -> (i32, [i32; 8]) {
+    let Ok(mut accounts) = book(which).lock() else { return (stored, [0; 8]) };
     if let Some(account) = accounts.iter_mut().find(|account| account.dimension == dimension && account.pos == pos) {
         account.seen = now;
         let flow = account.flow;
         if close_turn {
-            account.flow = [0; 7];
+            account.flow = [0; 8];
         }
         return (account.coins, flow);
     }
     accounts.retain(|account| now.saturating_sub(account.seen) <= STALE);
-    accounts.push(Account { dimension: dimension.to_owned(), pos, coins: stored, seen: now, flow: [0; 7] });
-    (stored, [0; 7])
+    accounts.push(Account { dimension: dimension.to_owned(), pos, coins: stored, seen: now, flow: [0; 8] });
+    (stored, [0; 8])
 }
 
 fn nearest<'a>(accounts: &'a mut [Account], dimension: &str, at: [i32; 3], now: u64, radius: i32) -> Option<&'a mut Account> {
@@ -137,21 +139,37 @@ pub(crate) fn record(dimension: &str, at: [i32; 3], coins: i32, kind: usize, now
     }
 }
 
-/// Esmeraldas de verdade entraram (`coins > 0`) ou saíram (`coins < 0`) da economia.
-pub(crate) fn border(dimension: &str, coins: i32) {
+fn with_border(dimension: &str, change: impl FnOnce(&mut (String, i64, i64, i64))) {
     if let Ok(mut borders) = BORDERS.lock() {
-        let index = match borders.iter().position(|(name, _, _)| name == dimension) {
+        let index = match borders.iter().position(|(name, _, _, _)| name == dimension) {
             Some(index) => index,
-            None => { borders.push((dimension.to_owned(), 0, 0)); borders.len() - 1 }
+            None => { borders.push((dimension.to_owned(), 0, 0, 0)); borders.len() - 1 }
         };
-        if coins > 0 { borders[index].1 += i64::from(coins) } else { borders[index].2 -= i64::from(coins) }
+        change(&mut borders[index]);
     }
 }
 
-/// (emitido, resgatado) nesta dimensão desde que o mundo abriu, em moedas.
+/// Moeda entrou (`coins > 0`: esmeraldas depositadas, compras do jogador, exportação) ou saiu
+/// (`coins < 0`: saque) da economia.
+pub(crate) fn border(dimension: &str, coins: i32) {
+    with_border(dimension, |entry| if coins > 0 { entry.1 += i64::from(coins) } else { entry.2 -= i64::from(coins) });
+}
+
+/// Parte da entrada que veio do mercado externo.
+pub(crate) fn exported(dimension: &str, coins: i32) {
+    with_border(dimension, |entry| entry.3 += i64::from(coins.max(0)));
+}
+
+/// (entrou, saiu) nesta dimensão desde que o mundo abriu, em moedas.
 pub(crate) fn borders(dimension: &str) -> (i64, i64) {
-    BORDERS.lock().ok().and_then(|borders| borders.iter().find(|(name, _, _)| name == dimension)
-        .map(|(_, emitted, redeemed)| (*emitted, *redeemed))).unwrap_or((0, 0))
+    BORDERS.lock().ok().and_then(|borders| borders.iter().find(|(name, _, _, _)| name == dimension)
+        .map(|(_, emitted, redeemed, _)| (*emitted, *redeemed))).unwrap_or((0, 0))
+}
+
+/// Quanto da entrada veio de exportações.
+pub(crate) fn exports(dimension: &str) -> i64 {
+    BORDERS.lock().ok().and_then(|borders| borders.iter().find(|(name, _, _, _)| name == dimension)
+        .map(|(_, _, _, exported)| *exported)).unwrap_or(0)
 }
 
 /// Soma dos saldos de um livro nesta dimensão.
