@@ -757,11 +757,12 @@ pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
 }
 
 pub(crate) fn screen_slots() -> Vec<Option<[f32; 2]>> {
-    vec![Some([17.0, 100.0]), Some([44.0, 100.0]), Some([62.0, 100.0]), Some([80.0, 100.0]), Some([152.0, 100.0])]
+    vec![Some([17.0, SLOTS_Y]), Some([44.0, SLOTS_Y]), Some([62.0, SLOTS_Y]), Some([80.0, SLOTS_Y]), Some([152.0, SLOTS_Y])]
 }
 
-const ROW: f32 = 10.0;
-const TOP: f32 = 20.0;
+const ROW: f32 = 9.0;
+const TOP: f32 = 30.0;
+const SLOTS_Y: f32 = 111.0;
 const WARN: u32 = 0x9a5a00;
 const GOOD: u32 = 0x1e7a1e;
 
@@ -824,11 +825,25 @@ fn lines(data: &[i32]) -> Vec<(String, u32)> {
     lines
 }
 
-pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>) {
-    let [x, y] = event.origin;
-    for (index, (line, color)) in lines(event.data).iter().enumerate() {
-        host.text(event.batch, &center::fit(host, line, 176.0), [x + 8.0, y + TOP + index as f32 * ROW], *color, false);
+/// Painel do lar: uma linha por assunto, com ícone, e embaixo a lenha, a despensa e a obra, com
+/// o fantasma do que vai em cada slot e o nome embaixo.
+pub(crate) fn draw(pen: &mut ui::Pen<'_>, view: &ui::screens::View<'_>) {
+    use ui::icons;
+    let icons = [icons::FLAME, icons::HEART, icons::CHECK, icons::BREAD, icons::HOUSE, icons::HAMMER, icons::SCROLL, icons::INFO];
+    for (index, (line, color)) in lines(view.data).iter().enumerate() {
+        let y = TOP + index as f32 * ROW;
+        if pen.hovering(6.0, y, 182.0, ROW) { pen.fill(6.0, y, 182.0, ROW, 0x20ffffff); }
+        ui::screens::info_row(pen, icons[index.min(icons.len() - 1)], line, 6.0, y + 1.0, 182.0, *color);
     }
+    let slots = screen_slots();
+    let at = |slot: usize| slots[slot].unwrap_or([0.0, 0.0]);
+    for (slot, item) in [(FUEL, "minecraft:oak_log"), (1, "minecraft:bread"), (BUILD, "minecraft:bricks")] {
+        if view.empty(slot) { pen.ghost(item, at(slot)[0], at(slot)[1]); }
+    }
+    let tr = |key: &str| Text::tr(key, &[]).plain();
+    pen.text_center(&tr("veio.ui.label.fuel"), at(FUEL)[0] + 8.0, SLOTS_Y + 19.0, ui::SOFT);
+    pen.text_center(&tr("veio.ui.label.pantry"), at(2)[0] + 8.0, SLOTS_Y + 19.0, ui::SOFT);
+    pen.text_center(&tr("veio.ui.label.build"), at(BUILD)[0] + 8.0, SLOTS_Y + 19.0, ui::SOFT);
 }
 
 pub(crate) fn tooltip(event: &mut horizon_client::mod_api::ScreenTooltipEvent<'_>) -> bool {

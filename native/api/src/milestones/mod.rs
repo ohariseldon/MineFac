@@ -12,7 +12,7 @@
 //! Primeira hora: na fase 1 o painel vira uma lista de montagem (energia, extratora, prensa,
 //! montador) que se marca sozinha quando as máquinas aparecem perto do quadro.
 use super::*;
-use horizon_client::mod_api::{ScreenDrawEvent, Text};
+use horizon_client::mod_api::Text;
 
 pub(crate) mod census;
 
@@ -196,91 +196,6 @@ pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
 
 pub(crate) fn screen_slots() -> Vec<Option<[f32; 2]>> { vec![Some([138.0, 120.0]), Some([162.0, 120.0])] }
 pub(crate) fn roles() -> &'static [&'static str] { &["input", "output"] }
-
-const GREEN: u32 = 0x2f7a34;
-const RED: u32 = 0xa02020;
-const MUTED: u32 = 0x8a8a8a;
-const BAR: u32 = 0xff2b2b2b;
-
-fn tr(key: &str, args: &[&dyn std::fmt::Display]) -> String { Text::tr(key, args).plain() }
-
-/// Largura útil na altura `row`: o painel inteiro acima dos slots, à esquerda deles abaixo.
-fn width_at(row: f32) -> f32 { if row + 8.0 <= 119.0 { 174.0 } else { 120.0 } }
-
-/// Escreve `text` a partir de `row`, quebrando por palavras na largura disponível em cada linha.
-fn write(host: &dyn Host, event: &mut ScreenDrawEvent<'_>, row: &mut f32, text: &str, color: u32) {
-    let [x, y] = event.origin;
-    let mut line = String::new();
-    for word in text.split(' ') {
-        let candidate = if line.is_empty() { word.to_owned() } else { format!("{line} {word}") };
-        if !line.is_empty() && host.text_width(&candidate) > width_at(*row) {
-            host.text(event.batch, &line, [x + 10.0, y + *row], color, false);
-            *row += 10.0;
-            line = word.to_owned();
-        } else {
-            line = candidate;
-        }
-    }
-    host.text(event.batch, &line, [x + 10.0, y + *row], color, false);
-    *row += 10.0;
-}
-
-pub(crate) fn draw_screen(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
-    let [x, y] = event.origin;
-    let read = |index: usize| event.data.get(index).copied().unwrap_or(0);
-    // Linhas em coordenadas relativas ao painel; `write` soma a origem.
-    let mut row = 20.0;
-    let phase = (read(1).max(0) as usize).min(PHASES.len());
-    if phase < PHASES.len() {
-        let current = &PHASES[phase];
-        write(host, event, &mut row, &tr("veio.board.phase", &[&(phase + 1), &PHASES.len(), &tr(&format!("veio.board.phase.{}", current.key), &[])]), presentation::INK);
-        let done = read(2).clamp(0, current.count as i32);
-        write(host, event, &mut row, &tr("veio.board.deliver", &[&done, &current.count, &tr(current.item_key, &[])]), presentation::SOFT_INK);
-        host.fill(event.batch, [x + 10.0, y + row, 174.0, 6.0], BAR);
-        if done > 0 {
-            host.fill(event.batch, [x + 11.0, y + row + 1.0, 172.0 * done as f32 / current.count as f32, 4.0], 0xff3fae3f);
-        }
-        row += 9.0;
-        // Licença: o que a fase abre. Nas outras fases, o que o quadro entrega.
-        if current.reward.0.starts_with("veio:permit_") {
-            let unlocks: Vec<String> = current.unlocks.iter().map(|key| tr(key, &[])).collect();
-            write(host, event, &mut row, &tr("veio.board.unlocks", &[&unlocks.join(", ")]), presentation::SOFT_INK);
-        } else {
-            write(host, event, &mut row, &tr("veio.board.reward", &[&current.reward.1, &tr(current.reward_key, &[])]), presentation::SOFT_INK);
-        }
-        if phase == 0 {
-            // Primeira hora: lista de montagem que se marca sozinha (verde = já há perto do quadro).
-            let setup = read(11);
-            let mut at = 10.0;
-            for (bit, key) in ["veio.board.setup.power", "veio.board.setup.drill", "veio.board.setup.press", "veio.board.setup.assembler"].iter().enumerate() {
-                let label = tr(key, &[]);
-                let width = host.text_width(&label);
-                if at > 10.0 && at + width > 184.0 { at = 10.0; row += 10.0; }
-                host.text(event.batch, &label, [x + at, y + row], if setup & (1 << bit) != 0 { GREEN } else { MUTED }, false);
-                at += width + 5.0;
-            }
-            row += 10.0;
-        }
-    } else {
-        write(host, event, &mut row, &tr("veio.board.done", &[]), GREEN);
-    }
-    row = f32::max(row, 82.0) + 2.0;
-    host.fill(event.batch, [x + 10.0, y + row - 3.0, 174.0, 1.0], 0xff8b8b8b);
-    let order = ORDERS[(read(3).max(0) as usize).min(ORDERS.len() - 1)];
-    let done = read(4).clamp(0, order.3 as i32);
-    write(host, event, &mut row, &tr("veio.board.order", &[&read(6).max(1), &done, &order.3, &tr(order.2, &[])]), presentation::INK);
-    let (key, color) = match read(5) {
-        1 => ("veio.board.order_paid", GREEN),
-        2 => ("veio.board.order_elsewhere", MUTED),
-        _ => ("veio.board.order_reward", presentation::SOFT_INK),
-    };
-    write(host, event, &mut row, &tr(key, &[&order.4]), color);
-    let (stuck, total) = (read(8) + read(9) + read(10), read(12));
-    let status = if total == 0 { tr("veio.board.no_machines", &[]) }
-        else if stuck == 0 { tr("veio.board.ok", &[&read(7), &total]) }
-        else { tr("veio.board.issues", &[&read(8), &read(9), &read(10)]) };
-    write(host, event, &mut row, &status, if stuck > 0 { RED } else if total == 0 { MUTED } else { GREEN });
-}
 
 #[cfg(test)]
 mod tests;

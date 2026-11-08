@@ -614,6 +614,12 @@ fn reserved(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now
 
 // ---------- Painel ----------
 
+/// Nome da planta escolhida (o índice vem do painel).
+pub(crate) fn plan_name(index: i32) -> String {
+    let blueprint = &blueprints::BLUEPRINTS[index.max(0) as usize % blueprints::BLUEPRINTS.len()];
+    Text::tr(&format!("veio.project.{}.name", blueprint.key), &[]).plain()
+}
+
 pub(crate) fn panel_lines(data: &[i32]) -> Vec<String> {
     let read = |index: usize| data.get(index).copied().unwrap_or(0);
     let tr = |key: &str, args: &[&dyn std::fmt::Display]| Text::tr(key, args).plain();

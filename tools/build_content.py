@@ -452,7 +452,7 @@ def main():
             "properties": properties,
             "shapes": shape, "collision_shapes": shape})
         if slots:
-            write(D / f"horizon/menu/{name}.json", {"slots": slots, "data_slots": 13, "results": results})
+            write(D / f"horizon/menu/{name}.json", {"slots": slots, "data_slots": 14, "results": results})
         write(D / f"loot_table/blocks/{name}.json", {"type": "minecraft:block", "pools": [{"rolls": 1,
             "entries": [{"type": "minecraft:item", "name": f"veio:{name}"}],
             "conditions": [{"condition": "minecraft:survives_explosion"}]}],

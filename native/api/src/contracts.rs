@@ -175,39 +175,6 @@ pub(super) fn tick(entity: &mut ModBlockEntity) -> bool {
     false
 }
 
-pub(super) fn draw_screen(
-    host: &dyn Host,
-    event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>,
-) {
-    use horizon_client::mod_api::Text;
-    let [x, y] = event.origin;
-    let stage = event.data.get(8).copied().unwrap_or(0).max(0) as usize;
-    let optional_export = stage == 3 && event.data.get(12).copied().unwrap_or(0) == 0;
-    let contract = if optional_export { &EXPORT } else { for_stage(stage) };
-    let title = Text::tr(contract.title, &[]).plain();
-    host.text(event.batch, &title, [x + 9.0, y + 24.0], presentation::INK, false);
-    let in_phase = phase(stage).is_some();
-    for (index, &(item, required)) in contract.inputs.iter().enumerate() {
-        let got = event.data.get(if index == 0 { 9 } else { 12 }).copied().unwrap_or(0).max(0);
-        let text = if in_phase { format!("{got}/{required} {}", item_name(item)) } else { format!("{required} x {}", item_name(item)) };
-        host.text(event.batch, &text, [x + 9.0, y + 76.0 + index as f32 * 11.0], presentation::SOFT_INK, false);
-    }
-    let status = event.data.first().copied().unwrap_or(0);
-    let key = if status == 3 { "veio.status.blocked" }
-        else if optional_export { "veio.contract.optional_beacon" }
-        else { "veio.contract.deliver" };
-    let color = if status == 3 { presentation::text_color(3) } else { presentation::INK };
-    host.text(event.batch, &Text::tr(key, &[]).plain(), [x + 9.0, y + 104.0], color, false);
-    let progress = if stage < CONTRACTS.len() && !optional_export {
-        Text::tr("veio.contract.stage", &[&(stage + 1), &CONTRACTS.len()]).plain()
-    } else if let Some(phase) = phase(stage) {
-        Text::tr("veio.project.stage", &[&(phase + 1), &PHASES.len()]).plain()
-    } else {
-        Text::tr("veio.contract.exports", &[&event.data.get(9).copied().unwrap_or(0)]).plain()
-    };
-    host.text(event.batch, &progress, [x + 9.0, y + 128.0], presentation::SOFT_INK, false);
-}
-
 pub(super) fn item_name(item: &str) -> String {
     let kind = if is_factory_block(item) { "block" } else { "item" };
     horizon_client::mod_api::Text::tr(&format!("{kind}.{}", item.replace(':', ".")), &[]).plain()

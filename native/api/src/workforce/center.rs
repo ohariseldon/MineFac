@@ -620,9 +620,13 @@ pub(crate) fn reward(dimension: &str, pos: [i32; 3], entity: &mut ModBlockEntity
     paid
 }
 
-const BAR: u32 = 0xff2b2b2b;
-const ROW: f32 = 9.5;
+const ROW: f32 = 9.0;
 const TOP: f32 = 33.0;
+/// Botões das abas (`holding::click` usa os mesmos retângulos).
+pub(crate) const PREVIOUS: [f32; 4] = [6.0, 19.0, 12.0, 12.0];
+pub(crate) const NEXT: [f32; 4] = [176.0, 19.0, 12.0, 12.0];
+/// Linha da companhia no Resumo: clicar saca uma esmeralda.
+pub(crate) const COMPANY_ROW: [f32; 2] = [TOP + 3.0 * ROW, ROW];
 /// Linhas de texto por página (cabem antes dos slots).
 const ROWS: usize = 6;
 /// Linha dos slots de meta e de comida.
@@ -630,17 +634,6 @@ const SLOTS_Y: f32 = 89.0;
 const WARN: u32 = 0x9a5a00;
 const GOOD: u32 = 0x1e7a1e;
 
-/// Corta o texto para caber em `width` pixels.
-pub(crate) fn fit(host: &dyn Host, text: &str, width: f32) -> String {
-    if host.text_width(text) <= width {
-        return text.to_owned();
-    }
-    let mut cut: String = text.to_owned();
-    while !cut.is_empty() && host.text_width(&format!("{cut}…")) > width {
-        cut.pop();
-    }
-    format!("{}…", cut.trim_end())
-}
 
 fn issue_line(value: i32) -> String {
     let (code, kind, dx, _, dz) = unpack(value);
@@ -722,26 +715,37 @@ fn request_line(value: i32, post_office: u32) -> (String, u32) {
 }
 
 /// Tela do centro: a página escolhida, as metas (no resumo) e as dicas de uso.
-pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>) {
-    let [x, y] = event.origin;
-    let read = |index: usize| event.data.get(index).copied().unwrap_or(0);
+/// Painel do centro, no padrão do kit: as abas com botões, as linhas com ícone e, embaixo, as
+/// metas (página Resumo) ou as dicas, com os slots da direita mostrando o que vai em cada um.
+pub(crate) fn draw(pen: &mut ui::Pen<'_>, view: &ui::screens::View<'_>) {
+    use ui::icons;
+    let read = |index: usize| view.read(index);
     let tr = |key: &str, args: &[&dyn std::fmt::Display]| Text::tr(key, args).plain();
     let tab = (read(0) / 1000).clamp(0, super::super::holding::TABS - 1);
     let page = ((read(0) / 100) % 10).clamp(0, PAGES - 1);
     let status = (read(0) % 100).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
     let index = if tab == 0 { page } else { PAGES - 1 + tab };
-    // Cabeçalho: < nome da visão (n/total) > — as setas trocam de visão (clique), como a chave.
-    host.text(event.batch, "<", [x + 8.0, y + 22.0], 0x1f4fa8, false);
-    host.text(event.batch, ">", [x + 166.0, y + 22.0], 0x1f4fa8, false);
+    // Abas: < e > trocam de visão (clique, como a chave); o nome e a posição no meio.
+    for (rect, label) in [(PREVIOUS, "<"), (NEXT, ">")] {
+        let [x, y, w, h] = rect;
+        let hover = pen.hovering(x, y, w, h);
+        pen.button(x, y, w, h, label, hover);
+    }
     let name = if tab == 0 { tr(&format!("veio.center.page.{page}"), &[]) } else { tr(&format!("veio.holding.tab{tab}"), &[]) };
-    let title = fit(host, &format!("{name} ({}/{VIEWS})", index + 1), 140.0);
-    host.text(event.batch, &title, [x + 22.0, y + 22.0], 0x1f4fa8, false);
-    if tab > 0 {
-        let lines: Vec<(String, u32)> = if tab == super::super::holding::FOREIGN {
-            let mut lines = vec![
-                (if read(5) > 0 { tr("veio.trade.reputation", &[&read(1), &read(2), &read(5)]) } else { tr("veio.trade.reputation_max", &[&read(1)]) },
-                    0x1f4fa8),
-                (tr("veio.trade.flows", &[&read(3), &read(4), &(read(3) - read(4))]), if read(3) >= read(4) { 0x1e7a1e } else { 0xaa1f1f }),
+    let name = pen.fit(&name, 124.0);
+    let count = format!("{}/{VIEWS}", index + 1);
+    let width = pen.width(&name) + 5.0 + pen.width(&count);
+    let left = (97.0 - width / 2.0).round();
+    pen.text(&name, left, PREVIOUS[1] + 2.0, ui::INK);
+    let after = left + pen.width(&name) + 5.0;
+    pen.text(&count, after, PREVIOUS[1] + 2.0, ui::FAINT);
+
+    type Line = (Option<ui::Icon>, String, u32);
+    let lines: Vec<Line> = if tab > 0 {
+        if tab == super::super::holding::FOREIGN {
+            let mut lines: Vec<Line> = vec![
+                (Some(icons::STAR), if read(5) > 0 { tr("veio.trade.reputation", &[&read(1), &read(2), &read(5)]) } else { tr("veio.trade.reputation_max", &[&read(1)]) }, ui::INK),
+                (Some(icons::SHIP), tr("veio.trade.flows", &[&read(3), &read(4), &(read(3) - read(4))]), if read(3) >= read(4) { GOOD } else { ui::BAD }),
             ];
             for slot in 0..3 {
                 let (product, need) = (read(6 + slot * 2), read(7 + slot * 2));
@@ -749,105 +753,121 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
                     continue;
                 }
                 let Some(&(_, key, _, _)) = society::trade::PRODUCTS.get((product / 1000) as usize) else { continue };
-                lines.push((tr("veio.trade.contract", &[&tr(key, &[]), &(need % 10000), &(need / 10000), &(product % 1000)]),
-                    presentation::INK));
+                lines.push((Some(icons::SCROLL), tr("veio.trade.contract", &[&tr(key, &[]), &(need % 10000), &(need / 10000), &(product % 1000)]), ui::INK));
             }
             lines
         } else {
             let stopped = read(5).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
             vec![
-                (tr("veio.holding.units", &[&read(1), &read(2), &read(3)]), presentation::INK),
-                (tr(&format!("veio.holding.made{tab}"), &[&read(4)]), presentation::INK),
-                (tr("veio.holding.profit", &[&read(10), &read(11), &(read(10) - read(11))]),
-                    if read(10) >= read(11) { GOOD } else { 0xaa1f1f }),
-                (if read(6) > 0 {
-                    tr("veio.holding.stopped", &[&tr(&format!("veio.status.{}", presentation::STATUS_KEYS[stopped]), &[]), &read(6)])
-                } else { tr("veio.holding.all_good", &[]) }, if read(6) > 0 { WARN } else { GOOD }),
-                (tr(&format!("veio.holding.extra{tab}"), &[&read(7), &read(8), &read(9)]), presentation::SOFT_INK),
+                (Some(icons::FACTORY), tr("veio.holding.units", &[&read(1), &read(2), &read(3)]), ui::INK),
+                (Some(icons::CHECK), tr(&format!("veio.holding.made{tab}"), &[&read(4)]), ui::INK),
+                (Some(icons::EMERALD), tr("veio.holding.profit", &[&read(10), &read(11), &(read(10) - read(11))]),
+                    if read(10) >= read(11) { GOOD } else { ui::BAD }),
+                if read(6) > 0 {
+                    (Some(icons::WARNING), tr("veio.holding.stopped", &[&tr(&format!("veio.status.{}", presentation::STATUS_KEYS[stopped]), &[]), &read(6)]), WARN)
+                } else { (Some(icons::CHECK), tr("veio.holding.all_good", &[]), GOOD) },
+                (Some(icons::INFO), tr(&format!("veio.holding.extra{tab}"), &[&read(7), &read(8), &read(9)]), ui::SOFT),
             ]
-        };
-        for (index, (line, color)) in lines.iter().enumerate() {
-            host.text(event.batch, &fit(host, line, 176.0), [x + 8.0, y + TOP + index as f32 * ROW], *color, false);
         }
-        return;
-    }
-    let mut lines: Vec<(String, u32)> = vec![(tr(&format!("veio.status.{}", presentation::STATUS_KEYS[status]), &[]), presentation::text_color(status))];
-    match page {
-        0 => {
-            let (workers, working) = split(read(1));
-            let (waiting, _hungry) = split(read(2));
-            let (fields, pens) = split(read(3));
-            let (villagers, cap) = split(read(7));
-            let (queued, filled) = split(read(5));
-            let storage = filled - 1;
-            lines.push((tr("veio.center.population", &[&villagers, &cap, &read(8)]), if read(8) < 16 { WARN } else { presentation::INK }));
-            lines.push((tr("veio.center.crew", &[&workers, &working, &waiting]), if waiting > 0 { WARN } else { presentation::INK }));
-            // Linha da companhia: clicar saca uma esmeralda (`holding::click`).
-            lines.push((tr("veio.center.company", &[&read(12), &read(6)]), 0x1f4fa8));
-            lines.push((tr("veio.center.zones_ready", &[&fields, &pens, &read(4)]), if read(4) > 0 { GOOD } else { presentation::INK }));
-            lines.push((if storage < 0 { tr("veio.center.no_storage", &[&queued]) } else { tr("veio.center.storage", &[&storage, &queued]) },
-                if storage >= 90 { WARN } else { presentation::INK }));
-        }
-        1 => {
-            let count = read(1);
-            lines[0] = if count == 0 { (tr("veio.center.no_issues", &[]), GOOD) } else { (tr("veio.center.issues", &[&count]), WARN) };
-            for index in 0..MAX_ISSUES.min(ROWS - 1) {
-                let value = read(index + 2);
-                if value != 0 {
-                    lines.push((issue_line(value), presentation::INK));
+    } else {
+        let mut lines: Vec<Line> = vec![(None, tr(&format!("veio.status.{}", presentation::STATUS_KEYS[status]), &[]), presentation::text_color(status))];
+        match page {
+            0 => {
+                let (workers, working) = split(read(1));
+                let (waiting, _hungry) = split(read(2));
+                let (fields, pens) = split(read(3));
+                let (villagers, cap) = split(read(7));
+                let (queued, filled) = split(read(5));
+                let storage = filled - 1;
+                lines.push((Some(icons::PEOPLE), tr("veio.center.population", &[&villagers, &cap, &read(8)]), if read(8) < 16 { WARN } else { ui::INK }));
+                lines.push((Some(icons::PERSON), tr("veio.center.crew", &[&workers, &working, &waiting]), if waiting > 0 { WARN } else { ui::INK }));
+                // Linha da companhia: clicar saca uma esmeralda (`holding::click`).
+                lines.push((Some(icons::EMERALD), tr("veio.center.company", &[&read(12), &read(6)]), ui::INFO));
+                lines.push((Some(icons::WHEAT), tr("veio.center.zones_ready", &[&fields, &pens, &read(4)]), if read(4) > 0 { GOOD } else { ui::INK }));
+                lines.push((Some(icons::CHEST), if storage < 0 { tr("veio.center.no_storage", &[&queued]) } else { tr("veio.center.storage", &[&storage, &queued]) },
+                    if storage >= 90 { WARN } else { ui::INK }));
+            }
+            1 => {
+                let count = read(1);
+                lines[0] = if count == 0 { (Some(icons::CHECK), tr("veio.center.no_issues", &[]), GOOD) } else { (Some(icons::WARNING), tr("veio.center.issues", &[&count]), WARN) };
+                for index in 0..MAX_ISSUES.min(ROWS - 1) {
+                    let value = read(index + 2);
+                    if value != 0 {
+                        lines.push((Some(icons::FLAG), issue_line(value), ui::INK));
+                    }
+                }
+            }
+            2 => {
+                let points = read(projects::PROJECTS.len() + 1);
+                lines[0] = (Some(icons::CROWN), tr("veio.center.projects", &[&tier_name(projects::tier_of(points))]), ui::INK);
+                for row in project_rows(view.data) {
+                    let (text, rgb) = match row {
+                        ProjectRow::Project(index) => project_line(index, read(index + 1)),
+                        ProjectRow::Built(count) => (tr("veio.center.project.built", &[&count]), GOOD),
+                    };
+                    lines.push((Some(if matches!(row, ProjectRow::Built(_)) { icons::HOUSE } else { icons::HAMMER }), text, rgb));
+                }
+            }
+            _ => {
+                let points = read(1);
+                let tier = projects::tier_of(points);
+                lines[0] = match projects::TIERS.get(tier as usize + 1) {
+                    Some(next) => (Some(icons::CROWN), tr("veio.center.prestige", &[&tier_name(tier), &points, next, &read(8)]), ui::INK),
+                    None => (Some(icons::CROWN), tr("veio.center.prestige_max", &[&tier_name(tier), &points, &read(8)]), GOOD),
+                };
+                let flags = read(2);
+                lines.push((Some(icons::EMERALD), tr("veio.center.treasury", &[&(read(12) / society::COINS_PER_EMERALD), &decree_name(flags & 15)]), ui::INK));
+                let slots = ((flags >> 4) & 7) as usize;
+                let post_office = (flags as u32) & projects::POST_OFFICE;
+                for index in 0..slots.min(requests::SLOTS) {
+                    let (text, rgb) = request_line(read(4 + index), post_office);
+                    lines.push((Some(icons::SCROLL), text, rgb));
                 }
             }
         }
-        2 => {
-            let points = read(projects::PROJECTS.len() + 1);
-            lines[0] = (tr("veio.center.projects", &[&tier_name(projects::tier_of(points))]), presentation::INK);
-            for row in project_rows(event.data) {
-                lines.push(match row {
-                    ProjectRow::Project(index) => project_line(index, read(index + 1)),
-                    ProjectRow::Built(count) => (tr("veio.center.project.built", &[&count]), GOOD),
-                });
-            }
+        lines
+    };
+    for (row, (icon, text, rgb)) in lines.iter().enumerate().take(ROWS) {
+        let y = TOP + row as f32 * ROW;
+        if pen.hovering(6.0, y, 182.0, ROW) {
+            // A linha da companhia é um botão (saque); as outras têm dica.
+            let company = tab == 0 && page == 0 && row == 3;
+            pen.fill(6.0, y, 182.0, ROW, if company { 0x40ffffff } else { 0x20ffffff });
         }
-        _ => {
-            let points = read(1);
-            let tier = projects::tier_of(points);
-            lines[0] = match projects::TIERS.get(tier as usize + 1) {
-                Some(next) => (tr("veio.center.prestige", &[&tier_name(tier), &points, next, &read(8)]), presentation::INK),
-                None => (tr("veio.center.prestige_max", &[&tier_name(tier), &points, &read(8)]), GOOD),
-            };
-            let flags = read(2);
-            lines.push((tr("veio.center.treasury", &[&(read(12) / society::COINS_PER_EMERALD), &decree_name(flags & 15)]), presentation::INK));
-            let slots = ((flags >> 4) & 7) as usize;
-            let post_office = (flags as u32) & projects::POST_OFFICE;
-            for index in 0..slots.min(requests::SLOTS) {
-                lines.push(request_line(read(4 + index), post_office));
-            }
+        match icon {
+            Some(icon) => { pen.icon_at_center(*icon, 12.0, y + 4.5); }
+            None => pen.lamp(9.0, y + 1.0, presentation::lamp_color(status)),
+        }
+        let text = pen.fit(text, 166.0);
+        pen.text(&text, 20.0, y + 1.0, *rgb);
+    }
+
+    // Slots da direita: o fantasma diz o que vai em cada um.
+    for (slot, item) in [(0, "minecraft:bread"), (4, "minecraft:emerald"), (6, "minecraft:bricks"), (7, "minecraft:paper")] {
+        if let Some([x, y]) = screen_slots().get(slot).copied().flatten() {
+            if view.empty(slot) { pen.ghost(item, x, y); }
         }
     }
-    for (index, (line, color)) in lines.iter().enumerate().take(ROWS) {
-        host.text(event.batch, &fit(host, line, 176.0), [x + 8.0, y + TOP + index as f32 * ROW], *color, false);
-    }
-    if page == 0 {
+    if tab == 0 && page == 0 {
         for goal in 0..3 {
-            let top = y + SLOTS_Y + goal as f32 * 18.0;
+            let top = SLOTS_Y + goal as f32 * 18.0;
             let percent = read(9 + goal);
-            let left = x + 38.0;
-            host.fill(event.batch, [left, top + 4.0, 70.0, 7.0], BAR);
-            if percent > 0 {
-                let color = if percent >= 100 { 0xff3fae3f } else { 0xffe0a020 };
-                host.fill(event.batch, [left + 1.0, top + 5.0, 68.0 * percent.min(100) as f32 / 100.0, 5.0], color);
-            }
+            let color = if percent >= 100 { 0x3fae3f } else { 0xe0a020 };
+            pen.bar(38.0, top + 4.0, 70.0, 8.0, percent.max(0) as f32 / 100.0, color);
             let label = if percent < 0 { tr("veio.center.goal_empty", &[]) } else { format!("{percent}%") };
-            host.text(event.batch, &label, [left + 74.0, top + 3.0], presentation::SOFT_INK, false);
+            pen.text(&label, 112.0, top + 4.0, if percent < 0 { ui::FAINT } else { ui::SOFT });
         }
     } else {
         let hints = match page {
+            _ if tab > 0 => ["veio.center.hint.hover", "veio.center.hint.page"],
             1 => ["veio.center.hint.compass", "veio.center.hint.hover"],
             2 => ["veio.center.hint.site", "veio.center.hint.hover"],
             _ => ["veio.center.hint.deliver", "veio.center.hint.cash"],
         };
-        for (index, key) in hints.iter().chain(["veio.center.hint.page"].iter()).enumerate() {
-            host.text(event.batch, &fit(host, &tr(key, &[]), 108.0), [x + 38.0, y + SLOTS_Y + 3.0 + index as f32 * 11.0], presentation::SOFT_INK, false);
+        let mut y = SLOTS_Y + 1.0;
+        for key in hints {
+            let lines = pen.paragraph(&tr(key, &[]), 38.0, y, 108.0, 2, ui::SOFT);
+            y += lines as f32 * 9.0 + 4.0;
         }
     }
 }
