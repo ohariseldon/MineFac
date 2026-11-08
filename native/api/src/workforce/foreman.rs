@@ -16,6 +16,7 @@
 //! não renovada vence e a tarefa volta a ficar livre. Ao pegar os itens na origem, o carregador
 //! tira a tarefa da fila (`complete`).
 use super::*;
+mod planning;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
@@ -33,7 +34,7 @@ const EMERALD_SLOT: usize = 3;
 const MAX_NETWORK: usize = 24;
 /// Tarefas na fila.
 pub(super) const MAX_QUEUE: usize = 8;
-/// A fila é refeita a cada 4 ciclos do capataz (40 ticks).
+/// Solicita uma fila a cada 4 ciclos; sua preparação pode avançar por vários ticks.
 const ORGANIZE_EVERY: i32 = 4;
 /// Uma tarefa marcada por um carregador volta a ficar livre se a marca não for renovada.
 const TASK_STALE: u64 = 200;
@@ -260,9 +261,31 @@ fn queue_outputs(block: &str) -> Vec<usize> {
     }
 }
 
-/// Varre a rede e, a cada `ORGANIZE_EVERY` ciclos, refaz a fila. Tarefas já pegas por um
-/// carregador (e renovadas) são mantidas; as demais são recalculadas do estado atual.
+/// Descobre a rede e solicita a fila incremental a cada `ORGANIZE_EVERY` ciclos.
+/// A fila anterior permanece disponível até a publicação de um plano completo.
 pub(super) fn organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
+    register_desk(host.dimension(), pos, now);
+    if number(entity, "PlanningPending") != 0 {
+        planning::advance(host, pos, entity, now);
+        return;
+    }
+    let Some(network) = scan_named(host, pos, entity, "Area", RADIUS, SCAN, MAX_NETWORK, &networked, true) else { return };
+    let round = (number(entity, "Organize") + 1) % ORGANIZE_EVERY;
+    set_number(entity, "Organize", round);
+    if round != 0 { return; }
+    planning::start(host.dimension(), pos, entity, network, now);
+    planning::advance(host, pos, entity, now);
+}
+
+pub(super) fn continue_planning(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
+    planning::advance(host, pos, entity, now);
+}
+
+pub(super) fn maintenance(now: u64) { planning::maintenance(now); }
+
+// Original whole-job planner: offline equivalence oracle and historical benchmark.
+#[cfg(test)]
+pub(super) fn reference_organize(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) {
     let dimension = host.dimension();
     register_desk(dimension, pos, now);
     if !budget::request(budget::Lane::Planning, dimension, pos, 1) { return; }

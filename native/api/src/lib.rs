@@ -291,6 +291,7 @@ impl Hooks for Factory {
         power::maintenance(defense::clock());
         pollution::note_players(host, defense::clock());
         pollution::harm_villagers(host, defense::clock());
+        workforce::maintenance(defense::clock());
         workforce::spawn::tick(host, defense::clock());
         onboarding::server_tick(host);
         home::tick(host, defense::clock());
@@ -536,6 +537,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "RoutingPriority" => key!("RoutingPriority"),
         "AreaScan" => key!("AreaScan"),
         "TopologyPending" => key!("TopologyPending"),
+        "PlanningPending" => key!("PlanningPending"),
         "TerrainPending" => key!("TerrainPending"),
         "AreaFound" => key!("AreaFound"),
         "Posts" => key!("Posts"),
