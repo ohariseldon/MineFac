@@ -85,6 +85,11 @@ fn post(input: PostInput) -> vec4<f32> {
             color = mix(color, smog_colour, thickness * 0.65 * exposed * effects);
         }
     }
+    if quality >= 1u && clouds && volumetric_clouds && frame.dimension == 0 && input.depth <= 0.000001 {
+        // The cumulus pass over the sky: the light the clouds send, and the sky they hide.
+        let sky_clouds = textureSampleLevel(clouds_target, linear_sampler, input.uv, 0.0);
+        color = color * (1.0 - sky_clouds.a) + sky_clouds.rgb;
+    }
     if quality >= 1u {
         if overworld {
             color += textureSampleLevel(rays, linear_sampler, input.uv, 0.0).rgb;
@@ -104,18 +109,28 @@ fn post(input: PostInput) -> vec4<f32> {
     let bounded = clamp(color, vec3<f32>(0.0), vec3<f32>(1.0));
     let luma = veio_luma(bounded);
     let curve = luma * luma * (3.0 - 2.0 * luma);
-    let target_luma = mix(luma, curve, 0.12 * color_strength);
+    let target_luma = mix(luma, curve, select(0.12, 0.26, quality >= 1u) * color_strength);
     var graded = bounded * select(1.0, target_luma / max(luma, 0.00001), luma > 0.00001);
     // Time of day: warm golden hours, cool blue nights; the seasons tint the light a little.
     if frame.dimension == 0 {
         let golden = veio_low_sun() * veio_daylight();
         let night = 1.0 - veio_daylight();
         let w = veio_season_weights();
-        var tint = vec3<f32>(1.0) + vec3<f32>(0.045, 0.012, -0.040) * golden + vec3<f32>(-0.030, -0.008, 0.040) * night;
+        let warmth = select(1.0, 2.1, quality >= 1u);
+        var tint = vec3<f32>(1.0) + vec3<f32>(0.045, 0.012, -0.040) * golden * warmth + vec3<f32>(-0.030, -0.008, 0.040) * night * warmth;
         tint += vec3<f32>(0.010, 0.006, -0.012) * w.y + vec3<f32>(0.018, 0.004, -0.018) * w.z + vec3<f32>(-0.016, -0.004, 0.020) * w.w;
         graded *= mix(vec3<f32>(1.0), tint, color_strength);
     }
-    graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + 0.06 * color_strength);
+    graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + select(0.06, 0.16, quality >= 1u) * color_strength);
+    if quality >= 1u {
+        // Split toning, as film: shadows lean cool teal, highlights warm. Kept small so
+        // Minecraft's own colours still read.
+        let l = veio_luma(graded);
+        let shade = 1.0 - smoothstep(0.05, 0.45, l);
+        let high = smoothstep(0.55, 0.95, l);
+        graded *= mix(vec3<f32>(1.0), vec3<f32>(0.955, 1.0, 1.05), shade * 0.6 * color_strength);
+        graded *= mix(vec3<f32>(1.0), vec3<f32>(1.04, 1.0, 0.94), high * 0.6 * color_strength);
+    }
     if vignette > 0.0 {
         let centred = input.uv - 0.5;
         let fall = dot(centred, centred) * 1.6;
