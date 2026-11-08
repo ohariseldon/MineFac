@@ -88,8 +88,8 @@ def build(label, read, write, assets, data):
             ("Abra o painel e observe itens/min e tempo ativo. Mude UMA coisa; espere uma nova leitura e compare.\n\nDesafio: aumente as chapas que chegam ao baú. Uma esteira rápida só ajuda se o transporte for o limite.",
              'Open the panel and watch items/min and active time. Change ONE thing; wait for a new reading and compare.\n\nChallenge: increase plates reaching the chest. A faster belt only helps if transport is the limit.')]),
         ("12. Cresça com a vila", "12. Grow with the village", [
-            ("Junte 32 engrenagens para abrir a oficina. Depois avance para ferro, molduras e módulos.\n\nUma extratora normal alimenta uma prensa. Duas linhas sustentam um montador. Confira a energia ao ampliar.",
-             'Stock 32 gears to open the workshop. Then advance to iron, frames and modules.\n\nOne normal extractor feeds one press. Two lines feed an assembler. Check power when expanding.'),
+            ("Continue no Quadro da fábrica: entregue 16 chapas. A próxima fase pede 32 engrenagens para abrir a oficina.\n\nUma extratora normal alimenta uma prensa. Duas linhas sustentam um montador. Confira a energia ao ampliar.",
+             'Continue at the Factory board: deliver 16 plates. The next phase needs 32 gears to open the workshop.\n\nOne normal extractor feeds one press. Two lines feed an assembler. Check power when expanding.'),
             ("Quer ajuda na lavoura? Venda comida no armazém para obter esmeraldas. Faça um posto do lavrador; o guia da vila explica a contratação.\n\nVocê escolhe o próximo problema a resolver. A fábrica pode continuar trabalhando.",
              'Want farm help? Sell food at the pantry for emeralds. Make a farmhand post; the village guide explains hiring.\n\nChoose the next problem to solve. Your factory can keep working.')]),
     ]

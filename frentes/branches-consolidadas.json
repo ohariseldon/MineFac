@@ -3,13 +3,13 @@
     "branch": "github",
     "included_by_ancestry": true,
     "unique_commits": 0,
-    "sha": "cf3700482571451a8140912032fe89eb4a8ff89c"
+    "sha": "a5f0eb5579495b44278d7be71b77d08e4c93d3ce"
   },
   {
     "branch": "github/claude/trusting-ritchie-sc9ty8",
     "included_by_ancestry": true,
     "unique_commits": 0,
-    "sha": "8abe43540496f2ec711e3ea211cd6cba066cfecc"
+    "sha": "720832441647e629c317f1a568fc75a06924b2a7"
   },
   {
     "branch": "github/codex/expansion",
@@ -22,6 +22,12 @@
     "included_by_ancestry": true,
     "unique_commits": 0,
     "sha": "690f554eb23316cde70362b70f261eb6cd78188b"
+  },
+  {
+    "branch": "github/codex/incremental-foremen",
+    "included_by_ancestry": true,
+    "unique_commits": 0,
+    "sha": "13758bd7859602b50bd7028377035fe005806d5d"
   },
   {
     "branch": "github/codex/incremental-topology",
@@ -153,7 +159,7 @@
     "branch": "github/main",
     "included_by_ancestry": true,
     "unique_commits": 0,
-    "sha": "cf3700482571451a8140912032fe89eb4a8ff89c"
+    "sha": "a5f0eb5579495b44278d7be71b77d08e4c93d3ce"
   },
   {
     "branch": "github/research/connected-veins",

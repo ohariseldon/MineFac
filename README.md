@@ -1,14 +1,16 @@
 # Veio 0.16.1 consolidada
 
 
-Esta versão reúne a 0.16.0 fornecida, todas as branches remotas conferidas, os commits `13758bd` e `fd2a446`, o tutorial interativo, o realismo opcional e o pacote `MineFac-progressao-fases.zip`. Registro da integração: [CONSOLIDACAO.md](CONSOLIDACAO.md).
+Esta versão reúne a 0.16.0 fornecida, todas as branches remotas conferidas, os commits `13758bd` e `fd2a446`, o tutorial interativo, o realismo opcional e os pacotes de fases e Quadro da fábrica. Registro da integração: [CONSOLIDACAO.md](CONSOLIDACAO.md).
 
 - **Aprender fazendo:** um objetivo na tela por vez, cumprido por máquinas funcionando e entregas reais. Braços, funis e carregadores também comprovam automação.
 - **Progressão por fases:** 32 engrenagens abrem a oficina; 16 chapas de aço e 16 circuitos abrem as fases seguintes. Jazidas de minério são medidas por conexão em 3D, com classe industrial a partir de 16 blocos. As linhas básicas usam razões inteiras de máquinas.
-- **Realismo:** opção de iluminação industrial leve antes de jogar, alternativa sem shaders e silhuetas próprias para as máquinas.
+- **Quadro da fábrica:** fases, licenças, entregas automatizáveis, pedidos diários e diagnóstico de gargalos. Os alertas respeitam o objetivo do tutorial.
+- **Aldeões:** caminhada guiada pelo cérebro vanilla, descanso dos trabalhadores civis e itens da carga visíveis na mão.
+- **Realismo 1.1:** opção de iluminação industrial leve antes de jogar, alternativa sem shaders e silhuetas próprias para as máquinas.
 - **Desempenho e continuidade:** planejamento incremental dos capatazes e limpeza dos estados temporários ao trocar de mundo; casa do fundador e correções de respawn preservadas.
 
-**Build consolidada** (rodada de integração e revisão feita pelo Claude, com o trabalho pendente das três frentes):
+**Conteúdo integrado da base 0.16.0:**
 
 - **Casa do fundador:** a vila já vem com a casa do jogador: centro de controle, lareira, sofá, cama ao lado do painel e um mural com o mapa das redondezas. Em casa, perto do painel, as fábricas rendem 15% mais; a primeira cama é a da casa e fora dela só cabe mais uma; refeições e banquetes aceleram o trabalho e as máquinas. Detalhes em [TRABALHADORES.md](TRABALHADORES.md), sexta entrega.
 - **Mobs e quartel (Grok, revisado):** saqueadores vêm atrás de quem está na fábrica; à noite, monstros caçam aldeões; o quartel treina milícia, guarda, arqueiro e mago. Lavradores e pastores dormem à noite. Sétima entrega do TRABALHADORES.md.
