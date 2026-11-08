@@ -17,7 +17,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:circuit"
+            "items": "veio:circuit",
+            "count": {
+              "min": 16
+            }
           }
         ]
       }
