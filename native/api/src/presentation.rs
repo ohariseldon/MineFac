@@ -236,7 +236,12 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
             number(entity, "energy"), number(entity, "Burn"), capacity(&entity.id), number(entity, "Rate"),
             number(entity, "Utilization"), number(entity, "ContractStage"), number(entity, "Total"),
             number(entity, "Damage"), number(entity, "Module"),
-            if entity.id == TESLA { number(entity, "LocalSmog") } else { number(entity, "Info") }]
+            // Slot 12: poluição local na torre Tesla; na central, a seleção do farol opcional
+            // (estágio e contador ficam nos slots 8 e 9); nas outras, a leitura própria
+            // (pureza, FE/t gerado, animais, aldeões).
+            if entity.id == TESLA { number(entity, "LocalSmog") }
+            else if entity.id == HUB { i32::from(contracts::beacon_selected(entity)) }
+            else { number(entity, "Info") }]
     };
     debug_assert_eq!(values.len(), DATA_SLOTS);
     if entity.data.len() != DATA_SLOTS {

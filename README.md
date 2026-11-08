@@ -131,10 +131,12 @@ A versão 0.5 acrescenta uma central de contratos, indicadores de produção e c
 A central é fabricada com um baú, uma engrenagem, um lingote de ferro e um de cobre. Tem duas entradas à esquerda e duas saídas à direita. Os contratos são concluídos quando os ingredientes e o espaço para todas as recompensas estão disponíveis.
 
 1. Oficina. Entregue 24 chapas de cobre e oito engrenagens para receber 64 esteiras e 32 cabos.
-2. Entrepostos. Entregue 16 chapas de aço e oito módulos mecânicos para receber 64 trilhos e 16 trilhos elétricos.
-3. Povoado. Entregue 12 circuitos e 24 molduras para receber oito funis e oito esmeraldas.
-4. Farol industrial. Entregue uma estrela do Nether e 32 circuitos para receber um farol e duas extratoras Mk.II. É um projeto opcional depois da infraestrutura.
-5. Exportação contínua. Depois dos projetos, a central aceita sem fim quatro circuitos e quatro chapas de aço, e entrega quatro esmeraldas e dois frascos de experiência por remessa. O painel conta as entregas.
+2. Entrepostos. Entregue 24 chapas de aço e 12 módulos mecânicos para receber 64 trilhos e 16 trilhos elétricos.
+3. Povoado. Entregue 24 circuitos e 32 molduras para receber oito funis e oito esmeraldas.
+4. Farol industrial. Entregue uma estrela do Nether e 48 circuitos para receber um farol e duas extratoras Mk.II. É um projeto opcional depois da infraestrutura.
+5. Exportação contínua. Depois do projeto do povoado, sem exigir o farol, a central aceita sem fim quatro circuitos e quatro chapas de aço, e entrega quatro esmeraldas e dois frascos de experiência por remessa. O painel conta as entregas.
+
+Para selecionar o farol opcional, esvazie as duas entradas e coloque primeiro a estrela na entrada 1; depois, os 48 circuitos na entrada 2. Sem a estrela, a central exibe e aceita exportações. Retire recompensas anteriores antes de trocar. Após concluir o farol, a central continua exportando.
 
 O progresso é salvo na central colocada. Sua desmontagem inicia uma central nova. A chave permite reorientá-la mantendo o progresso. Ao mudar de contrato, retire sobras das entradas e direcione os materiais do projeto seguinte. As recompensas podem sair por funis ou pelo bocal frontal.
 
@@ -188,7 +190,9 @@ Os **módulos** entram com o botão direito numa máquina de receita ou extrator
 |---|---|---|---|---|
 | Velocidade | 60% | 180% | 150% | Mais produção por máquina, 8% mais energia por produto |
 | Eficiência | 100% | 60% | 50% | Menos energia e metade da poluição |
-| Produtividade | 115% | 140% | 120% | Um produto extra a cada dez ciclos |
+| Produtividade | 115% | 140% | 120% | Um lote extra a cada cinco ciclos (+20%) |
+
+Produtividade reserva espaço para o lote extra antes de trabalhar: saída cheia pausa sem perder o bônus. A fração pertence ao produto e reinicia ao concluir uma receita de outro produto. O painel conta itens produzidos, incluindo lotes e bônus; o contador interno de ciclos permanece separado.
 
 O painel mostra o módulo, a poluição emitida por minuto e a integridade. Um selo colorido na tampa da máquina indica o módulo instalado.
 
