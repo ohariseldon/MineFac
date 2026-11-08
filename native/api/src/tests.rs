@@ -489,15 +489,16 @@ fn the_holding_counts_units_workers_and_daily_production_per_division() {
     observe(dimension, pos, &drill, 100);
     observe(dimension, pos, &drill, 150);
     roll(dimension, 1200);
-    let [units, active, workers, made, _, _] = summary(dimension, MINING);
+    let [units, active, workers, made, _, _, _, _] = summary(dimension, MINING);
     assert_eq!((units, active, workers), (1, 1, 0));
     assert_eq!(made, 15, "15 minérios no turno viram a produção do dia");
     roll(dimension, 1300);
     assert_eq!(summary(dimension, MINING)[3], 15, "um turno só fecha uma vez");
     // As abas do centro de controle: setas no cabeçalho.
-    assert_eq!(click([10.0, 25.0]), Some(PREVIOUS));
-    assert_eq!(click([170.0, 25.0]), Some(NEXT));
-    assert_eq!(click([90.0, 60.0]), None);
+    assert_eq!(click([10.0, 25.0], 1), Some(PREVIOUS));
+    assert_eq!(click([170.0, 25.0], 1), Some(NEXT));
+    assert_eq!(click([90.0, 60.0], 1), None);
+    assert_eq!(click([90.0, 70.0], 0), Some(workforce::society::ledger::CASH_OUT), "linha da companhia: saque");
     let mut center = ModBlockEntity::default();
     center.id = workforce::CONTROL_CENTER.to_owned();
     press(dimension, [0, 64, 0], &mut center, NEXT);
@@ -506,4 +507,14 @@ fn the_holding_counts_units_workers_and_daily_production_per_division() {
     press(dimension, [0, 64, 0], &mut center, PREVIOUS);
     press(dimension, [0, 64, 0], &mut center, PREVIOUS);
     assert_eq!(number(&center, "Tab"), TABS - 1, "volta pela última aba");
+}
+
+#[test]
+fn each_good_pays_the_business_that_makes_it() {
+    use holding::*;
+    assert_eq!(item_division("minecraft:bread"), AGRO);
+    assert_eq!(item_division("minecraft:white_wool"), AGRO);
+    assert_eq!(item_division("minecraft:oak_log"), FORESTRY);
+    assert_eq!(item_division("minecraft:raw_iron"), MINING);
+    assert_eq!(item_division("veio:gear"), MANUFACTURING);
 }

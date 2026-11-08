@@ -27,6 +27,7 @@ pub(crate) fn accepts(slot: usize, stack: &ItemStack) -> bool {
     plain(stack) && match slot {
         0 => is_food(&stack.item),
         society::ledger::COMPANY_VAULT => stack.item.as_ref() == WAGE,
+        society::ledger::COMPANY_CASHOUT => false,
         _ => GOAL_SLOTS.contains(&slot),
     }
 }
@@ -148,7 +149,7 @@ pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
     if tab > 0 {
         let holding = super::super::holding::data(entity);
         return std::array::from_fn(|index| match index {
-            0 => status, 1..=9 => holding[index - 1], 12 => number(entity, "Company"), _ => 0,
+            0 => status, 1..=11 => holding[index - 1], 12 => number(entity, "Company"), _ => 0,
         });
     }
     let keys = ["DWorkers", "DWorking", "DWaiting", "DHungry", "DFields", "DPens", "DStore", "DQueue",
@@ -177,16 +178,17 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
             (tr(&format!("veio.status.{}", presentation::STATUS_KEYS[status]), &[]), presentation::text_color(status)),
             (tr("veio.center.workers", &[&read(1), &read(2)]), presentation::INK),
             (tr("veio.center.waiting", &[&read(3), &read(4)]), if read(3) > 0 { 0x9a5a00 } else { presentation::INK }),
-            (tr("veio.center.zones", &[&read(5), &read(6), &read(12)]), presentation::INK),
-            (if read(7) < 0 { tr("veio.center.no_storage", &[&read(8)]) } else { tr("veio.center.storage", &[&read(7), &read(8)]) },
+            (tr("veio.center.company", &[&read(12)]), 0x1f4fa8),
+            (if read(7) < 0 { tr("veio.center.no_storage", &[&read(5), &read(6)]) } else { tr("veio.center.storage", &[&read(5), &read(6), &read(7)]) },
                 presentation::INK),
         ]
     } else {
         let stopped = read(5).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
         vec![
-            (tr("veio.holding.units", &[&read(1), &read(2)]), presentation::INK),
-            (tr("veio.holding.workers", &[&read(3), &(read(3) * society::WAGE_PER_TURN * society::TURNS_PER_DAY as i32)]), presentation::INK),
-            (tr(&format!("veio.holding.made{tab}"), &[&read(4)]), 0x1e7a1e),
+            (tr("veio.holding.units", &[&read(1), &read(2), &read(3)]), presentation::INK),
+            (tr(&format!("veio.holding.made{tab}"), &[&read(4)]), presentation::INK),
+            (tr("veio.holding.profit", &[&read(10), &read(11), &(read(10) - read(11))]),
+                if read(10) >= read(11) { 0x1e7a1e } else { 0xaa1f1f }),
             (if read(6) > 0 {
                 tr("veio.holding.stopped", &[&tr(&format!("veio.status.{}", presentation::STATUS_KEYS[stopped]), &[]), &read(6)])
             } else { tr("veio.holding.all_good", &[]) }, if read(6) > 0 { 0x9a5a00 } else { 0x1e7a1e }),
@@ -214,7 +216,7 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
 }
 
 pub(crate) fn screen_slots() -> Vec<Option<[f32; 2]>> {
-    vec![Some([170.0, 82.0]), Some([17.0, 82.0]), Some([17.0, 100.0]), Some([17.0, 118.0]), Some([170.0, 118.0])]
+    vec![Some([170.0, 82.0]), Some([17.0, 82.0]), Some([17.0, 100.0]), Some([17.0, 118.0]), Some([152.0, 118.0]), Some([170.0, 118.0])]
 }
 
 /// Relatório no chat para o jogador mais próximo.
