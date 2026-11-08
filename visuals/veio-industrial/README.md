@@ -33,12 +33,14 @@ material, que este shader lê. O original é 256x; o Veio reduz para 128x para c
 pacote em `resourcepacks/`, liga por último na lista (os seus pacotes continuam) e sobe o
 orçamento de texturas para 1024 MiB. No Leve ele sai.
 
-**Céu estável (3.1.2):** o Luiz viu o céu "bugar" ao andar e pular. Nas capturas, as nuvens
-volumétricas (calculadas na tela, em meia resolução) viravam bolhas grudadas no horizonte, com
-bordas granuladas, e faixas escuras no céu. Elas agora vêm desligadas (opção "Nuvens
-volumétricas", experimental), e voltam as nuvens planas do céu, que só dependem da direção do
-olhar. A imagem final ganhou um pontilhado de 1/255 para o céu escuro não formar faixas, e a
-fumaça da fábrica não tinge mais o horizonte à noite.
+**Céu estável (3.1.3):** o Luiz viu o céu "bugar" ao andar e pular. A causa: as passadas de
+nuvens e de luz no ar montavam a direção do olhar com um ponto a 0,1 bloco do olho, e o balanço
+da câmera ao andar (que o Horizon põe na projeção) desloca o olho alguns centímetros; a direção
+errava dezenas de graus a cada passo. Agora a direção é a diferença de dois pontos do mesmo raio,
+imune ao balanço. As nuvens também deixaram o ruído preso à tela (que "andava" ao mexer a câmera)
+por um preso às próprias nuvens, ganharam mais passos (24/36), somem no ar com a distância
+mostrando o céu de verdade por trás, e à noite não brilham mais que o céu. Pontilhado de 1/255
+contra faixas no céu escuro; a fumaça da fábrica não pinta o horizonte à noite.
 
 **Noite (3.1.1):** o primeiro teste foi à noite e saiu escuro, lavado e roxo. A luz do céu à noite
 não escurece mais o que o jogo já ilumina; o olho se adapta ao ar livre à noite (+55%) e as cores

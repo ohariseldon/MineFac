@@ -118,7 +118,10 @@ fn veio_rays(input: PostInput) -> f32 {
     let far_point = view_position(input.uv, max(depth, 0.0000001));
     let reach = min(frame.shadow_distance * 0.95, 96.0);
     let length_to = select(min(length(far_point), reach), reach, depth <= 0.000001);
-    let direction = normalize(view_position(input.uv, 0.5));
+    // The view ray as the difference of two points on it: the view bob of walking and jumping
+    // moves the eye inside the projection, so one point 2 near-planes away gave a ray off by tens
+    // of degrees (clouds and light shafts jumped with every step).
+    let direction = normalize(view_position(input.uv, 0.000001) - view_position(input.uv, 1.0));
     let steps = select(8, 16, quality >= 2u);
     let step_length = length_to / f32(steps);
     // Interleaved gradient noise: steady per pixel, the bilinear upscale hides it.

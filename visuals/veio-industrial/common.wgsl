@@ -167,7 +167,7 @@ fn veio_noise3(p: vec3<f32>) -> f32 {
 
 // ---------- Cumulus layer, shared by the cloud pass and the cloud shadows on the ground ----------
 override clouds: bool = true;
-override volumetric_clouds: bool = false;
+override volumetric_clouds: bool = true;
 const VEIO_CLOUD_BASE: f32 = 560.0;
 const VEIO_CLOUD_TOP: f32 = 1150.0;
 

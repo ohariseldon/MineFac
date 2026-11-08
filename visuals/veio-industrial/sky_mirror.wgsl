@@ -7,7 +7,7 @@
 // 2D field of towers eroded by 3D noise and lit by the sun through themselves (Beer's law with
 // the powder effect, a forward and a back scattering lobe). rgb is the light the clouds send
 // toward the camera, a how much of the sky behind they hide. Only where the sky shows.
-// 16 steps on Equilibrado, 28 on Alto; Leve keeps the flat clouds of the sky stage.
+// 24 steps on Equilibrado, 36 on Alto; Leve keeps the flat clouds of the sky stage.
 
 fn veio_cloud_density(p: vec3<f32>, coverage: f32, detail: bool) -> f32 {
     let h = clamp((p.y - VEIO_CLOUD_BASE) / (VEIO_CLOUD_TOP - VEIO_CLOUD_BASE), 0.0, 1.0);
@@ -28,7 +28,10 @@ fn veio_volumetric_clouds(input: PostInput) -> vec4<f32> {
     if quality == 0u || !clouds || !volumetric_clouds || frame.dimension != 0 {
         return vec4<f32>(0.0);
     }
-    let direction = normalize(view_position(input.uv, 0.5));
+    // The view ray as the difference of two points on it: the view bob of walking and jumping
+    // moves the eye inside the projection, so one point 2 near-planes away gave a ray off by tens
+    // of degrees (clouds and light shafts jumped with every step).
+    let direction = normalize(view_position(input.uv, 0.000001) - view_position(input.uv, 1.0));
     if direction.y < 0.015 {
         return vec4<f32>(0.0);
     }
@@ -39,12 +42,16 @@ fn veio_volumetric_clouds(input: PostInput) -> vec4<f32> {
     if t0 > far {
         return vec4<f32>(0.0);
     }
-    let steps = select(16, 28, quality >= 2u);
-    // Long slanting rays near the horizon march only the first 4,200 blocks of the layer.
-    let span = min(min(t1, far) - t0, 4200.0);
+    let steps = select(24, 36, quality >= 2u);
+    // Long slanting rays near the horizon march only the first 3,000 blocks of the layer.
+    let span = min(min(t1, far) - t0, 3000.0);
     let step_length = span / f32(steps);
-    let jitter = fract(52.9829189 * fract(dot(floor(input.pixel), vec2<f32>(0.06711056, 0.00583715))));
     let origin = vec3<f32>(veio_cloud_origin().x, camera_y, veio_cloud_origin().y);
+    // The step offset is tied to the clouds, not to the screen: with no history to average a
+    // per-pixel noise, that noise crawled over the sky whenever the view moved or bobbed. Cells
+    // grow with distance to stay about a pixel wide.
+    let entry = (origin + direction * t0).xz;
+    let jitter = veio_hash2(floor(entry / (2.0 + t0 * 0.002)));
 
     let sun = veio_key_direction();
     let day = veio_daylight();
@@ -58,14 +65,15 @@ fn veio_volumetric_clouds(input: PostInput) -> vec4<f32> {
     let sun_air = exp(-vec3<f32>(0.20, 0.46, 1.0) * 0.30 / (max(sun.y, 0.0) + 0.10));
     let moon = vec3<f32>(0.10, 0.13, 0.20);
     let sun_colour = mix(moon, vec3<f32>(1.0, 0.98, 0.94) * sun_air * 2.6, day);
-    let sky_top = veio_atmosphere(vec3<f32>(0.0, 1.0, 0.0)) * 1.15 + vec3<f32>(0.03);
+    // Sky light from above; at night only a dim moonlit grey, so clouds never outshine the sky.
+    let sky_top = veio_atmosphere(vec3<f32>(0.0, 1.0, 0.0)) * 1.15 + vec3<f32>(0.03) * day;
     let storm = clamp(frame.rain * 0.7 + frame.thunder * 0.2, 0.0, 0.9);
 
     var transmittance = 1.0;
     var light = vec3<f32>(0.0);
     let sigma = 0.035;
     let light_steps = select(3, 5, quality >= 2u);
-    for (var i = 0; i < 28; i++) {
+    for (var i = 0; i < 36; i++) {
         if i >= steps || transmittance < 0.03 { break; }
         let t = t0 + (f32(i) + jitter) * step_length;
         let p = origin + direction * t;
@@ -93,13 +101,13 @@ fn veio_volumetric_clouds(input: PostInput) -> vec4<f32> {
         light += transmittance * (1.0 - absorb) * sample;
         transmittance *= absorb;
     }
-    // Far clouds sink into the haze of the horizon.
-    let haze = smoothstep(0.015, 0.20, direction.y);
-    let air = veio_atmosphere(direction);
-    let alpha = (1.0 - transmittance) * haze;
-    let colour = mix(air * (1.0 - transmittance), light, haze * 0.9 + 0.1);
+    // Far clouds fade into the air: by distance (aerial perspective) and near the horizon. The
+    // result is premultiplied, so the last pass shows the real sky through the faded part
+    // instead of a colour guessed here.
+    let fade = exp(-t0 / 9000.0) * smoothstep(0.015, 0.14, direction.y);
+    let alpha = (1.0 - transmittance) * fade;
     let smog = veio_smog();
-    let tinted = mix(colour, vec3<f32>(0.45, 0.42, 0.36) * alpha, smog * 0.4);
+    let tinted = mix(light * fade, vec3<f32>(0.45, 0.42, 0.36) * alpha * mix(0.25, 1.0, day), smog * 0.4);
     return vec4<f32>(tinted, alpha);
 }
 

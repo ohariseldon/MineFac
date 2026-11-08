@@ -1,7 +1,7 @@
 schema = 1
 id = "veio_industrial"
 name = "Veio — Realismo"
-version = "3.1.2"
+version = "3.1.3"
 api = "0.1"
 description = "Nuvens volumétricas, água espelhada, profundidade nas texturas, sombras suaves com penumbra e sombra das nuvens no chão, céu com atmosfera e estrelas, relevo nas texturas, sombra de cantos, luz volumétrica, reflexos em chão molhado e metal, água com refração e cáusticas, plantas em movimento, luz colorida, estações do ano e fumaça da fábrica. Três níveis de qualidade; o Leve foi pensado para PCs de 8 GB."
 authors = ["Veio"]
@@ -194,9 +194,9 @@ default = true
 [[options]]
 id = "volumetric_clouds"
 name = "Nuvens volumétricas"
-description = "Experimental, desligado por padrão: cúmulos com volume calculados na tela. No primeiro teste viraram bolhas no horizonte e tremiam ao andar; as nuvens planas do céu são estáveis."
+description = "Cúmulos de verdade, com volume: base escura, topo iluminado pelo sol, bordas prateadas e luz dourada no fim da tarde. Somem no ar com a distância. Equilibrado e Alto; no Leve as nuvens são planas."
 type = "bool"
-default = false
+default = true
 
 [[options]]
 id = "waving"

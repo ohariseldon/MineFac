@@ -63,3 +63,15 @@ do céu também. Ela agora vem desligada por padrão (`volumetric_clouds = false
 planas do `sky.wgsl` de volta. A imagem final ganhou pontilhado triangular de 1/255 contra as
 faixas de 8 bits no céu escuro, e a fumaça da fábrica não pinta o horizonte à noite. Sem vídeo
 do defeito, a causa é a mais provável, não confirmada.
+
+## 3.1.3 (commit desta seção): causa achada, nuvens religadas
+
+O Luiz não quis as nuvens desligadas: "é muito mais fácil só consertar". Causa: `sky_mirror.wgsl`
+e `light.wgsl` faziam `normalize(view_position(uv, 0.5))`. Com profundidade invertida e infinita,
+0,5 é um ponto a 2 planos próximos (~0,1 bloco) do olho, e o Horizon põe o balanço da câmera
+(`frame.bob`) dentro de `frame.projection` (`native_post.rs`, `world_projection(...) * bob * spin`).
+A translação do balanço (centímetros) virava dezenas de graus de erro na direção. Correção: a
+direção é `view_position(uv, 1e-6) - view_position(uv, 1.0)`, dois pontos do mesmo raio, e a
+translação se cancela. Também: jitter das nuvens preso ao mundo (não à tela), 24/36 passos em até
+3.000 blocos, saída pré-multiplicada com desbotamento por distância (o céu real aparece por trás),
+luz ambiente das nuvens à noite sem o piso de 0,03. Nuvens volumétricas ligadas de novo.
