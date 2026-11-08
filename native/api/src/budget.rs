@@ -3,11 +3,11 @@
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Copy)]
-pub(super) enum Lane { Area, Terrain, Topology, Planning, Workforce }
+pub(super) enum Lane { Area, Terrain, Topology, Planning, Workforce, HaulSearch }
 // Independent reservations prevent cheap scans from starving network maintenance.
-const LIMITS: [u32; 5] = [512, 384, 4096, 2048, 512];
+const LIMITS: [u32; 6] = [512, 384, 4096, 2048, 512, 1024];
 // Background jobs retry every tick; workforce discovery runs less frequently.
-const STALE: [u64; 5] = [2, 2, 2, 2, 20];
+const STALE: [u64; 6] = [2, 2, 2, 2, 20, 2];
 type Key = (&'static str, [i32; 3]);
 
 #[derive(Default)]
@@ -20,7 +20,7 @@ struct Queue {
 #[derive(Default)]
 struct Scheduler {
     tick: Option<u64>,
-    queues: [Queue; 5],
+    queues: [Queue; 6],
 }
 
 impl Scheduler {

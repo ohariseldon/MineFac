@@ -916,6 +916,12 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         && (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) != 0 {
         foreman::continue_planning(host, pos, entity, now);
     }
+    if entity.id == HAULER_POST && number(entity, "HaulSearchPending") != 0
+        && worker(entity).is_some() && number(entity, "Absent") == 0
+        && !matches!(number(entity, "Status"), RESTING | NO_FOOD) && !has_load(entity)
+        && (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) != 0 {
+        foreman::continue_search(host, pos, entity, now);
+    }
     if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) == 0 {
         if entity.id == CONTROL_CENTER && !matches!(number(entity, "Status"), 1 | RESTING) {
             set_number(entity, "Admin", 0);

@@ -75,11 +75,13 @@ fn look(host: &mut dyn Host, spot: [i32; 3], stock: &[(usize, ItemStack)], room:
 pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, now: u64) -> Result<Plan, i32> {
     let dimension = host.dimension();
     // A fila do capataz vem antes das tarefas próprias.
-    if let Some(task) = foreman::claim_task(host, pos, now) {
-        if let Plan::Fetch { from, .. } = &task {
-            set_target(entity, Some(*from));
+    match foreman::search_task(host, pos, entity, now) {
+        foreman::TaskSearch::Found(task) => {
+            if let Plan::Fetch { from, .. } = &task { set_target(entity, Some(*from)); }
+            return Ok(task);
         }
-        return Ok(task);
+        foreman::TaskSearch::Pending => return Err(KEEP),
+        foreman::TaskSearch::Empty => {},
     }
     let Some(stations) = scan_blocks(host, pos, entity, RADIUS, SCAN, MAX_STATIONS, &station) else {
         return Err(KEEP);

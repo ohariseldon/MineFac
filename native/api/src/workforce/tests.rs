@@ -40,6 +40,27 @@ const HAULER_SWEEP: u64 = 48;
 /// Primeira volta do capataz (1875 / 25) com folga.
 const FOREMAN_SWEEP: u64 = 90;
 
+#[test]
+fn background_hauler_search_waits_during_rest_hunger_and_delivery() {
+    let mut world = Village::new("veio:search-background-guards");
+    let mut post = block(HAULER_POST);
+    set_worker(&mut post, Some([91,0,0,1]));
+    set_number(&mut post, "HaulSearchPending", 1);
+    for (time,status) in [(1,RESTING),(2,NO_FOOD)] {
+        set_number(&mut post,"Status",status);
+        tick(&mut world, POST, &mut post,time);
+        assert_eq!(number(&post,"HaulSearchPending"),1);
+    }
+    set_number(&mut post,"Status",WALKING);
+    set_carried(&mut post,&[(PLATE.into(),3)],Some(WHEAT),Carry::Supply,0);
+    tick(&mut world,POST,&mut post,3);
+    assert_eq!(number(&post,"HaulSearchPending"),1);
+    assert_eq!(carried(&post),[(PLATE.into(),3)]);
+    set_carried(&mut post,&[],None,Carry::Supply,0);
+    tick(&mut world,POST,&mut post,4);
+    assert_eq!(number(&post,"HaulSearchPending"),0);
+}
+
 #[derive(Default)]
 struct Village {
     dimension: &'static str,
