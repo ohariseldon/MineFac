@@ -15,7 +15,7 @@ Moinho, extratoras, geradores e drones também usam fundos de 2,4 segundos,
 renovados a cada 48 ticks, com afinação fixa: evita oscilações de duração e
 frequência entre segmentos. Há duas variações, fades de 160 ms, filtro de
 agudos de 850–1.500 Hz e RMS de até aproximadamente 0,10 antes do volume do jogo.
-Os perfis ficam entre 0,055 e 0,11. A intenção é um fundo macio, próximo de ASMR;
+Os perfis ficam entre 0,1375 e 0,275 (2,5× desde 2026-11-08, a pedido do Luiz: o fundo estava baixo demais). A intenção é um fundo macio, próximo de ASMR;
 a qualidade subjetiva precisa ser ouvida com música, ambiente e outras máquinas
 no jogo. Fades longos deixam uma respiração suave na emenda; não se trata de um
 loop perfeito sem variação de amplitude.

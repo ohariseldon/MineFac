@@ -102,7 +102,7 @@ fn position(pos: [i32; 3], entity: &ModBlockEntity) -> [f64; 3] {
 
 pub(super) fn after(host: &mut dyn Host, pos: [i32; 3], entity: &ModBlockEntity, previous: i32, previous_status: i32, time: i64) {
     if number(entity, "Status") == 13 && previous_status != 13 {
-        let repair = Profile { family: 255, work: None, finish: None, interval: 400, volume: 0.16, ambient: false };
+        let repair = Profile { family: 255, work: None, finish: None, interval: 400, volume: 0.4, ambient: false };
         play(host, pos, entity, repair, "veio:machine.repair", 0);
     }
     // Generator Status also means stored energy; only the production hook can
@@ -202,7 +202,7 @@ mod tests {
         assert_eq!(host.calls.len(), 1);
         let (event, at, category, volume, pitch) = &host.calls[0];
         assert_eq!(event, "veio:machine.press"); assert_eq!(*at, [0.5; 3]);
-        assert_eq!(*category, 4); assert!(*volume <= 0.3); assert!((0.97..=1.03).contains(pitch));
+        assert_eq!(*category, 4); assert!(*volume <= 0.5); assert!((0.97..=1.03).contains(pitch));
         entity.id = freight::DRONE.into();
         entity.nbt.insert(nbt_key("FlightTarget").clone(), Tag::IntArray(vec![16, 64, 0]));
         set_number(&mut entity, "Duration", 40); set_number(&mut entity, "Progress", 10);
@@ -268,7 +268,7 @@ mod tests {
         let mut host=Probe::default();let mut belt=ModBlockEntity::default();belt.id=BELT.into();
         scene(|s|{s.begin(1,0);s.listeners=vec![listener(0.0)];});
         after(&mut host,[0;3],&belt,0,0,0);
-        assert_eq!(host.calls[0].0,"veio:machine.belt");assert!(host.calls[0].1<0.06);
+        assert_eq!(host.calls[0].0,"veio:machine.belt");assert!(host.calls[0].1<0.1);
         for status in [3,5,9] {
             set_number(&mut belt,"Status",status);
             after(&mut host,[0;3],&belt,0,1,48);
