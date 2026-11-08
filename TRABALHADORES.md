@@ -32,6 +32,13 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## 0.19.0: contas separadas, impostos e preços locais
+
+- **Companhia x prefeitura:** o centro de controle ganhou um 5º espaço, o cofre da companhia. Ele paga os salários dos trabalhadores do jogador e os impostos. A prefeitura tem conta própria (verba inicial de 300 moedas, impostos, aportes) e paga o prefeito, a manutenção dos poços (1 moeda a cada 2 turnos por poço) e a assistência às famílias pobres.
+- **Impostos:** 0%, 8%, 12% e 16% (por fase) da produção e das vendas do turno na área. Falta de saldo vira dívida; dívida acima de um dia de imposto suspende as licenças.
+- **Preços locais:** fator por item em cada loja (50% a 200%), guiado pela cobertura do estoque frente à procura média do dia e pela falta que as famílias sentiram. Detalhes em [frentes/SOCIEDADE.md](frentes/SOCIEDADE.md).
+- **Mais leve e organizado:** `society/` em quatro arquivos; o PIB virou soma por turno na conta da prefeitura (sem lista de eventos); a idade dos moradores só é relida quando a família muda (ou uma vez por dia); vizinhança e alvarás numa passada só; sem-teto com `HashSet`; Gini em O(n log n); todas as chaves NBT novas na tabela rápida (o teste de alocação zero continua passando). Morador agora é identificado por mundo e aldeão.
+
 ## 0.18.0: sociedade da vila
 
 Casas e famílias, salário, consumo, lojas, prefeito, fases e indicadores. Regras e números no
@@ -287,7 +294,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0 e 149 na 0.18.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0, 149 na 0.18.0 e 160 na 0.19.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
@@ -301,7 +308,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 ## Teste sugerido ao usuário (0.18.0, sociedade)
 
 1. Faça um posto do lavrador (libera as receitas) e depois casa, poço, loja e prefeitura.
-2. Contrate o prefeito e o comerciante com esmeraldas; ponha esmeraldas no cofre e pão na loja.
+2. Contrate o prefeito e o comerciante com esmeraldas; ponha esmeraldas no cofre da companhia (5º espaço do centro de controle) e pão na loja.
 3. Ponha uma casa perto de 2 a 4 aldeões. Em até 1 minuto o painel mostra os moradores, a carteira e a despensa; de dia a família compra pão, e o caixa da loja enche.
 4. Clique no comerciante: a tela de troca mostra o pão à venda. Compre e veja o estoque baixar.
 5. Livro na prefeitura: relatório com IDH, Gini, PIB, bairros e o que falta para a próxima fase.
