@@ -140,33 +140,64 @@ fn signed(entity: &ModBlockEntity, key: &str) -> i32 {
     match entity.nbt.get(nbt_key(key)) { Some(Tag::Int(value)) => *value, _ => 0 }
 }
 
-/// Os 13 valores do painel do centro.
+/// Os 13 valores do painel do centro. O estado leva a aba nos milhares; nas abas de divisão, os
+/// valores 1 a 9 são os da holding.
 pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
+    let tab = number(entity, "Tab").clamp(0, super::super::holding::TABS - 1);
+    let status = number(entity, "Status") + tab * 1000;
+    if tab > 0 {
+        let holding = super::super::holding::data(entity);
+        return std::array::from_fn(|index| match index {
+            0 => status, 1..=9 => holding[index - 1], 12 => number(entity, "Company"), _ => 0,
+        });
+    }
     let keys = ["DWorkers", "DWorking", "DWaiting", "DHungry", "DFields", "DPens", "DStore", "DQueue",
         "DGoal1", "DGoal2", "DGoal3"];
     std::array::from_fn(|index| match index {
-        0 => number(entity, "Status"), 12 => number(entity, "Company"), _ => signed(entity, keys[index - 1]),
+        0 => status, 12 => number(entity, "Company"), _ => signed(entity, keys[index - 1]),
     })
 }
 
 const BAR: u32 = 0xff2b2b2b;
 
-/// Tela do centro: números da vila e barras das metas.
+/// Tela do centro: cabeçalho com as abas (setas) e os números da aba.
 pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>) {
     let [x, y] = event.origin;
     let read = |index: usize| event.data.get(index).copied().unwrap_or(0);
     let tr = |key: &str, args: &[&dyn std::fmt::Display]| Text::tr(key, args).plain();
-    let status = read(0).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
-    let lines = [
-        (tr(&format!("veio.status.{}", presentation::STATUS_KEYS[status]), &[]), presentation::text_color(status)),
-        (tr("veio.center.workers", &[&read(1), &read(2)]), presentation::INK),
-        (tr("veio.center.waiting", &[&read(3), &read(4)]), if read(3) > 0 { 0x9a5a00 } else { presentation::INK }),
-        (tr("veio.center.zones", &[&read(5), &read(6), &read(12)]), presentation::INK),
-        (if read(7) < 0 { tr("veio.center.no_storage", &[&read(8)]) } else { tr("veio.center.storage", &[&read(7), &read(8)]) },
-            presentation::INK),
-    ];
+    let tab = (read(0) / 1000).clamp(0, super::super::holding::TABS - 1);
+    let status = (read(0) % 1000).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
+    // Cabeçalho: < nome da aba > (clique nas setas).
+    host.text(event.batch, "<", [x + 8.0, y + 22.0], 0x1f4fa8, false);
+    host.text(event.batch, ">", [x + 166.0, y + 22.0], 0x1f4fa8, false);
+    let title = format!("{} ({}/{})", tr(&format!("veio.holding.tab{tab}"), &[]), tab + 1, super::super::holding::TABS);
+    host.text(event.batch, &title, [x + 22.0, y + 22.0], 0x1f4fa8, false);
+    let lines: Vec<(String, u32)> = if tab == 0 {
+        vec![
+            (tr(&format!("veio.status.{}", presentation::STATUS_KEYS[status]), &[]), presentation::text_color(status)),
+            (tr("veio.center.workers", &[&read(1), &read(2)]), presentation::INK),
+            (tr("veio.center.waiting", &[&read(3), &read(4)]), if read(3) > 0 { 0x9a5a00 } else { presentation::INK }),
+            (tr("veio.center.zones", &[&read(5), &read(6), &read(12)]), presentation::INK),
+            (if read(7) < 0 { tr("veio.center.no_storage", &[&read(8)]) } else { tr("veio.center.storage", &[&read(7), &read(8)]) },
+                presentation::INK),
+        ]
+    } else {
+        let stopped = read(5).clamp(0, presentation::STATUS_KEYS.len() as i32 - 1) as usize;
+        vec![
+            (tr("veio.holding.units", &[&read(1), &read(2)]), presentation::INK),
+            (tr("veio.holding.workers", &[&read(3), &(read(3) * society::WAGE_PER_TURN * society::TURNS_PER_DAY as i32)]), presentation::INK),
+            (tr(&format!("veio.holding.made{tab}"), &[&read(4)]), 0x1e7a1e),
+            (if read(6) > 0 {
+                tr("veio.holding.stopped", &[&tr(&format!("veio.status.{}", presentation::STATUS_KEYS[stopped]), &[]), &read(6)])
+            } else { tr("veio.holding.all_good", &[]) }, if read(6) > 0 { 0x9a5a00 } else { 0x1e7a1e }),
+            (tr(&format!("veio.holding.extra{tab}"), &[&read(7), &read(8), &read(9)]), presentation::SOFT_INK),
+        ]
+    };
     for (index, (line, color)) in lines.iter().enumerate() {
-        host.text(event.batch, line, [x + 8.0, y + 22.0 + index as f32 * 11.0], *color, false);
+        host.text(event.batch, line, [x + 8.0, y + 33.0 + index as f32 * 11.0], *color, false);
+    }
+    if tab != 0 {
+        return;
     }
     for goal in 0..3 {
         let top = y + 82.0 + goal as f32 * 18.0;
@@ -216,6 +247,9 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     host.tell(player, Text::tr("veio.report.title", &[&posts.len(), &working]));
     if let Some(company) = company {
         host.tell(player, company);
+    }
+    for line in super::super::holding::report_lines(dimension) {
+        host.tell(player, line);
     }
     for post in posts.iter().filter(|post| waiting(post.status)).take(REPORT_LINES) {
         let key = format!("veio.report.issue.{}", presentation::STATUS_KEYS.get(post.status as usize).copied().unwrap_or("idle"));

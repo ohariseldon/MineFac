@@ -948,7 +948,16 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         match entity.id.as_str() {
             SHOP => society::shop_cycle(host, pos, entity, time),
             TOWN_HALL => society::hall_cycle(host, pos, entity, time),
-            CONTROL_CENTER => society::company_cycle(host, pos, entity, time),
+            CONTROL_CENTER => {
+                society::company_cycle(host, pos, entity, time);
+                // Holding: fecha a produção do turno e recalcula a aba aberta de vez em quando.
+                if society::ledger::turn_edge(pos, time) {
+                    super::holding::roll(host.dimension(), time);
+                }
+                if time.div_euclid(EVERY) % 4 == 0 {
+                    super::holding::refresh(host.dimension(), pos, entity);
+                }
+            }
             _ => {}
         }
     }
