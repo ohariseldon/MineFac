@@ -316,10 +316,47 @@ for key, pt, en in [
  ("advancement.veio.coordination.description", "Um capataz alimenta e recontrata os trabalhadores dos postos.", "A foreman feeds and rehires the workers of your posts."),
 ]:
  label(key, pt, en)
+# Água (0.18): bomba, cano, aspersor, turbina hidrelétrica e rios das nascentes.
+help.update({
+ "pump":(
+ "Encoste em água parada.\n25 mB/t por fonte vizinha,\naté 4. Gasta 6 FE/t.\nEmpurra a água aos canos.",
+ "Place it by still water.\n25 mB/t per touching source,\nup to 4. Uses 6 FE/t.\nPushes water into pipes."),
+ "pipe":(
+ "Leva água da bomba.\nConecta nas seis faces.\nNivela entre canos vizinhos.\nNão precisa de energia.",
+ "Carries pump water.\nConnects on all six faces.\nLevels out between pipes.\nNeeds no power."),
+ "sprinkler":(
+ "No meio da lavoura 9x9,\nna altura das plantas. Molha\na terra e rega cada estágio.\nAdubo no slot: 3x mais rápido.",
+ "In the middle of a 9x9 field,\nat crop height. Wets the soil\nand waters every stage.\nFertilizer in the slot: 3x faster."),
+ "hydro_turbine":(
+ "Na parede da represa: água\natrás, saída livre na frente.\nQueda de 3 a 32 blocos e\nespelho largo. Até 320 FE/t.",
+ "In the dam wall: water\nbehind, free outlet in front.\nDrop of 3 to 32 blocks and\na wide lake. Up to 320 FE/t."),
+})
+for key, pt, en in [
+ ("block.veio.pump", "Bomba d'água", "Water Pump"),
+ ("block.veio.pipe", "Cano d'água", "Water Pipe"),
+ ("block.veio.sprinkler", "Aspersor", "Sprinkler"),
+ ("block.veio.hydro_turbine", "Turbina hidrelétrica", "Hydro Turbine"),
+ ("veio.water", "Água %s / %s mB", "Water %s / %s mB"),
+ ("veio.metric.water", "Água %s de %s mB", "Water %s of %s mB"),
+ ("veio.metric.pumping", "Bombeando %s mB/t", "Pumping %s mB/t"),
+ ("veio.metric.fertility", "Adubo no solo: %s", "Soil fertility: %s"),
+ ("veio.metric.head", "Queda d'água: %s blocos", "Water drop: %s blocks"),
+ ("veio.hint.pump", "Água parada ao lado; canos levam", "Still water beside; pipes carry it"),
+ ("veio.hint.sprinkler", "Água pelos canos; adubo acelera", "Water by pipe; fertilizer speeds up"),
+ ("veio.hint.hydro", "Represa atrás, saída na frente", "Dam behind, outlet in front"),
+ ("veio.hint.steam", "Água parada ao lado ou por cano", "Still water beside or by pipe"),
+ ("veio.guide.short.hydro_turbine", "Turbina hidro", "Hydro turbine"),
+ ("advancement.veio.hydro.title", "Força da queda d'água", "Power of the Falls"),
+ ("advancement.veio.hydro.description", "Represe um rio e gere energia com a queda.", "Dam a river and make power from the drop."),
+]:
+ label(key, pt, en)
+help["steam_engine"] = (
+ "Água parada ao lado ou por\ncano: 5 mB/t. 120 FE/t e o\ndobro de energia por\ncombustível do gerador.",
+ "Still water beside it or by\npipe: 5 mB/t. 120 FE/t and\ndouble the energy per\ngenerator fuel.")
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
- ("Lavoura e comida","Farming and food",["harvester","planter","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
- ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery"]),
+ ("Lavoura e comida","Farming and food",["harvester","planter","sprinkler","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
+ ("Energia","Power",["generator","biomass_generator","water_wheel","wind_turbine","steam_engine","geothermal","solar","battery","hydro_turbine","pump","pipe"]),
  ("Logística","Logistics",["belt","fast_belt","splitter","merger","inserter","fast_inserter","long_inserter","cable","pole","steel_pole","wrench"]),
  ("Projetos e defesa","Projects and defense",["contract_hub","tesla"]),
 ]
@@ -353,6 +390,7 @@ slothelp={
  "pantry":["Coloque comida para vender.","Recolha as esmeraldas."],
  "biomass_generator":["Biomassa, plantas ou feno."],
  "steam_engine":["Carvão, madeira ou outro combustível."],
+ "sprinkler":["Adubo: farinha de osso ou biomassa."],
  "planter":["Sementes, cenouras, batatas ou fungo do Nether."],
  "tree_farm":["Mudas de carvalho, bétula, pinheiro, selva, acácia ou cerejeira.","Produto.","Produto.","Produto."],
  "ranch":["Trigo, cenoura, batata, beterraba ou sementes.","Baldes vazios para ordenhar.","Produto.","Produto.","Produto."],
@@ -390,6 +428,7 @@ slot_en={
  "pantry":["Insert food to sell.","Collect the emeralds."],
  "biomass_generator":["Biomass, plants or hay."],
  "steam_engine":["Coal, wood or another fuel."],
+ "sprinkler":["Fertilizer: bone meal or biomass."],
  "planter":["Seeds, carrots, potatoes or nether wart."],
  "tree_farm":["Oak, birch, spruce, jungle, acacia or cherry saplings.","Product.","Product.","Product."],
  "ranch":["Wheat, carrots, potatoes, beetroot or seeds.","Empty buckets for milking.","Product.","Product.","Product."],
@@ -512,6 +551,12 @@ production=page(
 page(
  "Energia\n\nRoda d'água e cata-vento: grátis e limpos; 8 FE/t por face ou no nível do mar.\nGerador e biomassa: 40 FE/t; biomassa polui menos.\nVapor: 120 FE/t, precisa de água.\nGeotérmico e solar: escalam.\n\nAcumuladores seguram a noite.",
  "Power\n\nWater wheel and wind: free and clean; 8 FE/t per face or at sea level.\nGenerator and biomass: 40 FE/t; biomass pollutes less.\nSteam: 120 FE/t, needs water.\nGeothermal and solar: scale up.\n\nBatteries carry the night.")
+water=page(
+ "Água e irrigação\n\nA bomba, encostada em água parada, enche os canos. Os canos levam a água ao aspersor e ao motor a vapor.\n\nCada planta bebe por estágio: cenoura pouco, batata mais, beterraba muito. Sem água a lavoura cresce como sempre, devagar.",
+ "Water and irrigation\n\nA pump by still water fills the pipes. Pipes carry water to sprinklers and steam engines.\n\nEach crop drinks per stage: carrots little, potatoes more, beetroot a lot. Without water, crops grow as usual, slowly.")
+page(
+ "Rios e represas\n\nNo mundo novo, nascentes no alto de montanhas formam rios que descem até o mar, se juntam e engrossam, com quedas pelo caminho.\n\nFeche um vale e ponha a turbina na parede: queda maior e lago largo rendem mais. Rio volumoso também.",
+ "Rivers and dams\n\nIn new terrain, springs high in the mountains form rivers that run to the sea, join and grow, with falls on the way.\n\nClose a valley and set the turbine in the wall: a higher drop and a wider lake pay more. So does a big river.")
 food=page(
  "Comida e povoado\n\nTrigo > moinho > farinha > cozinha > pão.\nCarnes do rancho > fornalha elétrica.\n\nO armazém paga esmeraldas pela comida, mais por comida pronta, e 50% a mais com aldeões perto.",
  "Food and village\n\nWheat > mill > flour > kitchen > bread.\nRanch meat > electric furnace.\n\nThe pantry pays emeralds for food, more for cooked food, and 50% more with villagers near.")
@@ -668,7 +713,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.17.2"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.18.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",

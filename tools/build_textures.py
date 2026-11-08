@@ -31,6 +31,8 @@ PALETTE = {
     "S": "5b6170", "T": "3d424e", "M": "7c8394",
     # Vermelho de sinalização e ciano da esteira rápida.
     "x": "c22a2a", "C": "3fd0d8",
+    # Água encanada.
+    "B": "3f76e4", "i": "8fb8ff",
 }
 
 def hex_rgb(value):
@@ -387,6 +389,26 @@ MOTIFS.update({
         "nnnnnnnn",
         "........",
     ],
+    "pump": [
+        "...ii...",
+        "..iBBi..",
+        "..BBBB..",
+        "...BB...",
+        "eeeeeeee",
+        "eBBBBBBe",
+        "eeeeeeee",
+        "..e..e..",
+    ],
+    "hydro_turbine": [
+        "BBBBBBBB",
+        "iBBiiBBi",
+        "..yzzy..",
+        ".yz..zy.",
+        ".z.yy.z.",
+        ".yz..zy.",
+        "..yzzy..",
+        "iBiBBiBi",
+    ],
 })
 MACHINE_TIER = {
     "drill": "copper", "press": "copper", "assembler": "copper", "generator": "copper",
@@ -398,6 +420,7 @@ MACHINE_TIER = {
     "farm_post": "copper", "hauler_post": "iron", "foreman_desk": "copper", "shepherd_post": "copper",
     "barracks": "iron",
     "barn": "copper", "silo": "iron", "control_center": "steel",
+    "pump": "iron", "hydro_turbine": "steel",
 }
 
 def front(name):

@@ -13,6 +13,9 @@ pub(super) mod crops;
 pub(super) mod forestry;
 pub(super) mod ranch;
 pub(super) mod pantry;
+pub(crate) mod water;
+
+pub(super) use water::{HYDRO_TURBINE, PIPE, PUMP, SPRINKLER};
 
 pub(super) const DRILL_MK3: &str = "veio:drill_mk3";
 pub(super) const ELECTRIC_FURNACE: &str = "veio:electric_furnace";
@@ -70,17 +73,18 @@ pub(crate) struct Fuel {
 
 pub(super) fn is_machine(block: &str) -> bool {
     matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | BIOMASS_GENERATOR | WATER_WHEEL |
-        WIND_TURBINE | STEAM_ENGINE | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PANTRY)
+        WIND_TURBINE | STEAM_ENGINE | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PANTRY |
+        PUMP | PIPE | SPRINKLER | HYDRO_TURBINE)
 }
 
 /// Máquinas que consomem energia: recebem pela rede, param com redstone, mostram métricas.
 pub(super) fn consumes(block: &str) -> bool {
-    matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | PLANTER | GROW_LAMP | TREE_FARM | RANCH)
+    matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PUMP)
 }
 
 /// Fontes de energia deste módulo (as antigas: gerador, geotérmico e solar).
 pub(super) fn generates(block: &str) -> bool {
-    matches!(block, BIOMASS_GENERATOR | WATER_WHEEL | WIND_TURBINE | STEAM_ENGINE)
+    matches!(block, BIOMASS_GENERATOR | WATER_WHEEL | WIND_TURBINE | STEAM_ENGINE | HYDRO_TURBINE)
 }
 
 /// Fontes que queimam combustível: poluem apenas enquanto há queima.
@@ -91,7 +95,7 @@ pub(super) fn burns(block: &str) -> bool {
 /// Entrada de itens, sem alocar o `layout`.
 pub(super) fn has_inputs(block: &str) -> bool {
     matches!(block, ELECTRIC_FURNACE | MILL | PANTRY | KITCHEN | BIOMASS_GENERATOR | STEAM_ENGINE |
-        PLANTER | TREE_FARM | RANCH)
+        PLANTER | TREE_FARM | RANCH | SPRINKLER)
 }
 
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
@@ -99,8 +103,9 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         DRILL_MK3 => (1, vec![], vec![0]),
         ELECTRIC_FURNACE | MILL | PANTRY => (2, vec![0], vec![1]),
         KITCHEN => (3, vec![0, 1], vec![2]),
-        BIOMASS_GENERATOR | STEAM_ENGINE | PLANTER => (1, vec![0], vec![]),
-        WATER_WHEEL | WIND_TURBINE | GROW_LAMP => (1, vec![], vec![]),
+        BIOMASS_GENERATOR | STEAM_ENGINE | PLANTER | SPRINKLER => (1, vec![0], vec![]),
+        WATER_WHEEL | WIND_TURBINE | GROW_LAMP | PUMP | HYDRO_TURBINE => (1, vec![], vec![]),
+        PIPE => (0, vec![], vec![]),
         TREE_FARM => (4, vec![0], vec![1, 2, 3]),
         RANCH => (5, vec![0, 1], vec![2, 3, 4]),
         _ => return None,
@@ -140,6 +145,7 @@ pub(super) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (GEOTHERMAL, 0) => is_plain(stack, "minecraft:lava_bucket"),
         (HARVESTER, 0) => is_plain(stack, BONE_MEAL),
         (PLANTER, 0) => crops::planted(&stack.item).is_some(),
+        (SPRINKLER, 0) => stack.damage == 0 && stack.extra.is_none() && water::fertilizer(&stack.item).is_some(),
         (TREE_FARM, 0) => forestry::by_sapling(&stack.item).is_some(),
         (RANCH, 0) => ranch::is_feed(&stack.item),
         (RANCH, 1) => is_plain(stack, "minecraft:bucket"),
@@ -176,6 +182,12 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     if entity.id == GROW_LAMP {
         crops::grow(host, pos, entity, time);
         return true;
+    }
+    match entity.id.as_str() {
+        PUMP => { water::pump(host, pos, entity); return true; }
+        PIPE => { water::pipe(host, pos, entity); return true; }
+        SPRINKLER => { water::sprinkle(host, pos, entity, time); return true; }
+        _ => {}
     }
     if entity.id == TREE_FARM {
         forestry::tick(host, pos, entity, time);
@@ -260,13 +272,14 @@ pub(super) fn finish_cycle(entity: &mut ModBlockEntity) {
 
 /// Fontes contínuas e a lâmpada não têm ciclo: o painel omite a barra de progresso.
 pub(super) fn shows_progress(block: &str) -> bool {
-    !matches!(block, WATER_WHEEL | WIND_TURBINE | GROW_LAMP)
+    !matches!(block, WATER_WHEEL | WIND_TURBINE | GROW_LAMP | PUMP | PIPE | HYDRO_TURBINE)
 }
 
 /// Posição dos slots no painel (largura 194, como os demais painéis do Veio).
 pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
     Some(match block {
-        DRILL_MK3 | BIOMASS_GENERATOR | STEAM_ENGINE | PLANTER => vec![Some([89.0, 45.0])],
+        DRILL_MK3 | BIOMASS_GENERATOR | STEAM_ENGINE | PLANTER | SPRINKLER => vec![Some([89.0, 45.0])],
+        PUMP | HYDRO_TURBINE => vec![None],
         ELECTRIC_FURNACE | MILL | PANTRY => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
         KITCHEN => vec![Some([35.0, 45.0]), Some([71.0, 45.0]), Some([143.0, 45.0])],
         WATER_WHEEL | WIND_TURBINE | GROW_LAMP => vec![None],
@@ -282,6 +295,8 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         DRILL_MK3 => &["output"],
         BIOMASS_GENERATOR | STEAM_ENGINE => &["fuel"],
         PLANTER => &["seeds"],
+        SPRINKLER => &["fertilizer"],
+        PUMP | HYDRO_TURBINE => &[],
         KITCHEN => &["input1", "input2", "output"],
         TREE_FARM => &["saplings", "output", "", ""],
         RANCH => &["feed", "bucket", "output", "", ""],
@@ -303,7 +318,10 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
             tr(&format!("veio.purity.{}", ["unknown", "impure", "normal", "pure"][info.clamp(0, 3) as usize]), &[]),
         ],
         BIOMASS_GENERATOR => vec![tr("veio.hint.biomass", &[])],
-        STEAM_ENGINE => vec![tr("veio.hint.steam", &[])],
+        STEAM_ENGINE => vec![tr("veio.metric.water", &[&read(8), &water::capacity(STEAM_ENGINE)]), tr("veio.hint.steam", &[])],
+        PUMP => vec![tr("veio.metric.pumping", &[&info]), tr("veio.metric.water", &[&read(8), &water::capacity(PUMP)]), tr("veio.hint.pump", &[])],
+        SPRINKLER => vec![tr("veio.metric.fertility", &[&info]), tr("veio.metric.grown", &[&read(9)]), tr("veio.hint.sprinkler", &[])],
+        HYDRO_TURBINE => vec![tr("veio.metric.output", &[&info]), tr("veio.metric.head", &[&read(8)]), tr("veio.hint.hydro", &[])],
         WATER_WHEEL => vec![tr("veio.metric.output", &[&info]), tr("veio.hint.water_wheel", &[])],
         WIND_TURBINE => vec![tr("veio.metric.output", &[&info]), tr("veio.hint.wind", &[])],
         SOLAR => vec![tr("veio.metric.output", &[&info]), tr("veio.hint.solar", &[])],

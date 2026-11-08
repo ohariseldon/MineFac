@@ -80,6 +80,11 @@ BLOCKS = {
     "barracks": ("machine", "iron", 2, [], 2.0),
     "solar": ("solar", None, 1, [0], 2.5),
     "battery": ("battery", None, 1, [0], 2.5),
+    # Água (0.18): bomba, cano, aspersor e turbina hidrelétrica.
+    "pump": ("machine", "iron", 1, [], 1.5),
+    "pipe": ("pipe", None, 0, [], 1.0),
+    "sprinkler": ("sprinkler", None, 1, [], 1.0),
+    "hydro_turbine": ("machine", "steel", 1, [], 2.5),
 }
 
 # Itens sem bloco: modelo vanilla de referência para os componentes de dados e tamanho da pilha.
@@ -109,10 +114,10 @@ TABS = {
         "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module", "speed_module",
         "efficiency_module", "productivity_module"]),
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
-        "geothermal", "solar", "battery", "pole", "steel_pole", "cable",
+        "geothermal", "hydro_turbine", "solar", "battery", "pole", "steel_pole", "cable", "pump", "pipe",
         "minecraft:coal", "minecraft:lava_bucket"]),
     "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench"]),
-    "world": ("veio:harvester", ["harvester", "planter", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
+    "world": ("veio:harvester", ["harvester", "planter", "sprinkler", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
         "pantry", "flour", "biomass", "tesla", "barracks", "repair_kit", "minecraft:bone_meal"]),
 }
@@ -277,6 +282,27 @@ def model(kind, name, tier):
             box([0, 0, 6], [16, 3, 10], "#wire"),
             box([5, 0, 5], [11, 4, 11], "#joint"),
         ]
+    if kind == "pipe":
+        # Cano de cobre com uma janela de vidro no meio: liga nas seis faces.
+        textures = {"pipe": "minecraft:block/cut_copper", "joint": "minecraft:block/waxed_copper_block",
+                    "glass": "minecraft:block/light_blue_stained_glass", "particle": "minecraft:block/cut_copper"}
+        return textures, [
+            box([6, 6, 0], [10, 10, 16], "#pipe"),
+            box([0, 6, 6], [16, 10, 10], "#pipe"),
+            box([6, 0, 6], [10, 16, 10], "#pipe"),
+            box([5, 5, 5], [11, 11, 11], {"up": "#glass", "*": "#joint"}),
+        ]
+    if kind == "sprinkler":
+        textures = {"post": "minecraft:block/cut_copper", "head": "minecraft:block/iron_block",
+                    "nozzle": "minecraft:block/light_blue_stained_glass", "base": "minecraft:block/smooth_stone",
+                    "particle": "minecraft:block/cut_copper"}
+        return textures, [
+            box([5, 0, 5], [11, 2, 11], "#base"),
+            box([7, 2, 7], [9, 9, 9], "#post"),
+            box([5, 9, 5], [11, 10, 11], "#head"),
+            box([2, 9.25, 7.5], [14, 9.75, 8.5], "#nozzle"),
+            box([7.5, 9.25, 2], [8.5, 9.75, 14], "#nozzle"),
+        ]
     if kind == "solar":
         textures = {"frame": "minecraft:block/iron_block", "cells": "minecraft:block/daylight_detector_top",
                     "edge": "minecraft:block/daylight_detector_side", "particle": "minecraft:block/daylight_detector_top"}
@@ -312,6 +338,9 @@ SHAPES = {
     "wind_turbine": [[0.4375, 0, 0.4375, 0.5625, 1.5, 0.5625]],
     "grow_lamp": [[0.25, 0, 0.25, 0.75, 0.9375, 0.75]],
     "marker": [[0.375, 0, 0.375, 0.625, 0.9375, 0.625]],
+    "pipe": [[0.375, 0.375, 0, 0.625, 0.625, 1], [0, 0.375, 0.375, 1, 0.625, 0.625],
+             [0.375, 0, 0.375, 0.625, 1, 0.625]],
+    "sprinkler": [[0.3125, 0, 0.3125, 0.6875, 0.625, 0.6875]],
 }
 
 def write(path, value):
@@ -330,7 +359,7 @@ def main():
         }})
         write(A / f"items/{name}.json", {"model": {"type": "minecraft:model", "model": f"veio:block/{name}"}})
         # Sem menu, um template sem tela própria: a terracota esmaltada só gira com o jogador.
-        template = "minecraft:black_glazed_terracotta" if kind in ("cable", "pole", "steel_pole") else "minecraft:stonecutter"
+        template = "minecraft:black_glazed_terracotta" if kind in ("cable", "pipe", "pole", "steel_pole") else "minecraft:stonecutter"
         shape = {"default": SHAPES[kind]}
         properties = {"hardness": hardness, "occludes": False}
         if kind == "grow_lamp":

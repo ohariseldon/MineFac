@@ -48,6 +48,10 @@
     "veio:control_center",
     "veio:barracks",
     "veio:solar",
-    "veio:battery"
+    "veio:battery",
+    "veio:pump",
+    "veio:pipe",
+    "veio:sprinkler",
+    "veio:hydro_turbine"
   ]
 }

@@ -13,7 +13,7 @@
               "components": {
                 "minecraft:written_book_content": {
                   "title": {
-                    "raw": "Veio 0.17.2"
+                    "raw": "Veio 0.18.0"
                   },
                   "author": "Veio",
                   "generation": 0,
@@ -60,7 +60,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 22
+                              "page": 24
                             }
                           },
                           {
@@ -108,7 +108,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 30
+                              "page": 32
                             }
                           },
                           {
@@ -120,7 +120,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 31
+                              "page": 33
                             }
                           },
                           {
@@ -132,7 +132,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 32
+                              "page": 34
                             }
                           },
                           {
@@ -144,7 +144,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 33
+                              "page": 35
                             }
                           },
                           {
@@ -156,7 +156,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 34
+                              "page": 36
                             }
                           },
                           {
@@ -168,7 +168,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           },
                           {
@@ -319,6 +319,16 @@
                     },
                     {
                       "raw": {
+                        "translate": "veio.guide.page.30"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.guide.page.31"
+                      }
+                    },
+                    {
+                      "raw": {
                         "text": "",
                         "extra": [
                           {
@@ -334,7 +344,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 36
+                              "page": 38
                             }
                           },
                           {
@@ -346,7 +356,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 37
+                              "page": 39
                             }
                           },
                           {
@@ -358,7 +368,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 38
+                              "page": 40
                             }
                           },
                           {
@@ -370,7 +380,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 39
+                              "page": 41
                             }
                           },
                           {
@@ -382,7 +392,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 40
+                              "page": 42
                             }
                           },
                           {
@@ -394,7 +404,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 41
+                              "page": 43
                             }
                           },
                           {
@@ -406,7 +416,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 42
+                              "page": 44
                             }
                           },
                           {
@@ -418,7 +428,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 43
+                              "page": 45
                             }
                           },
                           {
@@ -430,7 +440,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 44
+                              "page": 46
                             }
                           },
                           {
@@ -442,7 +452,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 45
+                              "page": 47
                             }
                           },
                           {
@@ -476,7 +486,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 46
+                              "page": 48
                             }
                           },
                           {
@@ -488,30 +498,6 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 47
-                            }
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "block.veio.grow_lamp",
-                            "color": "dark_blue",
-                            "underlined": true,
-                            "click_event": {
-                              "action": "change_page",
-                              "page": 48
-                            }
-                          },
-                          {
-                            "text": "\n"
-                          },
-                          {
-                            "translate": "block.veio.tree_farm",
-                            "color": "dark_blue",
-                            "underlined": true,
-                            "click_event": {
-                              "action": "change_page",
                               "page": 49
                             }
                           },
@@ -519,7 +505,7 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.ranch",
+                            "translate": "block.veio.sprinkler",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
@@ -531,7 +517,7 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.mill",
+                            "translate": "block.veio.grow_lamp",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
@@ -543,7 +529,7 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.electric_furnace",
+                            "translate": "block.veio.tree_farm",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
@@ -555,7 +541,7 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.kitchen",
+                            "translate": "block.veio.ranch",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
@@ -567,12 +553,48 @@
                             "text": "\n"
                           },
                           {
-                            "translate": "block.veio.pantry",
+                            "translate": "block.veio.mill",
                             "color": "dark_blue",
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
                               "page": 54
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.electric_furnace",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 55
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.kitchen",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 56
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.pantry",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 57
                             }
                           },
                           {
@@ -606,7 +628,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 55
+                              "page": 58
                             }
                           },
                           {
@@ -618,7 +640,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 56
+                              "page": 59
                             }
                           },
                           {
@@ -630,7 +652,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 57
+                              "page": 60
                             }
                           },
                           {
@@ -642,7 +664,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 58
+                              "page": 61
                             }
                           },
                           {
@@ -654,7 +676,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 59
+                              "page": 62
                             }
                           },
                           {
@@ -666,7 +688,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 60
+                              "page": 63
                             }
                           },
                           {
@@ -678,7 +700,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 61
+                              "page": 64
                             }
                           },
                           {
@@ -690,7 +712,43 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 62
+                              "page": 65
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.short.hydro_turbine",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 66
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.pump",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 67
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "block.veio.pipe",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 68
                             }
                           },
                           {
@@ -724,7 +782,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 63
+                              "page": 69
                             }
                           },
                           {
@@ -736,7 +794,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 64
+                              "page": 70
                             }
                           },
                           {
@@ -748,7 +806,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 65
+                              "page": 71
                             }
                           },
                           {
@@ -760,7 +818,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 66
+                              "page": 72
                             }
                           },
                           {
@@ -772,7 +830,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 67
+                              "page": 73
                             }
                           },
                           {
@@ -784,7 +842,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 68
+                              "page": 74
                             }
                           },
                           {
@@ -796,7 +854,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 69
+                              "page": 75
                             }
                           },
                           {
@@ -808,7 +866,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 70
+                              "page": 76
                             }
                           },
                           {
@@ -820,7 +878,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 71
+                              "page": 77
                             }
                           },
                           {
@@ -832,7 +890,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 72
+                              "page": 78
                             }
                           },
                           {
@@ -844,7 +902,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 73
+                              "page": 79
                             }
                           },
                           {
@@ -878,7 +936,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 74
+                              "page": 80
                             }
                           },
                           {
@@ -890,7 +948,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 75
+                              "page": 81
                             }
                           },
                           {
@@ -924,7 +982,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 76
+                              "page": 82
                             }
                           },
                           {
@@ -936,7 +994,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 78
+                              "page": 84
                             }
                           },
                           {
@@ -948,7 +1006,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 79
+                              "page": 85
                             }
                           },
                           {
@@ -960,7 +1018,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 80
+                              "page": 86
                             }
                           },
                           {
@@ -972,7 +1030,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 81
+                              "page": 87
                             }
                           },
                           {
@@ -984,7 +1042,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 83
+                              "page": 89
                             }
                           },
                           {
@@ -996,7 +1054,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 84
+                              "page": 90
                             }
                           },
                           {
@@ -1008,7 +1066,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 85
+                              "page": 91
                             }
                           },
                           {
@@ -1020,7 +1078,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 91
+                              "page": 97
                             }
                           },
                           {
@@ -1032,7 +1090,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 92
+                              "page": 98
                             }
                           },
                           {
@@ -1453,6 +1511,41 @@
                           },
                           {
                             "translate": "veio.guide.craft.planter",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.sprinkler",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.sprinkler"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.sprinkler",
                             "color": "dark_gray"
                           },
                           {
@@ -1978,6 +2071,111 @@
                           },
                           {
                             "translate": "veio.guide.craft.battery",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.hydro_turbine",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.hydro_turbine"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.hydro_turbine",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.pump",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.pump"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.pump",
+                            "color": "dark_gray"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.back",
+                            "color": "dark_blue",
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "raw": {
+                        "text": "",
+                        "extra": [
+                          {
+                            "translate": "block.veio.pipe",
+                            "bold": true
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.use.pipe"
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.guide.craft.pipe",
                             "color": "dark_gray"
                           },
                           {
@@ -2557,7 +2755,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -2614,7 +2812,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -2658,7 +2856,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -2721,7 +2919,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -2774,7 +2972,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -2878,7 +3076,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -2925,7 +3123,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -3016,7 +3214,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -3107,7 +3305,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -3211,7 +3409,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -3315,7 +3513,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -3419,7 +3617,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -3523,7 +3721,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -3627,7 +3825,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -3712,7 +3910,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -3813,7 +4011,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -3944,7 +4142,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]
@@ -4084,7 +4282,7 @@
                             "color": "dark_blue",
                             "click_event": {
                               "action": "change_page",
-                              "page": 35
+                              "page": 37
                             }
                           }
                         ]

@@ -149,7 +149,12 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     }
     let limit = read(5).max(capacity(event.block)).max(1);
     let energy = read(3).clamp(0, limit);
-    if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) && event.block != production::PANTRY && !post {
+    if production::water::without_power(event.block) {
+        let limit = production::water::capacity(event.block).max(1);
+        let stored = read(8).clamp(0, limit);
+        host.text(event.batch, &Text::tr("veio.water", &[&stored, &limit]).plain(), [x + 10.0, y + 85.0], INK, false);
+        gauge(host, event, [10.0, 95.0], 174.0, stored as f32 / limit as f32, 0xff3f76e4);
+    } else if !matches!(event.block, BELT | FAST_BELT | SPLITTER | MERGER) && event.block != production::PANTRY && !post {
         let energy_text = Text::tr("veio.energy", &[&energy, &limit]).plain();
         host.text(event.batch, &energy_text, [x + 10.0, y + 85.0], INK, false);
         gauge(host, event, [10.0, 95.0], 174.0, energy as f32 / limit as f32, 0xffe0a020);
@@ -221,7 +226,7 @@ pub(super) const DATA_SLOTS: usize = 13;
 /// o desenho só lê o nome (`DisplayItem`), então mudar só a quantidade não pede sincronia.
 pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
     // These blocks have no menu; rendering and electricity read their NBT directly.
-    if matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE) { return false; }
+    if matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE | production::PIPE) { return false; }
     logistics_controls::publish(entity);
     let values = if entity.id == workforce::CONTROL_CENTER {
         workforce::center::data(entity)
@@ -243,6 +248,10 @@ pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
             GENERATOR | GEOTHERMAL => (burn, burn_total.max(1)),
             _ => (progress, duration.max(1)),
         };
+        // Slot 8: água guardada (mB) nos blocos com reservatório; queda na turbina.
+        let stage = if production::water::holds(&entity.id) { number(entity, "Water") }
+            else if entity.id == production::HYDRO_TURBINE { number(entity, "Head") }
+            else { stage };
         [status, progress, duration, energy, burn, capacity(&entity.id), rate, utilization, stage, total,
             damage, module, if entity.id == TESLA { smog } else { info }]
     };
@@ -342,6 +351,8 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     let lamp = lamp_color(status);
     let (lamp_from, lamp_to, lamps) = match event.block {
         CABLE => ([7.0, 4.0, 7.0], [9.0, 4.4, 9.0], 1),
+        production::PIPE => ([7.0, 6.0, 7.0], [9.0, 6.4, 9.0], 0),
+        production::SPRINKLER => ([7.0, 10.0, 7.0], [9.0, 10.6, 9.0], 1),
         SOLAR => ([7.0, 4.0, 0.2], [9.0, 5.0, 0.8], 1),
         BELT | FAST_BELT | SPLITTER | MERGER => ([0.2, 4.0, 7.0], [1.8, 4.4, 9.0], 1),
         TESLA => ([7.0, 3.5, 1.6], [9.0, 4.5, 2.0], 4),

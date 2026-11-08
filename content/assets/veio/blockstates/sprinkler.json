@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/sprinkler"
+    },
+    "facing=west": {
+      "model": "veio:block/sprinkler",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/sprinkler",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/sprinkler",
+      "y": 270
+    }
+  }
+}

@@ -10,6 +10,7 @@ mod farm;
 mod pollution;
 mod production;
 mod power;
+mod rivers;
 mod tutorial;
 mod upgrades;
 mod workforce;
@@ -214,6 +215,10 @@ impl Hooks for Factory {
         Flow::Continue
     }
 
+    fn chunk_load(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::ChunkLoadEvent<'_>) {
+        rivers::chunk_loaded(event.dimension, event.chunk, event.new, defense::clock());
+    }
+
     fn player_logged_in(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
         workforce::spawn::logged_in(event.player, event.name, defense::clock());
     }
@@ -228,6 +233,7 @@ impl Hooks for Factory {
         power::maintenance(defense::clock());
         workforce::maintenance(defense::clock());
         workforce::spawn::tick(host, defense::clock());
+        rivers::tick(host, defense::clock());
         if let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) {
             pollution::update(host, time);
         }
@@ -426,6 +432,9 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Carried" => key!("Carried"),
         "CustomName" => key!("CustomName"),
         "Edits" => key!("Edits"),
+        "Fertility" => key!("Fertility"),
+        "Water" => key!("Water"),
+        "WaterPort" => key!("WaterPort"),
         "Held" => key!("Held"),
         "ScanArea" => key!("ScanArea"),
         "Skipped" => key!("Skipped"),

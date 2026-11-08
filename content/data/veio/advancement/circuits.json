@@ -31,7 +31,8 @@
       "veio:barracks",
       "veio:speed_module",
       "veio:efficiency_module",
-      "veio:grow_lamp"
+      "veio:grow_lamp",
+      "veio:hydro_turbine"
     ]
   }
 }
