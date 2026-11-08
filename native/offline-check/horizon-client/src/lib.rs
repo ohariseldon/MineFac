@@ -918,6 +918,20 @@ pub mod mod_api {
         pub kind: &'a str,
         pub offer: &'a MerchantOffer,
     }
+    /// `interact_entity` (API 29): clique direito de um jogador numa entidade (`Entity.getId`),
+    /// uma vez por mão, antes da interação da entidade e do item. `Flow::Cancel` toma o clique.
+    #[non_exhaustive]
+    pub struct InteractEntityEvent<'a> {
+        pub entity: i32,
+        pub kind: &'a str,
+        pub stack: Option<&'a ItemStack>,
+    }
+    impl<'a> InteractEntityEvent<'a> {
+        /// Só no substituto: monta o evento para os testes.
+        pub fn preview(entity: i32, kind: &'a str, stack: Option<&'a ItemStack>) -> Self {
+            Self { entity, kind, stack }
+        }
+    }
     #[non_exhaustive]
     pub struct PlayerRespawnedEvent<'a> {
         pub player: u128,
@@ -1045,6 +1059,9 @@ pub mod mod_api {
         fn player_logged_in(&self, host: &mut dyn Host, event: &mut PlayerLoggedInEvent<'_>) {}
         fn player_respawned(&self, host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {}
         fn trade_with_villager(&self, host: &mut dyn Host, event: &mut TradeWithVillagerEvent<'_>) {}
+        fn interact_entity(&self, host: &mut dyn Host, event: &mut InteractEntityEvent<'_>) -> Flow {
+            Flow::Continue
+        }
         fn player_spawn_point_set(&self, host: &mut dyn Host, event: &mut PlayerSpawnPointSetEvent<'_>) -> Flow {
             Flow::Continue
         }

@@ -243,6 +243,11 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         ],
     } };
     let mut lines = lines;
+    // Faltam ingredientes: a terceira linha diz o que falta na receita mais próxima.
+    if let Some(missing) = production::missing_line(event.block, event.data) {
+        lines.truncate(2);
+        lines.push(missing);
+    }
     draw_rates(host, event, &layout);
     // Terceira linha: módulo, emissão e integridade, só quando houver algo a dizer.
     let mut extra = Vec::new();
