@@ -184,11 +184,12 @@ pub(crate) fn draw_screen(host: &dyn Host, event: &mut horizon_client::mod_api::
         ]
     } else if tab == super::super::holding::FOREIGN {
         let mut lines = vec![
-            (tr("veio.trade.reputation", &[&read(1), &read(2)]), 0x1f4fa8),
+            (if read(5) > 0 { tr("veio.trade.reputation", &[&read(1), &read(2), &read(5)]) } else { tr("veio.trade.reputation_max", &[&read(1)]) },
+                0x1f4fa8),
             (tr("veio.trade.flows", &[&read(3), &read(4), &(read(3) - read(4))]), if read(3) >= read(4) { 0x1e7a1e } else { 0xaa1f1f }),
         ];
         for slot in 0..3 {
-            let (product, need) = (read(5 + slot * 2), read(6 + slot * 2));
+            let (product, need) = (read(6 + slot * 2), read(7 + slot * 2));
             if product < 0 {
                 continue;
             }
@@ -283,6 +284,12 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     best.sort_by(|a, b| b.0.cmp(&a.0));
     for (price, item) in best.into_iter().take(3) {
         host.tell(player, Text::tr("veio.export.best", &[&item, &price]));
+    }
+    // Bolsa do dia: as cinco melhores cotações abertas, com a tendência.
+    for (product, price, trend) in society::trade::board(dimension, day, 5) {
+        let arrow = if trend > 0 { "+" } else if trend < 0 { "-" } else { "=" };
+        host.tell(player, Text::tr("veio.trade.board", &[&Text::tr(society::trade::PRODUCTS[product].1, &[]).plain(),
+            &price, &format!("{arrow}{}", trend.abs())]));
     }
     for post in posts.iter().filter(|post| waiting(post.status)).take(REPORT_LINES) {
         let key = format!("veio.report.issue.{}", presentation::STATUS_KEYS.get(post.status as usize).copied().unwrap_or("idle"));

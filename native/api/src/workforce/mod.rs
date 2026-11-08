@@ -957,6 +957,18 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
                 }
                 if time.div_euclid(EVERY) % 4 == 0 {
                     society::trade::persist(host.dimension(), entity, time);
+                    // Contratos novos, cumpridos ou perdidos e mercados abertos: aviso no chat.
+                    let news = society::trade::drain(host.dimension());
+                    if !news.is_empty() {
+                        let dimension = host.dimension();
+                        let players: Vec<u128> = host.server_players().into_iter()
+                            .filter(|player| player.dimension == dimension).map(|player| player.uuid).collect();
+                        for item in &news {
+                            for player in &players {
+                                host.tell(*player, society::trade::news_text(item));
+                            }
+                        }
+                    }
                     super::holding::refresh(host.dimension(), pos, entity, time);
                 }
             }

@@ -22,8 +22,6 @@ use horizon_client::mod_api::MerchantOffer;
 use ledger::Book;
 
 pub(crate) const STOCK_SLOTS: std::ops::Range<usize> = 1..7;
-/// O que o comerciante importa quando falta comida.
-const IMPORTED: &str = "minecraft:bread";
 /// Preço de atacado, em % do preço local.
 pub(crate) const WHOLESALE: i32 = 70;
 const FLOOR: i32 = 50;
@@ -342,28 +340,29 @@ pub(crate) fn shop_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
         set_int_map(entity, "Prices", &[]);
     } else if ledger::turn_edge(pos, time) {
         let day = time.div_euclid(DAY);
-        // Falta de comida e conexão externa: o comerciante importa pão (moeda sai da economia).
+        // Falta de comida e conexão externa: o comerciante importa a comida que mais vende (ou pão).
+        // A moeda sai da economia; importado não é entrega da indústria, então não vira atacado.
         let short = number(entity, "Short");
         if short > 0 && trade::connected(dimension, now) {
-            let wanted = (short as u32).min(16);
-            let room = STOCK_SLOTS.map(|slot| entity.items[slot].as_ref().map_or(64, |stack| {
-                if stack.item.as_ref() == IMPORTED && stack.extra.is_none() { 64 - stack.count.min(64) } else { 0 }
-            })).sum::<u32>();
-            let units = trade::import(dimension, pos, IMPORTED, wanted.min(room), day, now);
+            let item = int_map(entity, "Demand").into_iter()
+                .filter(|(item, _)| is_food(item) && trade::product(item).is_some())
+                .max_by_key(|(_, demand)| *demand)
+                .map_or_else(|| trade::STAPLE.to_owned(), |(item, _)| item);
+            let room_in = |stack: &Option<ItemStack>| stack.as_ref().map_or(64, |stack| {
+                if stack.item.as_ref() == item && stack.extra.is_none() { 64 - stack.count.min(64) } else { 0 }
+            });
+            let room: u32 = STOCK_SLOTS.map(|slot| room_in(&entity.items[slot])).sum();
+            let units = trade::import(dimension, pos, &item, (short as u32).min(16).min(room), day, now);
             let mut left = units;
             for slot in STOCK_SLOTS {
-                let fits = entity.items[slot].as_ref().map_or(64, |stack| {
-                    if stack.item.as_ref() == IMPORTED && stack.extra.is_none() { 64 - stack.count.min(64) } else { 0 }
-                });
-                let put = fits.min(left);
+                let put = room_in(&entity.items[slot]).min(left);
                 if put > 0 {
-                    add(&mut entity.items[slot], IMPORTED, put);
+                    add(&mut entity.items[slot], &item, put);
                     left -= put;
                 }
             }
-            // Importado não é entrega da indústria: não vira atacado.
             let mut known = int_map(entity, "Known");
-            bump(&mut known, IMPORTED, units as i32);
+            bump(&mut known, &item, units as i32);
             set_int_map(entity, "Known", &known);
         }
         let connected = trade::connected(dimension, now);

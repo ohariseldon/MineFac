@@ -16,7 +16,7 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 35] = [
+pub(super) const STATUS_KEYS: [&str; 36] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
@@ -26,7 +26,7 @@ pub(super) const STATUS_KEYS: [&str; 35] = [
     // Casas (`workforce::society`).
     "housed", "no_permit", "empty_home",
     // Conexões externas: sem companhia, porto sem água, estação fora da fronteira.
-    "no_company", "no_water", "not_frontier",
+    "no_company", "no_water", "not_frontier", "locked_market",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
