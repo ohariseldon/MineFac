@@ -18,6 +18,7 @@
 | Ver os problemas conhecidos e o que depende do dono | [09 Conflitos, lacunas e riscos](09_CONFLITOS_LACUNAS_E_RISCOS.md) |
 | Checar uma fonte, um commit, uma branch ou o status de um documento antigo | [10 Evidências](10_EVIDENCIAS_E_RASTREABILIDADE.md) |
 | Retomar o trabalho ou manter esta pasta atualizada | [11 Continuidade](11_PLANO_DE_CONTINUIDADE.md) |
+| Registrar uma mudança que você fez, ou ver o que mudou desde o último compilado | [notas/](notas/README.md) |
 
 ## Os documentos
 
@@ -29,12 +30,13 @@
 | 03 | [Atlas de sistemas](03_ATLAS_DE_SISTEMAS.md) + [`03_atlas/`](03_atlas/) | 25 fichas A–G; mapa de dependências; sistemas estruturantes e sobrepostos | Opus B, com a seção D do Opus A |
 | 04 | [Arquitetura e dependências](04_ARQUITETURA_E_DEPENDENCIAS.md) | Fronteira com o Horizon, módulos, fluxo do tick, persistência, pipeline de conteúdo, launcher, **Registro de IDs** | Opus A |
 | 05 | [Estado real da build](05_ESTADO_REAL_DA_BUILD.md) | Matriz de 158 FUN × 3 camadas com evidência; visão transversal; resultados das verificações e dos benchmarks | Opus A |
-| 06 | [Histórico e decisões](06_HISTORICO_E_DECISOES.md) | Cronologia 0.6 → 0.25 e linhas paralelas; DEC-001…066; reconciliações; o que foi substituído ou abandonado | Opus B |
+| 06 | [Histórico e decisões](06_HISTORICO_E_DECISOES.md) | Cronologia 0.6 → 0.25 e linhas paralelas; DEC-001…067; reconciliações; o que foi substituído ou abandonado | Opus B |
 | 07 | [Agentes e workflow](07_AGENTES_E_WORKFLOW.md) | Quem é quem, o que roda agora, conflitos entre agentes, fluxo consolidado, DoD, handoff, onboarding | Opus B |
 | 08 | [Backlog e prioridades](08_BACKLOG_E_PRIORIDADES.md) | TAR-001…065 em 6 categorias, com caminho crítico do #47 e as 10 próximas ações | Opus A |
 | 09 | [Conflitos, lacunas e riscos](09_CONFLITOS_LACUNAS_E_RISCOS.md) | CNF-001…022, os riscos R-01…R-43, as lacunas e as questões Q-01…Q-15 ao dono | Supervisor |
 | 10 | [Evidências e rastreabilidade](10_EVIDENCIAS_E_RASTREABILIDADE.md) | Índice de fontes, cobertura, confiabilidade, genealogia de 42+ branches e PRs, status dos documentos legados | Opus A |
 | 11 | [Plano de continuidade](11_PLANO_DE_CONTINUIDADE.md) | Leituras de retomada, regras de conflito, IDs, gatilhos de atualização, próximos ciclos, limites | Supervisor |
+| — | [Notas de mudança](notas/README.md) | Uma nota curta por alteração, de qualquer frente ([DEC-067](06_HISTORICO_E_DECISOES.md#dec-067)); modelo; registro dos compilados gerais | Todas as frentes |
 
 ## Respostas às perguntas do mandato
 
@@ -44,7 +46,7 @@
 | Quais sistemas existem e como funcionam? | 25 sistemas, 158 funcionalidades | [03](03_ATLAS_DE_SISTEMAS.md) |
 | O que está implementado, parcial ou planejado? | Main 0.25 integrada; candidata #47 integrada no código, sem compilação real nem teste em jogo; nada validado | [05](05_ESTADO_REAL_DA_BUILD.md), [01 §2](01_ESTADO_GERAL_DO_PROJETO.md#2-as-três-camadas-não-confundir) |
 | Como os sistemas interagem? | Mapa Mermaid e tabela de dependências; sistemas estruturantes | [03 §2](03_ATLAS_DE_SISTEMAS.md), [04 §4](04_ARQUITETURA_E_DEPENDENCIAS.md#4-dependências-entre-módulos) |
-| Quais decisões foram tomadas, modificadas ou revogadas? | DEC-001…066, separando dono e agente | [06 §3](06_HISTORICO_E_DECISOES.md#3-registro-de-decisões), [06 §5](06_HISTORICO_E_DECISOES.md#5-funcionalidades-substituídas-e-abandonadas) |
+| Quais decisões foram tomadas, modificadas ou revogadas? | DEC-001…067, separando dono e agente | [06 §3](06_HISTORICO_E_DECISOES.md#3-registro-de-decisões), [06 §5](06_HISTORICO_E_DECISOES.md#5-funcionalidades-substituídas-e-abandonadas) |
 | O que está em desenvolvimento e por quem? | Realismo (#51), mapa e desempenho (#52), obras (#53), agenda da vila (#54) | [07 §2](07_AGENTES_E_WORKFLOW.md#2-o-que-roda-agora-0811-2141-utc), [01 §7–8](01_ESTADO_GERAL_DO_PROJETO.md#7-quem-está-trabalhando-agora) |
 | O que foi concluído e não integrado? | Nada de código ficou fora do #47; o próprio #47 não está na main | [10 §4.5](10_EVIDENCIAS_E_RASTREABILIDADE.md#45-verificação-nenhum-código-ficou-fora-do-47), [05 §2.6](05_ESTADO_REAL_DA_BUILD.md#26-trabalho-em-branch-fora-da-main) |
 | Quais as lacunas, contradições e dependências? | 22 conflitos, 43 riscos, 15 questões ao dono | [09](09_CONFLITOS_LACUNAS_E_RISCOS.md) |

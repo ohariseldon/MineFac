@@ -1,7 +1,7 @@
 # 06 — Histórico e decisões
 
 > Referência: `main@53267af` (0.25.0), `pr47@80980db` (candidata), `#51@a0b0d72`, `#52@0b827f6`. Data: 2026-11-08, cerca de 21h UTC. O que aconteceu entre 20:38 e 21:41 (PRs #53 e #54, primeira compilação real) entrou como registro preliminar: últimas linhas do §2.3, §2.4 item 7, §2.5 e §3.6.
-> Este arquivo guarda a **cronologia**, o **registro de decisões** ([DEC-001](#dec-001) a [DEC-066](#dec-066)), as **reconciliações** e as **funcionalidades substituídas ou abandonadas**. Conflitos ainda abertos ficam em [09 §2](09_CONFLITOS_LACUNAS_E_RISCOS.md#2-conflitos-cnf); perguntas ao dono, em [09 §5](09_CONFLITOS_LACUNAS_E_RISCOS.md#5-decisões-pendentes-do-dono).
+> Este arquivo guarda a **cronologia**, o **registro de decisões** ([DEC-001](#dec-001) a [DEC-067](#dec-067)), as **reconciliações** e as **funcionalidades substituídas ou abandonadas**. Conflitos ainda abertos ficam em [09 §2](09_CONFLITOS_LACUNAS_E_RISCOS.md#2-conflitos-cnf); perguntas ao dono, em [09 §5](09_CONFLITOS_LACUNAS_E_RISCOS.md#5-decisões-pendentes-do-dono).
 
 ## 1. Como ler
 
@@ -123,6 +123,7 @@ Encaminhamento: [CNF-005](09_CONFLITOS_LACUNAS_E_RISCOS.md#2-conflitos-cnf), [Q-
 | 20:37 / 20:38 | Pergunta se as obras já estão no projeto; "crie um agente opus 5.5 no médio para prosseguir" | [DEC-064](#dec-064) |
 | 20:59 | "Quero testar o jogo aqui localmente … na build consolidada e atual" | [DEC-065](#dec-065) |
 | 21:10 / 21:23 | Pede que o agente use o PC dele; "pode rodar o launcher completo, que eu quero abrir o jogo" | (registro, dentro da [DEC-065](#dec-065)) |
+| 22:38 | Documentar cada alteração com notas leves e fazer um compilado geral de tempos em tempos | [DEC-067](#dec-067) |
 
 **Nenhuma decisão do dono revogou outra decisão do dono.** As revogações foram de decisões de agente: [DEC-012](#dec-012), [DEC-015](#dec-015) e parte da [DEC-036](#dec-036).
 
@@ -502,6 +503,15 @@ Ficha da decisão:
   - Mostra que a frente Cloud, dada como histórica, continua ativa.
   - A descrição afirma que nenhuma moeda é criada.
 - **Canônico:** pendente; não auditado.
+
+#### DEC-067
+**Notas de mudança e compilado periódico.** 08/11 22:38 · Luiz (dono), no chat do projeto · **Decisão do dono.** Texto literal: "Para cada alteração no projeto, seja nossa ou da nuvem, enfim, a gente deve documentar naquele nosso documento gigante que a gente fez, certo? A gente não precisa, tipo, pô, documentar tudo, sabe? A gente pode, tipo, só fazer leves documentos e de tempos em tempos a gente faz, tipo, um compilado geral e documenta, sabe? Enfim, a ideia é a gente não perder progresso nem processo."
+
+Ficha da decisão:
+- **Fonte:** chat do projeto (E4).
+- **Aplicação:** toda mudança, de qualquer frente, deixa uma nota curta em [`notas/`](notas/README.md) com o nome `AAAA-MM-DD-<frente>-<assunto>.md`; o compilado geral leva as notas para 00–11 e é registrado em `notas/README.md`. O formato da nota e o procedimento do compilado são proposta de agente.
+- **Relação:** torna leve a regra do [11 §4](11_PLANO_DE_CONTINUIDADE.md#4-quando-atualizar-o-quê). A nota no mesmo PR passa a ser o mínimo; a atualização completa das fichas pode esperar o compilado.
+- **Canônico:** sim.
 
 ## 4. Reconciliações
 

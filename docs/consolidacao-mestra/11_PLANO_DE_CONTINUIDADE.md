@@ -42,7 +42,7 @@ Em commits e PRs, cite os IDs num rodapé, por exemplo `Refs: FUN-OBR-04, DEC-03
 
 ## 4. Quando atualizar o quê
 
-A tabela é a regra mínima. Quem faz a mudança faz a atualização, no mesmo PR.
+**Regra do dono ([DEC-067](06_HISTORICO_E_DECISOES.md#dec-067)):** toda alteração, de qualquer frente, deixa no mesmo PR uma nota curta em [`notas/`](notas/README.md). Esse é o mínimo obrigatório. As atualizações da tabela abaixo podem ser feitas no mesmo PR ou ficar para o **compilado geral**, que lê as notas novas, aplica a tabela e se registra em `notas/README.md`. A exceção são as decisões do dono: a DEC entra no 06 já no PR da nota.
 
 | Gatilho | Atualizar | Quem |
 |---|---|---|
@@ -53,7 +53,7 @@ A tabela é a regra mínima. Quem faz a mudança faz a atualização, no mesmo P
 | Uma frente nova começa | Linha em [07](07_AGENTES_E_WORKFLOW.md) (agente, branch, SIS, TAR); responsável na TAR em [08](08_BACKLOG_E_PRIORIDADES.md) | Quem delegou |
 | Um documento novo em `frentes/` ou na raiz | Linha de status em [10](10_EVIDENCIAS_E_RASTREABILIDADE.md). O conteúdo normativo vai para a ficha do sistema, não para um documento solto | Autor |
 
-Uma TAR só fecha quando estas atualizações estiverem feitas. É o "critério de conclusão documental" do [07](07_AGENTES_E_WORKFLOW.md).
+Uma TAR só fecha quando a nota existir e estas atualizações estiverem feitas, no próprio PR ou no compilado seguinte. É o "critério de conclusão documental" do [07](07_AGENTES_E_WORKFLOW.md).
 
 ## 5. Procedimento de integração (resumo operacional)
 
@@ -101,7 +101,7 @@ A ordem detalhada e justificada das tarefas está no topo de [08](08_BACKLOG_E_P
   - todo `FUN-/DEC-/TAR-/CNF-/Q-` citado em commit ou documento existe;
   - nenhum código de `STATUS_KEYS` ou slot se repete com outro sentido;
   - todo `.md` do repositório tem status em [10](10_EVIDENCIAS_E_RASTREABILIDADE.md).
-- **Proporcionalidade.** O projeto tem um dono e vários agentes de IA. O mínimo obrigatório é DEC para decisões, atualização da ficha e do [05](05_ESTADO_REAL_DA_BUILD.md) por quem muda o código, e o integrador conferindo a §5. O resto é ajuda, não burocracia.
+- **Proporcionalidade.** O projeto tem um dono e vários agentes de IA. O mínimo obrigatório é a nota em [`notas/`](notas/README.md) para toda mudança, a DEC para decisões do dono, e o integrador conferindo a §5. A ficha e o [05](05_ESTADO_REAL_DA_BUILD.md) podem esperar o compilado geral. O resto é ajuda, não burocracia.
 
 ## 8. Limites desta consolidação
 
