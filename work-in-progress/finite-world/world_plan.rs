@@ -1,11 +1,21 @@
 // Builds a certificate against the real generator before a new world opens.
-use horizon_world::{registry::BlockRegistry, worldgen::generator::{GeneratorData, GeneratorWorker, OverworldGenerator}};
+use horizon_world::worldgen::generator::{GeneratorData, GeneratorWorker, OverworldGenerator};
 use horizon_core::position::ChunkPos;
 use horizon_world::veio_map::{Dimension, PORTAL_MARGIN};
 use serde_json::{Value, json};
-use std::{collections::{BTreeMap, BTreeSet}, path::Path};
+use std::{collections::{BTreeMap, BTreeSet}, sync::Arc};
 
 fn error(e: impl std::fmt::Display) -> String { e.to_string() }
+
+fn saved_string(tag: &horizon_world::nbt::Tag, wanted: &str) -> bool {
+    use horizon_world::nbt::Tag;
+    match tag {
+        Tag::String(s) => s.to_string_lossy().contains(wanted),
+        Tag::Compound(c) => c.values().any(|t| saved_string(t,wanted)),
+        Tag::List(v) => v.iter().any(|t| saved_string(t,wanted)),
+        _ => false,
+    }
+}
 
 pub fn derive(seed: i64, attempt: u64) -> i64 {
     if attempt == 0 { return seed; }
@@ -16,14 +26,18 @@ pub fn derive(seed: i64, attempt: u64) -> i64 {
 }
 
 fn witness(worker: &mut GeneratorWorker, name: &str, at: [i32; 3], cave: bool) -> bool {
-    // The whole 48x48 region, rather than one rare biome cell, must be present.
-    let mut samples = Vec::new();
-    for dz in [-24, -12, 0, 12, 24] {
-        for dx in [-24, -12, 0, 12, 24] {
-            samples.push([(at[0] + dx) >> 2, at[1] >> 2, (at[2] + dz) >> 2]);
-        }
-    }
-    if worker.noise_biomes(&samples).iter().any(|b| b.as_deref() != Some(name)) { return false; }
+    // Shores and rivers are naturally long, narrow regions. Validate their
+    // usable extent instead of demanding an unnatural square of beach.
+    let narrow=name.contains("beach")||name.ends_with(":river")||name.ends_with(":frozen_river")||name.ends_with(":stony_shore")||name.ends_with(":end_barrens");
+    let shapes: &[(i32,i32)]=if narrow{&[(24,4),(4,24)]}else{&[(16,16)]};
+    if !shapes.iter().any(|&(rx,rz)| {
+        let mut samples=Vec::new();
+        for dz in [-rz,0,rz]{for dx in [-rx,0,rx]{samples.push([(at[0]+dx)>>2,at[1]>>2,(at[2]+dz)>>2]);}}
+        worker.noise_biomes(&samples).iter().all(|b|b.as_deref()==Some(name))
+    }) {return false;}
+    // Small End islands appear in FEATURES, after the base height query.
+    // Barrens intentionally include the traversable void around large islands.
+    if name.ends_with(":small_end_islands")||name.ends_with(":end_barrens"){return true;}
     if !cave {
         let Some(surface) = worker.surface_sample(at[0], at[2]) else { return false; };
         let quart = [at[0] >> 2, (surface.height - 1) >> 2, at[2] >> 2];
@@ -68,9 +82,30 @@ fn scan(worker: &mut GeneratorWorker, dimension: Dimension, required: &[String])
     Ok(found)
 }
 
-fn reserve(worker: &mut GeneratorWorker, dimension: Dimension, names: &BTreeMap<String, Vec<String>>, biomes: &BTreeMap<String, Vec<[i32; 3]>>) -> Result<Vec<Value>, String> {
+fn usable_caves(worker:&mut GeneratorWorker,dimension:Dimension,biomes:&mut BTreeMap<String,Vec<[i32;3]>>)->Result<(),String> {
+    for (name,sites) in biomes {
+        if dimension!=Dimension::Nether && !name.ends_with("_caves") && !name.ends_with(":deep_dark"){continue;}
+        let mut valid=Vec::new();
+        for &at in sites.iter() {
+            let c=worker.generate_proto(ChunkPos::new(at[0]>>4,at[2]>>4)).map_err(error)?;
+            let mut volume=0;
+            for y in (at[1]-12).max(c.terrain.min_y())..(at[1]+12).min(c.terrain.min_y()+c.terrain.height()) {
+                for z in c.position().z*16..c.position().z*16+16 {for x in c.position().x*16..c.position().x*16+16 {
+                    if matches!(c.block_name(x,y,z),"minecraft:air"|"minecraft:cave_air"|"minecraft:water"){volume+=1;}
+                }}
+            }
+            if volume>=64 {valid.push(at);}
+        }
+        if valid.is_empty(){return Err(format!("{}: {name} lacks usable cave space",dimension.id()));}
+        *sites=valid;
+    }
+    Ok(())
+}
+
+fn reserve(data:&GeneratorData,worker: &mut GeneratorWorker, dimension: Dimension, names: &BTreeMap<String, Vec<String>>, biomes: &BTreeMap<String, Vec<[i32; 3]>>) -> Result<Vec<Value>, String> {
     let mut reserved: Vec<Value> = Vec::new();
     for (name, allowed) in names {
+      for variant in horizon_world::worldgen::generator::veio_catalog::variants(data,name)? {
         let mut result = None;
         'search: for biome in allowed {
             for &origin in biomes.get(biome).into_iter().flatten() {
@@ -89,26 +124,27 @@ fn reserve(worker: &mut GeneratorWorker, dimension: Dimension, names: &BTreeMap<
                         let bounds = start.bounding_box;
                         if !dimension.bounds().contains_box(bounds.min, bounds.max, PORTAL_MARGIN) { continue; }
                         // An End city must include a ship, so elytra remain obtainable.
-                        let pieces = format!("{:?}", start.save());
-                        if name == "minecraft:end_city" && !pieces.contains("ship") { continue; }
+                        if name == "minecraft:end_city" && !start.save().is_some_and(|t|saved_string(&t,"ship")) { continue; }
+                        if !variant.is_empty() && !start.save().is_some_and(|t|saved_string(&t,&variant)) {continue;}
                         if reserved.iter().any(|r| [0,2].iter().all(|&a| bounds.min[a] <= r["max"][a].as_i64().unwrap() as i32 + 16 && bounds.max[a] + 16 >= r["min"][a].as_i64().unwrap() as i32)) { continue; }
-                        result = Some(json!({"name":name,"chunk":[pos.x,pos.z],"min":bounds.min,"max":bounds.max}));
+                        result = Some(json!({"name":name,"variant":variant,"chunk":[pos.x,pos.z],"min":bounds.min,"max":bounds.max}));
                         break 'search;
                     }
                 }
             }
         }
         reserved.push(result.ok_or_else(|| format!("{}: no safe reservation for {name}", dimension.id()))?);
+      }
     }
     Ok(reserved)
 }
 
-pub fn build(resources: &Path, registry: &'static BlockRegistry, requested_seed: i64) -> Result<Value, String> {
-    let data = GeneratorData::load(&resources.join("worldgen"), registry).map_err(error)?;
+pub fn build(data: &Arc<GeneratorData>, requested_seed: i64) -> Result<Value, String> {
     let mut catalogs = Vec::new();
     for dimension in [Dimension::Overworld, Dimension::Nether, Dimension::End] {
         let biomes = horizon_world::worldgen::generator::veio_catalog::biomes(&data, "minecraft:normal", dimension.id())?;
         let structures = horizon_world::worldgen::generator::veio_catalog::structures(&data, &biomes)?;
+        horizon_world::worldgen::generator::veio_resources::audit(data,dimension,&biomes)?;
         catalogs.push((dimension, biomes, structures));
     }
     let mut last = String::new();
@@ -120,15 +156,17 @@ pub fn build(resources: &Path, registry: &'static BlockRegistry, requested_seed:
             for (dimension, required, structures) in &catalogs {
                 let generator = OverworldGenerator::for_world(data.clone(), seed, "minecraft:normal", dimension.id(), true).map_err(error)?;
                 let mut worker = generator.worker();
-                let biomes = scan(&mut worker, *dimension, required)?;
-                let reserved = reserve(&mut worker, *dimension, structures, &biomes)?;
-                dimensions.insert(dimension.id().to_owned(), json!({"biomes":biomes,"structures":reserved}));
+                let mut biomes = scan(&mut worker, *dimension, required)?;
+                usable_caves(&mut worker,*dimension,&mut biomes)?;
+                let reserved = reserve(data,&mut worker, *dimension, structures, &biomes)?;
+                let resources=horizon_world::worldgen::generator::veio_resources::build(data,&mut worker,*dimension,&biomes,&reserved,seed)?;
+                dimensions.insert(dimension.id().to_owned(), json!({"biomes":biomes,"structures":reserved,"resources":resources}));
             }
             Ok::<(),String>(())
         })();
         match outcome {
-            Ok(()) => return Ok(json!({"format":horizon_world::veio_map::FORMAT,"side":15000,"requested_seed":requested_seed,"seed":seed,"data_version":horizon_world::DATA_VERSION,"dimensions":dimensions})),
-            Err(e) => { eprintln!("Veio: candidate rejected: {e}"); last = e; }
+            Ok(()) => return Ok(json!({"format":horizon_world::veio_map::FORMAT,"side":15000,"requested_seed":requested_seed,"seed":seed,"data_version":horizon_world::DATA_VERSION,"catalog":horizon_world::worldgen::generator::veio_catalog::fingerprint(data),"dimensions":dimensions})),
+            Err(e) => { eprintln!("Veio: candidate rejected: {e}"); if e.contains("no stable survival habitat"){return Err(e);} last = e; }
         }
     }
     Err(format!("finite world validation failed after 64 candidates: {last}"))

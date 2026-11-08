@@ -4,10 +4,11 @@
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
-pub const FORMAT: u64 = 1;
+pub const FORMAT: u64 = 2;
 pub const FILE: &str = "data/veio/world-plan.json";
 pub const SIDE: f64 = 15_000.0;
 pub const PORTAL_MARGIN: f64 = 24.0;
+pub const PORTAL_TARGET_MARGIN: f64 = 4.0;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Dimension { Overworld, Nether, End }
@@ -94,7 +95,7 @@ pub fn for_world(root: &Path, dimension: &str) -> Option<Bounds> {
 /// Detect player data as well as level metadata. Missing/corrupt level.dat in
 /// an old world must never turn it into a new finite world.
 pub fn existing(root: &Path) -> std::io::Result<bool> {
-    for name in ["level.dat", "level.dat_old", "level.dat_mcr", "region", "entities", "playerdata", "DIM-1", "DIM1"] {
+    for name in ["level.dat", "level.dat_old", "level.dat_mcr", "region", "entities", "playerdata", "players", "dimensions", "DIM-1", "DIM1", "poi", "stats", "advancements", "data/minecraft", "data/horizon"] {
         if root.join(name).try_exists()? { return Ok(true); }
     }
     Ok(false)

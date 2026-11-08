@@ -23,6 +23,13 @@ source = "world_catalog.rs"
 visibility = "pub"
 
 [[module]]
+id = "finite_resources"
+file = "crates/horizon-world/src/worldgen/generator.rs"
+name = "veio_resources"
+source = "world_resources.rs"
+visibility = "pub"
+
+[[module]]
 id = "finite_pipeline"
 file = "crates/horizon-world/src/worldgen/generator.rs"
 name = "veio_finite"
@@ -36,7 +43,7 @@ source = "world_plan.rs"
 
 [[module]]
 id = "finite_entry"
-file = "crates/horizon-client/src/game.rs"
+file = "crates/horizon-client/src/game/world_loading.rs"
 name = "veio_entry"
 source = "world_entry.rs"
 
@@ -57,18 +64,10 @@ bindings = [
 
 [[injection]]
 id = "finite_generator_wrap"
-target = "horizon_world::worldgen::generator::OverworldGenerator::for_world_with_settings"
-kind = "HEAD"
-cancellable = true
+target = "horizon_world::worldgen::generator::OverworldGenerator::worker"
+kind = "RETURN"
 helper = "hooks/world_generator.rs"
-bindings = [
-  { name = "data", ty = "std::sync::Arc<crate::worldgen::generator::GeneratorData>", value = "data.clone()" },
-  { name = "seed", ty = "i64", value = "seed" },
-  { name = "preset", ty = "&str", value = "preset" },
-  { name = "dimension", ty = "&str", value = "dimension" },
-  { name = "structures", ty = "bool", value = "with_structures" },
-  { name = "saved", ty = "Option<&serde_json::Value>", value = "saved_stem" },
-]
+bindings = [{ name = "value", ty = "GeneratorWorker", value = "$value" }]
 
 [[injection]]
 id = "finite_portal_bounds"
@@ -230,7 +229,7 @@ cancellable = true
 helper = "hooks/enter_level.rs"
 bindings = [
   { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
-  { name = "host", ty = "Option<&mut crate::game::lan::LanHost>", value = "host.as_deref_mut()" },
+  { name = "host", ty = "&mut Option<&mut crate::game::lan::LanHost>", value = "&mut host" },
   { name = "target", ty = "crate::game::Dim", value = "target" },
 ]
 
@@ -284,3 +283,39 @@ hook_version = 1
 kind = "HEAD"
 helper = "hooks/world_closed.rs"
 bindings = [{ name = "phase", ty = "horizon_client::mod_api::WorldPhase", value = "phase" }]
+
+[[injection]]
+id = "finite_player_inside"
+hook = "player_tick"
+hook_version = 1
+kind = "HEAD"
+helper = "hooks/player_inside.rs"
+bindings = [{ name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" }]
+
+[[injection]]
+id = "finite_fixed_border"
+target = "horizon_client::game::commands::terrain_cmds::Game<'_>::cmd_worldborder"
+kind = "HEAD"
+cancellable = true
+helper = "hooks/fixed_border.rs"
+bindings = [{ name = "game", ty = "&crate::game::Game<'_>", value = "&*self" }]
+
+[[injection]]
+id = "finite_entity_portal_origin"
+target = "horizon_client::game::nether_portal::Game<'_>::send_through_portal"
+kind = "RETURN"
+helper = "hooks/portal_origin.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "value", ty = "()", value = "$value" },
+]
+
+[[injection]]
+id = "finite_falling_portal_origin"
+target = "horizon_client::game::nether_portal::Game<'_>::falling_through_portal"
+kind = "RETURN"
+helper = "hooks/falling_origin.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "value", ty = "Option<Dim>", value = "$value" },
+]

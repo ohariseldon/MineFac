@@ -4,8 +4,9 @@ Decisão de produto de 7 de novembro de 2026. Vale para a geração de novos mun
 do Veio e para qualquer mudança futura no gerador, na exploração ou nos portais.
 O usuário autorizou adaptar a distribuição do terreno para garantir o conteúdo.
 
-**Estado: requisito definido; geração finita, muralha e garantia de conteúdo ainda
-não implementadas nem validadas no jogo.** Este documento não altera os saves.
+**Estado: implementação experimental com primeiras verificações no gerador real;
+ainda desativada e sem validação completa no jogo.** A garantia de recursos e os
+portais ainda têm pendências. Este documento não altera os saves.
 
 O código experimental e os próximos passos estão no
 [checkpoint do mapa finito](work-in-progress/finite-world/CONTINUAR.md). Esse
