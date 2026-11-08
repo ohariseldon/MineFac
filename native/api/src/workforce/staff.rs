@@ -388,7 +388,7 @@ fn announce_tech(host: &mut dyn Host, pos: [i32; 3], tech: usize) {
     host.play_sound("minecraft:ui.toast.challenge_complete", at, 4, 0.8, 1.2);
     host.send_particles(&ParticleOptions::simple(ParticleType::ElectricSpark), None, [at[0], at[1] + 1.5, at[2]], [1.0, 1.0, 1.0], 0.1, 30);
     let key = TECHS[tech].key;
-    let line = Text::tr("veio.research.done", &[&Text::tr(&format!("veio.research.{key}.name"), &[]).plain(),
+    let line = Text::tr("veio.research.lab_done", &[&Text::tr(&format!("veio.research.{key}.name"), &[]).plain(),
         &Text::tr(&format!("veio.research.{key}.effect"), &[]).plain()]);
     let dimension = host.dimension();
     let players: Vec<u128> = host.server_players().into_iter()
