@@ -501,11 +501,11 @@ fn the_holding_counts_units_workers_and_daily_production_per_division() {
     assert_eq!(click([90.0, 70.0], 0), Some(workforce::society::ledger::CASH_OUT), "linha da companhia: saque");
     let mut center = ModBlockEntity::default();
     center.id = workforce::CONTROL_CENTER.to_owned();
-    press(dimension, [0, 64, 0], &mut center, NEXT);
+    press(dimension, [0, 64, 0], &mut center, NEXT, 0);
     assert_eq!(number(&center, "Tab"), 1, "aba Mineração");
     assert_eq!(data(&center)[0], 1, "uma extratora na aba");
-    press(dimension, [0, 64, 0], &mut center, PREVIOUS);
-    press(dimension, [0, 64, 0], &mut center, PREVIOUS);
+    press(dimension, [0, 64, 0], &mut center, PREVIOUS, 0);
+    press(dimension, [0, 64, 0], &mut center, PREVIOUS, 0);
     assert_eq!(number(&center, "Tab"), TABS - 1, "volta pela última aba");
 }
 

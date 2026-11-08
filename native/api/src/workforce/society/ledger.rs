@@ -111,6 +111,13 @@ pub(crate) fn put(which: Book, dimension: &str, at: [i32; 3], radius: i32, amoun
 /// A companhia é uma só: o cofre mais próximo, de qualquer distância.
 pub(crate) const ANYWHERE: i32 = i32::MAX / 4;
 
+/// Onde ficam os cofres da companhia nesta dimensão.
+pub(crate) fn company_positions(dimension: &str, now: u64) -> Vec<[i32; 3]> {
+    COMPANY.lock().map(|accounts| accounts.iter()
+        .filter(|account| account.dimension == dimension && now.saturating_sub(account.seen) <= STALE)
+        .map(|account| account.pos).collect()).unwrap_or_default()
+}
+
 /// Há um cofre da companhia nesta dimensão?
 pub(crate) fn company_open(dimension: &str, now: u64) -> bool {
     COMPANY.lock().is_ok_and(|accounts| accounts.iter().any(|account| account.dimension == dimension

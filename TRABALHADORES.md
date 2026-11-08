@@ -32,6 +32,14 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## 0.23.0: comércio exterior refeito
+
+Desenho, problema e porquê em [frentes/SOCIEDADE.md](frentes/SOCIEDADE.md#comércio-exterior-023-no-estilo-das-conexões-externas-de-cities-skylines).
+
+- `society/trade.rs` substitui o porto da 0.22: conexões externas físicas (porto de carga exige água; estação de carga, fronteira), capacidade, frete e horário; bolsa com índice diário determinístico e saturação pelas exportações recentes; contratos com prazo, prêmio e reputação (salvos no centro de controle); importação automática de pão pelas lojas com falta, com tarifa para a prefeitura e teto do preço local na paridade de importação.
+- Nova aba *Comércio exterior* no centro de controle (11 abas).
+- Testes: bolsa e camadas, porto que exige mar e parte no horário com frete, estação na fronteira, contrato com prêmio e reputação, importação com a identidade contábil fechando.
+
 ## 0.22.0: comércio exterior
 
 - **Porto de exportação** (`society/export.rs`, empresa de logística): 9 espaços, um navio por turno. Preço mundial por complexidade (1x a 4x) e saturação diária por item; sem centro de controle (cofre da companhia), o navio não sai.
@@ -315,7 +323,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0, 149 na 0.18.0, 160 na 0.19.0, 162 na 0.20.0, 164 na 0.21.0 e 166 na 0.22.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0, 149 na 0.18.0, 160 na 0.19.0, 162 na 0.20.0, 164 na 0.21.0, 166 na 0.22.0 e 169 na 0.23.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
