@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/mayor",
+  "display": {
+    "icon": {
+      "id": "veio:home"
+    },
+    "title": {
+      "translate": "veio.village.stage.hearth.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.hearth.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:home"
+          }
+        ]
+      }
+    }
+  }
+}

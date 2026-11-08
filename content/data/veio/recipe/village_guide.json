@@ -34,7 +34,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 2
+                    "page": 3
                   }
                 },
                 {
@@ -46,7 +46,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 3
+                    "page": 4
                   }
                 },
                 {
@@ -58,7 +58,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 4
+                    "page": 5
                   }
                 },
                 {
@@ -70,7 +70,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 5
+                    "page": 6
                   }
                 },
                 {
@@ -82,7 +82,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 6
+                    "page": 7
                   }
                 },
                 {
@@ -94,7 +94,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 7
+                    "page": 8
                   }
                 },
                 {
@@ -106,7 +106,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 8
+                    "page": 9
                   }
                 },
                 {
@@ -118,7 +118,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 9
+                    "page": 23
                   }
                 },
                 {
@@ -130,7 +130,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 10
+                    "page": 24
                   }
                 },
                 {
@@ -142,7 +142,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 11
+                    "page": 25
                   }
                 },
                 {
@@ -166,7 +166,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 16
+                    "page": 44
                   }
                 },
                 {
@@ -178,115 +178,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 17
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.village.contents.13",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 19
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.village.contents.14",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 20
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.village.contents.15",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 21
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.village.contents.16",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 22
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.village.contents.17",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 18
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.village.contents.18",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 23
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.village.contents.19",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 13
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.village.contents.20",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 12
-                  }
-                },
-                {
-                  "text": "\n"
-                },
-                {
-                  "translate": "veio.village.contents.21",
-                  "color": "dark_blue",
-                  "underlined": true,
-                  "click_event": {
-                    "action": "change_page",
-                    "page": 25
+                    "page": 45
                   }
                 },
                 {
@@ -412,6 +304,96 @@
           },
           {
             "raw": {
+              "translate": "veio.village.page.25"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.26"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.27"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.28"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.29"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.30"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.31"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.32"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.33"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.34"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.35"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.36"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.37"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.38"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.39"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.40"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.41"
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.village.page.42"
+            }
+          },
+          {
+            "raw": {
               "text": "",
               "extra": [
                 {
@@ -427,7 +409,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 26
+                    "page": 47
                   }
                 },
                 {
@@ -439,7 +421,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 27
+                    "page": 48
                   }
                 },
                 {
@@ -451,7 +433,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 28
+                    "page": 49
                   }
                 },
                 {
@@ -463,7 +445,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 29
+                    "page": 50
                   }
                 },
                 {
@@ -475,7 +457,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 51
                   }
                 },
                 {
@@ -487,7 +469,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 31
+                    "page": 52
                   }
                 },
                 {
@@ -499,7 +481,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 32
+                    "page": 53
                   }
                 },
                 {
@@ -511,7 +493,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 33
+                    "page": 54
                   }
                 },
                 {
@@ -523,7 +505,19 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 34
+                    "page": 55
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.site",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 56
                   }
                 },
                 {
@@ -535,7 +529,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 35
+                    "page": 57
                   }
                 },
                 {
@@ -547,7 +541,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 36
+                    "page": 58
                   }
                 },
                 {
@@ -559,7 +553,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 37
+                    "page": 59
                   }
                 },
                 {
@@ -571,7 +565,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 38
+                    "page": 60
                   }
                 },
                 {
@@ -583,7 +577,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 39
+                    "page": 61
                   }
                 },
                 {
@@ -595,7 +589,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 40
+                    "page": 62
                   }
                 },
                 {
@@ -603,6 +597,444 @@
                 },
                 {
                   "translate": "block.veio.freight_station",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 63
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.home",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 64
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "veio.village.manage",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.0",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 2
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.1",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 26
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.2",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 27
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.3",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 28
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.4",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 29
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.5",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 30
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.6",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 10
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.7",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 14
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.8",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 11
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.9",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 12
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.10",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 13
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.11",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 31
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.manage.12",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 46
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "veio.village.reference",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.0",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 18
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.1",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 19
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.2",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 21
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.3",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 17
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.4",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 16
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.5",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 20
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.6",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 42
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.reference.7",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 43
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "veio.village.plans",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.plans.0",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 33
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.plans.1",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 34
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.plans.2",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 35
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.plans.3",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 36
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.plans.4",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 37
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.plans.5",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 38
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.plans.6",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 39
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.plans.7",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 40
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.village.plans.8",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -944,6 +1376,41 @@
               "text": "",
               "extra": [
                 {
+                  "translate": "block.veio.site",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.site"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.site",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
                   "translate": "block.veio.barracks",
                   "bold": true
                 },
@@ -1168,6 +1635,41 @@
                 },
                 {
                   "translate": "veio.guide.craft.freight_station",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.home",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.home"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.home",
                   "color": "dark_gray"
                 },
                 {

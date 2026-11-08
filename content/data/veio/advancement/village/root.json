@@ -23,7 +23,8 @@
       "veio:tutorial/village_guide"
     ],
     "recipes": [
-      "veio:village_guide"
+      "veio:village_guide",
+      "veio:home"
     ],
     "function": "veio:village/welcome"
   }

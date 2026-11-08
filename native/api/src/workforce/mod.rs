@@ -40,6 +40,14 @@ pub(super) mod spawn;
 pub(super) mod village;
 pub(super) mod zones;
 pub(super) mod society;
+pub(super) mod projects;
+pub(super) mod requests;
+pub(super) mod blueprints;
+mod blueprint_data;
+pub(super) mod site;
+pub(super) mod staff;
+pub(super) mod focus;
+pub(super) mod home;
 
 pub(super) const FARM_POST: &str = "veio:farm_post";
 pub(super) const HAULER_POST: &str = "veio:hauler_post";
@@ -49,6 +57,8 @@ pub(super) const CONTROL_CENTER: &str = center::CONTROL_CENTER;
 pub(super) const BARRACKS: &str = barracks::BARRACKS;
 pub(super) const SHOP: &str = society::SHOP;
 pub(super) const TOWN_HALL: &str = society::TOWN_HALL;
+pub(super) const HOME: &str = home::HOME;
+pub(super) const SITE: &str = site::SITE;
 pub(super) use zones::{FIELD_MARKER, PEN_MARKER};
 pub(super) const VILLAGER: &str = "minecraft:villager";
 /// Contratar custa uma esmeralda, paga só quando a contratação dá certo.
@@ -113,12 +123,13 @@ pub(super) type Uuid = [i32; 4];
 
 /// Blocos com trabalhador contratado.
 pub(super) fn is_post(block: &str) -> bool {
-    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST | CONTROL_CENTER | BARRACKS | SHOP | TOWN_HALL)
+    matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST | CONTROL_CENTER | BARRACKS | SHOP | TOWN_HALL | SITE)
 }
 
-/// Todos os blocos deste módulo: postos, marcos de zona e armazéns.
+/// Todos os blocos deste módulo: postos, marcos de zona, armazéns e o lar do jogador.
 pub(super) fn owns(block: &str) -> bool {
     is_post(block) || zones::is_marker(block) || storage::is_store(block) || society::is_society_block(block)
+        || home::is_home(block)
 }
 
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
@@ -131,10 +142,13 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         FOREMAN_DESK => (4, vec![0, 1, 2, 3], vec![]),
         // Comida; ração para os animais; produtos (lã, ovos, penas).
         SHEPHERD_POST => (5, vec![0, 1], vec![2, 3, 4]),
-        // Comida do administrador; três metas (sem automação).
-        // Comida do administrador; três metas; cofre da companhia.
-        CONTROL_CENTER => (6, vec![0, society::ledger::COMPANY_VAULT], vec![society::ledger::COMPANY_CASHOUT]),
+        // Comida do administrador; três metas; cofre e saque da companhia; obras (entregas); decreto.
+        CONTROL_CENTER => (8, vec![0, society::ledger::COMPANY_VAULT, projects::SITE, projects::DECREE], vec![society::ledger::COMPANY_CASHOUT]),
         BARRACKS => (2, vec![0, 1], vec![]),
+        // Comida do mestre de obras (depois, do funcionário); entrada do funcionário; produto.
+        SITE => (3, vec![0, 1], vec![2]),
+        // Lenha; despensa; materiais da melhoria da casa.
+        HOME => (5, vec![0, 1, 2, 3, home::BUILD], vec![]),
         _ => return zones::layout(block).or_else(|| storage::layout(block)).or_else(|| society::layout(block)),
     })
 }
@@ -144,6 +158,7 @@ pub(super) fn outputs(block: &str) -> std::ops::Range<usize> {
         FARM_POST => 1..4,
         HAULER_POST => 4..7,
         SHEPHERD_POST => 2..5,
+        SITE => 2..3,
         _ => 0..0,
     }
 }
@@ -180,6 +195,8 @@ pub(super) fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (CONTROL_CENTER, _) => center::accepts(slot, stack),
         (BARRACKS, 0) => is_food(&stack.item),
         (BARRACKS, 1) => stack.item.as_ref() == WAGE,
+        (HOME, _) => home::accepts(slot, stack),
+        (SITE, _) => site::accepts(slot, stack),
         _ if zones::is_marker(block) => zones::accepts(block, slot, stack),
         _ if storage::is_store(block) => storage::accepts(block, slot, stack),
         _ if society::layout(block).is_some() => society::accepts(block, slot, stack),
@@ -750,9 +767,11 @@ pub(super) fn rotate(entity: &mut ModBlockEntity, len: usize) {
 pub(super) fn candidate(host: &mut dyn Host, pos: [i32; 3], now: u64) -> Option<(Uuid, u32)> {
     let dimension = host.dimension();
     let center = post_center(pos);
+    // Convocação (decreto): contrata mais longe.
+    let radius = projects::hire_radius(projects::at(dimension, pos, now));
     // Posições do censo (até 5 s de idade); a distância exata não é crítica para contratar.
     let mut nearby: Vec<(f64, u32)> = production::ranch::villager_positions(host, dimension).iter().copied()
-        .filter(|(_, at)| near(*at, center, HIRE_RADIUS))
+        .filter(|(_, at)| near(*at, center, radius))
         .map(|(id, at)| ((at[0] - center[0]).hypot(at[2] - center[2]), id))
         .collect();
     nearby.sort_by(|a, b| a.0.total_cmp(&b.0));
@@ -795,8 +814,20 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
     if zones::is_marker(&block) {
         return zones::right_click(host, pos, held);
     }
-    if block == CONTROL_CENTER && held == "minecraft:book" {
-        return center::report_to_chat(host, pos);
+    if block == HOME {
+        return home::right_click(host, pos, held);
+    }
+    if block == SITE && held == WRENCH && !host.sneaking() {
+        return site::cycle(host, pos);
+    }
+    if block == CONTROL_CENTER {
+        match held {
+            "minecraft:book" => return center::report_to_chat(host, pos),
+            focus::COMPASS => return focus::from_center(host, pos),
+            WAGE if host.sneaking() => return center::cash_out(host, pos),
+            WRENCH if !host.sneaking() => return center::next_page(host, pos),
+            _ => {}
+        }
     }
     if block == TOWN_HALL && held == "minecraft:book" {
         return society::report_to_chat(host, pos);
@@ -820,6 +851,14 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
         }
     });
     let staffed = staffed?;
+    if held == WAGE && block == SITE {
+        let mut refuses = false;
+        host.change_mod_block_entity(pos, &mut |entity| refuses = site::refuses_hire(entity));
+        if refuses {
+            notify(host, pos, "veio.site.no_staff");
+            return Some(Flow::Cancel);
+        }
+    }
     if wrench {
         if !staffed {
             return None;
@@ -934,6 +973,16 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return society::tick_block(host, pos, entity, time);
     }
     let now = defense::clock();
+    if entity.id == HOME {
+        return home::tick(host, pos, entity, time, now);
+    }
+    if entity.id == SITE {
+        site::tick(host, pos, entity, time, now);
+        if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) == 0 {
+            center::report(host.dimension(), pos, entity, now);
+        }
+        return;
+    }
     step(host, pos, entity, time, now);
     if entity.id == FOREMAN_DESK && number(entity, "PlanningPending") != 0
         && worker(entity).is_some() && number(entity, "Absent") == 0
@@ -947,8 +996,11 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         foreman::continue_search(host, pos, entity, now);
     }
     if (time + i64::from((pos[0] ^ pos[2]) & 7)).rem_euclid(EVERY) == 0 {
-        if entity.id == CONTROL_CENTER && !matches!(number(entity, "Status"), 1 | RESTING) {
-            set_number(entity, "Admin", 0);
+        if entity.id == CONTROL_CENTER {
+            if !matches!(number(entity, "Status"), 1 | RESTING) {
+                set_number(entity, "Admin", 0);
+            }
+            center::tick(host, pos, entity, now);
         }
         center::report(host.dimension(), pos, entity, now);
         match entity.id.as_str() {
@@ -1089,6 +1141,8 @@ fn block_goal(spot: [i32; 3]) -> [f64; 3] {
 fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32, at: [f64; 3], now: u64) -> i32 {
     let home = post_center(pos);
     let dimension = host.dimension();
+    // Obras da vila: refeitório e festa mudam o custo das tarefas.
+    let perks = projects::at(dimension, pos, now);
     // 1. Carregando: termina a entrega antes de qualquer outra tarefa.
     if has_load(entity) {
         let destination = carry_to(entity);
@@ -1108,7 +1162,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             host.play_sound("minecraft:entity.villager.work_farmer", home, 4, 0.5, 1.0);
             return 1;
         };
-        arrive(host, entity, spot, now);
+        arrive(host, entity, spot, now, perks);
         unreserve(dimension, pos);
         order(id, home, now);
         return 1;
@@ -1121,8 +1175,9 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         }
         return barracks::fight(host, pos, entity, id, at, now);
     }
-    // 2. Comida: cada tarefa gasta `TASK_COST` pontos; o trabalhador come até cobrir.
-    if !feed(entity, TASK_COST) {
+    // 2. Comida: cada tarefa gasta `TASK_COST` pontos (obras e decretos mudam); o trabalhador
+    // come até cobrir.
+    if !feed(entity, projects::food_cost(perks, number(entity, "Total"))) {
         cancel(id);
         set_target(entity, None);
         unreserve(dimension, pos);
@@ -1135,6 +1190,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
         FOREMAN_DESK => foreman::plan(host, pos, entity, now),
         SHEPHERD_POST => shepherd::plan(host, pos, entity, now),
         CONTROL_CENTER => center::plan(host, pos, entity, now),
+        SITE => site::plan_task(host, pos, entity, now),
         SHOP | TOWN_HALL => society::plan(pos),
         _ => Err(NO_TASK),
     };
@@ -1167,6 +1223,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
                 HAULER_POST => hauler::perform(host, spot, entity),
                 SHEPHERD_POST => shepherd::perform(host, spot, entity, now),
                 CONTROL_CENTER => center::perform(host, spot, entity, now),
+                SITE => site::perform(host, pos, entity),
                 SHOP | TOWN_HALL => society::perform(entity),
                 _ => None,
             };
@@ -1174,7 +1231,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             unreserve(dimension, pos);
             if let Some(load) = result {
                 set_carried(entity, &load, None, Carry::Product, 0);
-                finish_task(entity);
+                finish_task(entity, perks);
                 order(id, home, now);
             }
             1
@@ -1239,14 +1296,30 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
     }
 }
 
-/// Uma tarefa concluída: gasta comida e conta no painel.
-pub(super) fn finish_task(entity: &mut ModBlockEntity) {
-    set_number(entity, "Ration", number(entity, "Ration").saturating_sub(TASK_COST));
-    set_number(entity, "Total", number(entity, "Total").saturating_add(1));
+/// Uma tarefa concluída: gasta comida (menos com refeitório, nada na festa) e conta no painel.
+pub(super) fn finish_task(entity: &mut ModBlockEntity, perks: u32) {
+    let total = number(entity, "Total");
+    let cost = projects::food_cost(perks, total);
+    set_number(entity, "Ration", number(entity, "Ration").saturating_sub(cost));
+    set_number(entity, "Total", total.saturating_add(1));
+}
+
+/// Contador de dias guardado no bloco (`Day`), que avança quando a hora do dia volta a começar
+/// (manhã depois da noite, ou depois de dormir). Funciona com `day_time` total ou só a hora.
+pub(super) fn day_counter(host: &dyn Host, entity: &mut ModBlockEntity) -> i32 {
+    let hour = host.day_time().rem_euclid(24000) as i32;
+    let last = number(entity, "LastHour");
+    let mut day = number(entity, "Day");
+    if entity.nbt.contains_key(&"LastHour".into()) && hour < last {
+        day += 1;
+        set_number(entity, "Day", day);
+    }
+    set_number(entity, "LastHour", hour);
+    day
 }
 
 /// O trabalhador chegou ao destino da carga. O que não for usado volta com ele ao posto.
-fn arrive(host: &mut dyn Host, entity: &mut ModBlockEntity, spot: [i32; 3], now: u64) {
+fn arrive(host: &mut dyn Host, entity: &mut ModBlockEntity, spot: [i32; 3], now: u64, perks: u32) {
     let load = carried(entity);
     let kind = carry_kind(entity);
     let into = number(entity, "CarryInto") as usize;
@@ -1258,14 +1331,14 @@ fn arrive(host: &mut dyn Host, entity: &mut ModBlockEntity, spot: [i32; 3], now:
                 .filter(|(_, left)| *left > 0)
                 .collect();
             if rest.iter().map(|(_, count)| count).sum::<u32>() < before {
-                finish_task(entity);
+                finish_task(entity, perks);
                 host.play_sound("minecraft:entity.item.pickup", block_goal(spot), 4, 0.4, 1.2);
             }
             set_carried(entity, &rest, None, Carry::Supply, 0);
         }
         Carry::Wage => {
             if hire_for(host, spot, now) {
-                finish_task(entity);
+                finish_task(entity, perks);
                 set_number(entity, "Hired", number(entity, "Hired").saturating_add(1));
                 set_carried(entity, &[], None, Carry::Product, 0);
             } else {
@@ -1360,6 +1433,9 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
     if let Some(lines) = society::panel_lines(block, data) {
         return Some(lines);
     }
+    if block == SITE {
+        return Some(site::panel_lines(data));
+    }
     let (first, hint) = match block {
         FARM_POST => (tr("veio.metric.tasks", &[&read(9)]), "veio.hint.farm_post"),
         HAULER_POST => (tr("veio.metric.trips", &[&read(9)]), "veio.hint.hauler_post"),
@@ -1381,6 +1457,8 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         SHEPHERD_POST => vec![Some([17.0, 45.0]), Some([39.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
         CONTROL_CENTER => center::screen_slots(),
         BARRACKS => vec![Some([44.0, 45.0]), Some([134.0, 45.0])],
+        HOME => home::screen_slots(),
+        SITE => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([134.0, 45.0])],
         FIELD_MARKER | PEN_MARKER => vec![Some([89.0, 45.0])],
         _ => return storage::screen_slots(block).or_else(|| society::screen_slots(block)),
     })
@@ -1392,8 +1470,10 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         HAULER_POST => &["food", "supply", "", "", "output", "", ""],
         FOREMAN_DESK => &["food", "", "", "wage"],
         SHEPHERD_POST => &["food", "feed", "output", "", ""],
-        CONTROL_CENTER => &[],
+        CONTROL_CENTER => &["", "", "", "", "build", "decree"],
         BARRACKS => &["food", "wage"],
+        HOME => &["fuel", "pantry", "", "", "build"],
+        SITE => &["food", "supply", "output"],
         FIELD_MARKER => &["seeds"],
         PEN_MARKER => &["feed"],
         _ if storage::is_store(block) => &[],
@@ -1405,3 +1485,18 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
 mod tests;
 
 pub(super) fn maintenance(now: u64) { foreman::maintenance(now); }
+
+/// Tick global do jogo: chegada na vila e o foco dos jogadores.
+pub(super) fn world_tick(host: &mut dyn Host, now: u64) {
+    spawn::tick(host, now);
+    focus::tick(host, now);
+}
+
+/// Dica ao passar o cursor nos painéis próprios (centro e lar). `true` se tratou.
+pub(super) fn screen_tooltip(event: &mut horizon_client::mod_api::ScreenTooltipEvent<'_>) -> bool {
+    match event.block {
+        CONTROL_CENTER => center::tooltip(event),
+        HOME => home::tooltip(event),
+        _ => false,
+    }
+}

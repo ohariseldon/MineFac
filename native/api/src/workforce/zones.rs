@@ -141,9 +141,11 @@ pub(crate) fn contains(zone: &Zone, at: [f64; 3]) -> bool {
 
 /// Conta uma tarefa feita na zona (colheita, plantio, tosquia...). Libera níveis.
 pub(crate) fn credit(host: &mut dyn Host, marker: [i32; 3]) {
+    // Biblioteca e fartura contam mais trabalho por tarefa.
+    let gain = projects::zone_credit(projects::at(host.dimension(), marker, defense::clock()));
     host.change_mod_block_entity(marker, &mut |entity| {
         if is_marker(&entity.id) {
-            set_number(entity, "Work", number(entity, "Work").saturating_add(1));
+            set_number(entity, "Work", number(entity, "Work").saturating_add(gain));
         }
     });
 }
@@ -168,6 +170,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         set_number(entity, "Level", 1);
     }
     set_number(entity, "Status", ZONE_ACTIVE);
+    // Praça do mercado (obra da vila): o painel mostra o preço com desconto.
+    set_number(entity, "Market", i32::from(projects::at(host.dimension(), pos, defense::clock()) & projects::MARKET != 0));
     register(Zone {
         dimension: host.dimension().to_owned(),
         pos,
@@ -184,7 +188,9 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
 
 /// Dados do painel do marco (13 valores, como os demais painéis).
 pub(crate) fn data(entity: &ModBlockEntity) -> [i32; 13] {
-    let (cost, work, villagers) = requirement(unlocked(entity)).map_or((0, 0, 0), |(c, w, v)| (c as i32, w, v));
+    let perks = if number(entity, "Market") == 1 { projects::MARKET } else { 0 };
+    let (cost, work, villagers) = requirement(unlocked(entity))
+        .map_or((0, 0, 0), |(c, w, v)| (projects::zone_cost(perks, c) as i32, w, v));
     [number(entity, "Status"), level(entity), unlocked(entity), side(entity), number(entity, "Work"), work,
         number(entity, "Villagers"), villagers, cost, number(entity, "Work"), 0, 0, i32::from(entity.id == PEN_MARKER)]
 }
@@ -238,6 +244,7 @@ pub(crate) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
         notify(host, pos, "veio.zone.need_mayor");
         return Some(Flow::Cancel);
     }
+    let cost = projects::zone_cost(projects::at(host.dimension(), pos, defense::clock()), cost);
     if work < need_work {
         notify(host, pos, "veio.zone.need_work");
         return Some(Flow::Cancel);
@@ -246,10 +253,17 @@ pub(crate) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
         notify(host, pos, "veio.zone.need_villagers");
         return Some(Flow::Cancel);
     }
-    let taken = host.take_items(WAGE, cost);
-    if taken < cost {
+    // O caixa da vila paga primeiro; o jogador completa o resto.
+    let village = projects::nearest(host.dimension(), pos, center::RADIUS, defense::clock());
+    let from_treasury = village.as_ref().map_or(0, |village| center::take_treasury(host, village.pos, cost));
+    let rest = cost - from_treasury;
+    let taken = host.take_items(WAGE, rest);
+    if taken < rest {
         if taken > 0 {
             host.give_items(WAGE, taken);
+        }
+        if let Some(village) = village && from_treasury > 0 {
+            center::return_treasury(host, village.pos, from_treasury);
         }
         notify(host, pos, "veio.zone.need_emeralds");
         return Some(Flow::Cancel);

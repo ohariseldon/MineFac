@@ -27,8 +27,8 @@ pub(super) const STATUS_KEYS: [&str; 44] = [
     "housed", "no_permit", "empty_home",
     // Conexões externas: sem companhia, porto sem água, estação fora da fronteira.
     "no_company", "no_water", "not_frontier", "locked_market",
-    // Reservado ao canteiro de obras (36-39, PR das obras).
-    "idle", "idle", "idle", "idle",
+    // Canteiro de obras (`workforce::site`).
+    "site_plan", "site_blocked", "site_building", "site_done",
     // Terminais de transporte (`freight`): rota, caravana sem animal, sem ração, animal ocupado.
     "freight_route", "caravan_animal", "caravan_feed", "caravan_busy",
 ];
@@ -146,6 +146,10 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         workforce::society::draw_screen(host, event);
         return;
     }
+    if event.block == workforce::HOME {
+        workforce::home::draw_screen(host, event);
+        return;
+    }
     let status = read(0).clamp(0, STATUS_KEYS.len() as i32 - 1) as usize;
     let status_text = Text::tr(&format!("veio.status.{}", STATUS_KEYS[status]), &[]).plain();
     lamp_icon(host, event, [9.0, 24.0], status);
@@ -241,6 +245,8 @@ pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
         workforce::center::data(entity)
     } else if entity.id == workforce::TOWN_HALL {
         workforce::society::hall_data(entity)
+    } else if entity.id == workforce::HOME {
+        workforce::home::data(entity)
     } else if workforce::zones::is_marker(&entity.id) {
         workforce::zones::data(entity)
     } else {
@@ -352,11 +358,18 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     }
     if inserters::is_arm(event.block) { return inserters::draw(host, event); }
     if freight::owns(event.block) { freight::draw(host, event); return; }
+    if workforce::site::draw(host, event) {
+        return;
+    }
     if let Some(dynamic) = appearance::draw(host, event) {
         if !dynamic { event.draw.keep(); }
         return;
     }
     if production::draw(host, event) || workforce::zones::draw(host, event) {
+        return;
+    }
+    // O lar mostra o fogo na própria textura e solta fumaça; não tem luzes de máquina.
+    if event.block == workforce::HOME {
         return;
     }
     let status = (number(event.entity, "Status") as usize).min(STATUS_KEYS.len() - 1);

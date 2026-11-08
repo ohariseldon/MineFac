@@ -16,6 +16,8 @@
     "veio:barn",
     "veio:silo",
     "veio:control_center",
+    "veio:site",
+    "veio:home",
     "veio:mill",
     "veio:kitchen",
     "veio:pantry",

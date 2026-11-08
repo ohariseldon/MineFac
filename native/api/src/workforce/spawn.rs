@@ -55,8 +55,16 @@ pub(crate) fn logged_in(player: u128, name: &str, now: u64) {
     }
 }
 
-/// Quem renasce volta ao centro da vila (mesmo com cama em outro lugar).
+/// Quem renasce volta ao próprio lar (`home.rs`) ou, sem lar, ao centro da vila (mesmo com cama
+/// em outro lugar).
 pub(crate) fn respawned(host: &mut dyn Host, name: &str) {
+    if let Some(home) = home::home_of(name)
+        && safe_name(name)
+    {
+        let [x, y, z] = home.pos;
+        host.run_command(&format!("execute in {} run tp {name} {x} {} {z}", home.dimension, y + 1));
+        return;
+    }
     if let Some(([x, y, z], _)) = center()
         && safe_name(name)
     {

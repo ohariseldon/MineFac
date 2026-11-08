@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "veio:circuit",
+    "veio:iron_plate"
+  ],
+  "result": {
+    "id": "minecraft:compass",
+    "count": 1
+  }
+}

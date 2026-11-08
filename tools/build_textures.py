@@ -861,6 +861,25 @@ def main():
         "gggggggggggggggg",
         "gggggggggggggggg",
     ], noise=False)
+    # Boca da lareira do lar: tijolos, arco escuro, lenha e fogo.
+    out["block/home_front"] = render([
+        "rrsrrrtrrrsrrrtr",
+        "tttttttttttttttt",
+        "rrrtrrrsrrrtrrrs",
+        "tttttttttttttttt",
+        "rsrtkkkkkkkktrsr",
+        "tttkkkkkkkkkkttt",
+        "rrkkkkkOkkkkkkrr",
+        "ttkkkkOoOkkkkktt",
+        "rrkkkOoRoOkkkkrr",
+        "ttkkkoRXRokOkktt",
+        "rrkkOoRRRooOkkrr",
+        "ttkkoRXRXRoRoktt",
+        "rrkNnNnNnNnNnkrr",
+        "ttkknNnNnNnNkktt",
+        "rrrrrrtrrrrrtrrr",
+        "tttttttttttttttt",
+    ], salt=21)
     out["block/battery_side"] = render(BATTERY, salt=11)
     out["block/tesla_coil"] = render(COIL, salt=13)
     out["gui/material"] = material()
