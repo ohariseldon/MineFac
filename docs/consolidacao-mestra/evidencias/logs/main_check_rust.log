@@ -1,0 +1,220 @@
+$ cargo test --offline -p veio-check
+   Compiling horizon-client v0.0.0 (/home/user/MineFac/native/offline-check/horizon-client)
+   Compiling veio-check v0.0.0 (/home/user/MineFac/native/offline-check/veio-check)
+warning: unused import: `std::sync::Mutex`
+  --> veio-check/src/../../../api/src/workforce/foreman.rs:21:5
+   |
+21 | use std::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `distance` is never used
+   --> veio-check/src/../../../api/src/workforce/foreman.rs:150:4
+    |
+150 | fn distance(a: [i32; 3], b: [i32; 3]) -> f64 {
+    |    ^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `veio-check` (lib) generated 1 warning
+warning: `veio-check` (lib test) generated 2 warnings (1 duplicate) (run `cargo fix --lib -p veio-check --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 18.98s
+     Running unittests src/lib.rs (target/debug/deps/veio_check-f2210584b4a3636d)
+
+running 181 tests
+test preview::preview ... ignored
+test veio::budget::tests::dimensions_share_limits_same_tick_does_not_refill_and_lanes_do_not_starve ... ok
+test veio::inserters::tests::accepted_transfer_costs_once_and_does_not_repeat_during_animation ... ok
+test veio::inserters::tests::arms_are_powered_transport_without_supply_or_haul_slots ... ok
+test veio::inserters::tests::all_four_directions_use_the_correct_opposing_container_faces ... ok
+test veio::inserters::tests::fast_arm_delivers_two_and_a_half_times_the_basic_rate ... ok
+test veio::inserters::tests::full_filtered_and_empty_endpoints_preserve_items_and_energy ... ok
+test veio::inserters::tests::insufficient_power_and_redstone_do_not_touch_inventories ... ok
+test veio::inserters::tests::long_arm_skips_intermediate_inventories_in_all_directions ... ok
+test veio::inserters::tests::restoring_the_saved_animation_never_replays_an_already_completed_transfer ... ok
+test veio::inserters::tests::sample_filter_is_forwarded_to_the_atomic_host_transfer_and_can_be_cleared ... ok
+test veio::logistics::tests::an_arriving_item_waiting_for_its_turn_counts_as_moving ... ok
+test veio::logistics::tests::a_single_incoming_and_outgoing_line_snap_to_a_curve_unless_manually_locked ... ok
+test veio::logistics::tests::belt_climbs_one_block_and_keeps_items_when_the_upper_outlet_is_full ... ok
+test veio::logistics::tests::belt_curves_into_a_farm_post ... ok
+test veio::logistics::tests::each_orientation_has_two_distinct_side_inputs_and_no_rear_input ... ok
+test veio::logistics::tests::both_inputs_get_turns_even_when_the_outlet_accepts_only_one_per_cycle ... ok
+test veio::logistics::tests::filtered_splitter_sorts_strictly_and_never_spills_into_the_wrong_lane ... ok
+test veio::logistics::tests::full_outlet_preserves_both_buffers_and_the_next_turn ... ok
+test veio::logistics::tests::item_paths_meet_at_the_same_height_and_preserve_the_output_edge ... ok
+test veio::logistics::tests::merger_priority_drains_the_selected_source_before_the_other ... ok
+test veio::logistics::tests::lower_receiving_belt_builds_the_downhill_ramp ... ok
+test veio::logistics::tests::negative_signatures_also_skip_and_a_rotated_neighbor_invalidates ... ok
+test veio::logistics::tests::rejected_product_does_not_prevent_the_other_lane_from_delivering ... ok
+test veio::logistics::tests::redstone_pauses_belts_without_consuming_and_success_counts_the_real_flow ... ok
+test veio::logistics::tests::splitter_priority_uses_overflow_and_balanced_mode_still_alternates ... ok
+test veio::logistics_controls::tests::copy_and_clear_filter_never_consume_the_sample_or_put_it_in_inventory ... ok
+test veio::logistics::tests::stable_neighborhood_skips_incoming_scans ... ok
+test veio::operations::tests::current_contract_filters_materials_without_leaking_output_slots ... ok
+test veio::operations::tests::extractor_and_infrastructure_do_not_accept_materials_in_output_or_dummy_slots ... ok
+test veio::operations::tests::farmhand_post_is_a_farming_station_and_worker_states_suggest_no_hiring ... ok
+test veio::logistics_controls::tests::priority_cycles_and_filter_removal_survive_saved_nbt ... ok
+test veio::operations::tests::idle_empty_energy_does_not_invent_a_power_failure_or_a_worker_assignment ... ok
+test veio::operations::tests::redstone_is_a_control_to_inspect_and_unknown_states_stay_unknown ... ok
+test veio::operations::tests::station_snapshot_preserves_inputs_and_distinguishes_power_from_supply ... ok
+test veio::operations::tests::transport_buffers_are_not_worker_haul_jobs ... ok
+test veio::perf::factory::bench_factory ... ignored, medição explícita; rode sozinha com --release --nocapture
+test veio::perf::factory::bench_frame ... ignored, medição explícita; rode sozinha com --release --nocapture
+test veio::perf::factory::stopped_belts_keep_their_drawing_and_moving_ones_animate ... ok
+test veio::perf::profile_scale ... ignored, explicit performance run; run alone with --release --test-threads=1 --nocapture
+test veio::perf::stable_publication_and_network_ticks_allocate_nothing ... ok
+test veio::power::optimization_tests::area_refresh_keeps_delivering_power_and_removes_stale_consumers_when_complete ... ok
+test veio::power::optimization_tests::borrowed_area_keeps_wrap_order_and_handles_empty_or_partial_arrays ... ok
+test veio::power::optimization_tests::incremental_area_bounds_peak_reads_and_publishes_only_complete_results ... ok
+test veio::budget::tests::unloaded_head_expires_clock_rewind_clears_waiters_and_retries_are_deduplicated ... ok
+test veio::operations::tests::fast_material_rejection_keeps_the_original_layout_and_contract_fences ... ok
+test veio::power::rebuild::tests::chunk_revision_change_restarts_partial_work_and_unloaded_jobs_are_reclaimed ... ok
+test veio::power::rebuild::tests::real_collection_is_bounded_and_mid_build_removal_never_publishes_stale_endpoint ... ok
+test veio::budget::tests::thousand_jobs_share_a_hard_quota_and_all_make_progress_in_fixed_order ... ok
+test veio::power::rebuild::tests::tiny_steps_match_previous_solver_for_dense_mixed_tiers_ties_and_boundary_ranges ... ok
+test veio::production::tests::alternate_recipes_open_routes_without_the_nether ... ok
+test veio::production::tests::drill_reads_the_vein_and_respects_tiers ... ok
+test veio::production::tests::electric_furnace_turns_any_log_into_charcoal ... ok
+test veio::production::tests::every_recipe_machine_and_item_is_known ... ok
+test veio::production::tests::exhausted_global_terrain_budget_preserves_inputs_energy_and_cursor_then_resumes ... ok
+test veio::production::tests::harvester_cuts_tall_plants_above_the_base_and_attached_fruit_only ... ok
+test veio::production::tests::kitchen_prefers_the_recipe_that_uses_every_input ... ok
+test veio::production::tests::pantry_pays_more_for_processed_food_and_villages ... ok
+test veio::production::tests::planter_queues_seeds_on_empty_farmland_and_flushes_in_one_edit ... ok
+test veio::production::tests::purity_rewards_bigger_veins ... ok
+test veio::production::tests::ranch_breeds_shears_milks_and_keeps_a_population_cap ... ok
+test veio::production::tests::renewable_power_covers_a_starter_line_without_replacing_steam ... ok
+test veio::production::tests::tree_farm_fells_grown_trees_and_replants_the_same_species ... ok
+test veio::production::tests::unpowered_field_machines_do_no_world_scan_and_resume_when_funded ... ok
+test veio::production::tests::water_wheel_needs_flowing_water_and_steam_needs_still_water ... ok
+test veio::production::tests::wind_grows_with_altitude_and_needs_open_sky ... ok
+test veio::tests::belt_cargo_syncs_only_when_the_drawn_item_changes ... ok
+test veio::tests::contract_hub_keeps_exporting_after_the_last_project ... ok
+test veio::tests::crusher_keeps_multi_item_output_within_one_stack ... ok
+test veio::tests::each_good_pays_the_business_that_makes_it ... ok
+test veio::tests::every_company_block_belongs_to_a_holding_division ... ok
+test veio::tests::gems_need_the_advanced_extractor ... ok
+test veio::tests::generator_burns_vanilla_fuels_in_proportion_to_furnace_time ... ok
+test veio::tests::generator_conserves_energy_and_pauses_fuel_when_buffers_are_full ... ok
+test veio::tests::harvester_collects_ripe_crops_and_replants_them ... ok
+test veio::tests::harvester_store_merges_stacks_before_using_empty_slots ... ok
+test veio::tests::harvester_uses_bone_meal_and_waits_for_room ... ok
+test veio::tests::idle_cables_skip_neighbor_lookups ... ok
+test veio::tests::integrator_waits_for_both_inputs_and_preserves_them_when_output_is_full ... ok
+test veio::tests::menus_fence_outputs_and_route_inputs ... ok
+test veio::tests::modules_trade_one_bottleneck_for_another ... ok
+test veio::tests::numeric_updates_preserve_legacy_tag_and_clamping_semantics ... ok
+test veio::tests::one_pass_numbers_read_like_number ... ok
+test veio::tests::panels_publish_as_many_values_as_the_menus_declare ... ok
+test veio::tests::pole_balance_moves_energy_toward_the_emptier_buffer ... ok
+test veio::tests::poles_link_symmetrically_within_the_shorter_reach ... ok
+test veio::tests::pollution_spreads_and_fades_without_growing ... ok
+test veio::tests::published_signature_matches_the_nbt_for_every_block ... ok
+test veio::tests::raids_need_a_notice_a_day_of_grace_and_the_night ... ok
+test veio::tests::tesla_picks_the_closest_hostile_in_range ... ok
+test veio::tests::the_holding_counts_units_workers_and_daily_production_per_division ... ok
+test veio::tests::waves_bring_archers_and_brutes_later ... ok
+test veio::tests::waves_grow_but_stay_capped ... ok
+test veio::tests::wires_sag_between_their_ends ... ok
+test veio::tests::workforce_posts_count_as_item_input_for_belt_curves ... ok
+test veio::power::optimization_tests::thousand_poles_obey_one_global_area_quota_and_all_finish ... ok
+test veio::workforce::foreman::planning::tests::partial_job_resets_for_a_new_worker_and_restarts_after_memory_cleanup ... ok
+test veio::workforce::foreman::planning::tests::publication_preserves_new_claims_and_does_not_resurrect_completed_pins ... ok
+test veio::workforce::foreman::planning::tests::publication_rechecks_current_materials_counts_and_contracts ... ok
+test veio::workforce::foreman::planning::tests::reduced_snapshot_keeps_parallel_freight_filter_without_copying_unrelated_state ... ok
+test veio::workforce::foreman::planning::tests::stable_factories_match_the_previous_planner_with_hub_contracts_and_storage_priority ... ok
+test veio::workforce::foreman::search::tests::existing_claim_renews_with_one_read_despite_exhausted_discovery_budget ... ok
+test veio::workforce::foreman::search::tests::final_claim_rechecks_ownership_and_shifted_indices ... ok
+test veio::workforce::foreman::search::tests::many_searches_obey_global_quota_and_all_finish ... ok
+test veio::workforce::foreman::search::tests::mesas_rotate_after_completion_without_creating_duplicate_claims ... ok
+test veio::workforce::foreman::search::tests::replaced_desks_are_removed_and_registry_cleanup_is_bounded ... ok
+test veio::workforce::foreman::search::tests::saved_claim_restores_without_a_registry_heartbeat_and_never_resurrects_completion ... ok
+test veio::workforce::foreman::search::tests::ten_thousand_far_desks_do_not_add_local_work_and_empty_results_are_cached ... ok
+test veio::workforce::tests::a_cargo_port_needs_the_sea_and_ships_on_schedule_with_freight ... ok
+test veio::workforce::tests::a_freight_station_only_runs_at_the_frontier ... ok
+test veio::workforce::tests::a_fulfilled_contract_announces_the_premium_and_opens_a_market ... ok
+test veio::workforce::tests::a_player_purchase_brings_emeralds_into_the_economy_with_tax_at_source ... ok
+test veio::workforce::tests::babies_and_far_villagers_are_not_hired ... ok
+test veio::workforce::tests::background_hauler_search_waits_during_rest_hunger_and_delivery ... ok
+test veio::workforce::tests::balance_a_wage_feeds_two_people_at_reference_prices ... ok
+test veio::workforce::tests::balance_contracts_are_a_separate_buyer_and_open_markets_stay_open ... ok
+test veio::workforce::tests::balance_freight_weighs_on_raw_goods_and_saturation_has_a_floor ... ok
+test veio::workforce::tests::balance_importing_never_loses_money_and_the_ceiling_keeps_food_at_home ... ok
+test veio::workforce::tests::barracks_guard_heals_and_stays_on_duty_at_night ... ok
+test veio::workforce::tests::barracks_trains_a_class_and_the_militia_kills_in_three_blows ... ok
+test veio::workforce::tests::bench_large_village ... ignored
+test veio::workforce::tests::blocked_path_gives_up_on_that_crop ... ok
+test veio::workforce::tests::carried_crop_survives_dismissal_until_there_is_room ... ok
+test veio::workforce::tests::company_workers_are_paid_by_the_company_and_the_cost_lands_on_their_business ... ok
+test veio::workforce::tests::contracts_never_repeat_a_product_and_news_reach_the_chat ... ok
+test veio::workforce::tests::contracts_pay_a_premium_and_raise_reputation ... ok
+test veio::workforce::tests::control_center_dashboard_counts_workers_zones_storage_and_goals ... ok
+test veio::workforce::tests::farmhand_in_a_field_zone_plants_tills_and_harvests_beyond_the_old_area ... ok
+test veio::workforce::tests::farmhand_walks_harvests_and_carries_the_crop_home ... ok
+test veio::workforce::tests::field_filter_plants_only_the_chosen_seed ... ok
+test veio::workforce::tests::foreman_feeds_a_hungry_post_and_rehires_when_it_is_empty ... ok
+test veio::workforce::tests::foreman_without_emeralds_says_so_and_keeps_the_emerald_if_nobody_is_free ... ok
+test veio::workforce::tests::full_post_stops_before_harvesting ... ok
+test veio::workforce::tests::hauler_feeds_a_hungry_press_and_brings_the_plates_back ... ok
+test veio::workforce::tests::hauler_leaves_belts_and_other_posts_alone ... ok
+test veio::workforce::tests::hungry_worker_waits_without_touching_the_field ... ok
+test veio::workforce::tests::idle_farmhand_in_a_dry_field_scans_one_row ... ok
+test veio::workforce::tests::idle_farmhand_scans_one_row_per_cycle ... ok
+test veio::workforce::tests::idle_foreman_inspects_a_few_posts_per_cycle ... ok
+test veio::workforce::tests::idle_foreman_scans_one_row_per_cycle ... ok
+test veio::workforce::tests::idle_hauler_inspects_a_few_stations_per_cycle ... ok
+test veio::workforce::tests::idle_hauler_scans_one_row_per_cycle ... ok
+test veio::workforce::tests::indicators_measure_families_inequality_and_districts ... ok
+test veio::workforce::tests::locked_cargo_waits_at_the_port_and_reputation_survives_a_reload ... ok
+test veio::workforce::tests::missing_worker_is_released_after_a_while ... ok
+test veio::workforce::tests::money_circulates_without_appearing_or_vanishing ... ok
+test veio::workforce::tests::new_players_arrive_at_the_village_center_and_the_control_center_takes_over ... ok
+test veio::workforce::tests::prices_follow_local_supply_and_demand ... ok
+test veio::workforce::tests::queue_brings_pantry_emeralds_to_the_desk_and_frees_abandoned_tasks ... ok
+test veio::workforce::tests::queue_moves_harvested_wheat_from_the_farm_post_to_the_mill ... ok
+test veio::workforce::tests::queue_reads_each_network_block_once_per_refresh ... ok
+test veio::workforce::tests::queue_stores_leftovers_in_the_barn_and_feeds_machines_from_it ... ok
+test veio::workforce::tests::raw_wheat_does_not_pay_a_full_harvest ... ok
+test veio::workforce::tests::reopened_world_finds_the_worker_by_uuid ... ok
+test veio::workforce::tests::shepherd_does_not_start_feeding_a_lonely_animal ... ok
+test veio::workforce::tests::shepherd_feeds_a_breeding_pair_and_then_stops ... ok
+test veio::workforce::tests::shepherd_picks_up_eggs_and_shears_sheep_beside_them ... ok
+test veio::workforce::tests::shepherd_works_the_whole_pen_and_follows_its_feed ... ok
+test veio::workforce::tests::shops_import_food_when_short_and_money_leaves_the_economy ... ok
+test veio::workforce::tests::silo_only_takes_grain_and_food ... ok
+test veio::workforce::tests::stale_claim_from_unloaded_post_loses_to_the_live_one ... ok
+test veio::workforce::tests::supply_returns_to_the_stock_when_the_machine_no_longer_takes_it ... ok
+test veio::workforce::tests::the_mayor_is_paid_from_public_funds_and_poor_families_get_assistance ... ok
+test veio::workforce::tests::the_mayor_phase_sets_the_zone_limit_and_house_permits_need_a_well ... ok
+test veio::workforce::tests::the_merchant_offers_the_stock_at_the_local_price ... ok
+test veio::workforce::tests::the_world_market_pays_for_complexity_and_reputation_opens_markets ... ok
+test veio::workforce::tests::two_haulers_never_serve_the_same_machine_at_once ... ok
+test veio::workforce::tests::village_cap_grows_with_development_up_to_150 ... ok
+test veio::workforce::tests::villager_works_for_one_post_only_until_dismissed ... ok
+test veio::workforce::tests::villages_grow_with_births_until_the_cap ... ok
+test veio::workforce::tests::walking_shepherd_follows_the_target_without_rereading_the_herd ... ok
+test veio::workforce::tests::without_a_mayor_zones_stop_at_level_two_and_the_village_at_thirty ... ok
+test veio::workforce::tests::work_goal_hands_the_order_to_the_villager_brain_and_respects_danger ... ok
+test veio::workforce::tests::work_goal_only_runs_with_a_fresh_order ... ok
+test veio::workforce::tests::worker_discovery_keeps_cached_targets_and_cursor_while_globally_deferred ... ok
+test veio::workforce::tests::worker_holds_what_it_carries_and_empties_the_hand_after_delivery ... ok
+test veio::workforce::tests::workers_rest_at_night_and_resume_in_the_morning ... ok
+test veio::workforce::tests::zone_levels_need_work_villagers_and_emeralds_and_the_wrench_picks_the_size ... ok
+test veio::power::rebuild::tests::simultaneous_dense_rebuilds_share_the_global_work_limit_and_all_finish ... ok
+test veio::power::optimization_tests::ranked_connections_match_original_sorted_selection_with_ties_and_mixed_tiers ... ok
+test veio::workforce::foreman::planning::tests::many_large_plans_share_the_quota_and_keep_the_old_queue_until_done ... ok
+
+test result: ok. 176 passed; 0 failed; 5 ignored; 0 measured; 0 filtered out; finished in 1.03s
+
+   Doc-tests veio_check
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+real	0m20.608s
+user	0m36.292s
+sys	0m3.722s
+exit=0

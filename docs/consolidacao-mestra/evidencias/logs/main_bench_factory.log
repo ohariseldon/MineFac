@@ -1,0 +1,30 @@
+warning: unused import: `std::sync::Mutex`
+  --> veio-check/src/../../../api/src/workforce/foreman.rs:21:5
+   |
+21 | use std::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `distance` is never used
+   --> veio-check/src/../../../api/src/workforce/foreman.rs:150:4
+    |
+150 | fn distance(a: [i32; 3], b: [i32; 3]) -> f64 {
+    |    ^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `veio-check` (lib test) generated 2 warnings (run `cargo fix --lib -p veio-check --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.00s
+     Running unittests src/lib.rs (target/release/deps/veio_check-e8a7211881567067)
+
+running 1 test
+test veio::perf::factory::bench_factory ... fábrica: 480 blocos: 275.5 µs por tick do jogo (Veio + mundo simulado)
+  por tick: 936 alocações, 694 block(), 100 block_property(), 0.0 set_block_property(), 393 change_mod_block_entity(), 19.5 insert_item(), 28.6 sync, 80 neighbor_signal()
+  sync por tick: veio:assembler 0.45, veio:belt 21.96, veio:cable 0.00, veio:drill 0.00, veio:drill_mk3 1.88, veio:fast_belt 4.27, veio:generator 0.00, veio:pole 0.00, veio:press 0.00, veio:solar 0.00
+CHECK factory_digest=3d135c43f0c20445 gears=1024
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 180 filtered out; finished in 1.32s
+
+exit=0

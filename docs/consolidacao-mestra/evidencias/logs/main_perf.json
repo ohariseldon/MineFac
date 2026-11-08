@@ -1,0 +1,74 @@
+{
+  "revision": "53267af22d2fe0bb9240bb7ef2421caeacc78b83",
+  "scope": "offline instrumented simulation; timings include counters; no renderer or FPS measurement",
+  "samples": 3,
+  "checks": [
+    "power_energy=129500 callbacks=33792",
+    "queue_tasks=8 source_reads=1045"
+  ],
+  "scenarios": [
+    {
+      "scenario": "publish_2000_cables_20_ticks",
+      "runs": 20,
+      "ns": 134926,
+      "allocations": 0,
+      "allocated_bytes": 0,
+      "nbt_keys": 0,
+      "fallback_locks": 0
+    },
+    {
+      "scenario": "configured_arm_publication",
+      "runs": 20000,
+      "ns": 585368,
+      "allocations": 0,
+      "allocated_bytes": 0,
+      "nbt_keys": 60000,
+      "fallback_locks": 0
+    },
+    {
+      "scenario": "working_machine_metrics",
+      "runs": 20000,
+      "ns": 2665181,
+      "allocations": 1,
+      "allocated_bytes": 20,
+      "nbt_keys": 182438,
+      "fallback_locks": 0
+    },
+    {
+      "scenario": "rejected_queue_material",
+      "runs": 30000,
+      "ns": 1773340,
+      "allocations": 0,
+      "allocated_bytes": 0,
+      "nbt_keys": 0,
+      "fallback_locks": 0
+    },
+    {
+      "scenario": "256_poles_cached_network_40_ticks",
+      "runs": 40,
+      "ns": 2290182,
+      "allocations": 0,
+      "allocated_bytes": 0,
+      "nbt_keys": 147080,
+      "fallback_locks": 0
+    },
+    {
+      "scenario": "dense_pole_links",
+      "runs": 100,
+      "ns": 874753,
+      "allocations": 1500,
+      "allocated_bytes": 1024800,
+      "nbt_keys": 0,
+      "fallback_locks": 0
+    },
+    {
+      "scenario": "foreman_95_node_queue",
+      "runs": 40,
+      "ns": 746710,
+      "allocations": 9267,
+      "allocated_bytes": 1296535,
+      "nbt_keys": 850,
+      "fallback_locks": 0
+    }
+  ]
+}
