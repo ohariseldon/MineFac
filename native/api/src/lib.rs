@@ -479,6 +479,7 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "Side" => key!("Side"),
         "Module" => key!("Module"),
         "MovedAt" => key!("MovedAt"),
+        "HeldSince" => key!("HeldSince"),
         "NextInput" => key!("NextInput"),
         "Organize" => key!("Organize"),
         "PathReady" => key!("PathReady"),

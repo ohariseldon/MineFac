@@ -73,7 +73,7 @@ Quadro: 257 blocos redesenhados, 1223 alocações, 67 µs.
 
 ## O que ainda custa mais
 
-1. **Sincronias das esteiras** (22 de 28,6 por tick). Uma esteira que recebe um item depois de muito tempo parada mostra o estado 3 (bloqueada, laranja) por até 4 ticks, até chegar a sua vez de mover (`stamp - MovedAt > 8`). Depois vai a 0 (vazia). São duas sincronias por item por esteira, e cada sincronia é um pacote de bloco com o NBT inteiro e um redesenho no cliente. Contar a espera da vez como 1 (andando) cortaria a maior parte, mas muda a luz que o jogador vê. Fica como decisão de jogo, não implementada.
+1. **Sincronias das esteiras** (22 de 28,6 por tick). Na 0.17.2 a espera da vez passou a contar como andando (1), a pedido do usuário: a luz não pisca mais laranja a cada item. Medido depois: as sincronias continuam em 28,6 por tick, porque a esteira ainda vai de vazia (0) a carregada e volta, e o item desenhado muda junto. Para cortar mais, só deixando de mostrar a carga, o que não vale a pena.
 2. Postes: 393 `change_mod_block_entity` por tick (distribuição a cada consumidor, mesmo cheio) e a reconstrução dos fios a cada 40 ticks, que relê os postes vizinhos.
 3. `neighbor_signal` em todo consumidor, todo tick (resposta da redstone em 1 tick).
 4. Buscas restantes no NBT: `set_number_at` (12%) e a primeira assinatura visual (10%).
