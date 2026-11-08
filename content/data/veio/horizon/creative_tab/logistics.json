@@ -4,11 +4,14 @@
   "items": [
     "veio:belt",
     "veio:fast_belt",
+    "veio:express_belt",
+    "veio:belt_tunnel",
     "veio:splitter",
     "veio:merger",
     "veio:inserter",
     "veio:fast_inserter",
     "veio:long_inserter",
-    "veio:wrench"
+    "veio:wrench",
+    "veio:clipboard"
   ]
 }

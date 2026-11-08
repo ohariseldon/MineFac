@@ -6,7 +6,7 @@
 //! conhecer cada máquina: basta `layout`/`outputs` e o NBT `energy`.
 use super::*;
 
-mod data;
+pub(super) mod data;
 pub(super) mod extraction;
 pub(super) mod generation;
 pub(super) mod crops;
@@ -30,6 +30,8 @@ pub(super) const GROW_LAMP: &str = "veio:grow_lamp";
 pub(super) const TREE_FARM: &str = "veio:tree_farm";
 pub(super) const RANCH: &str = "veio:ranch";
 pub(super) const PANTRY: &str = "veio:pantry";
+/// Fabricadora: três entradas, para os produtos de topo (núcleo de automação, kit Mk.II).
+pub(super) const FABRICATOR: &str = "veio:fabricator";
 // Itens criados pela produção; as receitas os citam pelo nome em `tools/production.json`.
 #[allow(dead_code)]
 pub(super) const FLOUR: &str = "veio:flour";
@@ -74,12 +76,12 @@ pub(crate) struct Fuel {
 pub(super) fn is_machine(block: &str) -> bool {
     matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | BIOMASS_GENERATOR | WATER_WHEEL |
         WIND_TURBINE | STEAM_ENGINE | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PANTRY |
-        PUMP | PIPE | SPRINKLER | HYDRO_TURBINE)
+        PUMP | PIPE | SPRINKLER | HYDRO_TURBINE | FABRICATOR)
 }
 
 /// Máquinas que consomem energia: recebem pela rede, param com redstone, mostram métricas.
 pub(super) fn consumes(block: &str) -> bool {
-    matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PUMP)
+    matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PUMP | FABRICATOR)
 }
 
 /// Fontes de energia deste módulo (as antigas: gerador, geotérmico e solar).
@@ -95,7 +97,7 @@ pub(super) fn burns(block: &str) -> bool {
 /// Entrada de itens, sem alocar o `layout`.
 pub(super) fn has_inputs(block: &str) -> bool {
     matches!(block, ELECTRIC_FURNACE | MILL | PANTRY | KITCHEN | BIOMASS_GENERATOR | STEAM_ENGINE |
-        PLANTER | TREE_FARM | RANCH | SPRINKLER)
+        PLANTER | TREE_FARM | RANCH | SPRINKLER | FABRICATOR)
 }
 
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
@@ -103,6 +105,7 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         DRILL_MK3 => (1, vec![], vec![0]),
         ELECTRIC_FURNACE | MILL | PANTRY => (2, vec![0], vec![1]),
         KITCHEN => (3, vec![0, 1], vec![2]),
+        FABRICATOR => (4, vec![0, 1, 2], vec![3]),
         BIOMASS_GENERATOR | STEAM_ENGINE | PLANTER | SPRINKLER => (1, vec![0], vec![]),
         WATER_WHEEL | WIND_TURBINE | GROW_LAMP | PUMP | HYDRO_TURBINE => (1, vec![], vec![]),
         PIPE => (0, vec![], vec![]),
@@ -117,6 +120,7 @@ pub(super) fn outputs(block: &str) -> std::ops::Range<usize> {
         DRILL_MK3 => 0..1,
         ELECTRIC_FURNACE | MILL | PANTRY => 1..2,
         KITCHEN => 2..3,
+        FABRICATOR => 3..4,
         TREE_FARM => 1..4,
         RANCH => 2..5,
         _ => 0..0,
@@ -159,7 +163,7 @@ pub(super) fn emission(block: &str) -> f32 {
     match block {
         DRILL_MK3 => 6.0,
         STEAM_ENGINE => 4.0,
-        BIOMASS_GENERATOR | ELECTRIC_FURNACE => 2.0,
+        BIOMASS_GENERATOR | ELECTRIC_FURNACE | FABRICATOR => 2.0,
         MILL | KITCHEN | TREE_FARM => 1.0,
         _ => 0.0,
     }
@@ -228,6 +232,9 @@ pub(super) fn process(entity: &mut ModBlockEntity) {
     let (item, amount) = recipe.output;
     let (duration, draw) = upgrades::apply(recipe.ticks, recipe.power, upgrades::effect(entity));
     set_number(entity, "Duration", duration);
+    // Índice da receita ativa (1 em diante) para o painel mostrar entrada e saída por minuto.
+    let index = recipes(&entity.id).position(|other| std::ptr::eq(other, recipe)).map_or(0, |index| index as i32 + 1);
+    set_number(entity, "RecipeIndex", index);
     let changed = with_nbt_key("Recipe", |key| {
         !matches!(entity.nbt.get(key), Some(Tag::String(old)) if java_eq(old, item))
     });
@@ -263,6 +270,17 @@ pub(super) fn process(entity: &mut ModBlockEntity) {
     finish_cycle(entity);
 }
 
+/// Itens por minuto de cada slot da receita `index` (1 em diante) com ciclo de `duration` ticks:
+/// as entradas na ordem dos slots e, por último, a saída com o bônus de produtividade. Como no
+/// Satisfactory, o painel escreve o número acima de cada slot.
+pub(super) fn rates_per_minute(block: &str, index: i32, duration: i32, bonus: i32) -> Option<Vec<f32>> {
+    let recipe = recipes(block).nth(usize::try_from(index).ok()?.checked_sub(1)?)?;
+    let cycles = 1200.0 / duration.max(1) as f32;
+    let mut rates: Vec<f32> = recipe.inputs.iter().map(|input| input.count as f32 * cycles).collect();
+    rates.push(recipe.output.1 as f32 * cycles * (1.0 + bonus as f32 / 100.0));
+    Some(rates)
+}
+
 /// Contadores comuns ao terminar um ciclo de produção.
 pub(super) fn finish_cycle(entity: &mut ModBlockEntity) {
     set_number(entity, "Produced", number(entity, "Produced").saturating_add(1));
@@ -282,6 +300,7 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         PUMP | HYDRO_TURBINE => vec![None],
         ELECTRIC_FURNACE | MILL | PANTRY => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
         KITCHEN => vec![Some([35.0, 45.0]), Some([71.0, 45.0]), Some([143.0, 45.0])],
+        FABRICATOR => vec![Some([26.0, 45.0]), Some([53.0, 45.0]), Some([80.0, 45.0]), Some([143.0, 45.0])],
         WATER_WHEEL | WIND_TURBINE | GROW_LAMP => vec![None],
         TREE_FARM => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0])],
         RANCH => vec![Some([17.0, 45.0]), Some([39.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
@@ -298,6 +317,7 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         SPRINKLER => &["fertilizer"],
         PUMP | HYDRO_TURBINE => &[],
         KITCHEN => &["input1", "input2", "output"],
+        FABRICATOR => &["input1", "input2", "input3", "output"],
         TREE_FARM => &["saplings", "output", "", ""],
         RANCH => &["feed", "bucket", "output", "", ""],
         PANTRY => &["food", "emeralds"],
@@ -319,7 +339,9 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         ],
         BIOMASS_GENERATOR => vec![tr("veio.hint.biomass", &[])],
         STEAM_ENGINE => vec![tr("veio.metric.water", &[&read(8), &water::capacity(STEAM_ENGINE)]), tr("veio.hint.steam", &[])],
-        PUMP => vec![tr("veio.metric.pumping", &[&info]), tr("veio.metric.water", &[&read(8), &water::capacity(PUMP)]), tr("veio.hint.pump", &[])],
+        PUMP => vec![tr("veio.metric.pumping", &[&info]),
+            tr(if read(8) < 0 { "veio.metric.lava" } else { "veio.metric.water" }, &[&read(8).abs(), &water::capacity(PUMP)]),
+            tr("veio.hint.pump", &[])],
         SPRINKLER => vec![tr("veio.metric.fertility", &[&info]), tr("veio.metric.grown", &[&read(9)]), tr("veio.hint.sprinkler", &[])],
         HYDRO_TURBINE => vec![tr("veio.metric.output", &[&info]), tr("veio.metric.head", &[&read(8)]), tr("veio.hint.hydro", &[])],
         WATER_WHEEL => vec![tr("veio.metric.output", &[&info]), tr("veio.hint.water_wheel", &[])],

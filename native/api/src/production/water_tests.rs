@@ -78,6 +78,34 @@ fn pump_fills_from_still_water_and_pipes_carry_it_to_a_sprinkler() {
 }
 
 #[test]
+fn lava_pumps_slowly_through_its_own_pipes_to_the_geothermal_only() {
+    let mut plot = Plot::default();
+    plot.put([0, 63, 0], "minecraft:lava", &[("level", "0")]);
+    plot.machines.insert([1, 64, 0], entity(PIPE));
+    plot.machines.insert([2, 64, 0], entity(GEOTHERMAL));
+    plot.machines.insert([1, 64, 1], entity(SPRINKLER));
+    let mut wet = entity(PIPE);
+    set_number(&mut wet, "Water", 500);
+    plot.machines.insert([0, 64, 1], wet);
+    let mut pump_entity = entity(PUMP);
+    for _ in 0..400 {
+        set_number(&mut pump_entity, "energy", 2000);
+        pump(&mut plot, [0, 64, 0], &mut pump_entity);
+        let mut pipe_entity = plot.machines.remove(&[1, 64, 0]).unwrap();
+        pipe(&mut plot, [1, 64, 0], &mut pipe_entity);
+        plot.machines.insert([1, 64, 0], pipe_entity);
+    }
+    assert_eq!(pump_source(0, 1), (LAVA_PER_SOURCE, true));
+    assert_eq!(pump_source(2, 3), (pump_rate(2), false), "água tem preferência");
+    assert!(is_lava(&pump_entity));
+    let geothermal = &plot.machines[&[2, 64, 0]];
+    assert!(is_lava(geothermal) && number(geothermal, "Water") > 1000, "lava chegou: {}", number(geothermal, "Water"));
+    assert_eq!(number(&plot.machines[&[1, 64, 1]], "Water"), 0, "aspersor não recebe lava");
+    assert_eq!(number(&plot.machines[&[0, 64, 1]], "Water"), 500, "cano com água não recebe lava");
+    assert!(panel_amount(geothermal) < 0);
+}
+
+#[test]
 fn pump_without_water_or_power_says_why() {
     let mut plot = Plot::default();
     let mut dry = entity(PUMP);
@@ -97,8 +125,8 @@ fn pipes_level_out_and_never_push_back_into_the_pump() {
     assert_eq!(share(600, 1000, 400, 1000, true), 100, "metade da diferença");
     assert_eq!(share(400, 1000, 600, 1000, true), 0, "não sobe para o mais cheio");
     assert_eq!(share(50, 1000, 3000, 4000, false), 50, "consumidor recebe o que houver");
-    assert!(!receives(PUMP));
-    assert!(receives(PIPE) && receives(SPRINKLER) && receives(STEAM_ENGINE));
+    assert!(!receives(PUMP, false) && !receives(PUMP, true));
+    assert!(receives(PIPE, false) && receives(SPRINKLER, false) && receives(STEAM_ENGINE, false) && receives(GEOTHERMAL, true));
 }
 
 /// Lavoura 9x9 de trigo em volta do aspersor, na camada abaixo dele.

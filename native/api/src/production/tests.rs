@@ -168,7 +168,7 @@ fn electric_furnace_turns_any_log_into_charcoal() {
 fn every_recipe_machine_and_item_is_known() {
     for recipe in data::RECIPES {
         assert!(super::super::layout(recipe.machine).is_some(), "{}", recipe.machine);
-        assert!(recipe.inputs.len() <= 2 && recipe.ticks > 0 && recipe.power > 0);
+        assert!(recipe.inputs.len() <= if recipe.machine == FABRICATOR { 3 } else { 2 } && recipe.ticks > 0 && recipe.power > 0);
     }
 }
 

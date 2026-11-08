@@ -1,0 +1,32 @@
+{
+  "parent": "veio:research/metallurgy",
+  "display": {
+    "icon": {
+      "id": "veio:circuit"
+    },
+    "title": {
+      "translate": "advancement.veio.research.electronics.title"
+    },
+    "description": {
+      "translate": "advancement.veio.research.electronics.description"
+    },
+    "frame": "goal"
+  },
+  "criteria": {
+    "research": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:solar",
+      "veio:drill_mk2",
+      "veio:tesla",
+      "veio:speed_module",
+      "veio:efficiency_module",
+      "veio:grow_lamp",
+      "veio:hydro_turbine",
+      "veio:chunk_anchor"
+    ]
+  }
+}

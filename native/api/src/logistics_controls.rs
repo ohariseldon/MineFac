@@ -60,7 +60,46 @@ fn configurable(block: &str) -> bool {
     inserters::is_arm(block) || matches!(block, SPLITTER | MERGER)
 }
 
+/// Prancheta: copia filtro e prioridade de um braço, divisor ou unificador e cola em outros,
+/// como o copiar e colar configurações do Factorio. Agachado copia; em pé cola.
+pub(super) const CLIPBOARD: &str = "veio:clipboard";
+
+/// Configuração copiada: (filtro, prioridade). Uma por mundo aberto, compartilhada.
+static COPIED: std::sync::Mutex<Option<(Option<String>, i32)>> = std::sync::Mutex::new(None);
+
+pub(super) fn copy(entity: &ModBlockEntity) -> (Option<String>, i32) {
+    (filter(entity), number(entity, "RoutingPriority"))
+}
+
+/// Cola o que couber no bloco: o unificador não tem filtro, os braços não têm prioridade.
+pub(super) fn paste(entity: &mut ModBlockEntity, (item, priority): &(Option<String>, i32)) {
+    if entity.id != MERGER {
+        set_filter(entity, item.as_deref());
+    }
+    if matches!(entity.id.as_str(), SPLITTER | MERGER) {
+        set_number(entity, "RoutingPriority", *priority);
+    }
+    publish(entity);
+}
+
+fn clipboard(host: &mut dyn Host, pos: [i32; 3]) -> Flow {
+    let mut copied = COPIED.lock().unwrap_or_else(|err| err.into_inner());
+    if host.sneaking() {
+        host.change_mod_block_entity(pos, &mut |entity| *copied = Some(copy(entity)));
+        host.play_sound("minecraft:item.book.page_turn", center(pos), 4, 0.6, 1.0);
+    } else if let Some(settings) = copied.as_ref() {
+        if host.change_mod_block_entity(pos, &mut |entity| paste(entity, settings)) {
+            host.block_entity_sync(pos);
+            host.play_sound("minecraft:block.note_block.hat", center(pos), 4, 0.4, 1.5);
+        }
+    }
+    Flow::Cancel
+}
+
 pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], block: &str) -> Option<Flow> {
+    if configurable(block) && host.held().is_some_and(|(item, _, _)| item == CLIPBOARD) {
+        return Some(clipboard(host, pos));
+    }
     if !configurable(block) || !host.sneaking() { return None; }
     let held = host.held().map(|(item, _, _)| item);
     let change = match held.as_deref() {
@@ -129,6 +168,24 @@ mod tests {
         fn block_entity_sync(&mut self, _pos: [i32; 3]) { self.syncs += 1; }
         fn play_sound(&mut self, _sound: &str, _at: [f64; 3], _source: usize, _volume: f32, _pitch: f32) -> bool { true }
     }
+    #[test]
+    fn clipboard_copies_filter_and_priority_to_compatible_blocks() {
+        let mut splitter = ModBlockEntity::default();
+        splitter.id = SPLITTER.to_owned();
+        set_filter(&mut splitter, Some("minecraft:iron_ingot"));
+        set_number(&mut splitter, "RoutingPriority", 2);
+        let settings = copy(&splitter);
+        let mut arm = ModBlockEntity::default();
+        arm.id = inserters::ID.to_owned();
+        paste(&mut arm, &settings);
+        assert_eq!(filter(&arm).as_deref(), Some("minecraft:iron_ingot"));
+        assert_eq!(number(&arm, "RoutingPriority"), 0, "braço não tem prioridade");
+        let mut merger = ModBlockEntity::default();
+        merger.id = MERGER.to_owned();
+        paste(&mut merger, &settings);
+        assert_eq!((filter(&merger), priority(&merger)), (None, 2));
+    }
+
     #[test]
     fn copy_and_clear_filter_never_consume_the_sample_or_put_it_in_inventory() {
         let mut entity = ModBlockEntity::default();

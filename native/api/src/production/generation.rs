@@ -130,7 +130,13 @@ pub(crate) fn produce(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockE
             let mut burn = number(entity, "Burn");
             let bucket_room = entity.items[1].as_ref().is_none_or(|stack|
                 is_plain(stack, "minecraft:bucket") && stack.count < 16);
-            if burn == 0 && bucket_room
+            let piped = number(entity, "Water");
+            if burn == 0 && piped >= water::LAVA_BUCKET && water::is_lava(entity) {
+                // Lava encanada antes dos baldes: não sobram baldes vazios.
+                set_number(entity, "Water", piped - water::LAVA_BUCKET);
+                burn = 800;
+                set_number(entity, "BurnTotal", burn);
+            } else if burn == 0 && bucket_room
                 && entity.items[0].as_ref().is_some_and(|s| is_plain(s, "minecraft:lava_bucket"))
             {
                 consume(&mut entity.items[0], 1);

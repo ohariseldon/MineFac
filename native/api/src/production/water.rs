@@ -32,7 +32,23 @@ const SENSE_EVERY: i32 = 40;
 
 /// Blocos que guardam água no NBT `Water`.
 pub(crate) fn holds(block: &str) -> bool {
-    matches!(block, PUMP | PIPE | SPRINKLER | STEAM_ENGINE)
+    matches!(block, PUMP | PIPE | SPRINKLER | STEAM_ENGINE | GEOTHERMAL)
+}
+
+/// Lava encanada: a mesma bomba, encostada em lava parada, puxa 5 mB/t por fonte, e os canos a
+/// levam até o gerador geotérmico (1.000 mB valem um balde). Cada cano leva um fluido por vez
+/// (`Fluid` 1 é lava); vazio, aceita qualquer um.
+pub(crate) const LAVA_PER_SOURCE: i32 = 5;
+pub(crate) const LAVA_BUCKET: i32 = 1000;
+
+pub(crate) fn is_lava(entity: &ModBlockEntity) -> bool {
+    number(entity, "Fluid") == 1
+}
+
+/// Valor do painel: mB guardados, negativos quando o fluido é lava.
+pub(crate) fn panel_amount(entity: &ModBlockEntity) -> i32 {
+    let stored = number(entity, "Water");
+    if is_lava(entity) { -stored } else { stored }
 }
 
 /// Capacidade do reservatório interno, em mB.
@@ -42,13 +58,14 @@ pub(crate) fn capacity(block: &str) -> i32 {
         PIPE => 1000,
         SPRINKLER => 4000,
         STEAM_ENGINE => 8000,
+        GEOTHERMAL => 2000,
         _ => 0,
     }
 }
 
-/// Quem recebe água de canos e bombas. A bomba não recebe: ela só puxa do mundo.
-fn receives(block: &str) -> bool {
-    matches!(block, PIPE | SPRINKLER | STEAM_ENGINE)
+/// Quem recebe de canos e bombas, por fluido. A bomba não recebe: ela só puxa do mundo.
+fn receives(block: &str, lava: bool) -> bool {
+    if lava { matches!(block, PIPE | GEOTHERMAL) } else { matches!(block, PIPE | SPRINKLER | STEAM_ENGINE) }
 }
 
 /// Blocos sem energia, que mostram o nível de água no lugar da carga.
@@ -67,6 +84,7 @@ fn push(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     if stored == 0 {
         return;
     }
+    let lava = is_lava(entity);
     let offset = number(entity, "WaterPort") as usize % 6;
     for i in 0..6 {
         if stored == 0 {
@@ -76,21 +94,26 @@ fn push(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
         let delta = face.normal();
         let target = std::array::from_fn(|axis| pos[axis] + delta[axis]);
         host.change_mod_block_entity(target, &mut |other| {
-            if !receives(&other.id) {
+            let theirs = water(other);
+            // Fluidos não se misturam: um cano com água não recebe lava, e vice-versa.
+            if !receives(&other.id, lava) || (theirs > 0 && is_lava(other) != lava) {
                 return;
             }
             let other_limit = capacity(&other.id);
-            let theirs = water(other);
             let offered = share(stored, limit, theirs, other_limit, other.id == PIPE);
             let accepted = offered.min(other_limit - theirs).max(0);
             if accepted > 0 {
                 set_number(other, "Water", theirs + accepted);
+                set_number(other, "Fluid", i32::from(lava));
                 stored -= accepted;
             }
         });
     }
     set_number(entity, "WaterPort", ((offset + 1) % 6) as i32);
     set_number(entity, "Water", stored);
+    if stored == 0 {
+        set_number(entity, "Fluid", 0);
+    }
 }
 
 /// Quanto oferecer a um vizinho. Entre canos, a diferença de nível proporcional (a água
@@ -112,6 +135,20 @@ fn still_water_around(host: &dyn Host, [x, y, z]: [i32; 3]) -> i32 {
         .count() as i32
 }
 
+/// Lava parada encostada (seis faces).
+fn still_lava_around(host: &dyn Host, [x, y, z]: [i32; 3]) -> i32 {
+    [[x + 1, y, z], [x - 1, y, z], [x, y, z + 1], [x, y, z - 1], [x, y - 1, z], [x, y + 1, z]].into_iter()
+        .filter(|&side| host.block(side) == "minecraft:lava"
+            && host.block_property(side, "level").is_none_or(|level| level == "0"))
+        .count() as i32
+}
+
+/// Vazão da bomba em mB/t e o fluido: água quando houver, senão lava, bem mais lenta.
+pub(crate) fn pump_source(water_sources: i32, lava_sources: i32) -> (i32, bool) {
+    if water_sources > 0 { (pump_rate(water_sources), false) }
+    else { (lava_sources.clamp(0, PUMP_SOURCES) * LAVA_PER_SOURCE, lava_sources > 0) }
+}
+
 /// Vazão da bomba em mB/t pelo número de fontes encostadas.
 pub(crate) fn pump_rate(sources: i32) -> i32 {
     sources.clamp(0, PUMP_SOURCES) * PUMP_PER_SOURCE
@@ -127,11 +164,21 @@ fn sense_due(entity: &mut ModBlockEntity, pos: [i32; 3]) -> bool {
 /// Bomba: com energia, enche o tanque com a água parada encostada e empurra pelos canos.
 pub(crate) fn pump(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     if sense_due(entity, pos) {
-        set_number(entity, "Info", pump_rate(still_water_around(host, pos)));
+        let water_sources = still_water_around(host, pos);
+        let lava_sources = if water_sources == 0 { still_lava_around(host, pos) } else { 0 };
+        let (rate, lava) = pump_source(water_sources, lava_sources);
+        set_number(entity, "Info", rate);
+        set_number(entity, "PumpLava", i32::from(lava));
     }
     let rate = number(entity, "Info");
     let limit = capacity(PUMP);
-    let stored = water(entity);
+    let mut stored = water(entity);
+    let lava = number(entity, "PumpLava") == 1;
+    if is_lava(entity) != lava {
+        // Trocou de fonte: o resto do tanque se perde, para não misturar.
+        stored = 0;
+        set_number(entity, "Fluid", i32::from(lava));
+    }
     let energy = number(entity, "energy");
     let status = if rate == 0 {
         NO_WATER
@@ -142,9 +189,11 @@ pub(crate) fn pump(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     } else {
         set_number(entity, "energy", energy - PUMP_POWER);
         set_number(entity, "Water", (stored + rate).min(limit));
+        set_number(entity, "Fluid", i32::from(lava));
         set_number(entity, "Total", number(entity, "Total").saturating_add(rate));
         1
     };
+    if status != 1 { set_number(entity, "Water", stored); }
     set_number(entity, "Status", status);
     push(host, pos, entity);
 }

@@ -434,6 +434,28 @@ for key, pt, en in [
  ('veio.guide.role.output', 'Saída', 'Output'),
 ]:
  label(key, pt, en)
+# Grande indústria (0.20): blocos do Guia da Grande Indústria, o terceiro livro.
+help.update({
+ "research_lab":(
+ "Pesquisa da fábrica: entregue\ncentenas de peças. Consome 2/s\nde cada entrada com 24 FE/t.\nVários laboratórios somam.",
+ "Factory research: deliver\nhundreds of parts. Eats 2/s\nper input with 24 FE/t.\nSeveral labs add up."),
+ "fabricator":(
+ "Três entradas: motor,\nprocessador e aço ou\nengrenagens. Faz o núcleo de\nautomação e o kit Mk.II.",
+ "Three inputs: motor,\nprocessor and steel or\ngears. Makes the automation\ncore and the Mk.II kit."),
+ "factory_monitor":(
+ "Estatísticas da dimensão:\nmáquinas paradas e itens\nproduzidos e gastos por\nminuto. Avisa os problemas.",
+ "Dimension statistics:\nidle machines and items\nmade and used per minute.\nWarns about problems."),
+ "chunk_anchor":(
+ "Mantém o chunk carregado\nmesmo longe de você.\nGasta 32 FE/t; sem energia\nsolta o chunk em 5 s.",
+ "Keeps its chunk loaded\neven when you are far.\nUses 32 FE/t; without power\nreleases it after 5 s."),
+ "express_belt":(
+ "Mesmas curvas e rampas.\nTransporta até 10 itens/s,\no dobro da rápida.\nChave fixa a direção.",
+ "Same turns and ramps.\nCarries up to 10 items/s,\ntwice the fast belt.\nWrench locks direction."),
+ "belt_tunnel":(
+ "Coloque dois, na mesma\ndireção, até 6 blocos.\nA entrada passa os itens\npor baixo até a saída.",
+ "Place two facing the same\nway, up to 6 blocks apart.\nThe entrance passes items\nunderneath to the exit."),
+})
+industry_order=["research_lab","fabricator","factory_monitor","chunk_anchor","express_belt","belt_tunnel"]
 categories=[
  ("Extração e processamento","Mining and processing",["drill","drill_mk2","drill_mk3","press","assembler","cutter","integrator","crusher","alloy_furnace","electronics"]),
  ("Lavoura e comida","Farming and food",["harvester","planter","sprinkler","grow_lamp","tree_farm","ranch","mill","electric_furnace","kitchen","pantry"]),
@@ -444,7 +466,7 @@ categories=[
 order=[name for _,_,names in categories for name in names]
 # Blocos da vila operária: consulta no Guia da Vila Operária (fim deste arquivo).
 village_order=["farm_post","field_marker","shepherd_post","pen_marker","barn","silo","hauler_post","foreman_desk","control_center","barracks","house","shop","town_hall","well"]
-assert set(order)|set(village_order)==set(help), (set(order)|set(village_order))^set(help)
+assert set(order)|set(village_order)|set(industry_order)==set(help), (set(order)|set(village_order)|set(industry_order))^set(help)
 for name,(pt,en) in help.items():
  label(f"veio.help.{name}",pt,en)
 
@@ -532,6 +554,18 @@ slot_en={
  "foreman_desk":["Food for the foreman and the posts.","Food for the foreman and the posts.","Food for the foreman and the posts.","Emeralds for rehiring."],
  "contract_hub":["First ingredient in the displayed order.","Second ingredient in the displayed order.","First reward.","Second reward."],
 }
+slothelp.update({
+ "research_lab":["Primeira peça da pesquisa atual.","Segunda peça da pesquisa atual."],
+ "fabricator":["Coloque DOIS motores.","Coloque processadores.","Aço (núcleo) ou engrenagens (kit Mk.II).","Recolha o produto."],
+ "express_belt":["Itens guardados neste trecho da esteira."],
+ "belt_tunnel":["Itens a caminho da saída do túnel."],
+})
+slot_en.update({
+ "research_lab":["First part of the current research.","Second part of the current research."],
+ "fabricator":["Put TWO motors.","Put processors.","Steel (core) or gears (Mk.II kit).","Collect the product."],
+ "express_belt":["Items held by this conveyor segment."],
+ "belt_tunnel":["Items on their way to the tunnel exit."],
+})
 for block,lines in slothelp.items():
  for i,line in enumerate(lines): label(f"veio.slothelp.{block}.{i}",line,slot_en[block][i])
 label("veio.slothelp.merger.0", "A: lateral amarela. Olhando para a saída, fica à esquerda.", "A: yellow side. Left when facing the outlet.")
@@ -549,6 +583,7 @@ label("veio.guide.role.output","Saída","Output")
 label("veio.guide.role.fuel","Combust.","Fuel")
 label("veio.guide.role.input1","Ent.1","In 1")
 label("veio.guide.role.input2","Ent.2","In 2")
+label("veio.guide.role.input3","Ent.3","In 3")
 label("veio.guide.role.output1","Sai.1","Out 1")
 label("veio.guide.role.output2","Sai.2","Out 2")
 label("veio.guide.role.fertilizer","Adubo","Fertilizer")
@@ -753,6 +788,8 @@ label("veio.guide.group.plants","Plantas, folhas ou mudas","Plants, leaves or sa
 label("veio.guide.group.coal","Carvão","Coal")
 label("veio.guide.recipes","Receitas das máquinas","Machine recipes")
 label("veio.guide.alt","alternativa","alternate")
+label("veio.guide.per_minute"," /min · %ss"," /min · %ss")
+label("veio.metric.utilization_max","Tempo ativo %s%% · máx. %s ciclos/min","Active %s%% · max %s cycles/min")
 def name_component(item):
  if item.startswith("@"):
   return {"translate":f"veio.guide.group.{item[1:]}"}
@@ -775,10 +812,18 @@ for machine in machines:
   extra.append({"text":"\n"})
   for r in chunk:
    extra.append({"text":"\n"})
+   # Como no Satisfactory: cada item com o ritmo de uma máquina sem módulo, em itens por
+   # minuto, e o ciclo no fim. Duas prensas de 40/min enchem um montador que pede 80/min.
+   def rate(count):
+    per_minute=count*1200/r["ticks"]
+    return f"{per_minute:.0f}" if per_minute>=10 else f"{per_minute:.1f}".replace(".",",").replace(",0","")
    for i,(item,count) in enumerate(r["in"]):
     if i: extra.append({"text":" + "})
-    extra.extend([{"text":f"{count} "},name_component(item)])
-   extra.extend([{"text":" > ","color":"dark_gray"},{"text":f"{r['out'][1]} "},name_component(r["out"][0])])
+    extra.extend([{"text":f"{rate(count)} "},name_component(item)])
+   extra.extend([{"text":" > ","color":"dark_gray"},{"text":f"{rate(r['out'][1])} "},name_component(r["out"][0])])
+   seconds=r["ticks"]/20
+   cycle=f"{seconds:.0f}" if seconds==int(seconds) else f"{seconds:.1f}".replace(".",",")
+   extra.append({"translate":"veio.guide.per_minute","with":[cycle],"color":"dark_gray"})
    if r.get("alt"):
     extra.extend([{"text":" ("},{"translate":"veio.guide.alt","italic":True},{"text":")"}])
   extra.extend([{"text":"\n"},{"translate":"veio.guide.recipes","color":"dark_blue","click_event":{"action":"change_page","page":recipe_index}}])
@@ -991,6 +1036,156 @@ for name,item,pt,en,pdesc,edesc in vstages:
   "criteria":{"obtain":{"trigger":"minecraft:inventory_changed","conditions":{"items":[{"items":item}]}}}})
  vparent="veio:village/"+name
 print("Village guide pages:",len(vpages))
+# ---------- Guia da Grande Indústria ----------
+# Terceiro livro: pesquisa, razões, cadeia funda, monitor, âncora, logística nova e o grande
+# projeto. Entregue pelo avanço do aço, quando a fábrica passa a crescer por volume.
+for key, pt, en in [
+ ("block.veio.research_lab", "Laboratório de pesquisa", "Research Lab"),
+ ("block.veio.fabricator", "Fabricadora", "Fabricator"),
+ ("block.veio.factory_monitor", "Monitor da fábrica", "Factory Monitor"),
+ ("block.veio.chunk_anchor", "Âncora de chunk", "Chunk Anchor"),
+ ("block.veio.express_belt", "Esteira expressa", "Express Conveyor"),
+ ("block.veio.belt_tunnel", "Túnel de esteira", "Conveyor Tunnel"),
+ ("item.veio.motor", "Motor elétrico", "Electric Motor"),
+ ("item.veio.processor", "Processador", "Processor"),
+ ("item.veio.automation_core", "Núcleo de automação", "Automation Core"),
+ ("item.veio.mk2_kit", "Kit Mk.II", "Mk.II Kit"),
+ ("item.veio.clipboard", "Prancheta", "Clipboard"),
+ ("veio.guide.short.express_belt", "Esteira expressa", "Express conveyor"),
+ ("veio.guide.short.belt_tunnel", "Túnel", "Tunnel"),
+ ("veio.mk2", "Mk.II", "Mk.II"),
+ ("veio.research.title", "Pesquisa %s/%s: %s", "Research %s/%s: %s"),
+ ("veio.research.metallurgy", "Metalurgia", "Metallurgy"),
+ ("veio.research.electronics", "Eletrônica", "Electronics"),
+ ("veio.research.automation", "Automação", "Automation"),
+ ("veio.research.scale", "Escala", "Scale"),
+ ("veio.research.metallurgy.unlocks", "Libera bateria, vapor e túnel", "Unlocks battery, steam, tunnel"),
+ ("veio.research.electronics.unlocks", "Libera solar, Tesla e âncora", "Unlocks solar, Tesla, anchor"),
+ ("veio.research.automation.unlocks", "Libera fabricadora e broca III", "Unlocks fabricator, drill III"),
+ ("veio.research.scale.unlocks", "Libera a esteira expressa", "Unlocks the express belt"),
+ ("veio.research.complete", "Todas as pesquisas concluídas.", "All research complete."),
+ ("veio.research.done", "Pesquisa concluída: %s. Novas receitas no livro.", "Research complete: %s. New recipes in the book."),
+ ("veio.monitor.counts", "%s ativas · %s esperando · %s paradas", "%s active · %s waiting · %s stuck"),
+ ("veio.monitor.header", "Item          produz  gasta /min", "Item           made   used /min"),
+ ("veio.monitor.empty", "Nenhuma máquina medida ainda.", "No machine measured yet."),
+ ("veio.monitor.alert", "Veio: %s máquinas paradas (saída cheia, energia ou desgaste). Uma em %s %s %s.", "Veio: %s machines stuck (full output, power or wear). One at %s %s %s."),
+ ("veio.hint.anchor", "Mantém o chunk carregado: %s FE/t", "Keeps the chunk loaded: %s FE/t"),
+ ("veio.anchor.on", "Chunk carregado", "Chunk loaded"),
+ ("veio.anchor.off", "Sem energia: o chunk será solto", "No power: the chunk will unload"),
+ ("veio.hint.tunnel", "Par na mesma direção, até %s blocos", "Pair facing the same way, up to %s blocks"),
+ ("veio.lava", "Lava %s / %s mB", "Lava %s / %s mB"),
+ ("veio.metric.lava", "Lava %s de %s mB", "Lava %s of %s mB"),
+ ("veio.project.phase1", "Torre: fundação de aço", "Tower: steel foundation"),
+ ("veio.project.phase2", "Torre: fiação e motores", "Tower: wiring and motors"),
+ ("veio.project.phase3", "Torre: central de controle", "Tower: control room"),
+ ("veio.project.phase4", "Torre: transmissor", "Tower: transmitter"),
+ ("veio.project.stage", "Grande projeto: fase %s de %s", "Grand project: phase %s of %s"),
+ ("veio.project.done", "A torre de transmissão está pronta. A central volta a exportar.", "The transmission tower is done. The hub goes back to exporting."),
+ ("advancement.veio.research.metallurgy.title", "Metalurgia", "Metallurgy"),
+ ("advancement.veio.research.metallurgy.description", "Pesquise com 128 aços e 128 engrenagens.", "Research with 128 steel and 128 gears."),
+ ("advancement.veio.research.electronics.title", "Eletrônica", "Electronics"),
+ ("advancement.veio.research.electronics.description", "Pesquise com 128 circuitos e 128 molduras.", "Research with 128 circuits and 128 frames."),
+ ("advancement.veio.research.automation.title", "Automação", "Automation"),
+ ("advancement.veio.research.automation.description", "Pesquise com 64 motores e 64 processadores.", "Research with 64 motors and 64 processors."),
+ ("advancement.veio.research.scale.title", "Escala", "Scale"),
+ ("advancement.veio.research.scale.description", "Pesquise com 32 núcleos de automação e 256 aços.", "Research with 32 automation cores and 256 steel."),
+ ("advancement.veio.grand_project.title", "Torre de transmissão", "Transmission Tower"),
+ ("advancement.veio.grand_project.description", "Conclua as quatro fases do grande projeto.", "Finish the four phases of the grand project."),
+]:
+ label(key, pt, en)
+for name,texts in {
+ "motor":("Aço e quatro fiações no integrador. Base da automação.","Steel and four wires in an integrator. Base of automation."),
+ "processor":("Dois circuitos e dois silícios no montador de circuitos.","Two circuits and two silicon in a circuit assembler."),
+ "automation_core":("Motores, processadores e aço na fabricadora. Pesquisa e grande projeto.","Motors, processors and steel in a fabricator. Research and grand project."),
+ "mk2_kit":("Botão direito numa máquina: ciclo na metade, dobro de energia por tick. Agachar + chave devolve.","Right-click a machine: half the cycle, double power per tick. Sneak + wrench returns it."),
+ "clipboard":("Agachado num braço, divisor ou unificador: copia filtro e prioridade. Em pé: cola.","Sneak on an arm, splitter or merger: copies filter and priority. Standing: pastes."),
+}.items(): label(f"veio.componenthelp.{name}",*texts)
+for name in industry_order:
+ label(f"veio.help.{name}", *help[name])
+ipages=[None]
+def ipage(pt,en):
+ key=f"veio.industry.page.{len(ipages)+1:02}"
+ label(key,pt,en)
+ ipages.append({"translate":key})
+ return len(ipages)
+i_intro=ipage(
+ "A grande indústria\n\nCom o aço, a fábrica passa a crescer por volume: as receitas novas saem de pesquisas que pedem centenas de peças.\n\nMonte linhas que rodem sozinhas e meça o ritmo de cada uma.",
+ "Large-scale industry\n\nWith steel, the factory grows by volume: new recipes come from research that asks for hundreds of parts.\n\nBuild lines that run on their own and measure each one.")
+i_research=ipage(
+ "Laboratório\n\nEntregue as duas peças da pesquisa atual. Ele gasta 2 de cada por segundo com 24 FE/t.\n\nO progresso é do mundo: vários laboratórios somam e quebrar um não perde nada. Concluída, todos ganham as receitas.",
+ "Research lab\n\nDeliver both parts of the current research. It eats 2 of each per second with 24 FE/t.\n\nProgress belongs to the world: several labs add up and breaking one loses nothing. When done, everyone gets the recipes.")
+i_tree=ipage(
+ "Pesquisas\n\n1 Metalurgia: 128 aço, 128 engr.\nbateria, vapor, túnel, monitor\n2 Eletrônica: 128 circ., 128 mold.\nsolar, Tesla, módulos, âncora\n3 Automação: 64 motores, 64 proc.\nfabricadora, broca III\n4 Escala: 32 núcleos, 256 aço\nesteira expressa",
+ "Research\n\n1 Metallurgy: 128 steel, 128 gears\nbattery, steam, tunnel, monitor\n2 Electronics: 128 circ., 128 frames\nsolar, Tesla, modules, anchor\n3 Automation: 64 motors, 64 proc.\nfabricator, drill III\n4 Scale: 32 cores, 256 steel\nexpress belt")
+i_ratio=ipage(
+ "Razões\n\nAs receitas mostram itens por minuto de uma máquina sem módulo, e o ciclo.\n\nPrensa: 40 cobre > 40 chapas\nMontador: 60 chapas > 30 engr.\n\nTrês prensas alimentam duas montadoras (120 = 2 x 60).",
+ "Ratios\n\nRecipes show items per minute of one machine without modules, and the cycle.\n\nPress: 40 copper > 40 plates\nAssembler: 60 plates > 30 gears\n\nThree presses feed two assemblers (120 = 2 x 60).")
+i_panel=ipage(
+ "No painel\n\nAcima de cada slot, o painel mostra quanto a máquina pede e entrega por minuto, já com módulo e Mk.II.\n\nEsteiras: comum 150/min, rápida 300/min, expressa 600/min. Some as máquinas até encher a esteira.",
+ "On the panel\n\nAbove each slot the panel shows what the machine asks and gives per minute, with module and Mk.II.\n\nBelts: basic 150/min, fast 300/min, express 600/min. Add machines until the belt is full.")
+i_chain=ipage(
+ "Cadeia funda\n\nMotor: aço + 4 fiações (integrador)\nProcessador: 2 circuitos + 2 silícios\nNúcleo: 2 motores, 2 proc., 4 aços (fabricadora)\nKit Mk.II: 2 motores, 1 proc., 8 engr.\n\nO núcleo alimenta a pesquisa de escala e o grande projeto.",
+ "Deep chain\n\nMotor: steel + 4 wires (integrator)\nProcessor: 2 circuits + 2 silicon\nCore: 2 motors, 2 proc., 4 steel (fabricator)\nMk.II kit: 2 motors, 1 proc., 8 gears\n\nThe core feeds the scale research and the grand project.")
+i_mk2=ipage(
+ "Kit Mk.II\n\nBotão direito com o kit numa máquina de receita ou broca: ciclo na metade, dobro de energia por tick e 25% mais poluição.\n\nSoma-se ao módulo. Agachar com a chave tira o módulo, depois o kit.",
+ "Mk.II kit\n\nRight-click a recipe machine or drill with the kit: half the cycle, double power per tick and 25% more pollution.\n\nIt stacks with the module. Sneak with the wrench to remove the module, then the kit.")
+i_monitor=ipage(
+ "Monitor da fábrica\n\nMostra as máquinas da dimensão: ativas, esperando insumo e paradas.\n\nLista os 9 itens de maior fluxo: produção e gasto por minuto. Gasto em vermelho falta na linha.\n\nA cada 30 s avisa onde há máquina parada.",
+ "Factory monitor\n\nShows the machines in the dimension: active, waiting for input and stuck.\n\nLists the 9 busiest items: made and used per minute. Red usage is short on the line.\n\nEvery 30 s it warns where a machine is stuck.")
+i_anchor=ipage(
+ "Âncora de chunk\n\nCom 32 FE/t, mantém o chunk dela carregado: a mina distante continua rodando com você longe.\n\nSem energia por 5 s, solta o chunk. Quebrada, solta em 20 s. Uma por chunk basta.",
+ "Chunk anchor\n\nWith 32 FE/t it keeps its chunk loaded: the distant mine keeps running while you are away.\n\nWithout power for 5 s it releases the chunk. Broken, it releases in 20 s. One per chunk is enough.")
+i_logistics=ipage(
+ "Logística nova\n\nTúnel: dois na mesma direção, até 6 blocos. Itens passam por baixo de muros e trilhos.\n\nPrancheta: agachado copia filtro e prioridade de braço ou divisor; em pé, cola em outro.\n\nEsteira expressa: 10 itens/s.",
+ "New logistics\n\nTunnel: two facing the same way, up to 6 blocks. Items pass under walls and rails.\n\nClipboard: sneak to copy an arm or splitter's filter and priority; stand to paste onto another.\n\nExpress belt: 10 items/s.")
+i_lava=ipage(
+ "Lava encanada\n\nA bomba encostada em lava parada (sem água ao lado) puxa 5 mB/t por fonte.\n\nOs canos levam a lava ao gerador geotérmico: 1.000 mB valem um balde, sem baldes vazios. Cada cano leva um fluido só.",
+ "Piped lava\n\nA pump touching still lava (and no water) draws 5 mB/t per source.\n\nPipes carry it to the geothermal generator: 1,000 mB is one bucket, with no empty buckets. Each pipe holds one fluid.")
+i_project=ipage(
+ "Grande projeto\n\nDepois dos quatro contratos, a central pede a torre de transmissão em quatro fases:\n\n1 200 aço, 100 módulos\n2 300 circuitos, 100 motores\n3 150 proc., 50 núcleos\n4 200 núcleos, 50 kits Mk.II\n\nEla recolhe aos poucos e paga cada fase.",
+ "Grand project\n\nAfter the four contracts, the hub asks for the transmission tower in four phases:\n\n1 200 steel, 100 modules\n2 300 circuits, 100 motors\n3 150 proc., 50 cores\n4 200 cores, 50 Mk.II kits\n\nIt collects slowly and pays each phase.")
+i_blocks=len(ipages)+1;ipages.append(None)
+irefs={}
+for name in industry_order:
+ reference_labels(name)
+ irefs[name]=len(ipages)+1
+ ipages.append({"text":"","extra":[{"translate":f"block.veio.{name}","bold":True},{"text":"\n"},
+  {"translate":f"veio.guide.use.{name}"},{"text":"\n"},{"translate":f"veio.guide.craft.{name}","color":"dark_gray"},{"text":"\n"},
+  {"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}}]})
+label("veio.industry.blocks","Blocos","Blocks")
+extra=[{"translate":"veio.industry.blocks","bold":True},{"text":"\n"}]
+for name in industry_order:
+ extra.extend([{"translate":f"block.veio.{name}","color":"dark_blue","underlined":True,
+  "click_event":{"action":"change_page","page":irefs[name]}},{"text":"\n"}])
+extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
+ipages[i_blocks-1]={"text":"","extra":extra}
+ilinks=[("Começar","Start here",i_intro),("Laboratório","Research lab",i_research),("Pesquisas","Research tree",i_tree),
+ ("Razões","Ratios",i_ratio),("Razões no painel","Ratios on the panel",i_panel),("Cadeia funda","Deep chain",i_chain),
+ ("Kit Mk.II","Mk.II kit",i_mk2),("Monitor","Monitor",i_monitor),("Âncora de chunk","Chunk anchor",i_anchor),
+ ("Logística nova","New logistics",i_logistics),("Lava encanada","Piped lava",i_lava),("Grande projeto","Grand project",i_project),("Blocos","Blocks",i_blocks)]
+label("veio.industry.title","Guia da Grande Indústria","Large Industry Guide")
+extra=[{"translate":"veio.industry.title","bold":True},{"text":"\n"}]
+for n,(pt,en,target) in enumerate(ilinks):
+ key=f"veio.industry.contents.{n}";label(key,pt,en)
+ extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
+ipages[0]={"text":"","extra":extra}
+assert len(ipages)<=100
+ibook={"minecraft:written_book_content":{"title":{"raw":"Grande Indústria"},"author":"Veio",
+ "generation":0,"resolved":True,"pages":[{"raw":p} for p in ipages]},
+ "minecraft:custom_name":{"translate":"veio.industry.title","italic":False}}
+write(f"{D}/loot_table/tutorial/industry_guide.json",{"type":"minecraft:generic",
+ "pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:written_book",
+ "functions":[{"function":"minecraft:set_components","components":ibook}]}]}]})
+write(f"{D}/recipe/industry_guide.json",{"type":"minecraft:crafting_shapeless","category":"misc",
+ "ingredients":["minecraft:book","veio:gear"],
+ "result":{"id":"minecraft:written_book","count":1,"components":ibook}})
+label("veio.industry.welcome","Você recebeu o Guia da Grande Indústria: pesquisa, razões e o grande projeto.","You received the Large Industry Guide: research, ratios and the grand project.")
+write(f"{D}/advancement/tutorial/industry.json",{"parent":"veio:steel",
+ "criteria":{"steel":{"trigger":"minecraft:inventory_changed","conditions":{"items":[{"items":"veio:steel_plate"}]}}},
+ "rewards":{"loot":["veio:tutorial/industry_guide"],"recipes":["veio:industry_guide"],"function":"veio:tutorial/industry_welcome"}})
+p=root/D/"function/tutorial/industry_welcome.mcfunction";p.parent.mkdir(parents=True,exist_ok=True)
+p.write_text('tellraw @s {"translate":"veio.industry.welcome","color":"gold"}\n',encoding="utf-8")
+print("Industry guide pages:",len(ipages))
 from build_operations import add_labels
 add_labels(langs)
 for code,data in langs.items():write(f"{A}/lang/{code}.json",data)

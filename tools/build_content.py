@@ -90,6 +90,13 @@ BLOCKS = {
     "pipe": ("pipe", None, 0, [], 1.0),
     "sprinkler": ("sprinkler", None, 1, [], 1.0),
     "hydro_turbine": ("machine", "steel", 1, [], 2.5),
+    # Grande indústria (0.20): pesquisa, cadeia funda, monitor, âncora e esteira expressa.
+    "research_lab": ("machine", "iron", 2, [], 2.0),
+    "fabricator": ("machine", "steel", 4, [3], 2.5),
+    "factory_monitor": ("machine", "iron", 1, [], 1.5),
+    "chunk_anchor": ("machine", "steel", 1, [], 3.0),
+    "express_belt": ("belt", None, 1, [], 1.5),
+    "belt_tunnel": ("tunnel", None, 1, [], 1.5),
 }
 
 # Itens sem bloco: modelo vanilla de referência para os componentes de dados e tamanho da pilha.
@@ -111,17 +118,23 @@ ITEMS = {
     "productivity_module": ("minecraft:echo_shard", 16),
     "flour": ("minecraft:sugar", 64),
     "biomass": ("minecraft:wheat", 64),
+    "motor": ("minecraft:iron_ingot", 64),
+    "processor": ("minecraft:redstone", 64),
+    "automation_core": ("minecraft:echo_shard", 16),
+    "mk2_kit": ("minecraft:iron_ingot", 16),
+    "clipboard": ("minecraft:paper", 1),
 }
 
 TABS = {
     "industry": ("veio:press", ["drill", "drill_mk2", "drill_mk3", "press", "assembler", "cutter", "integrator",
         "crusher", "alloy_furnace", "electronics", "electric_furnace", "contract_hub", "wrench", "copper_plate", "iron_plate",
         "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module", "speed_module",
-        "efficiency_module", "productivity_module"]),
+        "efficiency_module", "productivity_module", "fabricator", "research_lab", "factory_monitor", "chunk_anchor",
+        "motor", "processor", "automation_core", "mk2_kit"]),
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
         "geothermal", "hydro_turbine", "solar", "battery", "pole", "steel_pole", "cable", "pump", "pipe",
         "minecraft:coal", "minecraft:lava_bucket"]),
-    "logistics": ("veio:belt", ["belt", "fast_belt", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench"]),
+    "logistics": ("veio:belt", ["belt", "fast_belt", "express_belt", "belt_tunnel", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "wrench", "clipboard"]),
     "world": ("veio:harvester", ["harvester", "planter", "sprinkler", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "mill", "kitchen",
         "pantry", "flour", "biomass", "tesla", "barracks", "house", "shop", "town_hall", "well", "repair_kit", "minecraft:bone_meal"]),
@@ -198,7 +211,7 @@ def model(kind, name, tier):
             box([6, 15, 6], [10, 16, 10], "#tip"),
         ]
     if kind in ("belt", "splitter", "merger"):
-        rail = "veio:block/fast_belt_rail" if name == "fast_belt" else "veio:block/belt_rail"
+        rail = {"fast_belt": "veio:block/fast_belt_rail", "express_belt": "veio:block/express_belt_rail"}.get(name, "veio:block/belt_rail")
         textures = {
             "base": "minecraft:block/smooth_stone", "base_side": "minecraft:block/smooth_stone_slab_side",
             "belt": "veio:block/belt", "rail": rail, "iron": "minecraft:block/iron_block",
@@ -287,6 +300,18 @@ def model(kind, name, tier):
             box([0, 0, 6], [16, 3, 10], "#wire"),
             box([5, 0, 5], [11, 4, 11], "#joint"),
         ]
+    if kind == "tunnel":
+        # Boca de túnel: esteira entrando sob uma cobertura de aço com a borda em vermelho.
+        textures = {"base": "minecraft:block/smooth_stone", "base_side": "minecraft:block/smooth_stone_slab_side",
+                    "belt": "veio:block/belt", "hood": "minecraft:block/polished_deepslate",
+                    "rail": "veio:block/express_belt_rail", "particle": "minecraft:block/polished_deepslate"}
+        return textures, [
+            box([0, 0, 0], [16, 2, 16], {"up": "#base", "down": "#base", "*": "#base_side"}),
+            box([2, 2, 0], [14, 3, 16], "#belt"),
+            box([0, 2, 6], [2, 8, 16], "#hood"),
+            box([14, 2, 6], [16, 8, 16], "#hood"),
+            box([0, 8, 6], [16, 10, 16], {"north": "#rail", "*": "#hood"}),
+        ]
     if kind == "pipe":
         # Cano de cobre com uma janela de vidro no meio: liga nas seis faces.
         textures = {"pipe": "minecraft:block/cut_copper", "joint": "minecraft:block/waxed_copper_block",
@@ -346,6 +371,7 @@ SHAPES = {
     "pipe": [[0.375, 0.375, 0, 0.625, 0.625, 1], [0, 0.375, 0.375, 1, 0.625, 0.625],
              [0.375, 0, 0.375, 0.625, 1, 0.625]],
     "sprinkler": [[0.3125, 0, 0.3125, 0.6875, 0.625, 0.6875]],
+    "tunnel": [[0, 0, 0, 1, 0.625, 1]],
 }
 
 def write(path, value):

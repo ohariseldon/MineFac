@@ -1,0 +1,26 @@
+{
+  "parent": "veio:research/electronics",
+  "display": {
+    "icon": {
+      "id": "veio:motor"
+    },
+    "title": {
+      "translate": "advancement.veio.research.automation.title"
+    },
+    "description": {
+      "translate": "advancement.veio.research.automation.description"
+    },
+    "frame": "goal"
+  },
+  "criteria": {
+    "research": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:fabricator",
+      "veio:drill_mk3"
+    ]
+  }
+}

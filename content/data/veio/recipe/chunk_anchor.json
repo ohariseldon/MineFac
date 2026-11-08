@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:steel_plate",
+    "veio:circuit",
+    "minecraft:ender_pearl",
+    "minecraft:obsidian"
+  ],
+  "result": {
+    "id": "veio:chunk_anchor",
+    "count": 1
+  }
+}

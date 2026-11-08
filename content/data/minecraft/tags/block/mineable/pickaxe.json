@@ -56,6 +56,12 @@
     "veio:pump",
     "veio:pipe",
     "veio:sprinkler",
-    "veio:hydro_turbine"
+    "veio:hydro_turbine",
+    "veio:research_lab",
+    "veio:fabricator",
+    "veio:factory_monitor",
+    "veio:chunk_anchor",
+    "veio:express_belt",
+    "veio:belt_tunnel"
   ]
 }
