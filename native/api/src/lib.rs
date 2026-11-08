@@ -963,7 +963,7 @@ fn rare_nbt_key(name: &str) -> &'static JavaString {
 }
 
 #[inline(always)]
-pub(super) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -> T {
+pub(crate) fn with_nbt_key<T>(name: &str, read: impl FnOnce(&JavaString) -> T) -> T {
     read(nbt_key(name))
 }
 
@@ -1058,8 +1058,8 @@ fn published_signature(entity: &ModBlockEntity) -> (i32, i32, i32, bool) {
 /// Hash multiplicativo (o do rustc) para chaves pequenas consultadas todo tick: chunks e
 /// posições. Os mapas que o usam só são consultados por chave, nunca percorridos em ordem.
 #[derive(Default, Clone, Copy)]
-pub(super) struct FastHasher(u64);
-pub(super) type FastHash = std::hash::BuildHasherDefault<FastHasher>;
+pub(crate) struct FastHasher(u64);
+pub(crate) type FastHash = std::hash::BuildHasherDefault<FastHasher>;
 
 impl FastHasher {
     #[inline]
