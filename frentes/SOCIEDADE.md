@@ -18,7 +18,7 @@ ele **circula**.
           salários                compras (varejo)
 companhia ────────▶ famílias ────────────────▶ lojas (comerciantes independentes)
     ▲                  ▲                          │
-    │                  │ prefeito, assistência    │ atacado (70% do preço local)
+    │                  │ prefeito, assistência    │ atacado (75% do preço local)
     │                  │                          │
     └── atacado ───────┼──────────────────────────┘
                        │
@@ -97,8 +97,8 @@ novo entra em `PRODUCTS` com a sua camada; a praça do mercado e as missões usa
 
 - **Missões e praça do mercado (outra frente):** devem pagar em moedas pelas mesmas contas (a praça
   comprando bens da companhia = atacado; missões pagando a companhia = entrada de esmeralda como borda).
-- **Balanceamento:** salário (2 moedas por turno), margem do atacado (70%), impostos e preços
-  ficam para uma rodada de balanceamento.
+- **Balanceamento:** ver [ECONOMIA.md](ECONOMIA.md) (0.25) e `tools/sim_economy.py`.
+  
 
 ## Preços locais (oferta e procura)
 
@@ -147,8 +147,7 @@ cuidando do bem-estar, e por isso põe limites indiretos.
 
 - **População:** moradores, adultos, crianças, famílias, sem-teto (aldeões a 128 blocos sem casa).
 - **Emprego:** adultos empregados / adultos.
-- **PIB (moedas/dia):** produção (tarefas dos trabalhadores x 2 moedas) + comércio (vendas das lojas),
-  medido no último dia.
+- **PIB (moedas/dia):** consumo final (varejo do dia) + exportações (0.22+).
 - **IDH (0 a 1):** média geométrica de quatro dimensões por família, ponderada pelos moradores:
   alimentação (despensa e variedade), moradia (alvará, lotação, ar), serviços (saneamento, energia,
   comércio) e renda (renda por morador frente ao custo de vida).

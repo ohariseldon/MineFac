@@ -111,21 +111,41 @@ pub(crate) fn index(product: usize, day: i64) -> i32 {
     80 + (n % 41) as i32
 }
 
-/// Preço mundial cheio (sem saturação), em moedas.
-fn world(product: usize, day: i64) -> i32 {
+/// Valor de referência de um produto (índice 100%), em centésimos de moeda. É também a âncora do
+/// preço local nas lojas: o mesmo bem vale o mesmo dentro e fora, antes de oferta e procura.
+pub(crate) fn reference_cents(product: usize) -> i32 {
     let (_, _, base, tier) = PRODUCTS[product];
-    (base * tier_factor(tier) * index(product, day) / 10_000).max(1)
+    base * tier_factor(tier)
 }
 
-/// Unidades que o mundo absorve por dia a preço cheio (matéria-prima satura antes).
-fn absorb(tier: i32) -> i32 {
-    if tier == 0 { 32 } else { 64 }
+/// Preço mundial cheio do dia (sem saturação), em centésimos de moeda.
+pub(crate) fn world_cents(product: usize, day: i64) -> i32 {
+    reference_cents(product) * index(product, day) / 100
 }
 
-/// Preço de uma unidade com `pressure` unidades já despejadas no mercado.
-fn saturated(product: usize, day: i64, pressure: i32) -> i32 {
+/// Unidades por dia que o mundo absorve antes de o preço cair à metade. Volumes maiores para
+/// matéria-prima e processados, menores para eletrônicos e módulos (mercados de nicho).
+pub(crate) fn absorb(tier: i32) -> i32 {
+    match tier { 0 => 256, 1 | 2 => 512, 3 => 256, _ => 128 }
+}
+
+/// Pressão sobre o mercado à vista: metade da média recente mais o que já foi vendido hoje.
+fn pressure(trade: &Trade, product: usize) -> i32 {
+    trade.recent[product] / 2 + trade.today[product]
+}
+
+/// Piso da saturação: o mundo sempre paga pelo menos isto do preço cheio, em % (valor de sucata).
+pub(crate) const SCRAP: i32 = 25;
+
+/// Preço de uma unidade, em centésimos, com `pressure` unidades já despejadas no mercado à vista.
+pub(crate) fn spot_cents(product: usize, day: i64, pressure: i32) -> i32 {
     let tier = PRODUCTS[product].3;
-    (world(product, day) * absorb(tier) / (absorb(tier) + pressure.max(0))).max(1)
+    let full = world_cents(product, day);
+    (full * absorb(tier) / (absorb(tier) + pressure.max(0))).max(full * SCRAP / 100)
+}
+
+fn saturated(product: usize, day: i64, pressure: i32) -> i32 {
+    (spot_cents(product, day, pressure) / 100).max(1)
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -149,6 +169,8 @@ pub(crate) enum News {
 struct Trade {
     loaded: bool,
     reputation: i32,
+    /// Camada mais alta já aberta: mercado conquistado não fecha por um contrato perdido.
+    best: i32,
     issued: i32,
     contracts: Vec<Contract>,
     /// Exportações recentes por produto (média de alguns dias) e as do dia corrente.
@@ -186,13 +208,20 @@ fn with_trade<T>(dimension: &str, change: impl FnOnce(&mut Trade) -> T) -> T {
     change(trade)
 }
 
-/// Muda a reputação e anota quando uma camada nova abre.
+/// Camada aberta agora: a da reputação, nunca abaixo da melhor já conquistada.
+fn open_tier(trade: &Trade) -> i32 {
+    unlocked_tier(trade.reputation).max(trade.best)
+}
+
+/// Muda a reputação e anota quando uma camada nova abre (a camada aberta nunca volta).
 fn reputation(trade: &mut Trade, delta: i32) {
-    let before = unlocked_tier(trade.reputation);
+    let before = open_tier(trade);
+    // Guarda a camada aberta antes de mexer: cair de reputação não fecha mercado.
+    trade.best = trade.best.max(before);
     trade.reputation = (trade.reputation + delta).max(0);
-    let after = unlocked_tier(trade.reputation);
-    if after > before {
-        trade.news.push(News::Opened(after));
+    trade.best = trade.best.max(open_tier(trade));
+    if trade.best > before {
+        trade.news.push(News::Opened(trade.best));
     }
 }
 
@@ -215,7 +244,7 @@ fn new_day(trade: &mut Trade, day: i64) {
     reputation(trade, -(lost.len() as i32));
     while trade.contracts.len() < MAX_CONTRACTS {
         let taken: Vec<usize> = trade.contracts.iter().map(|contract| contract.product).collect();
-        let contract = issue(trade.reputation, trade.issued, day, &taken);
+        let contract = issue(open_tier(trade), trade.issued, day, &taken);
         trade.issued += 1;
         trade.news.push(News::Offered(contract.product, contract.need, contract.due - day));
         trade.contracts.push(contract);
@@ -224,8 +253,7 @@ fn new_day(trade: &mut Trade, day: i64) {
 
 /// Um contrato novo: produto da camada mais alta liberada (um em três, uma abaixo), que ainda não
 /// esteja em outro contrato; lote menor quanto mais complexo; prazo de 3 a 4 dias.
-pub(crate) fn issue(reputation: i32, number: i32, day: i64, taken: &[usize]) -> Contract {
-    let top = unlocked_tier(reputation);
+pub(crate) fn issue(top: i32, number: i32, day: i64, taken: &[usize]) -> Contract {
     let tier = if number % 3 == 2 { (top - 1).max(0) } else { top };
     let mut options: Vec<usize> = (0..PRODUCTS.len()).filter(|index| PRODUCTS[*index].3 == tier && !taken.contains(index)).collect();
     if options.is_empty() {
@@ -240,20 +268,20 @@ pub(crate) fn issue(reputation: i32, number: i32, day: i64, taken: &[usize]) -> 
 pub(crate) fn quote(dimension: &str, item: &str, day: i64) -> Option<i32> {
     let product = product(item)?;
     with_trade(dimension, |trade| {
-        (PRODUCTS[product].3 <= unlocked_tier(trade.reputation))
-            .then(|| saturated(product, day, trade.recent[product] + trade.today[product]))
+        (PRODUCTS[product].3 <= open_tier(trade))
+            .then(|| saturated(product, day, pressure(trade, product)))
     })
 }
 
 /// O mundo já compra este item (camada liberada)?
 pub(crate) fn open_market(dimension: &str, item: &str) -> bool {
-    product(item).is_some_and(|product| with_trade(dimension, |trade| PRODUCTS[product].3 <= unlocked_tier(trade.reputation)))
+    product(item).is_some_and(|product| with_trade(dimension, |trade| PRODUCTS[product].3 <= open_tier(trade)))
 }
 
 /// Paridade de importação: o que custa trazer uma unidade de fora (preço mundial + frete + tarifa).
 pub(crate) fn import_price(item: &str, day: i64) -> Option<i32> {
     let product = product(item)?;
-    Some((world(product, day) * (100 + IMPORT_FREIGHT + IMPORT_TARIFF) / 100).max(1))
+    Some((world_cents(product, day) * (100 + IMPORT_FREIGHT + IMPORT_TARIFF) / 10_000).max(1))
 }
 
 /// Tendência da bolsa: índice de hoje menos o de ontem, em pontos.
@@ -275,18 +303,19 @@ pub(crate) fn export(dimension: &str, at: [i32; 3], item: &str, count: u32, day:
     }
     // Uma trava só: cotação, saturação, contratos e reputação juntos.
     let total = with_trade(dimension, |trade| {
-        if PRODUCTS[product].3 > unlocked_tier(trade.reputation) {
+        if PRODUCTS[product].3 > open_tier(trade) {
             return 0;
         }
-        // Em centésimos de moeda: o prêmio de itens baratos não some no arredondamento.
+        // Em centésimos de moeda. O contrato é um comprador à parte: paga o preço cheio do dia mais o
+        // prêmio e não derruba o mercado à vista. O que sobra vai à vista, com saturação.
         let mut cents = 0;
         for _ in 0..count {
-            let price = saturated(product, day, trade.recent[product] + trade.today[product]);
-            trade.today[product] += 1;
-            cents += price * 100;
             if let Some(contract) = trade.contracts.iter_mut().find(|contract| contract.product == product && contract.done < contract.need) {
                 contract.done += 1;
-                cents += price * PREMIUM;
+                cents += world_cents(product, day) * (100 + PREMIUM) / 100;
+            } else {
+                cents += spot_cents(product, day, pressure(trade, product));
+                trade.today[product] += 1;
             }
         }
         let total = cents / 100;
@@ -294,7 +323,7 @@ pub(crate) fn export(dimension: &str, at: [i32; 3], item: &str, count: u32, day:
         let done: Vec<Contract> = trade.contracts.iter().filter(|contract| contract.done >= contract.need).cloned().collect();
         trade.contracts.retain(|contract| contract.done < contract.need);
         for contract in &done {
-            let premium = saturated(contract.product, day, 0) * contract.need * PREMIUM / 100;
+            let premium = world_cents(contract.product, day) * contract.need * PREMIUM / 10_000;
             trade.news.push(News::Fulfilled(contract.product, premium));
         }
         reputation(trade, done.len() as i32);
@@ -358,17 +387,24 @@ pub(crate) fn roll(dimension: &str, time: i64) {
 /// Formato `Trade`: [versão, reputação, emitidos, contratos (produto, pedido, feito, prazo)...] e
 /// `TradeRecent`: pares (produto, unidades) só dos produtos com pressão.
 pub(crate) fn persist(dimension: &str, entity: &mut ModBlockEntity, time: i64) {
-    const VERSION: i32 = 2;
+    const VERSION: i32 = 3;
     with_trade(dimension, |trade| {
         if !trade.loaded {
             trade.loaded = true;
             if let Some(Tag::IntArray(values)) = entity.nbt.get(nbt_key("Trade")) {
-                // A 0.23 não tinha versão: [reputação, emitidos, contratos...].
-                let body = if values.first() == Some(&VERSION) { &values[1..] } else { &values[..] };
+                // 0.23: [reputação, emitidos, contratos...]; 0.24: [2, reputação, emitidos, contratos...];
+                // 0.25: [3, reputação, emitidos, melhor camada, contratos...].
+                let (body, best) = match values.first() {
+                    Some(&3) if values.len() >= 4 => (&values[1..], Some(values[3])),
+                    Some(&2) => (&values[1..], None),
+                    _ => (&values[..], None),
+                };
                 if body.len() >= 2 {
                     trade.reputation = body[0].max(0);
                     trade.issued = body[1].max(0);
-                    trade.contracts = body[2..].chunks_exact(4)
+                    trade.best = best.unwrap_or(0).max(unlocked_tier(trade.reputation));
+                    let skip = if best.is_some() { 3 } else { 2 };
+                    trade.contracts = body[skip..].chunks_exact(4)
                         .filter(|chunk| (chunk[0] as usize) < PRODUCTS.len())
                         .map(|chunk| Contract { product: chunk[0] as usize, need: chunk[1], done: chunk[2], due: i64::from(chunk[3]) })
                         .collect();
@@ -386,14 +422,15 @@ pub(crate) fn persist(dimension: &str, entity: &mut ModBlockEntity, time: i64) {
             trade.news.retain(|news| !matches!(news, News::Offered(..)));
         }
         new_day(trade, time.div_euclid(DAY));
-        let mut values = vec![VERSION, trade.reputation, trade.issued];
+        let mut values = vec![VERSION, trade.reputation, trade.issued, trade.best];
         for contract in &trade.contracts {
             values.extend([contract.product as i32, contract.need, contract.done, contract.due as i32]);
         }
         entity.nbt.insert("Trade".into(), Tag::IntArray(values));
         let recent: Vec<i32> = (0..PRODUCTS.len())
             .filter(|product| trade.recent[*product] + trade.today[*product] > 0)
-            .flat_map(|product| [product as i32, trade.recent[product] + trade.today[product] / 2])
+            // O dia de hoje entra na média como numa virada de dia.
+            .flat_map(|product| [product as i32, (trade.recent[product] * 6 + trade.today[product] * 4) / 10])
             .collect();
         entity.nbt.insert("TradeRecent".into(), Tag::IntArray(recent));
     });
@@ -419,7 +456,7 @@ pub(crate) fn news_text(news: &News) -> Text {
 /// reputação (0 se tudo aberto)] e até três contratos (produto, feito, pedido, dias).
 pub(crate) fn summary(dimension: &str, day: i64) -> ([i32; 5], Vec<[i32; 4]>) {
     with_trade(dimension, |trade| {
-        ([trade.reputation, unlocked_tier(trade.reputation), trade.exports_day, trade.imports_day,
+        ([trade.reputation, open_tier(trade), trade.exports_day, trade.imports_day,
             next_unlock(trade.reputation).unwrap_or(0)],
             trade.contracts.iter().map(|contract| [contract.product as i32, contract.done, contract.need,
                 (contract.due - day).max(0) as i32]).collect())
@@ -429,9 +466,9 @@ pub(crate) fn summary(dimension: &str, day: i64) -> ([i32; 5], Vec<[i32; 4]>) {
 /// As melhores cotações de hoje entre os produtos abertos: (produto, preço, tendência).
 pub(crate) fn board(dimension: &str, day: i64, count: usize) -> Vec<(usize, i32, i32)> {
     let mut quotes: Vec<(usize, i32, i32)> = with_trade(dimension, |trade| {
-        let tier = unlocked_tier(trade.reputation);
+        let tier = open_tier(trade);
         (0..PRODUCTS.len()).filter(|product| PRODUCTS[*product].3 <= tier)
-            .map(|product| (product, saturated(product, day, trade.recent[product] + trade.today[product]), trend(product, day)))
+            .map(|product| (product, saturated(product, day, pressure(trade, product)), trend(product, day)))
             .collect()
     });
     quotes.sort_by(|a, b| b.1.cmp(&a.1));
@@ -447,14 +484,25 @@ pub(crate) fn state(dimension: &str) -> (i32, Vec<Contract>) {
 
 #[cfg(test)]
 pub(crate) fn set_reputation(dimension: &str, value: i32) {
-    with_trade(dimension, |trade| trade.reputation = value);
+    with_trade(dimension, |trade| {
+        trade.reputation = value;
+        trade.best = trade.best.max(open_tier(trade));
+    });
+}
+
+/// Camada aberta agora (testes).
+#[cfg(test)]
+pub(crate) fn tier_open(dimension: &str) -> i32 {
+    with_trade(dimension, |trade| open_tier(trade))
 }
 
 // ---------- Conexões externas ----------
 
-/// Capacidade (pilhas por viagem), turnos entre viagens e frete (base, por pilha).
+/// Capacidade (pilhas por viagem), turnos entre viagens e frete (base, por pilha). O frete é por
+/// pilha, não por valor: pesa em matéria-prima (64 minérios de ferro valem 128) e quase nada em
+/// componentes (64 engrenagens valem 896). O navio é barato e lento; o trem, caro e frequente.
 pub(crate) fn schedule(block: &str) -> (usize, i64, i32, i32) {
-    if block == PORT { (SLOTS, 2, 4, 1) } else { (6, 1, 2, 2) }
+    if block == PORT { (SLOTS, 2, 4, 6) } else { (6, 1, 2, 12) }
 }
 
 /// Blocos de água em volta (7x7, no nível do bloco e abaixo).
