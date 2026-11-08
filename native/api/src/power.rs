@@ -76,6 +76,16 @@ fn forget(dimension: &str, pos: [i32; 3]) {
     }
 }
 
+/// Há um poste (de madeira ou aço) a até `radius` blocos de `pos`? Lê só os chunks em volta.
+pub(super) fn pole_near(dimension: &str, pos: [i32; 3], radius: i32) -> bool {
+    let Ok(all) = POLES.lock() else { return false };
+    let Some((_, chunks)) = all.iter().find(|(name, _)| name == dimension) else { return false };
+    let (cx, cz) = chunk(pos);
+    let span = (radius >> 4) + 1;
+    (cx - span..=cx + span).any(|x| (cz - span..=cz + span).any(|z| chunks.get(&(x, z))
+        .is_some_and(|cell| cell.nodes.keys().any(|at| distance2(*at, pos) <= radius * radius))))
+}
+
 fn distance2(a: [i32; 3], b: [i32; 3]) -> i32 {
     (0..3).map(|axis| (a[axis] - b[axis]).pow(2)).sum()
 }

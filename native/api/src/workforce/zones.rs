@@ -228,6 +228,16 @@ pub(crate) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
         notify(host, pos, "veio.zone.max");
         return Some(Flow::Cancel);
     };
+    // O plano diretor do prefeito limita o nível das zonas (fase 1, sem prefeitura: nível 2).
+    let (limit, suspended) = society::zone_cap(host.dimension(), pos, defense::clock());
+    if suspended {
+        notify(host, pos, "veio.zone.suspended");
+        return Some(Flow::Cancel);
+    }
+    if unlocked + 1 > limit {
+        notify(host, pos, "veio.zone.need_mayor");
+        return Some(Flow::Cancel);
+    }
     if work < need_work {
         notify(host, pos, "veio.zone.need_work");
         return Some(Flow::Cancel);

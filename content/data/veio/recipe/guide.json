@@ -11,7 +11,7 @@
     "components": {
       "minecraft:written_book_content": {
         "title": {
-          "raw": "Veio 0.17.2"
+          "raw": "Veio 0.18.0"
         },
         "author": "Veio",
         "generation": 0,

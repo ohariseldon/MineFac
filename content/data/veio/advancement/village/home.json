@@ -1,0 +1,28 @@
+{
+  "parent": "veio:village/center",
+  "display": {
+    "icon": {
+      "id": "veio:house"
+    },
+    "title": {
+      "translate": "veio.village.stage.home.title"
+    },
+    "description": {
+      "translate": "veio.village.stage.home.description"
+    },
+    "announce_to_chat": false,
+    "show_toast": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:house"
+          }
+        ]
+      }
+    }
+  }
+}

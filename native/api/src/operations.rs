@@ -37,7 +37,8 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
         DRILL | DRILL_MK2 | DRILL_MK3 => Sector::Extraction,
         PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE
             | workforce::HAULER_POST => Sector::Industry,
-        workforce::FOREMAN_DESK | workforce::CONTROL_CENTER => Sector::Workforce,
+        workforce::FOREMAN_DESK | workforce::CONTROL_CENTER | workforce::SHOP | workforce::TOWN_HALL => Sector::Workforce,
+        _ if workforce::society::is_society_block(block) => Sector::Workforce,
         HARVESTER | PLANTER | GROW_LAMP | TREE_FARM | RANCH | workforce::FARM_POST | workforce::SHEPHERD_POST => Sector::Farming,
         MILL | KITCHEN | PANTRY => Sector::Food,
         HUB => Sector::Projects,

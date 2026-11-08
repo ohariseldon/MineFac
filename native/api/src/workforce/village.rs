@@ -67,6 +67,10 @@ pub(crate) fn observe(host: &mut dyn Host, dimension: &str, id: u32, now: u64) {
     if near < MIN_ADULTS || near >= limit {
         return;
     }
+    // O prefeito: teto da fase, licença em dia e vaga em casa com alvará.
+    if !society::birth_allowed(dimension, block, near, now) {
+        return;
+    }
     if let Ok(mut births) = BIRTHS.lock()
         && births.len() < MAX_PENDING
     {

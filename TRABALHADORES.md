@@ -32,6 +32,17 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## 0.18.0: sociedade da vila
+
+Casas e famílias, salário, consumo, lojas, prefeito, fases e indicadores. Regras e números no
+[README](README.md#sociedade-da-vila) e o desenho em [frentes/SOCIEDADE.md](frentes/SOCIEDADE.md).
+
+- **Código:** `native/api/src/workforce/society.rs`. Casa e poço são blocos sem trabalhador (como armazéns); loja e prefeitura são postos (comerciante e prefeito ficam no posto, como o administrador do centro de controle).
+- **Leveza:** a casa trabalha uma vez por turno (1200 ticks), lê o censo de posições e no máximo 4 NBT (idade dos moradores). A prefeitura soma registros em memória uma vez por turno. A loja só reescreve as ofertas do comerciante quando o estoque muda. Nada roda por aldeão a cada tick.
+- **Troca com o jogador:** as ofertas vão para o comerciante com `entity_merge_nbt` (`Offers`), e o evento `trade_with_villager` tira o item do estoque e põe as esmeraldas no caixa. Um aldeão que já tinha profissão perde as trocas vanilla enquanto for comerciante.
+- **Limites indiretos:** `zones::right_click` consulta `society::zone_cap`; `village::observe` consulta `society::birth_allowed`.
+- **Integração pendente:** a frente de obras da vila (outro agente: prestígio, prefeitura como obra, escola, mercado, refeitório) deve se juntar a esta prefeitura e somar serviços ao IDH.
+
 ## 0.17.0: o inimigo e o quartel
 
 Partindo do que o Grok fez (ondas e quartel), o inimigo ficou mais justo e mais leve:
@@ -276,7 +287,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Verificações e limitações
 
-- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1 e 138 na 0.17.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
+- Feito: `python tools/check_project.py`, `python tools/check_rust.py --preview` (51 testes na primeira entrega, 61 na 0.10.0, 67 na 0.11.0, 78 na 0.12.0, 90 na 0.13.0, 93 na 0.14.0, 134 na 0.16.0, 135 na 0.16.1, 138 na 0.17.0 e 149 na 0.18.0 (com a logística do Codex e os lotes 3 a 7 do Grok); prévia dos painéis novos).
 - **Não feito**: compilação pelo launcher e teste no jogo. As assinaturas usadas (`entity`, `entity_nbt`, `server_players`, `action_bar`, `take_items`, `give_items`, `register_goals`, `nav_move_to`) já existiam no substituto e no Veio; nenhuma assinatura nova foi acrescentada.
 - A verificar no jogo: (1) se o Horizon chama `register_goals` para aldeões, que usam o cérebro vanilla e não o seletor de objetivos — se não chamar, o aldeão nunca chega e o posto mostra "Caminho obstruído"; (2) se o cérebro do aldeão disputa a navegação com o objetivo `Work` (o objetivo refaz o caminho a cada segundo); (3) a leitura do `UUID` e do `Age` pelo `entity_nbt`.
 - Não distingue morte, remoção e chunk descarregado: todos aparecem como "ausente" até o limite.
@@ -286,6 +297,14 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 - Dois pastores podem perseguir o mesmo animal (a reserva é por bloco, e o animal anda); o segundo só encontra o animal já atendido e procura outro.
 - A rede da mesa guarda os primeiros 24 blocos encontrados; numa base muito densa, postos podem ficar de fora.
 - O carregador, depois da primeira volta, ainda inspeciona até 12 máquinas a cada 10 ticks quando escolhe a próxima viagem; um teto de inspeções por ciclo fica para um lote seguinte.
+
+## Teste sugerido ao usuário (0.18.0, sociedade)
+
+1. Faça um posto do lavrador (libera as receitas) e depois casa, poço, loja e prefeitura.
+2. Contrate o prefeito e o comerciante com esmeraldas; ponha esmeraldas no cofre e pão na loja.
+3. Ponha uma casa perto de 2 a 4 aldeões. Em até 1 minuto o painel mostra os moradores, a carteira e a despensa; de dia a família compra pão, e o caixa da loja enche.
+4. Clique no comerciante: a tela de troca mostra o pão à venda. Compre e veja o estoque baixar.
+5. Livro na prefeitura: relatório com IDH, Gini, PIB, bairros e o que falta para a próxima fase.
 
 ## Teste sugerido ao usuário (0.17.0, inimigo)
 
