@@ -292,6 +292,26 @@ pub(super) fn text_color(status: usize) -> u32 {
 
 const FLAT: [Option<CubeFace<'static>>; 6] = [Some(CubeFace { sprite: "veio:gui/material", uv: None }); 6];
 
+fn machine_accent(block: &str) -> u32 {
+    match block {
+        PRESS | production::ELECTRIC_FURNACE => 0xc46a32,
+        ASSEMBLER | ELECTRONICS => 0x3f8f9a,
+        CUTTER | CRUSHER => 0xc0c4c8,
+        INTEGRATOR | ALLOY => 0xd8a04a,
+        GENERATOR | production::STEAM_ENGINE => 0x6a4030,
+        _ => 0x8d93a0,
+    }
+}
+
+fn output_mark(facing: &str) -> ([f32; 3], [f32; 3]) {
+    match facing {
+        "north" => ([6.0, 16.0, 0.0], [10.0, 16.7, 1.6]),
+        "west" => ([0.0, 16.0, 6.0], [1.6, 16.7, 10.0]),
+        "east" => ([14.4, 16.0, 6.0], [16.0, 16.7, 10.0]),
+        _ => ([6.0, 16.0, 14.4], [10.0, 16.7, 16.0]),
+    }
+}
+
 pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
     if !is_factory_block(event.block) {
         return;
@@ -380,11 +400,19 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
                 event.draw.pop();
             }
             event.draw.still();
-        } else if status == 1 && needs_power(event.block) && event.block != production::GROW_LAMP {
-            // Rotor no teto: gira enquanto a máquina trabalha.
-            event.draw.spin([0.0, 1.0, 0.0], [0.5, 1.0, 0.5], 6.0, 0.0);
-            host.draw_cube(event.draw, [4.0, 16.0, 7.25], [12.0, 16.5, 8.75], FLAT, 0x9a9a9a);
+        } else if needs_power(event.block) && event.block != production::GROW_LAMP {
+            // Cruz no teto: parada quando ociosa, girando enquanto trabalha. A marca na borda
+            // aponta a saída, para a linha se ler de cima.
+            let working = status == 1;
+            let color = machine_accent(event.block);
+            event.draw.spin([0.0, 1.0, 0.0], [0.5, 1.0, 0.5], if working { 8.0 } else { 0.0 }, 0.0);
+            host.draw_cube(event.draw, [6.4, 16.0, 6.4], [9.6, 17.4, 9.6], FLAT, 0x2e2e2e);
+            host.draw_cube(event.draw, [1.5, 16.5, 7.15], [14.5, 17.15, 8.85], FLAT, color);
+            host.draw_cube(event.draw, [7.15, 16.5, 1.5], [8.85, 17.15, 14.5], FLAT, color);
             event.draw.still();
+            let facing = host.block_state_property(event.state, "facing").unwrap_or("south");
+            let (from, to) = output_mark(facing);
+            host.draw_cube(event.draw, from, to, FLAT, if working { color } else { 0x6a6a6a });
         }
         let module = number(event.entity, "Module");
         if module > 0 {

@@ -204,6 +204,22 @@ fn drill_reads_the_vein_and_respects_tiers() {
 }
 
 #[test]
+fn a_normal_copper_vein_wants_two_presses_and_one_assembler() {
+    let ticks = |machine: &str, item: &str| {
+        recipes(machine).find(|recipe| recipe.output.0 == item && !recipe.alt).unwrap().ticks
+    };
+    let press = ticks("veio:press", "veio:copper_plate");
+    let gear = ticks("veio:assembler", "veio:gear");
+    let normal = extraction::duration(40, 1, 2);
+    assert_eq!(press, normal * 2, "veio normal: duas prensas");
+    assert_eq!(gear, press, "duas chapas enchem um montador no ritmo das duas prensas");
+    assert_eq!(extraction::duration(40, 1, 1), press, "veio impuro: uma prensa basta");
+    assert_eq!(extraction::duration(40, 1, 3) * 4, press, "veio puro: quatro prensas");
+    let ingot = recipes("veio:press").find(|recipe| recipe.alt && recipe.output.0 == "veio:copper_plate").unwrap().ticks;
+    assert_eq!(ingot * 2, press, "lingote pronto continua o atalho, duas vezes mais rápido que o bruto");
+}
+
+#[test]
 fn renewable_power_covers_a_starter_line_without_replacing_steam() {
     assert_eq!(generation::burner(BIOMASS_GENERATOR).unwrap().0, 40);
     assert_eq!(generation::burner(GENERATOR).unwrap().0, 40);
