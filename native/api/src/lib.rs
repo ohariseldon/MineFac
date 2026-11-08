@@ -498,6 +498,20 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
         return;
     };
     pollution::update(host, time);
+    if logistics::quiet_belt(entity, pos, time) && !onboarding::tracking() {
+        // Mesmo resultado do tick completo: os observadores leem o mesmo estado, a esteira só
+        // redesenha a carga se um vizinho colocou ou tirou itens.
+        let status = number(entity, "Status");
+        let produced = number(entity, "Produced");
+        milestones::census::observe(host.dimension(), pos, entity, status, 0, defense::clock());
+        industry::observe(host.dimension(), pos, entity, time);
+        holding::observe(host.dimension(), pos, entity, time);
+        soundscape::after(host, pos, entity, produced, status, time);
+        if presentation::publish_cargo(entity) {
+            host.block_entity_sync(pos);
+        }
+        return;
+    }
     if power::tick(host, pos, entity, time) {
         host.block_entity_sync(pos);
     }

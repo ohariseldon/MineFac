@@ -263,3 +263,18 @@ fn the_mural_maps_seen_terrain_marks_the_factory_and_reaches_players_at_home() {
     assert_eq!(mural::color("minecraft:dirt_path"), 10);
     reset();
 }
+
+#[test]
+fn with_nobody_near_the_mural_keeps_refreshing_but_slower() {
+    let _serial = SERIAL.lock().unwrap_or_else(|err| err.into_inner());
+    reset();
+    let mut world = World { ground: 70, ..World::default() };
+    let center = [0, 70, 0];
+    for time in (0..20).step_by(2) { mural::step(&mut world, center, time); }
+    assert_eq!(mural::pixel(0, 0, 0), Some(4 + 1), "a primeira linha é lida");
+    assert_eq!(mural::pixel(0, 0, 1), Some(0), "sem ninguém perto, não lê uma linha a cada 2 ticks");
+    mural::step(&mut world, center, 20);
+    assert_eq!(mural::pixel(0, 0, 1), Some(4 + 1), "mas continua, uma linha por segundo");
+    assert!(world.maps.is_empty());
+    reset();
+}

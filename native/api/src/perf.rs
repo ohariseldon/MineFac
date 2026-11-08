@@ -10,6 +10,9 @@ thread_local! {
     static COUNTS: Cell<Counts> = const { Cell::new(Counts { allocations: 0, bytes: 0, keys: 0, fallback: 0 }) };
 }
 struct Meter;
+/// Bytes vivos no processo inteiro (todas as threads): mede memória ocupada, não tráfego.
+static LIVE: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+fn live_bytes() -> usize { LIVE.load(std::sync::atomic::Ordering::Relaxed) }
 #[global_allocator]
 static ALLOCATOR: Meter = Meter;
 
@@ -21,16 +24,26 @@ fn count(update: impl FnOnce(&mut Counts)) {
 unsafe impl GlobalAlloc for Meter {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         count(|c| { c.allocations += 1; c.bytes += layout.size(); });
+        LIVE.fetch_add(layout.size(), std::sync::atomic::Ordering::Relaxed);
         unsafe { System.alloc(layout) }
     }
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
         count(|c| { c.allocations += 1; c.bytes += layout.size(); });
+        LIVE.fetch_add(layout.size(), std::sync::atomic::Ordering::Relaxed);
         unsafe { System.alloc_zeroed(layout) }
     }
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) { unsafe { System.dealloc(ptr, layout) } }
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        LIVE.fetch_sub(layout.size(), std::sync::atomic::Ordering::Relaxed);
+        unsafe { System.dealloc(ptr, layout) }
+    }
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, size: usize) -> *mut u8 {
         count(|c| { c.allocations += 1; c.bytes += size; });
-        unsafe { System.realloc(ptr, layout, size) }
+        let moved = unsafe { System.realloc(ptr, layout, size) };
+        if !moved.is_null() {
+            LIVE.fetch_add(size, std::sync::atomic::Ordering::Relaxed);
+            LIVE.fetch_sub(layout.size(), std::sync::atomic::Ordering::Relaxed);
+        }
+        moved
     }
 }
 pub(super) fn key_read() { count(|c| c.keys += 1); }
@@ -67,7 +80,7 @@ fn stable_publication_and_network_ticks_allocate_nothing() {
         presentation::publish(&mut console);
         presentation::publish(&mut zone);
         record_performance(&mut machine, 0);
-        power::tick(&mut grid, [0; 3], &mut pole, 1);
+        power::tick(&mut grid, [0; 3], &mut pole, 4); // tick de entrega do lote, fora da revisão da área
     };
     for _ in 0..16 { step(); }
     COUNTS.with(|c| c.set(Counts::default()));
@@ -136,7 +149,7 @@ fn profile_scale() {
     }).collect();
     let mut grid = Grid { targets: vec![node(PRESS), node(BATTERY), node(POLE)], callbacks: 0 };
     measure("256_poles_cached_network_40_ticks", 40, || {
-        for n in &mut poles { black_box(power::tick(&mut grid, [0; 3], n, 1)); }
+        for n in &mut poles { black_box(power::tick(&mut grid, [0; 3], n, 4)); } // tick de entrega do lote
     });
     let energy: i32 = poles.iter().chain(grid.targets.iter()).map(|n| number(n, "energy")).sum();
     println!("CHECK power_energy={energy} callbacks={}", grid.callbacks);

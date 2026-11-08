@@ -25,11 +25,13 @@ pub(super) struct Tier {
     pub wire: u32,
 }
 
-pub(super) const WOOD: Tier = Tier { reach: 8, area: 2, rate: 120, capacity: 1000, top: 1.40, wire: 0x2d2a26 };
-pub(super) const STEEL: Tier = Tier { reach: 16, area: 3, rate: 400, capacity: 4000, top: 1.90, wire: 0xb5643c };
+pub(super) const WOOD: Tier = Tier { reach: 8, area: 2, rate: 120, capacity: 4000, top: 1.40, wire: 0x2d2a26 };
+pub(super) const STEEL: Tier = Tier { reach: 16, area: 3, rate: 400, capacity: 16000, top: 1.90, wire: 0xb5643c };
 /// Cada poste escolhe seis vizinhos; a união simétrica pode conter mais fios.
 const MAX_LINKS: usize = 6;
 const REFRESH: i64 = 40;
+/// Ticks entre entregas de um poste (veja `tick`).
+pub(super) const BATCH: i64 = 4;
 /// Limit world lookups for area discovery; energy transfer still runs every tick.
 const AREA_READS_PER_TICK: i32 = 8;
 
@@ -195,7 +197,8 @@ mod optimization_tests {
         assert!(budget::request(budget::Lane::Topology, host.dimension(), [999; 3], 4096));
         assert!(budget::request(budget::Lane::Area, host.dimension(), [999; 3], 512));
         tick(&mut host, [0; 3], &mut pole, 0);
-        assert_eq!(number(&host.consumer, "energy"), WOOD.rate);
+        // Lote de `BATCH` ticks: até 4 x 120 FE de uma vez; o poste só tinha 200.
+        assert_eq!(number(&host.consumer, "energy"), 200.min(WOOD.rate * BATCH as i32));
         assert_eq!(number(&pole, "energy") + number(&host.consumer, "energy"), 200);
         assert!(number(&pole, "AreaScan") > 0);
         assert_eq!(number(&pole, "TopologyPending"), 1);
@@ -244,11 +247,13 @@ mod optimization_tests {
         set_number(&mut pole, "Port", 2);
         let mut trace = Trace { order: Vec::new() };
         tick(&mut trace, [0; 3], &mut pole, 1);
+        assert!(trace.order.is_empty(), "fora do lote, o poste não chama ninguém");
+        tick(&mut trace, [0; 3], &mut pole, 4);
         assert_eq!(trace.order, [[3,0,0],[1,0,0],[2,0,0]]);
         assert_eq!(number(&pole, "Port"), 0);
         pole.nbt.insert("Area".into(), Tag::IntArray(Vec::new()));
         trace.order.clear();
-        tick(&mut trace, [0; 3], &mut pole, 2);
+        tick(&mut trace, [0; 3], &mut pole, 8);
         assert!(trace.order.is_empty());
     }
 }
@@ -373,6 +378,14 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         changed |= rebuild::poll(host, pos, entity, steel, time);
     }
     scan_area(host, pos, entity, own.area, due);
+    // Como a rede elétrica do Factorio, a entrega é em lotes: cada poste atende sua área e
+    // seus fios a cada `BATCH` ticks (fase pela posição), com `BATCH` vezes a vazão. As
+    // máquinas guardam 2.000 FE, então recebem o mesmo total e nunca ficam sem energia por
+    // isso; o poste faz um quarto das chamadas ao mundo.
+    if (time + i64::from((pos[0] * 7 + pos[2] * 13) & 3)).rem_euclid(BATCH) != 0 {
+        return changed;
+    }
+    let rate = own.rate * BATCH as i32;
     let limit = own.capacity;
     let mut energy = number(entity, "energy").min(limit);
     let area = offsets(entity, "Area");
@@ -387,11 +400,11 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             let capacity = capacity(&other.id);
             let stored = number(other, "energy").min(capacity);
             let flow = if needs_power(&other.id) {
-                energy.min(own.rate).min(capacity - stored).max(0)
+                energy.min(rate).min(capacity - stored).max(0)
             } else if is_generator(&other.id) {
-                balance(energy, limit, stored, capacity, own.rate).min(0)
+                balance(energy, limit, stored, capacity, rate).min(0)
             } else if matches!(other.id.as_str(), CABLE | BATTERY) {
-                balance(energy, limit, stored, capacity, own.rate)
+                balance(energy, limit, stored, capacity, rate)
             } else {
                 0
             };
@@ -410,7 +423,7 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         host.change_mod_block_entity(add(pos, offset), &mut |other| {
             let Some(far) = tier(&other.id) else { return };
             let stored = number(other, "energy").min(far.capacity);
-            let flow = balance(energy, limit, stored, far.capacity, own.rate.min(far.rate))
+            let flow = balance(energy, limit, stored, far.capacity, rate.min(far.rate * BATCH as i32))
                 .clamp(-stored.min(limit - energy), energy.min(far.capacity - stored));
             if flow != 0 {
                 set_number(other, "energy", stored + flow);

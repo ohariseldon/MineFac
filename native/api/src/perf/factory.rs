@@ -106,7 +106,11 @@ impl Host for World {
         self.count(|o| o.change += 1);
         let Some(&i) = self.index.get(&pos) else { return false };
         if self.nodes[i].id.is_empty() { return false; }
+        // Como o Horizon (`native_with_mod_block_entity`): copia os itens do alvo antes e compara
+        // depois, para saber se o contêiner mudou. Esse custo existe no jogo a cada chamada.
+        let items = self.nodes[i].items.clone();
         change(&mut self.nodes[i]);
+        std::hint::black_box(self.nodes[i].items != items);
         true
     }
     fn insert_item(&mut self, pos: [i32; 3], _: Direction, stack: ItemStack) -> Option<ItemStack> {
@@ -146,9 +150,11 @@ impl Host for World {
 
 /// 16 linhas: extratora (comum ou Mk.III) → 8 esteiras → prensa → 8 esteiras → montadora (que enche e para).
 /// Cada linha tem postes de madeira e um gerador a carvão; ao lado, 64 cabos e 16 painéis solares.
-fn build() -> World {
+fn build() -> World { build_lines(LINES) }
+
+fn build_lines(lines: i32) -> World {
     let mut world = World::default();
-    for line in 0..LINES {
+    for line in 0..lines {
         let z = line * 6;
         for dx in -1..=1 { for dz in -1..=1 {
             world.blocks.insert([dx, -1, z + dz], "minecraft:copper_ore".into());
@@ -194,6 +200,32 @@ fn bench_factory() {
     eprintln!("  sync por tick: {}", kinds.iter().map(|(id, n)| format!("{id} {:.2}", per(*n))).collect::<Vec<_>>().join(", "));
     let produced: i32 = world.nodes.iter().filter(|n| n.id == ASSEMBLER).map(|n| n.items[1].as_ref().map_or(0, |s| s.count as i32)).sum();
     eprintln!("CHECK factory_digest={:016x} gears={produced}", world.digest());
+}
+
+/// Escala: a mesma linha repetida até ~19 mil blocos. Mede µs por tick, µs por bloco e a
+/// memória ocupada (bytes vivos), para conferir que o custo cresce em linha reta com a fábrica
+/// e caber no orçamento de um PC com 8 GB. A memória inclui o mundo simulado (mapas do teste),
+/// então é um teto para o que o Veio ocupa, não o valor exato.
+/// `cargo test --offline --release -p veio-check bench_factory_scale -- --ignored --nocapture --test-threads=1`
+#[test]
+#[ignore = "medição explícita; rode sozinha com --release --nocapture --test-threads=1"]
+fn bench_factory_scale() {
+    // VEIO_SCALE_LINES=160 mede um só tamanho (útil no callgrind).
+    let only = std::env::var("VEIO_SCALE_LINES").ok().and_then(|v| v.parse::<i32>().ok());
+    for lines in only.map_or(vec![16, 160, 640], |n| vec![n]) {
+        let before = super::live_bytes();
+        let mut world = build_lines(lines);
+        let blocks = world.order.len();
+        for _ in 0..600 { world.tick(); }
+        let ticks = if lines > 160 { 400 } else { 1000 };
+        let started = std::time::Instant::now();
+        for _ in 0..ticks { world.tick(); }
+        let micros = started.elapsed().as_secs_f64() * 1e6 / ticks as f64;
+        let live = super::live_bytes().saturating_sub(before);
+        eprintln!("ESCALA {{\"blocos\":{blocks},\"us_por_tick\":{micros:.0},\"us_por_bloco\":{:.3},\"tick_pct_50ms\":{:.2},\"memoria_mb\":{:.1},\"bytes_por_bloco\":{}}}",
+            micros / blocks as f64, micros / 50_000.0 * 100.0, live as f64 / 1_048_576.0, live / blocks);
+        drop(world);
+    }
 }
 
 /// Desenhos guardados com `keep`, como o jogo: valem até a próxima sincronia do bloco.
