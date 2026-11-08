@@ -30,7 +30,9 @@ README = """Veio {version}
    versão muda; a primeira vez leva de 20 a 30 minutos), instala o conteúdo e abre o jogo.
 5. Na primeira partida, ative o Veio em Opções > Mods e reinicie o jogo.
 
-Realismo: sol e sombras próximos, céu natural, metais e água com iluminação suave.
+Realismo: sol e luar, sombras próximas, metais e pintura distintos, chuva e água com profundidade.
+Atmosfera, chuva, água e brilho podem ser ajustados nas opções do shader.
+Em placas limitadas, reduza as sombras para 512 e alcance de 32 blocos, ou escolha Leve.
 Leve: sem pacote de shaders e com distância de visão reduzida.
 Os 8 GB são uma meta para a memória total do PC; o desempenho também depende da placa gráfica.
 As configurações originais ficam em options.txt.antes-do-veio e horizon-graphics.txt.antes-do-veio.
