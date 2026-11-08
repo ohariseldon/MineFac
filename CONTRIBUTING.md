@@ -1,6 +1,6 @@
 # Trabalhar no MineFac / Veio
 
-Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.17.0**, com aldeões trabalhadores, energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
+Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.17.1**, com aldeões trabalhadores, energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
 
 ## Começar na nuvem
 
