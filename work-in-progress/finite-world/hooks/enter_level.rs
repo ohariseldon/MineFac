@@ -1,0 +1,1 @@
+fn finite_enter_level(game:&mut crate::game::Game<'_>,host:Option<&mut crate::game::lan::LanHost>,target:crate::game::Dim)->std::ops::ControlFlow<crate::Result<()>>{crate::game::levels::veio_level::enter(game,host,target)}

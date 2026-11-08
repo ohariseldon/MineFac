@@ -1,0 +1,1 @@
+fn finite_portal_start(game:&mut crate::game::Game<'_>,host:&mut crate::game::lan::LanHost,conn:u32,target:crate::game::Dim,plan:Option<crate::game::nether_portal::Plan>)->std::ops::ControlFlow<()>{crate::game::server_travel::veio_travel::start(game,host,conn,target,plan)}

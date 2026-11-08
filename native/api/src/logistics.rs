@@ -34,7 +34,7 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
                 if let Some(stack) = entity.items[slot].as_ref() {
                     let moved = if is_belt(&entity.id) {
                         let target = belt_target(host, pos, facing);
-                        send_to(host, target, facing, stack, batch)
+                        send_to(host, pos, target, facing, stack, batch)
                     } else { send(host, pos, facing, stack, batch) };
                     if moved > 0 {
                         consume(&mut entity.items[slot], moved);
@@ -154,15 +154,18 @@ pub(super) fn split(
 }
 
 pub(super) fn send(host: &mut dyn Host, pos: [i32; 3], facing: Direction, stack: &ItemStack, batch: u32) -> u32 {
-    send_to(host, adjacent(pos, facing, 0), facing, stack, batch)
+    send_to(host, pos, adjacent(pos, facing, 0), facing, stack, batch)
 }
 
-fn send_to(host: &mut dyn Host, target: [i32; 3], facing: Direction, stack: &ItemStack, batch: u32) -> u32 {
+fn send_to(host: &mut dyn Host, from: [i32; 3], target: [i32; 3], facing: Direction, stack: &ItemStack, batch: u32) -> u32 {
+    onboarding::before_transfer(host);
     let mut offered = stack.clone();
     let count = stack.count.min(batch);
     offered.count = count;
     let returned = host.insert_item(target, facing.opposite(), offered);
-    count - returned.map_or(0, |remainder| remainder.count)
+    let moved = count - returned.map_or(0, |remainder| remainder.count);
+    onboarding::transferred(host, from, target, &stack.item, moved);
+    moved
 }
 
 pub(super) fn is_belt(block: &str) -> bool { matches!(block, BELT | FAST_BELT) }

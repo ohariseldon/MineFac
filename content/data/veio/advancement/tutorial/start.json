@@ -19,9 +19,10 @@
   },
   "rewards": {
     "loot": [
-      "veio:tutorial/guide"
+      "veio:tutorial/first_steps"
     ],
     "recipes": [
+      "veio:first_steps",
       "veio:guide",
       "veio:generator",
       "veio:cable",

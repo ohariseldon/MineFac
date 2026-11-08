@@ -15,7 +15,24 @@
   },
   "criteria": {
     "welcome": {
-      "trigger": "minecraft:tick"
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "veio:farm_post",
+              "veio:hauler_post",
+              "veio:shepherd_post",
+              "veio:foreman_desk",
+              "veio:control_center",
+              "veio:field_marker",
+              "veio:pen_marker",
+              "veio:barn",
+              "veio:granary"
+            ]
+          }
+        ]
+      }
     }
   },
   "rewards": {

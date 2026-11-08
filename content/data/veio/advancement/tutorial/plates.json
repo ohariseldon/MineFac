@@ -1,5 +1,5 @@
 {
-  "parent": "veio:tutorial/drill",
+  "parent": "veio:tutorial/press",
   "display": {
     "icon": {
       "id": "veio:copper_plate"
@@ -19,7 +19,10 @@
       "conditions": {
         "items": [
           {
-            "items": "veio:copper_plate"
+            "items": "veio:copper_plate",
+            "count": {
+              "min": 4
+            }
           }
         ]
       }

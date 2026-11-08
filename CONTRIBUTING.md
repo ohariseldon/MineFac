@@ -1,6 +1,6 @@
 # Trabalhar no MineFac / Veio
 
-Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.15.0**, com aldeões trabalhadores, energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
+Este repositório contém o Veio, um jogo de automação industrial executado como mod nativo do Horizon. A versão atual é a **0.15.2**, com aldeões trabalhadores, energia por postes e fios, transporte, processamento, contratos, tutorial dentro do jogo, colheitadeira, torre Tesla, poluição com ataques de Saqueadores, módulos de melhoria e visual no estilo do Minecraft.
 
 ## Começar na nuvem
 
@@ -16,6 +16,11 @@ A verificação Rust compila `native/api/src` contra `native/offline-check/horiz
 
 ## Onde alterar
 
+Antes de trabalhar em geração, limites, estruturas, recursos, spawn ou portais,
+leia [MAPA.md](MAPA.md). Ele fixa o Overworld em **15.000 × 15.000 blocos** e exige
+conteúdo completo em cada novo mundo, com geração adaptada e retorno seguro do
+Nether. Ampliar o tamanho ou aplicar apenas `worldborder` não substitui a garantia.
+
 A divisão atual é Cloud para trabalhadores, Grok para desempenho e balanceamento, e Codex para expansão e integração. Consulte [COORDENACAO.md](COORDENACAO.md) antes de alterar arquivos compartilhados. O transporte de itens está em `native/api/src/logistics.rs`; postes e fios estão em `native/api/src/power.rs`.
 
 - `native/api/src/lib.rs`: simulação, energia, inventários, transporte, combustíveis, jazidas e regras de interação.
@@ -30,6 +35,7 @@ A divisão atual é Cloud para trabalhadores, Grok para desempenho e balanceamen
 - `native/api/src/presentation.rs`: painéis no estilo vanilla e desenho animado das máquinas e esteiras.
 - `native/api/src/contracts.rs`: pedidos e recompensas da central de projetos.
 - `native/api/src/tutorial.rs`: ajuda no inventário, rótulos e dicas dos painéis.
+- `native/api/src/onboarding.rs`: objetivo atual na barra de ação, comprovação de energia/produção/fluxo/entrega e progresso por jogador na pasta do mundo. O relógio avança só no servidor; ticks da janela não podem alterar a sessão. Os observadores de braços, funis e carregadores ficam em `onboarding/transport.rs`; só entregas confirmadas podem produzir crédito, e carga em trânsito é separada dos estoques do posto.
 - `content/data/veio`: registros, receitas, avanços e tabelas de saque.
 - `tools/build_content.py`: lista única de blocos e itens. Gera modelos, blockstates, registros, menus, saques, abas criativas e a tag de picareta.
 - `tools/production.json` e `tools/build_production.py`: receitas, jazidas, combustíveis e valores de comida. O script gera `native/api/src/production/data.rs`; rode-o ao mudar o JSON. O guia lê o mesmo JSON.

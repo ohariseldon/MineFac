@@ -13,9 +13,6 @@
     }
   },
   "rewards": {
-    "loot": [
-      "veio:tutorial/guide"
-    ],
     "function": "veio:tutorial/path_welcome"
   }
 }
