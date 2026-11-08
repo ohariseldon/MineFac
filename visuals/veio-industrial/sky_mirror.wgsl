@@ -120,7 +120,9 @@ fn veio_screen_reflection(input: PostInput) -> vec4<f32> {
         return vec4<f32>(0.0);
     }
     let surface = surface_at(vec2<i32>(input.uv * vec2<f32>(textureDimensions(scene_surface))));
-    if !surface.present || surface.smoothness < 0.12 || surface.data > 0.5 {
+    // Only what really mirrors: polished metal, glass and wet ground (smoothness 0.45 and up).
+    // Ordinary stone, wood and dirt keep their matte look and cost nothing here.
+    if !surface.present || surface.smoothness < 0.45 || surface.data > 0.5 {
         return vec4<f32>(0.0);
     }
     let depth = depth_at(input.uv);

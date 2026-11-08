@@ -100,3 +100,18 @@ Photon v1.4, que liga os mapas LabPBR das nossas texturas e corta o que mais cus
 grande, luz colorida, TAA, GTAO, SSRT, POM com 40 amostras). Os nomes de opção foram conferidos nos
 próprios packs. Próximo: medir FPS (padrão × ajuste) no PC do Luiz e o launcher baixar e ligar o
 vencedor.
+
+## 3.2.1 (commit desta seção): menos reflexo, identidade do Minecraft
+
+Luiz (23:45): o ambiente "ficou bom, não precisa esquentar a cabeça"; alguns objetos refletem
+sem necessidade (preocupação com custo quando há muita coisa na tela); minérios e plantações
+devem ficar como no Minecraft, pacote de texturas só para o básico (areia, grama...); perdeu um
+pouco a identidade do Minecraft.
+
+- Reflexo na tela só a partir de lisura 0,45 (metal polido, vidro, chão molhado), antes 0,12, que
+  pegava pedra e madeira comuns com os mapas do pacote; mistura 0,75 → 0,55.
+- Pacote de texturas: só `textures/block/` do cenário. Ficam originais: minérios, plantações
+  (trigo, cenoura, batata, beterraba, caules, cacau, fungo do Nether, frutas, flor-tocha,
+  jarro), itens, criaturas, interface, partículas e água. 66 MB.
+- Próximas frentes do Luiz (loop de jogo, tutorial, aldeões, forma em cruz) são de outras
+  threads; não entram aqui.
