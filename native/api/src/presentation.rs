@@ -217,9 +217,11 @@ fn lamp_icon(host: &dyn Host, event: &mut ScreenDrawEvent<'_>, [lx, ly]: [f32; 2
 /// (`tools/check_project.py` confere).
 pub(super) const DATA_SLOTS: usize = 13;
 
-pub(super) fn publish(entity: &mut ModBlockEntity) {
+/// Copia o NBT para o painel. Devolve `true` quando o item desenhado sobre a esteira mudou:
+/// o desenho só lê o nome (`DisplayItem`), então mudar só a quantidade não pede sincronia.
+pub(super) fn publish(entity: &mut ModBlockEntity) -> bool {
     // These blocks have no menu; rendering and electricity read their NBT directly.
-    if matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE) { return; }
+    if matches!(entity.id.as_str(), CABLE | POLE | STEEL_POLE) { return false; }
     logistics_controls::publish(entity);
     let values = if entity.id == workforce::CONTROL_CENTER {
         workforce::center::data(entity)
@@ -242,22 +244,26 @@ pub(super) fn publish(entity: &mut ModBlockEntity) {
     }
     entity.data.copy_from_slice(&values);
     if !matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
-        return;
+        return false;
     }
     let count = logistics::display_stack(entity).map_or(0, |stack| stack.count) as i32;
-    let same = {
+    let (same, was_empty) = {
         let name = logistics::display_stack(entity).map_or("", |stack| stack.item.as_ref());
-        with_nbt_key("DisplayItem", |key| {
-            matches!(entity.nbt.get(key), Some(Tag::String(old)) if java_eq(old, name))
-        }) && number(entity, "DisplayCount") == count
+        with_nbt_key("DisplayItem", |key| match entity.nbt.get(key) {
+            Some(Tag::String(old)) => (java_eq(old, name), old.0.is_empty()),
+            _ => (false, true),
+        })
     };
-    if !same {
-        let name = logistics::display_stack(entity).map_or(String::new(), |stack| stack.item.as_ref().to_owned());
-        with_nbt_key("DisplayItem", |key| {
-            entity.nbt.insert(key.clone(), Tag::String(name.as_str().into()));
-        });
-        set_number(entity, "DisplayCount", count);
+    set_number(entity, "DisplayCount", count);
+    if same {
+        return false;
     }
+    let name = logistics::display_stack(entity).map_or(String::new(), |stack| stack.item.as_ref().to_owned());
+    with_nbt_key("DisplayItem", |key| {
+        entity.nbt.insert(key.clone(), Tag::String(name.as_str().into()));
+    });
+    // Sem carga antes e depois (só faltava a chave): o desenho não muda.
+    !(was_empty && name.is_empty())
 }
 
 /// Cor das luzes no mundo: fortes, para ler de longe.

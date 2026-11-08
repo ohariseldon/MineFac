@@ -313,8 +313,8 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     tick_factory(host, pos, entity, time);
     pollution::emit(host, pos, entity, time);
     record_performance(entity, produced);
-    presentation::publish(entity);
-    if visual_signature(entity) != previous {
+    let cargo = presentation::publish(entity);
+    if cargo || visual_signature(entity) != previous {
         host.block_entity_sync(pos);
     }
 }
@@ -537,14 +537,10 @@ fn set_number(entity: &mut ModBlockEntity, key: &str, value: i32) {
     });
 }
 
-fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32, Option<ItemStack>) {
-    // A carga desenhada no mundo é só de esteira, divisor e unificador; o braço anima pelo `MovedAt`.
-    let cargo = if matches!(entity.id.as_str(), BELT | FAST_BELT | SPLITTER | MERGER) {
-        logistics::display_stack(entity).cloned()
-    } else {
-        None
-    };
-    (number(entity, "Status"), number(entity, "Module"), number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }), cargo)
+/// O que o desenho no mundo lê do NBT, além da carga (que `presentation::publish` acusa).
+/// O braço anima pelo `MovedAt`.
+fn visual_signature(entity: &ModBlockEntity) -> (i32, i32, i32) {
+    (number(entity, "Status"), number(entity, "Module"), number(entity, if inserters::is_arm(&entity.id) { "MovedAt" } else { "Info" }))
 }
 
 fn center([x, y, z]: [i32; 3]) -> [f64; 3] {

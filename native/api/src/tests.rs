@@ -382,6 +382,22 @@ fn panels_publish_as_many_values_as_the_menus_declare() {
 }
 
 #[test]
+fn belt_cargo_syncs_only_when_the_drawn_item_changes() {
+    let mut belt = entity(BELT, 1);
+    assert!(!presentation::publish(&mut belt), "vazia antes e depois: nada a redesenhar");
+    belt.items[0] = Some(ItemStack::new(PLATE, 3));
+    assert!(presentation::publish(&mut belt), "item novo aparece no desenho");
+    belt.items[0] = Some(ItemStack::new(PLATE, 2));
+    assert!(!presentation::publish(&mut belt), "só a quantidade mudou: o desenho é o mesmo");
+    assert_eq!(number(&belt, "DisplayCount"), 2, "o NBT continua com a quantidade");
+    belt.items[0] = Some(ItemStack::new(GEAR, 2));
+    assert!(presentation::publish(&mut belt));
+    belt.items[0] = None;
+    assert!(presentation::publish(&mut belt), "a carga some do desenho");
+    assert!(matches!(belt.nbt.get(nbt_key("DisplayItem")), Some(Tag::String(name)) if name.0.is_empty()));
+}
+
+#[test]
 fn workforce_posts_count_as_item_input_for_belt_curves() {
     assert!(has_item_inputs(workforce::FARM_POST));
     assert!(has_item_inputs(workforce::HAULER_POST));
