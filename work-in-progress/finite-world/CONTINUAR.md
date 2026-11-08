@@ -1,4 +1,4 @@
-# Checkpoint do mapa finito — 7 de novembro de 2026
+# Checkpoint do mapa finito — 8 de novembro de 2026
 
 Pedido: Overworld de 15.000 × 15.000 blocos, muralha de bedrock, todos os biomas
 e recursos garantidos, Nether com portais seguros, preservando mundos existentes.

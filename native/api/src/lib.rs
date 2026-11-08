@@ -72,6 +72,12 @@ pub fn hooks() -> Box<dyn Hooks> {
 struct Factory;
 
 impl Hooks for Factory {
+    fn server_about_to_start(&self, _host: &mut dyn Host, _event: &mut horizon_client::mod_api::ServerAboutToStartEvent) {
+        // A casa, as camas e os bônus em memória pertencem ao mundo que abre.
+        // O painel carrega os próprios dados salvos quando começar a funcionar.
+        home::reset();
+    }
+
     fn block_entity(
         &self,
         _host: &mut dyn Host,

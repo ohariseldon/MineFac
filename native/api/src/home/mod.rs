@@ -403,7 +403,6 @@ fn decode(text: &str) -> Vec<Beds> {
     }).collect()
 }
 
-#[cfg(test)]
 pub(crate) fn reset() {
     *state() = State::default();
     HOME_UNTIL.store(0, Ordering::Relaxed);

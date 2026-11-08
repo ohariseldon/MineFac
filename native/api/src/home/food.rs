@@ -84,7 +84,6 @@ pub(crate) fn eaten(player: u128, name: &str, dimension: &str, at: [f64; 3], ite
     Some(ticks)
 }
 
-#[cfg(test)]
 pub(crate) fn reset() {
     MEAL_UNTIL.store(0, Ordering::Relaxed);
     FEAST_UNTIL.store(0, Ordering::Relaxed);

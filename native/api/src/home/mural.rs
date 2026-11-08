@@ -158,7 +158,6 @@ fn send(host: &mut dyn Host, mural: &mut Mural, everyone: bool) {
     mural.viewers = near;
 }
 
-#[cfg(test)]
 pub(crate) fn reset() {
     *mural() = None;
 }

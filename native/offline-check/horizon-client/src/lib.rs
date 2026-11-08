@@ -604,6 +604,8 @@ pub mod mod_api {
     #[non_exhaustive]
     pub struct TickEvent {}
     #[non_exhaustive]
+    pub struct ServerAboutToStartEvent { pub dedicated: bool }
+    #[non_exhaustive]
     pub struct PlayerLoggedInEvent<'a> {
         pub player: u128,
         pub name: &'a str,
@@ -666,6 +668,7 @@ pub mod mod_api {
 
     // ---------- Ganchos ----------
     pub trait Hooks: Send + Sync {
+        fn server_about_to_start(&self, host: &mut dyn Host, event: &mut ServerAboutToStartEvent) {}
         fn inventory_move_item(&self, host: &dyn Host, event: &mut InventoryMoveItemEvent<'_>) -> Flow { Flow::Continue }
         fn place_block(&self, host: &mut dyn Host, event: &mut PlaceBlockEvent<'_>) {}
         fn player_logged_out(&self, host: &mut dyn Host, event: &mut PlayerLoggedOutEvent<'_>) {}
