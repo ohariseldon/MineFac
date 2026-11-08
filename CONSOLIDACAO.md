@@ -1,6 +1,6 @@
 # Consolidação — candidata em integração
 
-Aguardando o encerramento de todas as frentes antes de gerar a build única final. A release 0.16.1 anterior não contém as entregas recebidas depois de seu empacotamento.
+Trabalho interrompido a pedido do usuário para passagem a outro coordenador. Estado e pendências em [CHECKPOINT-INTEGRACAO.md](frentes/CHECKPOINT-INTEGRACAO.md). A release 0.16.1 anterior não contém as entregas recebidas depois de seu empacotamento.
 
 ## Entradas preservadas
 
