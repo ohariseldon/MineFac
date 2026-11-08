@@ -23,7 +23,10 @@ use ledger::Book;
 
 pub(crate) const STOCK_SLOTS: std::ops::Range<usize> = 1..7;
 /// Preço de atacado, em % do preço local.
-pub(crate) const WHOLESALE: i32 = 70;
+pub(crate) const WHOLESALE: i32 = 75;
+/// Margem do comerciante sobre o custo de importar: o teto do preço local é esse custo + margem,
+/// para que importar nunca dê prejuízo à loja.
+pub(crate) const IMPORT_MARGIN: i32 = 10;
 const FLOOR: i32 = 50;
 const CEILING: i32 = 200;
 const IDLE_FLOOR: i32 = 70;
@@ -31,8 +34,21 @@ const IDLE_FLOOR: i32 = 70;
 const REMEMBERED: usize = 12;
 
 /// Preço base de uma unidade: comida vale os pontos, bens a tabela.
+///
+/// **Âncora única:** produtos da bolsa valem localmente o mesmo valor de referência do mercado
+/// mundial (base x complexidade), então pão é pão dentro e fora da vila. Comida fora da bolsa vale
+/// os pontos de comida x 1,5 se for preparada (o mesmo fator dos processados) ou x 1 se for crua;
+/// bens de conforto, a tabela `GOODS`.
 pub(crate) fn base_price(item: &str) -> Option<i32> {
-    production::pantry::value(item).map(|value| value as i32).or_else(|| goods(item).map(|(price, _)| price))
+    if let Some(product) = trade::product(item) {
+        return Some((trade::reference_cents(product) / 100).max(1));
+    }
+    let name = item.split(':').nth(1).unwrap_or(item);
+    let prepared = name.starts_with("cooked_") || name.starts_with("baked_") || name.ends_with("_pie")
+        || name.ends_with("_stew") || name.ends_with("_soup") || matches!(name, "cookie" | "cake" | "golden_carrot" | "golden_apple");
+    production::pantry::value(item)
+        .map(|value| (value as i32 * if prepared { 150 } else { 100 } / 100).max(1))
+        .or_else(|| goods(item).map(|(price, _)| price))
 }
 
 fn int_map(entity: &ModBlockEntity, key: &str) -> Vec<(String, i32)> {
@@ -122,6 +138,14 @@ fn update_prices(entity: &mut ModBlockEntity, ceiling: &dyn Fn(&str) -> Option<i
     set_int_map(entity, "Prices", &prices);
     set_int_map(entity, "Sold", &[]);
     set_number(entity, "Short", 0);
+}
+
+/// Teto do fator de preço de um item, em %, quando há conexão externa: o custo de importar mais a
+/// margem do comerciante, já contando o imposto que sai na venda. Assim importar nunca dá prejuízo.
+pub(crate) fn import_ceiling(item: &str, day: i64, tax: i32) -> Option<i32> {
+    let base = base_price(item)?;
+    let cost = trade::import_price(item, day)?;
+    Some((cost * (100 + IMPORT_MARGIN) * 100 / ((100 - tax) * base.max(1))).clamp(FLOOR, CEILING))
 }
 
 /// Índice de preços da comida da loja (média dos fatores), em %.
@@ -281,12 +305,15 @@ pub(crate) fn buy(host: &mut dyn Host, shop: [i32; 3], wanted: fn(&str) -> bool,
     bought
 }
 
-/// Lote e preço em esmeraldas de um item ao preço `unit`: o menor lote que vale 1 esmeralda (até 16).
+/// Lote e preço em esmeraldas de um item ao preço `unit`: o maior lote que cabe em 1 esmeralda
+/// (até 16 unidades); item que custa mais que uma esmeralda vai sozinho, arredondado para cima.
 pub(crate) fn bundle_at(unit: i32) -> (u32, u32) {
     let unit = unit.max(1) as u32;
-    let count = (COINS_PER_EMERALD as u32).div_ceil(unit).clamp(1, 16);
-    let emeralds = (count * unit).div_ceil(COINS_PER_EMERALD as u32).max(1);
-    (count, emeralds)
+    let emerald = COINS_PER_EMERALD as u32;
+    if unit > emerald {
+        return (1, unit.div_ceil(emerald));
+    }
+    ((emerald / unit).clamp(1, 16), 1)
 }
 
 #[cfg(test)]
@@ -366,10 +393,8 @@ pub(crate) fn shop_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
             set_int_map(entity, "Known", &known);
         }
         let connected = trade::connected(dimension, now);
-        update_prices(entity, &|item| {
-            let base = base_price(item)?;
-            connected.then(|| trade::import_price(item, day)).flatten().map(|cost| (cost * 100 / base.max(1)).clamp(FLOOR, CEILING))
-        });
+        let tax = governing(dimension, pos, now).map_or(0, |hall| mayor::tax_rate(hall.phase));
+        update_prices(entity, &|item| connected.then(|| import_ceiling(item, day, tax)).flatten());
     }
     // Vendas do dia: zera no começo de cada dia.
     let today = time.div_euclid(DAY) as i32;
