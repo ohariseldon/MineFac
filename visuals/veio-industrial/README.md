@@ -24,10 +24,20 @@ foram refeitos com técnicas publicadas e usadas há anos, em vez de fórmulas p
   leve. A imagem fica perto das cores do Minecraft, com um pouco mais de saturação.
 - Água e sombras não mudaram.
 
-**Texturas:** o shader não troca texturas. Para relevo e brilho por material, use um pacote
-LabPBR. Indicado: [Vanilla Normals Renewed](https://github.com/Poudingue/Vanilla-Normals-Renewed),
-gratuito e com cara de Minecraft. Instale-o como pacote de recursos (Opções > Pacotes de
-recursos); o Veio não o redistribui.
+**Texturas realistas embutidas (3.1.1):** o Realismo instala e liga sozinho o pacote
+`visuals/texturas/Veio-Texturas-JG-128x.zip`, uma adaptação de **PBR JG** (Jason J. Gardner,
+CC BY-NC-SA 4.0): texturas fotográficas com mapas LabPBR de relevo, oclusão e brilho por
+material, que este shader lê. O original é 256x; o Veio reduz para 128x para caber na meta de
+8 GB (cerca de 93 MB) e mantém a água do jogo. O pacote não vai para o git: gere com
+`python tools/build_realistic_textures.py`, que baixa do Modrinth e confere o SHA-512. O launcher põe o
+pacote em `resourcepacks/`, liga por último na lista (os seus pacotes continuam) e sobe o
+orçamento de texturas para 1024 MiB. No Leve ele sai.
+
+**Noite (3.1.1):** o primeiro teste foi à noite e saiu escuro, lavado e roxo. A luz do céu à noite
+não escurece mais o que o jogo já ilumina; o olho se adapta ao ar livre à noite (+55%) e as cores
+desbotam um pouco, como na visão noturna de verdade; o céu noturno ficou azul-escuro em vez de
+preto, com estrelas mais visíveis; a lua clareia mais neutra; os tons azuis da noite e do inverno
+caíram para um terço; a vinheta caiu de 0,35 para 0,2.
 
 ## 3.0.1
 

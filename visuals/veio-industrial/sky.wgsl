@@ -135,7 +135,7 @@ fn veio_stars(direction: vec3<f32>) -> f32 {
     let centre = (cell + 0.5) / 180.0;
     let d = length(cube - centre) * 180.0;
     let twinkle = 0.75 + 0.25 * sin(frame.time * 2.3 + h * 600.0);
-    return (1.0 - smoothstep(0.0, 0.45, d)) * (h - 0.985) / 0.015 * twinkle;
+    return (1.0 - smoothstep(0.0, 0.55, d)) * mix(0.35, 1.2, (h - 0.985) / 0.015) * twinkle;
 }
 
 fn sky(input: SkyInput) -> vec4<f32> {
@@ -153,7 +153,7 @@ fn sky(input: SkyInput) -> vec4<f32> {
     let light = (physical.light + sun_disc) * VEIO_SKY_EXPOSURE;
     // Night: a dark blue base with airglow at the horizon, under the stars.
     let up = max(direction.y, 0.0);
-    let night = vec3<f32>(0.010, 0.016, 0.034) + vec3<f32>(0.010, 0.012, 0.020) * exp(-up * 4.0);
+    let night = vec3<f32>(0.024, 0.036, 0.070) + vec3<f32>(0.020, 0.026, 0.040) * exp(-up * 4.0);
     var color = pow(veio_aces(light), vec3<f32>(1.0 / 2.2)) + night * (1.0 - day);
     color = mix(input.color.rgb, color, clamp(atmosphere * 1.5, 0.0, 1.0));
     // The lowest band meets the game's fog, so far terrain melts into the sky without a seam.

@@ -76,6 +76,8 @@ def main():
     out = args.out.resolve() if args.out is not None else ROOT / "dist" / f"Veio-{current}.zip"
     out.parent.mkdir(parents=True, exist_ok=True)
     top = f"Veio-{current}"
+    if not list((ROOT / "visuals" / "texturas").glob("Veio-Texturas-*.zip")):
+        print("Aviso: sem o pacote de texturas realistas. Rode antes: python tools/build_realistic_textures.py")
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.write(exe, f"{top}/launcher.exe")
         for name in ("Jogar-Leve.cmd", "Escolher-Visual.cmd"):

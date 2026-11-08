@@ -129,10 +129,15 @@ fn post(input: PostInput) -> vec4<f32> {
         let halo = textureSampleLevel(glow, linear_sampler, input.uv, 0.0).rgb;
         color += halo * bloom * 0.45;
     }
-    // Eye adaptation: dark interiors open up a little, bright outdoors stays as it is.
+    // Eye adaptation: dark interiors open up a little, and under the open night sky the eye
+    // opens more, as it does outdoors at night (moonlit scenes stay readable, not black).
     let indoor = 1.0 - frame.eye_light_smooth.y;
     let lit = max(frame.eye_light_smooth.x, frame.eye_light_smooth.y * veio_daylight());
-    color *= 1.0 + 0.12 * indoor * (1.0 - lit);
+    let night_out = (1.0 - veio_daylight()) * frame.eye_light_smooth.y * (1.0 - frame.eye_light_smooth.x);
+    color *= 1.0 + 0.12 * indoor * (1.0 - lit) + 0.55 * night_out * select(1.0, 0.0, frame.dimension != 0);
+    // Night vision of the eye (Purkinje): colours fade at night outdoors.
+    let grey = veio_luma(color);
+    color = mix(color, vec3<f32>(grey) * vec3<f32>(0.96, 0.99, 1.06), 0.30 * night_out);
     // Film shoulder: values above 0.8 roll off instead of clipping (the bloom adds light).
     let over = max(color - vec3<f32>(0.8), vec3<f32>(0.0));
     color = min(color, vec3<f32>(0.8)) + 0.2 * (vec3<f32>(1.0) - exp(-over / 0.2));
@@ -149,8 +154,8 @@ fn post(input: PostInput) -> vec4<f32> {
         let night = 1.0 - veio_daylight();
         let w = veio_season_weights();
         let warmth = 1.0;
-        var tint = vec3<f32>(1.0) + vec3<f32>(0.045, 0.012, -0.040) * golden * warmth + vec3<f32>(-0.030, -0.008, 0.040) * night * warmth;
-        tint += vec3<f32>(0.010, 0.006, -0.012) * w.y + vec3<f32>(0.018, 0.004, -0.018) * w.z + vec3<f32>(-0.016, -0.004, 0.020) * w.w;
+        var tint = vec3<f32>(1.0) + vec3<f32>(0.045, 0.012, -0.040) * golden * warmth + vec3<f32>(-0.010, -0.002, 0.012) * night * warmth;
+        tint += vec3<f32>(0.010, 0.006, -0.012) * w.y + vec3<f32>(0.018, 0.004, -0.018) * w.z + vec3<f32>(-0.006, -0.001, 0.008) * w.w;
         graded *= mix(vec3<f32>(1.0), tint, color_strength);
     }
     graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + 0.10 * color_strength);

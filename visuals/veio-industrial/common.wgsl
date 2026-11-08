@@ -11,7 +11,7 @@ override quality: u32 = 1u;
 override seasons: bool = true;
 override bloom: f32 = 0.6;
 override sun_rays: f32 = 0.5;
-override vignette: f32 = 0.35;
+override vignette: f32 = 0.2;
 override ambient_occlusion: f32 = 0.7;
 override screen_reflections: bool = true;
 
@@ -42,7 +42,7 @@ fn veio_key_direction() -> vec3<f32> {
 
 fn veio_key_color() -> vec3<f32> {
     let sun = mix(vec3<f32>(1.04, 1.025, 0.97), vec3<f32>(1.16, 0.90, 0.68), veio_low_sun() * 0.75);
-    return mix(vec3<f32>(0.70, 0.82, 1.10), sun, veio_daylight());
+    return mix(vec3<f32>(0.80, 0.86, 1.0), sun, veio_daylight());
 }
 
 // ---------- Veio's world state (frame.mods[0]) ----------

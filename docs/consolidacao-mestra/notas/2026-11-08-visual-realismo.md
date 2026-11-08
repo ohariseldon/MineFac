@@ -26,3 +26,28 @@ Nota curta de mudança. Entra no próximo compilado da consolidação mestra (SI
 - Pacote de texturas indicado (não incluído): Vanilla Normals Renewed (LabPBR, uso gratuito).
 - Água e sombras intactas, porque o Luiz aprovou as duas.
 - Não visto no jogo ainda: falta o Luiz testar.
+
+## 3.1.0 no jogo (capturas do Luiz, 30 JPGs, todas à noite)
+
+Em `/mnt/project-files/visual/capturas/3.1.0/` (e na branch `claude/capturas-visual-3.1`). Céu preto
+sem estrelas, imagem escura e lavada (pixel mais claro ~80/255), neve cinza-roxa, faixa
+castanho-magenta no horizonte (fumaça da fábrica + névoa), árvores distantes borradas, alguns
+quadrados escuros no chão (provável artefato do mapa de sombra; não corrigido ainda). O Luiz
+reforçou: realismo de "parecer real", e o melhor pacote de texturas já dentro do pacote.
+
+## 3.1.1 (commit desta seção)
+
+- Noite: céu da noite não escurece o que o jogo ilumina (`material.wgsl`), adaptação do olho ao
+  ar livre à noite e visão noturna (`finish.wgsl`), céu noturno azul-escuro e estrelas mais
+  visíveis (`sky.wgsl`), lua mais neutra (`common.wgsl`), tons azuis de noite e inverno a 1/3,
+  vinheta 0,35 → 0,2.
+- Texturas: `tools/build_realistic_textures.py` baixa PBR JG 1.1.0 do Modrinth (SHA-512 conferido), reduz
+  256x → 128x, tira a água e grava `visuals/texturas/Veio-Texturas-JG-128x.zip` (93 MB, fora do
+  git). Licença CC BY-NC-SA 4.0, crédito em `CREDITS.md` e dentro do zip. Escolha: entre os
+  pacotes realistas com PBR que permitem redistribuir, foi o de melhor aparência; os mais
+  famosos (Patrix, Optimum Realism, Prime's HD, RealSource) proíbem redistribuir.
+- Launcher (`launcher/src/visuals.rs`, revisão de perfil 3): no Realismo copia o pacote para
+  `resourcepacks/`, liga por último em `resourcePacks` e `incompatibleResourcePacks` e sobe
+  `textureBudgetMiB` para 1024; no Leve remove. Teste novo no launcher.
+- Falta: capturas de dia e do pôr do sol; quadrados escuros da sombra; árvores borradas ao longe
+  (talvez o LOD do Horizon, não o shader).
