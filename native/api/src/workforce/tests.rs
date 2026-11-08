@@ -260,6 +260,9 @@ impl Host for Village {
     fn server_players(&self) -> Vec<horizon_client::mod_api::NativeServerPlayer> {
         self.players.clone()
     }
+    fn acting_player(&self) -> Option<horizon_client::mod_api::NativeServerPlayer> {
+        self.players.first().cloned()
+    }
     fn run_command(&mut self, line: &str) -> bool {
         self.commands.push(line.to_owned());
         true
@@ -2760,4 +2763,123 @@ fn balance_contracts_are_a_separate_buyer_and_open_markets_stay_open() {
     assert_eq!(state(dimension).0, 0, "contratos perdidos tiram reputação");
     assert_eq!(tier_open(dimension), 2, "mercado conquistado não fecha");
     let _ = &mut village;
+}
+
+#[test]
+fn with_no_one_near_the_post_waits_for_the_villager_the_player_clicks() {
+    pick::reset();
+    let mut village = Village::new("veio:test_pick_hire");
+    village.stations.insert(POST, post());
+    village.players.push(named_player(village.dimension, 7, "Luiz", [0.5, 64.0, 0.5]));
+    village.emeralds = 2;
+    // Longe demais para a contratação automática (8), perto o bastante para a escolha (32).
+    village.villager(12001, [20.5, 64.0, 0.5], [12, 0, 1, 1]);
+    assert_eq!(right_click(&mut village, POST, WAGE), Some(Flow::Cancel));
+    assert_eq!(worker(&village.stations[&POST]), None);
+    assert_eq!(village.emeralds, 2, "sem contratação, a esmeralda fica");
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.none"));
+
+    // Sem a espera, a esmeralda num aldeão é comércio vanilla; com ela, contrata.
+    assert_eq!(pick::interact(&mut village, 12001, Some(WAGE)), Some(Flow::Cancel));
+    assert_eq!(worker(&village.stations[&POST]), Some([12, 0, 1, 1]));
+    assert_eq!(village.emeralds, 1);
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.hired.hungry"), "posto sem comida: o próximo passo é a comida");
+    assert_eq!(pick::interact(&mut village, 12001, Some(WAGE)), None, "a espera acabou: volta a ser comércio");
+
+    // Agachado e de mão vazia, o aldeão diz onde trabalha.
+    village.sneak = true;
+    set_number(village.stations.get_mut(&POST).unwrap(), "Status", NO_FOOD);
+    assert_eq!(pick::interact(&mut village, 12001, None), Some(Flow::Cancel));
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.works.no_food"));
+    village.sneak = false;
+    assert_eq!(pick::interact(&mut village, 12001, None), None, "sem agachar, abre o comércio");
+}
+
+#[test]
+fn a_picked_villager_must_be_free_adult_and_near_the_post() {
+    pick::reset();
+    let mut village = Village::new("veio:test_pick_rules");
+    village.stations.insert(POST, post());
+    village.players.push(named_player(village.dimension, 8, "Luiz", [0.5, 64.0, 0.5]));
+    village.emeralds = 3;
+    village.villager(12101, [60.5, 64.0, 0.5], [12, 1, 0, 1]);
+    village.villager(12102, [20.5, 64.0, 0.5], [12, 1, 0, 2]);
+    village.villagers.get_mut(&12102).unwrap().2 = -24000;
+    right_click(&mut village, POST, WAGE);
+    assert_eq!(pick::interact(&mut village, 12101, Some(WAGE)), Some(Flow::Cancel));
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.pick.far"));
+    right_click(&mut village, POST, WAGE);
+    assert_eq!(pick::interact(&mut village, 12102, Some(WAGE)), Some(Flow::Cancel));
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.child"));
+    assert_eq!(worker(&village.stations[&POST]), None);
+    assert_eq!(village.emeralds, 3, "escolha recusada não cobra");
+    village.sneak = true;
+    assert_eq!(pick::interact(&mut village, 12101, None), Some(Flow::Cancel));
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.free"));
+}
+
+#[test]
+fn the_post_panel_says_what_to_do_next() {
+    let data = |status: i32, rate: i32| { let mut data = vec![0; 13]; data[0] = status; data[6] = rate; data };
+    assert_eq!(next_step_key(FARM_POST, &data(NO_WORKER, 0)), Some("veio.todo.hire"));
+    assert_eq!(next_step_key(HAULER_POST, &data(NO_FOOD, 0)), Some("veio.todo.food"));
+    assert_eq!(next_step_key(HAULER_POST, &data(IDLE_WORK, 0)), Some("veio.todo.hauler_none"));
+    assert_eq!(next_step_key(HAULER_POST, &data(IDLE_WORK, 3)), Some("veio.todo.hauler_idle"));
+    assert_eq!(next_step_key(FARM_POST, &data(NO_TASK, 0)), Some("veio.todo.farm_idle"));
+    assert_eq!(next_step_key(FOREMAN_DESK, &data(NO_WAGE, 0)), Some("veio.todo.wage"));
+    assert_eq!(next_step_key(SHEPHERD_POST, &data(production::NO_ANIMALS, 0)), Some("veio.todo.shepherd_idle"));
+    assert_eq!(next_step_key(FARM_POST, &data(1, 0)), None, "trabalhando: fica a dica fixa");
+    assert_eq!(next_step_key(SHOP, &data(NO_WORKER, 0)), None, "loja e prefeitura têm painel próprio");
+    let lines = panel_lines(FARM_POST, &data(NO_FOOD, 0)).unwrap();
+    assert_eq!(lines[2], "veio.todo.food");
+}
+
+#[test]
+fn a_hauler_carries_the_press_plates_on_to_the_assembler() {
+    let mut village = Village::new("veio:test_work_chain");
+    village.crops.clear();
+    let mut press = block(PRESS);
+    press.items[1] = Some(ItemStack::new(PLATE, 6));
+    set_number(&mut press, "Status", 1);
+    village.stations.insert(PRESS_AT, press);
+    let assembler_at = [-3, 64, 0];
+    let mut assembler = block(ASSEMBLER);
+    set_number(&mut assembler, "Status", 2);
+    village.stations.insert(assembler_at, assembler);
+    village.villager(12201, [0.5, 64.0, 1.5], [12, 2, 0, 1]);
+    let mut hauler = block(HAULER_POST);
+    set_number(&mut hauler, "Ration", 20);
+    assert!(hire_at(&mut village, &mut hauler, POST, 0));
+    // Recolhe as chapas da prensa...
+    let now = cycles_at(&mut village, POST, &mut hauler, 1, HAULER_SWEEP * 2, |post| target(post) == Some(PRESS_AT));
+    village.walk(12201, [2, 64, 0]);
+    cycle_at(&mut village, POST, &mut hauler, now + 1);
+    assert_eq!(carried(&hauler), vec![(PLATE.to_owned(), 6)]);
+    village.walk(12201, [0, 64, 1]);
+    cycle_at(&mut village, POST, &mut hauler, now + 2);
+    assert_eq!(hauler.items[4], Some(ItemStack::new(PLATE, 6)));
+    // ... e leva ao montador parado por falta delas, sem devolver à prensa.
+    let now = cycles_at(&mut village, POST, &mut hauler, now + 3, HAULER_SWEEP, |post| carry_to(post) == Some(assembler_at));
+    assert_eq!(carried(&hauler), vec![(PLATE.to_owned(), 6)]);
+    village.walk(12201, [-2, 64, 0]);
+    cycle_at(&mut village, POST, &mut hauler, now + 1);
+    assert_eq!(village.stations[&assembler_at].items[0], Some(ItemStack::new(PLATE, 6)));
+    assert!(village.stations[&PRESS_AT].items[0].is_none(), "a chapa não volta para a prensa");
+}
+
+#[test]
+fn a_starved_machine_names_the_missing_input_of_the_closest_recipe() {
+    let mut assembler = block(ASSEMBLER);
+    assembler.items[0] = Some(ItemStack::new(PLATE, 1));
+    production::process(&mut assembler);
+    assert_eq!(number(&assembler, "Status"), 2);
+    let recipe = number(&assembler, "RecipeIndex");
+    assert!(recipe > 0, "taxas da receita mais próxima no painel");
+    assert_eq!(number(&assembler, "Info"), 1, "falta a entrada 1 (só 1 de 2 chapas)");
+    assert_eq!(production::missing_input(ASSEMBLER, 2, recipe, 1), Some((PLATE, 2)));
+    assert_eq!(production::missing_input(ASSEMBLER, 1, recipe, 1), None, "trabalhando: nada a pedir");
+    // Entradas vazias: nada a apontar.
+    let mut empty = block(ASSEMBLER);
+    production::process(&mut empty);
+    assert_eq!(number(&empty, "Info"), 0);
 }

@@ -58,6 +58,12 @@ fn look(host: &mut dyn Host, spot: [i32; 3], stock: &[(usize, ItemStack)], room:
             }
         }
         look.feed = stock.iter().find_map(|(from, stack)| view.inputs.iter().find_map(|slot| {
+            // Produto recolhido de outra máquina segue para a próxima da linha (prensa > montador),
+            // nunca de volta a uma máquina que o fabrica.
+            if outputs(HAULER_POST).contains(from)
+                && production::recipes(&machine.id).any(|recipe| is_plain(stack, recipe.output.0)) {
+                return None;
+            }
             let current = match slot.stack {
                 None => 0,
                 Some(present) if is_plain(present, &stack.item) => present.count,
@@ -93,7 +99,8 @@ pub(super) fn plan(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         set_target(entity, None);
         return Err(IDLE_WORK);
     }
-    let stock: Vec<(usize, ItemStack)> = stock_slots(&entity.id)
+    // Insumos do posto primeiro; depois o que ele recolheu, para encadear máquinas vizinhas.
+    let stock: Vec<(usize, ItemStack)> = stock_slots(&entity.id).chain(outputs(&entity.id))
         .filter_map(|slot| entity.items[slot].clone().filter(plain).map(|stack| (slot, stack)))
         .collect();
     let room = entity.items[outputs(&entity.id)].to_vec();

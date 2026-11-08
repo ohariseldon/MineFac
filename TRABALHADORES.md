@@ -32,6 +32,14 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
 
+## Interação mais clara (sobre a 0.25.0, PR do #47)
+
+- **O painel diz o próximo passo:** a 3ª linha dos postos muda com o estado (contratar, pôr comida, esvaziar a saída, pôr insumos ou esmeraldas, abrir caminho).
+- **Escolher quem contratar:** sem aldeão livre a 8 blocos, o clique com esmeralda deixa o posto esperando 30 s; clique, ainda com a esmeralda, no aldeão que quiser, a até 32 blocos. Fora disso, esmeralda no aldeão é comércio normal.
+- **Perguntar ao aldeão:** agachado e de mão vazia, clique num aldeão para ver em que posto ele trabalha e o que falta, ou se está livre.
+- **Carregador encadeia:** o que ele recolhe de uma máquina abastece a vizinha parada por falta daquilo (prensa > montador), nunca de volta a quem fabrica.
+- **Máquinas:** em "Faltam ingredientes", o painel mostra o item e a entrada que faltam na receita mais próxima.
+
 ## 0.25.0: balanceamento da economia
 
 Números, princípios e resultados em [frentes/ECONOMIA.md](frentes/ECONOMIA.md).
