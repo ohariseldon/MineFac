@@ -382,6 +382,21 @@ fn panels_publish_as_many_values_as_the_menus_declare() {
 }
 
 #[test]
+fn one_pass_numbers_read_like_number() {
+    let mut n = entity(PRESS, 2);
+    n.nbt.insert("Burn".into(), Tag::Int(-3));
+    n.nbt.insert("Info".into(), Tag::String("x".into()));
+    n.nbt.insert("Aaa".into(), Tag::Int(9));
+    n.nbt.insert("Zzz".into(), Tag::Int(9));
+    set_number(&mut n, "Module", 2);
+    set_number(&mut n, "energy", 77);
+    let names = ["Burn", "Damage", "Info", "Module", "Status", "energy"];
+    let keys = names.map(nbt_key);
+    assert_eq!(numbers_sorted(&n, &keys), names.map(|name| number(&n, name)));
+    assert_eq!(numbers_sorted(&n, &keys), [0, 0, 0, 2, 0, 77]);
+}
+
+#[test]
 fn published_signature_matches_the_nbt_for_every_block() {
     let blocks = [DRILL, DRILL_MK2, PRESS, ASSEMBLER, BELT, FAST_BELT, SPLITTER, MERGER, CUTTER, INTEGRATOR,
         GENERATOR, CABLE, SOLAR, BATTERY, GEOTHERMAL, CRUSHER, ALLOY, ELECTRONICS, HUB, HARVESTER, TESLA,
