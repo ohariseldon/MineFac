@@ -16,13 +16,13 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 28] = [
+pub(super) const STATUS_KEYS: [&str; 29] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
     "no_worker", "absent", "no_task", "no_food", "path", "walking", "idle_work", "no_wage",
     // Zonas e armazéns.
-    "zone", "storing",
+    "zone", "storing", "rest",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {

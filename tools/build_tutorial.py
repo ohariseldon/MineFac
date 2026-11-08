@@ -241,6 +241,7 @@ for key, pt, en in [
  ("block.veio.field_marker", "Marco de lavoura", "Field Marker"),
  ("veio.status.zone", "Zona ativa", "Zone active"),
  ("veio.status.storing", "Guardando", "Storing"),
+ ("veio.status.rest", "Descansando (noite)", "Resting (night)"),
  ("block.veio.pen_marker", "Marco de cercado", "Pen Marker"),
  ("block.veio.barn", "Celeiro", "Barn"),
  ("block.veio.silo", "Silo", "Silo"),
@@ -654,7 +655,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.15.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.16.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -747,8 +748,8 @@ v_grow=vpage(
  "A vila cresce\n\nAldeões têm filhos até o teto da vila: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle. Máximo 150.\n\nVárias fábricas espalhadas: cada uma com sua vila.",
  "The village grows\n\nVillagers have children up to the village cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center. Max 150.\n\nSeveral spread factories: each has its own village.")
 v_trouble=vpage(
- "Quando um aldeão para\n\nSem comida: ponha pão.\nAusente: traga-o ou dispense (agachar + chave).\nCaminho obstruído: abra passagem.\nSaída cheia: esvazie ou use um celeiro.\nPasse o cursor no estado do painel para dicas.",
- "When a villager stops\n\nNo food: add bread.\nMissing: bring them back or dismiss (sneak + wrench).\nPath blocked: clear the way.\nOutput full: empty it or use a barn.\nHover over the panel status for tips.")
+ "Quando um aldeão para\n\nNoite: ele dorme e volta de manhã.\nSem comida: ponha pão.\nAusente: traga-o ou dispense (agachar + chave).\nCaminho obstruído: abra passagem.\nSaída cheia: esvazie ou use um celeiro.\nCursor no estado: dicas.",
+ "When a villager stops\n\nNight: they sleep and return in the morning.\nNo food: add bread.\nMissing: bring them back or dismiss (sneak + wrench).\nPath blocked: clear the way.\nOutput full: empty it or use a barn.\nHover the status for tips.")
 v_food=vpage(
  "Comida\n\nCada tarefa gasta 2 pontos. Trigo vale 1, batata e cenoura 1, pão 6 (3 tarefas), carne assada 8 (4 tarefas), torta 10.\n\nComida pronta rende mais: monte moinho e cozinha cedo.",
  "Food\n\nEach task costs 2 points. Wheat is worth 1, potato and carrot 1, bread 6 (3 tasks), cooked meat 8 (4 tasks), pie 10.\n\nCooked food goes further: build a mill and kitchen early.")

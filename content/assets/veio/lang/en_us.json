@@ -750,7 +750,7 @@
   "veio.village.page.09": "7. Control center\n\nHire an administrator. The panel shows workers, waits, zones, storage and goals.\n\nItem in a goal slot: x16 stored. Book on the center: report. Spawn moves to the center.",
   "veio.village.page.10": "Grow the zones\n\nEmerald on the marker unlocks the next level:\n13x13: 8 emer., 32 tasks, 6 villagers\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nThe wrench picks the size among unlocked ones.",
   "veio.village.page.11": "The village grows\n\nVillagers have children up to the village cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center. Max 150.\n\nSeveral spread factories: each has its own village.",
-  "veio.village.page.12": "When a villager stops\n\nNo food: add bread.\nMissing: bring them back or dismiss (sneak + wrench).\nPath blocked: clear the way.\nOutput full: empty it or use a barn.\nHover over the panel status for tips.",
+  "veio.village.page.12": "When a villager stops\n\nNight: they sleep and return in the morning.\nNo food: add bread.\nMissing: bring them back or dismiss (sneak + wrench).\nPath blocked: clear the way.\nOutput full: empty it or use a barn.\nHover the status for tips.",
   "veio.village.page.13": "Food\n\nEach task costs 2 points. Wheat is worth 1, potato and carrot 1, bread 6 (3 tasks), cooked meat 8 (4 tasks), pie 10.\n\nCooked food goes further: build a mill and kitchen early.",
   "veio.village.blocks": "Village blocks",
   "veio.village.title": "Worker Village Guide",
@@ -816,5 +816,7 @@
   "veio.guide.craft.fast_inserter": "Craft: 1 Transfer Arm, 1 Circuit Board, 1 Steel Plate, 2 Copper Wiring",
   "veio.guide.use.long_inserter": "Up to 1 item/s; 60 FE/item.\nReaches 2 blocks on each side.\nSkips intermediate inventory.\nSneak + item: set filter.\nSneak + empty hand: clear.",
   "veio.guide.make.long_inserter": "Craft Long Transfer Arm\n\n1 x Transfer Arm\n2 x Cut Frame\n1 x Gear\n1 x Copper Wiring\n\nMakes: 1",
-  "veio.guide.craft.long_inserter": "Craft: 1 Transfer Arm, 2 Cut Frame, 1 Gear, 1 Copper Wiring"
+  "veio.guide.craft.long_inserter": "Craft: 1 Transfer Arm, 2 Cut Frame, 1 Gear, 1 Copper Wiring",
+  "veio.status.rest": "Resting (night)",
+  "veio.operation.advice.rest": "Night: the worker sleeps and returns in the morning."
 }

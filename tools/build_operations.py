@@ -40,6 +40,7 @@ def add_labels(langs):
         "idle_work": ("Nada a atender: abasteça o estoque ou aguarde produtos.", "Nothing to serve: stock the post or wait for products."),
         "no_wage": ("Coloque esmeraldas na mesa para recontratar trabalhadores.", "Put emeralds in the desk to rehire workers."),
         "zone": ("Postos perto da borda trabalham nesta zona.", "Posts near the border work in this zone."),
+        "rest": ("Noite: o trabalhador dorme e volta de manhã.", "Night: the worker sleeps and returns in the morning."),
         "storing": ("A fila do capataz guarda e retira itens daqui.", "The foreman's queue stores and takes items here."),
         "unknown": ("Confira a ajuda da máquina para identificar o impedimento.", "Check machine help to identify what is preventing operation."),
     }

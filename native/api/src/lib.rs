@@ -52,6 +52,8 @@ const STEEL_POLE: &str = "veio:steel_pole";
 const REPAIR_KIT: &str = "veio:repair_kit";
 /// Cada kit de reparo recupera metade da integridade.
 const REPAIR: i32 = 50;
+/// Amostragem dos registros de mobs em `entity_tick_pre`.
+const OBSERVE_EVERY: u64 = 7;
 
 
 pub fn hooks() -> Box<dyn Hooks> {
@@ -208,8 +210,15 @@ impl Hooks for Factory {
     fn entity_tick_pre(&self, host: &mut dyn Host,
         event: &mut horizon_client::mod_api::EntityTickPreEvent<'_>) -> Flow
     {
-        defense::observe(event.dimension, event.entity, event.kind);
-        production::ranch::observe(event.dimension, event.entity, event.kind);
+        // Registro por amostragem: cada mob entra nos registros (defesa e rancho) em 1 de cada
+        // `OBSERVE_EVERY` ticks do relógio do mod, não em todos. As consultas aceitam marcas de até
+        // 40-60 ticks, então nada se perde; o número é ímpar para cobrir todos os ids mesmo que o
+        // relógio avance de 2 em 2 (janela e servidor no mesmo processo).
+        let now = defense::clock();
+        if (now + u64::from(event.entity)) % OBSERVE_EVERY == 0 {
+            defense::observe(event.dimension, event.entity, event.kind);
+            production::ranch::observe(event.dimension, event.entity, event.kind);
+        }
         if event.kind == "minecraft:villager" {
             workforce::village::observe(host, event.dimension, event.entity, defense::clock());
         }
