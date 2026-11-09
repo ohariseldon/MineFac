@@ -311,6 +311,7 @@ def add_labels(label):
     label('veio.onboarding.blocked.5','A máquina está sem energia. Confira combustível no gerador e cabos encostando nas máquinas.', 'The machine has no power. Check generator fuel and cables touching the machines.')
     label('veio.onboarding.blocked.9','Redstone está pausando a máquina. Retire o sinal para retomar o exercício.', 'Redstone is pausing the machine. Remove the signal to resume the exercise.')
     add_village_labels(label, names, recipe_line)
+    add_city_labels(label, names, recipe_line)
 
 
 def add_village_labels(label, names, recipe_line):
@@ -435,9 +436,129 @@ def add_village_labels(label, names, recipe_line):
     label('veio.village.end_sub', 'Tutorial da vila concluído', 'Village tutorial complete')
     label('veio.village.end.1', 'Pronto: você contrata, demarca, organiza, abriga e governa. O resto é crescer.',
           'Done: you hire, mark, organize, house and govern. The rest is growing.')
-    label('veio.village.end.2', 'Próximos passos: um poço para o saneamento, uma loja com comerciante e mais casas, para a vila subir de fase.',
-          'Next steps: a well for sanitation, a shop with a merchant and more houses, so the village moves up a phase.')
+    label('veio.village.end.2', 'Quando quiser transformar a vila em cidade (serviços, comércio, dinheiro e a primeira fase), fale comigo de novo.',
+          'When you want to turn the village into a town (services, trade, money and the first phase), talk to me again.')
     label('veio.village.end.3', 'Eu vou receber visitantes pedindo festas e obras. Fique de olho no chat e na prefeitura.',
           'I will receive visitors asking for festivals and works. Keep an eye on the chat and the town hall.')
     label('veio.village.end.4', 'Dúvidas? Aperte J: a wiki tem tudo. E o livro da prefeitura mostra o que falta para a próxima fase.',
           'Questions? Press J: the wiki has everything. And the town hall book shows what the next phase needs.')
+
+
+def add_city_labels(label, names, recipe_line):
+    """Capítulo 3 do tutorial: a cidade, contada pelo prefeito Otávio (onboarding/city.rs)."""
+    names.update({
+        'well': ('Poço', 'Well'), 'shop': ('Loja', 'Shop'), 'pole': ('Poste de madeira', 'Wooden pole'), 'park': ('Parque', 'Park'),
+        'cobblestone': ('Pedregulho', 'Cobblestone'), 'bucket': ('Balde', 'Bucket'), 'oak_sapling': ('Muda de carvalho', 'Oak sapling'),
+        'poppy': ('Papoula', 'Poppy'), 'dandelion': ('Dente-de-leão', 'Dandelion'), 'lantern': ('Lanterna', 'Lantern'),
+        'copper_ingot': ('Lingote de cobre', 'Copper ingot'), 'stick': ('Graveto', 'Stick'),
+    })
+    for key, (pt, en) in names.items(): label(f'veio.onboarding.name.{key}', pt, en)
+    steps = [
+      # (título, fala do prefeito, passos, objetivo da barra, comentário ao concluir)
+      (('Cidade 1 de 8 · Saneamento', 'Town 1 of 8 · Sanitation'),
+       ('Uma cidade começa pela água limpa. Sem saneamento, as famílias adoecem e o IDH não sobe; da fase Vila em diante, casa nova só ganha alvará com um poço a até 24 blocos.',
+        'A town starts with clean water. Without sanitation families fall ill and HDI stays low; from the Village phase on, a new house only gets a permit with a well within 24 blocks.'),
+       [('1. Fabrique um poço (ficha acima).', '1. Craft a well (card above).'),
+        ('2. Coloque-o a até 24 blocos das casas: um poço atende o bairro inteiro.', '2. Place it within 24 blocks of the houses: one well serves the whole district.'),
+        ('3. O espaço do poço enche baldes: balde vazio entra, balde de água sai.', '3. The well slot fills buckets: an empty bucket goes in, a water bucket comes out.'),
+        ('4. Abra uma casa: a linha de serviços mostra o saneamento.', '4. Open a house: the services line shows sanitation.')],
+       ('Uma casa com saneamento (poço a até 24 blocos)', 'A house with sanitation (well within 24 blocks)'),
+       ('Água limpa. Agora as famílias precisam onde comprar.', 'Clean water. Now families need somewhere to shop.')),
+      (('Cidade 2 de 8 · Comércio', 'Town 2 of 8 · Trade'),
+       ('As famílias ganham salário e gastam na loja mais próxima. O comerciante é independente: compra de você no atacado (75% do preço) e vende no varejo.',
+        'Families earn wages and spend at the nearest shop. The merchant is independent: buys from you wholesale (75% of the price) and sells retail.'),
+       [('1. Fabrique uma loja (ficha acima).', '1. Craft a shop (card above).'),
+        ('2. Coloque-a perto das casas (da fase Cidade em diante, casa nova pede loja a até 40 blocos).', '2. Place it near the houses (from the City phase on, a new house needs a shop within 40 blocks).'),
+        ('3. Contrate um comerciante com uma esmeralda, como nos postos.', '3. Hire a merchant with an emerald, as with the posts.'),
+        ('4. Clique no comerciante: é a tela de troca do Minecraft, com o estoque real e o preço local.', '4. Click the merchant: it is the Minecraft trade screen, with real stock and the local price.')],
+       ('Contrate um comerciante na loja', 'Hire a merchant at the shop'),
+       ('A loja abriu as portas. Falta mercadoria.', 'The shop is open. It needs goods.')),
+      (('Cidade 3 de 8 · A primeira venda', 'Town 3 of 8 · The first sale'),
+       ('O que você entrega no estoque o comerciante compra fiado e paga com as vendas. Os preços são da vila: sobem quando falta e caem quando sobra.',
+        'What you put in the stock the merchant buys on credit and pays from sales. Prices are local: they rise when goods are short and fall when they pile up.'),
+       [('1. Abasteça o estoque da loja com comida (pão, batata assada) e bens (lã, couro, velas).', '1. Stock the shop with food (bread, baked potatoes) and goods (wool, leather, candles).'),
+        ('2. Funil e carregador também abastecem: a loja aceita entregas automáticas.', '2. Hoppers and haulers also stock it: the shop takes automatic deliveries.'),
+        ('3. De dia, as famílias vêm comprar. A venda paga 4% de imposto na fonte para a prefeitura.', '3. During the day families come to buy. Each sale withholds 4% tax for the town hall.'),
+        ('4. Abra a loja para ver o caixa, os preços e o que mais vende.', '4. Open the shop to see the till, the prices and what sells most.')],
+       ('Primeira venda da loja (caixa acima de zero)', 'First shop sale (till above zero)'),
+       ('O dinheiro começou a girar. Vamos ver de onde ele vem.', 'Money has started to move. Let us see where it comes from.')),
+      (('Cidade 4 de 8 · A conta da companhia', 'Town 4 of 8 · The company account'),
+       ('A companhia é você: paga os salários dos seus trabalhadores e recebe o atacado das lojas. O dinheiro só entra na vila em esmeraldas de verdade, pelo cofre do centro de controle.',
+        'The company is you: it pays your workers\' wages and receives wholesale from the shops. Money only enters the village as real emeralds, through the control center vault.'),
+       [('1. Vá ao centro de controle (o painel da sua casa).', '1. Go to the control center (the panel in your house).'),
+        ('2. Ponha esmeraldas no cofre: cada uma vira 60 moedas na conta da companhia.', '2. Put emeralds in the vault: each one becomes 60 coins in the company account.'),
+        ('3. Sem saldo, os trabalhadores ficam sem salário e as famílias empobrecem.', '3. Without a balance, workers go unpaid and families get poorer.'),
+        ('4. Clique na linha da companhia no painel para sacar de volta, se precisar.', '4. Click the company line on the panel to withdraw, if you need to.')],
+       ('Esmeraldas no cofre do centro de controle', 'Emeralds in the control center vault'),
+       ('Salários garantidos. Agora, conforto nas casas.', 'Wages secured. Now, comfort at home.')),
+      (('Cidade 5 de 8 · Energia nas casas', 'Town 5 of 8 · Power at home'),
+       ('Energia é serviço público: entra no IDH junto com saneamento, comércio e lazer. Da fase Cidade em diante, casa nova pede um poste a até 12 blocos.',
+        'Power is a public service: it counts in HDI with sanitation, trade and leisure. From the City phase on, a new house needs a pole within 12 blocks.'),
+       [('1. Fabrique postes (ficha acima; a receita rende 2).', '1. Craft poles (card above; the recipe makes 2).'),
+        ('2. Leve uma linha de postes da fábrica até o bairro: eles se ligam sozinhos a até 8 blocos.', '2. Run a pole line from the factory to the district: they link on their own within 8 blocks.'),
+        ('3. Um poste a até 12 blocos da casa já conta.', '3. One pole within 12 blocks of the house is enough.')],
+       ('Uma casa com energia (poste a até 12 blocos)', 'A house with power (pole within 12 blocks)'),
+       ('Luz nas casas. Falta um lugar para descansar.', 'Lights at home. We still need a place to relax.')),
+      (('Cidade 6 de 8 · Lazer', 'Town 6 of 8 · Leisure'),
+       ('Gente que só trabalha não é feliz. Parque, praça e monumento dão lazer a 32 blocos: é o quarto serviço do IDH, e o ânimo da vila sobe nas festas.',
+        'People who only work are not happy. Parks, plazas and monuments give leisure within 32 blocks: the fourth HDI service, and village morale rises at festivals.'),
+       [('1. Fabrique um parque (ficha acima).', '1. Craft a park (card above).'),
+        ('2. Coloque-o a até 32 blocos das casas.', '2. Place it within 32 blocks of the houses.'),
+        ('3. Mais tarde eu vou pedir obras cívicas para os bairros sem lazer: a prefeitura paga a companhia.', '3. Later I will ask for civic works for districts without leisure: the town hall pays the company.'),
+        ('4. Visitantes também vão chegar pedindo festas. Entregue o pedido no espaço Agenda da prefeitura.', '4. Visitors will also come asking for festivals. Deliver the request in the town hall Agenda slot.')],
+       ('Uma casa com lazer (parque a até 32 blocos)', 'A house with leisure (park within 32 blocks)'),
+       ('Um parque! Agora precisamos de mais gente.', 'A park! Now we need more people.')),
+      (('Cidade 7 de 8 · Bairro', 'Town 7 of 8 · A district'),
+       ('Uma vila de verdade tem várias famílias. Cada casa abriga até 4 aldeões; bebês nascem onde há vaga. Casas muito juntas ficam apertadas: espalhe o bairro.',
+        'A real village has several families. Each house holds up to 4 villagers; babies are born where there is room. Houses packed too tight are crowded: spread the district.'),
+       [('1. Fabrique mais casas (ficha acima).', '1. Craft more houses (card above).'),
+        ('2. Coloque-as perto dos aldeões, com até 6 vizinhas a 16 blocos.', '2. Place them near villagers, with at most 6 neighbours within 16 blocks.'),
+        ('3. Camas livres fazem a vila crescer; comida na despensa mantém as famílias.', '3. Free beds make the village grow; food in the pantry keeps families going.'),
+        ('4. Abra a prefeitura: ela mostra famílias, emprego e IDH da vila.', '4. Open the town hall: it shows families, jobs and the village HDI.')],
+       ('Famílias na vila: %s/3', 'Families in the village: %s/3'),
+       ('Três famílias! Estamos perto da primeira fase.', 'Three families! We are close to the first phase.')),
+      (('Cidade 8 de 8 · Subir de fase', 'Town 8 of 8 · Move up a phase'),
+       ('O plano diretor tem quatro fases: Povoado, Vila, Cidade e Metrópole. Para virar Vila: 12 moradores, 3 famílias e IDH 0,40. Eu confiro no fim de cada dia.',
+        'The master plan has four phases: Hamlet, Village, City and Metropolis. To become a Village: 12 residents, 3 families and HDI 0.40. I check at the end of each day.'),
+       [('1. Abra a prefeitura ou clique com um livro: o relatório diz o que falta.', '1. Open the town hall or click it with a book: the report says what is missing.'),
+        ('2. IDH baixo? Comida na despensa, salário em dia, serviços (poço, poste, loja, lazer) e casas sem aperto.', '2. Low HDI? Food in the pantry, wages paid, services (well, pole, shop, leisure) and uncrowded houses.'),
+        ('3. Moradores sobem com camas livres e casas com vaga.', '3. Residents grow with free beds and houses with room.'),
+        ('4. Na fase Vila, a zona pode ir ao nível 3, a vila a 60 aldeões e 10 casas, e o imposto sobe para 8%.', '4. In the Village phase, zones can reach level 3, the village 60 villagers and 10 houses, and tax rises to 8%.')],
+       ('Fase Vila · moradores %s/12 · famílias %s/3 · IDH %s/0,40', 'Village phase · residents %s/12 · families %s/3 · HDI %s/0.40'),
+       ('Somos uma Vila! O plano diretor avançou.', 'We are a Village! The master plan moved forward.')),
+    ]
+    for i, (title, why, lines, goal, done) in enumerate(steps):
+        label(f'veio.city.title.{i}', *title)
+        label(f'veio.city.why.{i}', *why)
+        for n, line in enumerate(lines, 1): label(f'veio.city.do.{i}.{n}', *line)
+        label(f'veio.city.goal.{i}', *goal)
+        label(f'veio.city.done.{i}', *done)
+    for step, block in {0: 'well', 1: 'shop', 4: 'pole', 5: 'park', 6: 'house'}.items():
+        label(f'veio.city.recipe.{step}', *recipe_line(block))
+    sources = {
+      0: ('De onde vem: pedregulho = minerar pedra · balde = 3 lingotes de ferro.', 'Where from: cobblestone = mine stone · bucket = 3 iron ingots.'),
+      1: ('De onde vem: barril = 6 tábuas + 2 lajes · esmeralda = troca com aldeões.', 'Where from: barrel = 6 planks + 2 slabs · emerald = trade with villagers.'),
+      4: ('De onde vem: graveto = 2 tábuas · lingote de cobre = minério de cobre na fornalha.', 'Where from: stick = 2 planks · copper ingot = copper ore in a furnace.'),
+      5: ('De onde vem: mudas = folhas de carvalho · flores = campos · cerca = tábuas e gravetos · lanterna = pepitas de ferro e tocha.',
+          'Where from: saplings = oak leaves · flowers = meadows · fence = planks and sticks · lantern = iron nuggets and a torch.'),
+      6: ('De onde vem: tábuas = troncos · porta = 6 tábuas · painel de vidro = 6 vidros.', 'Where from: planks = logs · door = 6 planks · glass pane = 6 glass.'),
+    }
+    for step, (pt, en) in sources.items(): label(f'veio.city.from.{step}', pt, en)
+    label('veio.city.intro.1', 'A vila trabalha. Agora vamos fazer dela um lugar bom de morar: água, comércio, luz, lazer e mais famílias.',
+          'The village works. Now let us make it a good place to live: water, trade, light, leisure and more families.')
+    label('veio.city.intro.2', 'No fim, a vila sobe de fase, e o plano diretor libera mais aldeões, zonas maiores e mais casas.',
+          'At the end the village moves up a phase, and the master plan unlocks more villagers, bigger zones and more houses.')
+    label('veio.city.intro.3', 'Começamos pela água.', 'We start with water.')
+    label('veio.city.bar', 'Cidade %s/8 | %s', 'Town %s/8 | %s')
+    label('veio.city.start_title', 'Capítulo 3: a cidade', 'Chapter 3: the town')
+    label('veio.city.start_sub', 'Serviços, comércio, dinheiro e a primeira fase', 'Services, trade, money and the first phase')
+    label('veio.city.end_title', 'Uma cidade de verdade', 'A real town')
+    label('veio.city.end_sub', 'Tutorial da cidade concluído', 'Town tutorial complete')
+    label('veio.city.end.1', 'Água, comércio, salário, luz, lazer e famílias: você sabe fazer uma cidade.',
+          'Water, trade, wages, light, leisure and families: you know how to build a town.')
+    label('veio.city.end.2', 'Para Cidade: 36 moradores, 9 famílias, IDH 0,55, PIB de 400 por dia e 60% de emprego. Para Metrópole: 80 moradores, 3 bairros e Gini até 0,45.',
+          'For City: 36 residents, 9 families, HDI 0.55, GDP of 400 a day and 60% employment. For Metropolis: 80 residents, 3 districts and Gini up to 0.45.')
+    label('veio.city.end.3', 'Com o porto ou a estação de carga, a vila vende para o mundo: contratos pagam mais e abrem mercados novos.',
+          'With the cargo port or station, the village sells to the world: contracts pay more and open new markets.')
+    label('veio.city.end.4', 'Eu sigo na prefeitura. Clique em mim quando quiser saber o próximo passo da fábrica.',
+          'I will be at the town hall. Click me whenever you want the factory\'s next step.')

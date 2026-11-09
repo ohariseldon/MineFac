@@ -122,6 +122,10 @@ struct Progress {
     village_base: i32,
     village_count: i32,
     village_announced: Option<u8>,
+    /// Capítulo da cidade (`city`): etapa (0 não começou, 1..=8, 9 fim) e o que já fabricou. Salvos.
+    city: u8,
+    city_crafted: u16,
+    city_announced: Option<u8>,
     // Unsaved transient evidence must not survive a reload or manual intervention.
     input_credit: u32,
     output_credit: u32,
@@ -311,11 +315,11 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-6\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-7\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
             self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips,
             self.intro, u8::from(self.outro), self.village, self.village_crafted, self.village_base.max(0),
-            self.drills, self.events, self.dimension);
+            self.city, self.city_crafted, self.drills, self.events, self.dimension);
         for pos in self.blocks.iter().chain([&self.plot]).chain(self.village_blocks.iter()) {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
@@ -334,16 +338,18 @@ impl Progress {
     fn decode(text: &str) -> Option<Self> {
         let mut lines = text.lines();
         // v4: o começo novo (prefeito salvo); v5: mais o capítulo da vila (3 números e 6 blocos);
-        // v6: mais as etapas dos sistemas (2 números; Quadro e poste depois do prefeito).
+        // v6: mais o capítulo da cidade (2 números); v7: mais as etapas dos sistemas da fábrica
+        // (2 números; Quadro e poste depois do prefeito).
         let (fields, version) = match lines.next()? {
             "veio-onboarding-1" => (10, 1), "veio-onboarding-2" => (12, 2), "veio-onboarding-3" => (14, 3),
-            "veio-onboarding-4" => (14, 4), "veio-onboarding-5" => (17, 5), "veio-onboarding-6" => (19, 6), _ => return None,
+            "veio-onboarding-4" => (14, 4), "veio-onboarding-5" => (17, 5), "veio-onboarding-6" => (19, 6),
+            "veio-onboarding-7" => (21, 7), _ => return None,
         };
         let version4 = version >= 4;
         let values: Vec<u32> = lines.next()?.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
         if values.len() != fields || values[0] > u32::from(DONE) { return None; }
         let (crafted, tips) = if fields >= 12 { (values[10], values[11] as u16) } else { (0, 0) };
-        let (drills, events) = if version >= 6 { (values[17].min(64), values[18]) } else { (0, 0) };
+        let (drills, events) = if version >= 7 { (values[19].min(64), values[20]) } else { (0, 0) };
         // Saves de antes do prólogo: quem já começou a fábrica não volta para a casa e o prefeito.
         // A v3 não tinha a vila nem os recursos: 0 casa, 1 prefeito, 2 terreno, 3 pronto.
         let (intro, outro) = if version4 { ((values[12] as u8).min(intro::INTRO_DONE), values[13] != 0) }
@@ -366,20 +372,21 @@ impl Progress {
             for block in &mut village_blocks { *block = parse(lines.next()?)?; }
             ((values[14] as u8).min(village::DONE_VILLAGE), values[15] as u16, values[16] as i32)
         } else { (0, 0, 0) };
+        let (city, city_crafted) = if version >= 6 { ((values[17] as u8).min(city::DONE_CITY), values[18] as u16) } else { (0, 0) };
         let mayor = if version4 { lines.next().and_then(|line| {
             let coords: Vec<f64> = line.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
             coords.try_into().ok()
         }) } else { None };
         let mut more = [None; 2];
-        if version >= 6 { for pos in &mut more { *pos = parse(lines.next()?)?; } }
+        if version >= 7 { for pos in &mut more { *pos = parse(lines.next()?)?; } }
         let [board, pole] = more;
-        // Até a v5 a fábrica acabava na etapa 8. Quem já abriu o capítulo da vila fica nele (a
-        // fábrica conta como pronta); os outros seguem para as etapas dos sistemas e voltam ao
-        // prefeito no fim das 16.
+        // Até a v6 a fábrica acabava na etapa 8. Quem já abriu o capítulo da vila (ou da cidade)
+        // fica nele (a fábrica conta como pronta); os outros seguem para as etapas dos sistemas e
+        // voltam ao prefeito no fim das 16.
         let mut step = values[0] as u8;
         let mut outro = outro;
-        if version <= 5 && step == 8 {
-            if village > 0 { step = DONE; outro = true; } else { outro = false; }
+        if version <= 6 && step == 8 {
+            if village > 0 || city > 0 { step = DONE; outro = true; } else { outro = false; }
         }
         // Sem o terreno salvo, o prefeito escolhe outro.
         let intro = if intro == intro::PLOT_STAGE && plot.is_none() { intro::MAYOR_STAGE } else { intro };
@@ -387,7 +394,7 @@ impl Progress {
             plates: values[3].min(4), gears: values[4].min(1), copper: values[5].min(1),
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
             delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro, mayor,
-            village, village_blocks, village_crafted, village_base, board, pole, drills, events,
+            village, village_blocks, village_crafted, village_base, city, city_crafted, board, pole, drills, events,
             poles: u32::from(pole.is_some()), ..Self::default() })
     }
 }
@@ -413,7 +420,7 @@ pub(super) fn tracking() -> bool { ACTIVE.load(Ordering::Relaxed) }
 pub(super) fn visible_goal(uuid: u128) -> bool {
     SESSION.lock().ok().and_then(|slot| slot.as_ref().and_then(|session|
         session.players.get(&uuid).map(|progress| (progress.step < DONE || progress.intro < intro::INTRO_DONE || !progress.outro
-            || village::step(progress).is_some())
+            || village::step(progress).is_some() || city::step(progress).is_some())
             && !progress.hidden)))
         .unwrap_or(false)
 }
@@ -692,6 +699,13 @@ fn tick(host: &mut dyn Host, now: u64) {
             continue;
         }
         // Capítulo da vila: enquanto está aberto, ele fala e ocupa a barra.
+        if city::step(p).is_some() {
+            city::tick(host, player, p, defense::clock());
+            if p.dirty && now % 100 == 0 && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
+                host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
+            }
+            continue;
+        }
         if village::step(p).is_some() {
             village::tick(host, player, p, now);
             if p.dirty && now % 100 == 0 && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
@@ -761,22 +775,27 @@ pub(super) fn logout(_host: &dyn Host, uuid: u128) {
 
 pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command: &str) -> bool {
     let action = match command.trim() {
-        "veiotutorial ocultar" => 0, "veiotutorial mostrar" => 1, "veiotutorial reiniciar" => 2, "veiotutorial vila" => 3,
+        "veiotutorial ocultar" => 0, "veiotutorial mostrar" => 1, "veiotutorial reiniciar" => 2, "veiotutorial vila" => 3, "veiotutorial cidade" => 4,
         _ => return false,
     };
     let Ok(mut slot) = SESSION.lock() else { return true; };
     if !session(host, &mut slot) { return true; }
     let s = slot.as_mut().unwrap();
     let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
-    if action == 3 {
-        // Capítulo da vila direto (quem já conhece a fábrica): pula o prólogo, se ainda estiver nele.
+    if action >= 3 {
+        // Capítulo da vila ou da cidade direto (quem já conhece o anterior): pula o prólogo.
         if p.intro < intro::INTRO_DONE { p.intro = intro::INTRO_DONE; }
-        village::start(host, player, p);
+        if action == 3 { village::start(host, player, p); }
+        else {
+            // A cidade fecha o capítulo da vila, se estava aberto, para os dois não disputarem a barra.
+            if village::step(p).is_some() { p.village = village::DONE_VILLAGE; }
+            city::start(host, player, p);
+        }
         if save(&s.root, player.uuid, p).is_err() { host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); }
         ACTIVE.store(true, Ordering::Relaxed);
         return true;
     }
-    match action { 0 => { p.hidden = true; }, 1 => { p.hidden = false; p.announced = None; p.village_announced = None; },
+    match action { 0 => { p.hidden = true; }, 1 => { p.hidden = false; p.announced = None; p.village_announced = None; p.city_announced = None; },
         // Refazer não repete as dicas já vistas.
         _ => { *p = Progress { tips: p.tips, ..Progress::default() }; } }
     if action == 1 { p.intro_announced = None; }
@@ -808,6 +827,7 @@ pub(super) fn world_changed() { intro::reset(); }
 
 mod intro;
 mod village;
+mod city;
 pub(super) use intro::{mayor_seen, visuals, MAYOR};
 #[cfg(test)]
 mod tests;

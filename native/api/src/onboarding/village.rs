@@ -267,7 +267,7 @@ pub(super) fn start(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pr
 }
 
 /// Lista de materiais do bloco da etapa (a mesma do capítulo da fábrica).
-fn materials(host: &mut dyn Host, player: &NativeServerPlayer, block: &str, ingredients: &[&str]) -> bool {
+pub(super) fn materials(host: &mut dyn Host, player: &NativeServerPlayer, block: &str, ingredients: &[&str]) -> bool {
     if !spawn_safe(&player.name) { return false; }
     let mut line = vec![format!(r#"{{"translate":"veio.onboarding.make","with":[{{"translate":"{}"}}],"color":"gold"}}"#, name_key(block))];
     for item in ingredients {
