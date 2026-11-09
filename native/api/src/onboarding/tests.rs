@@ -212,7 +212,7 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     p.crafted = 0b101; p.tips = TIP_BELT;
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.crafted, loaded.tips), (0b101, TIP_BELT));
-    let old = p.encode().replace("veio-onboarding-4", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0\n", "\n", 1);
+    let old = p.encode().replace("veio-onboarding-5", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0\n", "\n", 1);
     assert_eq!(Progress::decode(&old).map(|old| (old.step, old.crafted)), Some((6, 0)));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
@@ -260,7 +260,10 @@ fn arbitrary_worker_loads_do_not_certify_plates_and_failed_supply_gives_no_credi
 #[test]
 fn client_window_tick_never_reads_the_server_world_or_advances_its_clock() {
     struct Client;
-    impl Host for Client { fn window(&self) -> bool { true } }
+    impl Host for Client {
+        fn window(&self) -> bool { true }
+        fn player(&self) -> Option<horizon_client::mod_api::NativePlayer> { None }
+    }
     // All other Host methods panic: a client tick must not call any of them.
     let before = SERVER_CLOCK.load(Ordering::Relaxed);
     server_tick(&mut Client);
@@ -375,7 +378,7 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
     host.root = other_world.clone();
     logged_in(&host);
     tick(&mut host, 160);
-    assert!(host.bars.last().unwrap().contains("intro.goal.home"), "mundo novo começa pela casa");
+    assert!(host.bars.last().unwrap().contains("intro.goal.village"), "mundo novo começa pela vila");
     host.root = root.clone();
     logged_in(&host);
     tick(&mut host, 180);
@@ -392,7 +395,7 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
     // (Lá o jogador ainda está no prólogo, sem nada para salvar: o arquivo pode nem existir.)
     let other = std::fs::read_to_string(path(&other_world.join("veio/tutorial"), player.uuid)).ok()
         .and_then(|text| Progress::decode(&text)).unwrap_or_default();
-    assert_eq!((other.step, other.intro), (0, intro::HOME_STAGE));
+    assert_eq!((other.step, other.intro), (0, intro::VILLAGE_STAGE));
     let _ = std::fs::remove_dir_all(&other_world);
 }
 
@@ -451,7 +454,7 @@ fn old_saves_skip_the_prologue_once_the_factory_started_and_v3_keeps_the_plot() 
     let p = Progress::decode(old).unwrap();
     assert_eq!((p.step, p.intro, p.outro), (3, intro::INTRO_DONE, false));
     let fresh = "veio-onboarding-2\n0 0 0 0 0 0 0 0 0 0 0 0\nminecraft:overworld\n-\n-\n-\n-\n-\n";
-    assert_eq!(Progress::decode(fresh).unwrap().intro, intro::HOME_STAGE);
+    assert_eq!(Progress::decode(fresh).unwrap().intro, intro::VILLAGE_STAGE);
     let finished = "veio-onboarding-1\n8 0 1 4 1 1 2 1 4 1\nminecraft:overworld\n-\n-\n-\n-\n-\n";
     assert!(Progress::decode(finished).unwrap().outro, "quem já terminou não precisa voltar ao prefeito");
     let mut p = Progress { intro: intro::PLOT_STAGE, plot: Some([30, 65, -4]), dimension: "minecraft:overworld".into(), ..Progress::default() };
@@ -463,9 +466,10 @@ fn old_saves_skip_the_prologue_once_the_factory_started_and_v3_keeps_the_plot() 
 }
 
 #[test]
-fn the_mayor_hands_out_a_plot_and_a_level_plot_starts_the_factory() {
+fn the_mayor_asks_for_resources_gives_the_generator_and_a_level_plot_starts_the_factory() {
     use horizon_client::mod_api::NativeHeightmap;
-    struct Land { player: NativeServerPlayer, hill: Option<[i32; 2]>, chat: Vec<String>, bars: Vec<String>, sparks: usize }
+    struct Land { player: NativeServerPlayer, hill: Option<[i32; 2]>, chat: Vec<String>, sparks: usize,
+        bag: HashMap<String, u32> }
     impl Host for Land {
         fn surface_heights(&self, _: &str, columns: &[(i32, i32)], _: NativeHeightmap) -> Result<Vec<Option<i32>>, String> {
             Ok(columns.iter().map(|(x, z)| Some(if self.hill == Some([*x, *z]) { 70 } else { 64 })).collect())
@@ -473,19 +477,40 @@ fn the_mayor_hands_out_a_plot_and_a_level_plot_starts_the_factory() {
         fn acting_player(&self) -> Option<NativeServerPlayer> { Some(self.player.clone()) }
         fn run_command(&mut self, line: &str) -> bool { self.chat.push(line.to_owned()); true }
         fn tell(&mut self, _: u128, text: Text) -> bool { self.chat.push(text.plain()); true }
-        fn action_bar(&mut self, _: u128, text: Text) -> bool { self.bars.push(text.plain()); true }
+        fn action_bar(&mut self, _: u128, _: Text) -> bool { true }
+        fn entity(&self, _: u32) -> Option<horizon_client::mod_api::EntityRef> { None }
+        fn take_items(&mut self, item: &str, count: u32) -> u32 {
+            let have = self.bag.entry(item.to_owned()).or_default();
+            let n = (*have).min(count); *have -= n; n
+        }
+        fn give_items(&mut self, item: &str, count: u32) -> u32 { *self.bag.entry(item.to_owned()).or_default() += count; count }
         fn send_particles(&mut self, _: &horizon_client::mod_api::ParticleOptions, _: Option<horizon_client::mod_api::BlockStateId>,
             _: [f64; 3], _: [f64; 3], _: f64, _: i32) -> bool { self.sparks += 1; true }
     }
     let player = NativeServerPlayer { uuid: 77, name: "Fundador".into(), dimension: "minecraft:overworld".into(),
         position: [0.0, 64.0, 0.0], ..Default::default() };
-    let mut land = Land { player: player.clone(), hill: None, chat: vec![], bars: vec![], sparks: 0 };
+    let mut land = Land { player: player.clone(), hill: None, chat: vec![], sparks: 0, bag: HashMap::new() };
     let mut p = Progress { intro: intro::MAYOR_STAGE, ..Progress::default() };
+    // Primeira conversa: a história e o pedido.
+    intro::talk(&mut land, &player, &mut p);
+    assert_eq!(p.intro, intro::GATHER_STAGE);
+    assert!(land.chat.iter().any(|line| line.contains("mayor.how.1")), "{:?}", land.chat);
+    // Faltando um lingote: nada some do inventário.
+    land.bag.insert("minecraft:cobblestone".into(), 20);
+    land.bag.insert("minecraft:iron_ingot".into(), 2);
+    land.bag.insert("minecraft:copper_ingot".into(), 1);
+    intro::talk(&mut land, &player, &mut p);
+    assert_eq!(p.intro, intro::GATHER_STAGE);
+    assert_eq!((land.bag["minecraft:cobblestone"], land.bag["minecraft:copper_ingot"]), (20, 1), "devolve o que tirou");
+    // Com tudo: entrega, ganha o gerador e as receitas, e o terreno é escolhido.
+    land.bag.insert("minecraft:copper_ingot".into(), 3);
     intro::talk(&mut land, &player, &mut p);
     assert_eq!(p.intro, intro::PLOT_STAGE);
+    assert_eq!(land.bag[GENERATOR], 1);
+    assert_eq!((land.bag["minecraft:cobblestone"], land.bag["minecraft:copper_ingot"]), (4, 1));
+    assert!(land.chat.iter().any(|line| line == "recipe give Fundador veio:press"));
     let plot = p.plot.expect("o prefeito escolheu o terreno");
     assert_eq!(plot[1], 64, "nível do meio do terreno");
-    assert_eq!(land.chat.iter().filter(|line| line.contains("agenda.says")).count(), 5, "4 falas e o terreno: {:?}", land.chat);
     // Um bloco a mais no meio do terreno: ainda não conta, mas cabe na folga.
     land.hill = Some([plot[0], plot[2]]);
     land.player.position = [f64::from(plot[0]), 64.0, f64::from(plot[2])];
@@ -498,12 +523,12 @@ fn the_mayor_hands_out_a_plot_and_a_level_plot_starts_the_factory() {
     land.chat.clear();
     intro::talk(&mut land, &near, &mut p);
     assert!(land.chat.iter().any(|line| line.contains("why.0")), "{:?}", land.chat);
-    assert!(land.chat.iter().any(|line| line.contains("do.0.1")));
-    // Fim da fábrica: a última conversa fecha o tutorial uma vez.
+    // Fim da fábrica: a última conversa fecha o tutorial uma vez e libera o Quadro da fábrica.
     p.step = DONE;
     intro::talk(&mut land, &near, &mut p);
     assert!(p.outro);
     assert!(land.chat.iter().any(|line| line.contains("outro.title")));
+    assert!(land.chat.iter().any(|line| line == "recipe give Fundador veio:factory_board"));
     let calls = land.chat.len();
     intro::talk(&mut land, &near, &mut p);
     assert!(!land.chat[calls..].iter().any(|line| line.contains("xp add")), "a recompensa sai uma vez só");
@@ -645,4 +670,16 @@ fn the_mayor_opens_the_village_chapter_and_celebrates_each_step() {
     assert_eq!(p.village, village::DONE_VILLAGE);
     assert!(town.commands.iter().any(|line| line.contains("veio.village.end_title")));
     assert!(village::step(&p).is_none());
+}
+
+#[test]
+fn the_arrow_turns_with_the_player() {
+    use intro::arrow;
+    let (from, south) = ([0.0, 64.0, 0.0], [0.0, 64.0, 30.0]);
+    assert_eq!(arrow(from, south, 0.0), "↑", "olhando para o sul, o alvo ao sul fica à frente");
+    assert_eq!(arrow(from, south, 180.0), "↓");
+    // Olhando para o oeste (yaw 90), o sul fica à esquerda.
+    assert_eq!(arrow(from, south, 90.0), "←");
+    assert_eq!(arrow(from, south, -90.0), "→");
+    assert_eq!(arrow(from, [30.0, 64.0, 30.0], 0.0), "↖", "sudeste, olhando para o sul: à frente e à esquerda");
 }

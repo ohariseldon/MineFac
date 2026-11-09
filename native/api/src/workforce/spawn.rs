@@ -178,8 +178,42 @@ fn clear_trees(host: &mut dyn Host, [x, y, z]: [i32; 3]) {
     }
 }
 
-/// Leva o jogador ao centro e fixa os spawns, só se ele ainda não tem a tag.
-fn settle(host: &mut dyn Host, name: &str, [x, y, z]: [i32; 3]) -> bool {
+/// Quem chega nasce perto da vila, não dentro dela: a `APPROACH` blocos do centro, do lado de
+/// onde o jogador estava, e o tutorial aponta a vila (`onboarding::intro`). Quem já está entre
+/// `NEAR_MIN` e `SEARCH` blocos fica onde está.
+pub(crate) const APPROACH: i32 = 44;
+const NEAR_MIN: f64 = 28.0;
+
+/// Onde o jogador aparece: `None` se já está perto da vila; senão um chão seco e sem árvore a
+/// `APPROACH` blocos do centro, começando pelo rumo do jogador; sem terreno lido, o centro.
+pub(crate) fn approach(host: &dyn Host, center: [i32; 3], from: [f64; 3]) -> Option<[i32; 3]> {
+    let (dx, dz) = (from[0] - f64::from(center[0]), from[2] - f64::from(center[2]));
+    let distance = dx.hypot(dz);
+    if (NEAR_MIN..=SEARCH).contains(&distance) {
+        return None;
+    }
+    // Rumos em 8 direções, do mais perto do jogador ao mais longe (sem rumo: o sul, longe da casa).
+    let angle = if distance < 1.0 { std::f64::consts::FRAC_PI_2 } else { dz.atan2(dx) };
+    let mut headings: Vec<f64> = (0..8).map(|k| f64::from(k) * std::f64::consts::FRAC_PI_4).collect();
+    let gap = |a: f64| { let d = (a - angle).rem_euclid(std::f64::consts::TAU); d.min(std::f64::consts::TAU - d) };
+    headings.sort_by(|a, b| gap(*a).total_cmp(&gap(*b)));
+    let points: Vec<(i32, i32)> = headings.iter()
+        .map(|a| (center[0] + (a.cos() * f64::from(APPROACH)).round() as i32, center[2] + (a.sin() * f64::from(APPROACH)).round() as i32))
+        .collect();
+    if let (Some(floor), Some(ground), Some(top)) = (heights(host, &points, NativeHeightmap::OceanFloor),
+        heights(host, &points, NativeHeightmap::MotionBlockingNoLeaves), heights(host, &points, NativeHeightmap::MotionBlocking))
+    {
+        for (index, (x, z)) in points.iter().enumerate() {
+            if floor[index] == ground[index] && top[index] == ground[index] {
+                return Some([*x, ground[index], *z]);
+            }
+        }
+    }
+    Some(center)
+}
+
+/// Fixa os spawns na vila e leva o jogador para perto dela, só se ele ainda não tem a tag.
+fn settle(host: &mut dyn Host, name: &str, [x, y, z]: [i32; 3], from: [f64; 3]) -> bool {
     let only_new = format!("execute in {OVERWORLD} as {name} unless entity @s[tag={TAG}] run");
     let ok = host.run_command(&format!("{only_new} setworldspawn {x} {y} {z}"));
     if !ok {
@@ -187,7 +221,9 @@ fn settle(host: &mut dyn Host, name: &str, [x, y, z]: [i32; 3]) -> bool {
     }
     host.run_command(&format!("{only_new} spawnpoint @s {x} {y} {z}"));
     host.run_command(&format!("{only_new} tellraw @s {{\"translate\":\"veio.spawn.village\",\"color\":\"gold\"}}"));
-    host.run_command(&format!("{only_new} tp @s {x} {y} {z}"));
+    if let Some([ax, ay, az]) = approach(host, [x, y, z], from) {
+        host.run_command(&format!("{only_new} tp @s {ax} {ay} {az}"));
+    }
     host.run_command(&format!("tag {name} add {TAG}"));
     true
 }
@@ -222,7 +258,7 @@ pub(crate) fn tick(host: &mut dyn Host, now: u64) {
         let known = center().map(|(at, _)| at);
         let found = known.or_else(|| find_village(host, player.position));
         if let Some(at) = found {
-            if settle(host, &arrival.name, at) {
+            if settle(host, &arrival.name, at, player.position) {
                 if let Ok(mut center) = CENTER.lock()
                     && center.is_none()
                 {
@@ -247,7 +283,7 @@ pub(crate) fn tick(host: &mut dyn Host, now: u64) {
                 if trees { clear_trees(host, site); }
                 let [x, y, z] = site;
                 if host.run_command(&format!("execute in {OVERWORLD} run place structure minecraft:village_plains {x} {y} {z}"))
-                    && settle(host, &name, site)
+                    && settle(host, &name, site, player.position)
                 {
                     if let Ok(mut center) = CENTER.lock() && center.is_none() {
                         *center = Some((site, false));

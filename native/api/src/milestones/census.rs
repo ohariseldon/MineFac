@@ -128,6 +128,11 @@ pub(crate) fn report_board(dimension: &'static str, pos: [i32; 3], info: BoardIn
     });
 }
 
+/// A fase mais adiantada entre os quadros da fábrica vistos nesta dimensão.
+pub(crate) fn board_phase(dimension: &str) -> Option<usize> {
+    with_census(|census| census.boards.iter().filter(|((dim, _), _)| *dim == dimension).map(|(_, board)| board.phase).max())
+}
+
 fn near(a: [i32; 3], b: [i32; 3], radius: i32) -> bool { (0..3).all(|axis| (a[axis] - b[axis]).abs() <= radius) }
 
 fn summarize<'a>(machines: impl Iterator<Item = &'a Machine>, now: u64) -> Summary {

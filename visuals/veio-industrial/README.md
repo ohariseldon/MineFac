@@ -28,10 +28,21 @@ foram refeitos com técnicas publicadas e usadas há anos, em vez de fórmulas p
 `visuals/texturas/Veio-Texturas-JG-128x.zip`, uma adaptação de **PBR JG** (Jason J. Gardner,
 CC BY-NC-SA 4.0): texturas fotográficas com mapas LabPBR de relevo, oclusão e brilho por
 material, que este shader lê. O original é 256x; o Veio reduz para 128x para caber na meta de
-8 GB (cerca de 93 MB) e mantém a água do jogo. O pacote não vai para o git: gere com
+8 GB (cerca de 64 MB) e mantém a água do jogo. O pacote não vai para o git: gere com
 `python tools/build_realistic_textures.py`, que baixa do Modrinth e confere o SHA-512. O launcher põe o
 pacote em `resourcepacks/`, liga por último na lista (os seus pacotes continuam) e sobe o
 orçamento de texturas para 1024 MiB. No Leve ele sai.
+
+**Nuvens claras e ar mais limpo (3.2.3):** bases de nuvem cinza-claro (luz que volta do chão e
+mais luz espalhada dentro), raios de sol só como um toque sobre o terreno, névoa de distância
+mais longe e mais fraca, e faces de costas para o sol com luz do céu suficiente para mostrar a
+textura.
+
+**Brilho do Minecraft nas texturas (3.2.2):** o PBR JG é feito para shaders PBR, que acendem a
+cena bem mais; com a luz do jogo a pedra ficava com 57% do brilho do original e a grama com 76%.
+A ferramenta agora mede o brilho médio de cada textura do Minecraft 26.3 e ajusta a do JG com
+uma curva de luz até bater, sem estourar os claros. Minérios, plantações, folhas e água ficam
+originais. Nuvens de chuva ficam cinza da neblina, não carvão.
 
 **Adaptação do olho e nuvens lisas (3.2):** o brilho segue o lugar onde o jogador está, pela luz
 em volta do olho que o jogo suaviza em ~2 s (a mesma técnica do BSL e do Complementary com

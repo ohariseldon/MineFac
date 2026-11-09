@@ -280,6 +280,10 @@ impl Hooks for Factory {
         // As caravanas acompanham seus animais em todo tick (`freight::caravan`).
         freight::caravan::observe(host, event.dimension, event.entity, event.kind);
         // Visitante que nenhum pedido da agenda conhece sai do mundo (de antes de reabrir, por exemplo).
+        // O prefeito do tutorial: guarda o id (a seta e a conversa usam) e tira cópias a mais.
+        if event.kind == onboarding::MAYOR && (now + u64::from(event.entity)) % 41 == 0 {
+            onboarding::mayor_seen(host, event.dimension, event.entity);
+        }
         if event.kind == workforce::society::agenda::VISITOR && (now + u64::from(event.entity)) % 41 == 0 {
             workforce::society::agenda::visitor_seen(host, event.dimension, event.entity);
         }
@@ -530,6 +534,7 @@ impl Hooks for Factory {
     #[allow(elided_lifetimes_in_paths)]
     fn visuals(&self, host: &dyn Host, event: &mut horizon_client::mod_api::VisualsEvent) {
         ambience::visuals(host, event.lights);
+        onboarding::visuals(event.rims);
     }
 
     /// Estação, temperatura e fumaça da fábrica para o pacote de shaders (`frame.mods`).

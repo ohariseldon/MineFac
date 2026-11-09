@@ -152,7 +152,7 @@ pub(super) fn bar(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Prog
     let text = match p.village_blocks[focus(step)] {
         Some(pos) => {
             let target = [f64::from(pos[0]) + 0.5, f64::from(pos[1]), f64::from(pos[2]) + 0.5];
-            let (distance, dir) = intro::direction(player.position, target);
+            let (distance, dir) = intro::pointer(player, target);
             if distance > 12 { Text::tr("veio.village.far", &[&goal, &distance, &dir]) } else { Text::literal(goal) }
         }
         None => Text::literal(goal),
@@ -240,7 +240,6 @@ fn finish(host: &mut dyn Host, player: &NativeServerPlayer) {
 pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) {
     match p.village {
         0 => start(host, player, p),
-        DONE_VILLAGE.. => for line in 1..=4 { say(host, player.uuid, &format!("veio.village.end.{line}")); },
         _ => {
             if let Some(step) = step(p) {
                 say(host, player.uuid, "veio.village.again");

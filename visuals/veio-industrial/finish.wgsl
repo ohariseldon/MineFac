@@ -90,7 +90,7 @@ fn post(input: PostInput) -> vec4<f32> {
         }
         if screen_reflections {
             let mirrored = veio_sky_mirror(input.uv, true);
-            color = mix(color, mirrored.rgb, mirrored.a * 0.75);
+            color = mix(color, mirrored.rgb, mirrored.a * 0.55);
         }
     }
     let overworld = frame.dimension == 0 && frame.eye_in == 0u;
@@ -102,14 +102,14 @@ fn post(input: PostInput) -> vec4<f32> {
         let exposed = frame.eye_light_smooth.y * frame.eye_light_smooth.y;
         let effects = (1.0 - frame.blindness) * (1.0 - frame.darkness) * (1.0 - 0.6 * frame.night_vision);
         if atmosphere > 0.0 {
-            let near = min(24.0, frame.render_distance * 0.25);
+            let near = min(48.0, frame.render_distance * 0.35);
             let far = max(near + 16.0, frame.render_distance * 0.88);
             // Aerial perspective: far terrain takes the colour of the air toward it.
             let view_dir = normalize((frame.view_inverse * vec4<f32>(projected.xyz, 0.0)).xyz);
-            let air = mix(frame.fog_color, veio_atmosphere(vec3<f32>(view_dir.x, max(view_dir.y, 0.02), view_dir.z)), 0.55);
+            let air = mix(frame.fog_color, veio_atmosphere(vec3<f32>(view_dir.x, max(view_dir.y, 0.02), view_dir.z)), 0.35);
             let haze = smoothstep(near, far, distance) * atmosphere * exposed * effects
                 * (0.14 + 0.10 * frame.rain) * mix(0.30, 1.0, veio_daylight());
-            color = mix(color, air, clamp(haze, 0.0, 0.30));
+            color = mix(color, air, clamp(haze, 0.0, 0.22));
         }
         let smog = veio_smog();
         if smog > 0.0 {

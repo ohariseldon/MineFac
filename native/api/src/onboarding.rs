@@ -69,6 +69,8 @@ struct Progress {
     intro: u8,
     plot: Option<Pos>,
     outro: bool,
+    /// Onde o prefeito ficou (para a seta quando ele está longe, em chunk descarregado). Salvo.
+    mayor: Option<[f64; 3]>,
     intro_announced: Option<u8>,
     intro_since: Option<u64>,
     plot_level: Option<intro::Level>,
@@ -240,7 +242,7 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-4\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-5\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
             self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips,
             self.intro, u8::from(self.outro), self.village, self.village_crafted, self.village_base.max(0), self.dimension);
@@ -248,19 +250,31 @@ impl Progress {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
         }
+        match self.mayor {
+            Some([x, y, z]) => text.push_str(&format!("{x} {y} {z}\n")),
+            None => text.push_str("-\n"),
+        }
         text
     }
 
     fn decode(text: &str) -> Option<Self> {
         let mut lines = text.lines();
+        // v4: o começo novo (prefeito salvo); v5: mais o capítulo da vila (3 números e 6 blocos).
         let fields = match lines.next()? {
-            "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, "veio-onboarding-3" => 14, "veio-onboarding-4" => 17, _ => return None,
+            "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, "veio-onboarding-3" => 14, "veio-onboarding-4" => 15,
+            "veio-onboarding-5" => 17, _ => return None,
         };
+        let version5 = fields == 17;
+        let version4 = fields >= 15;
+        let fields = if version5 { 17 } else { fields.min(14) };
         let values: Vec<u32> = lines.next()?.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
         if values.len() != fields || values[0] > u32::from(DONE) { return None; }
         let (crafted, tips) = if fields >= 12 { (values[10] as u16, values[11] as u16) } else { (0, 0) };
         // Saves de antes do prólogo: quem já começou a fábrica não volta para a casa e o prefeito.
-        let (intro, outro) = if fields >= 14 { ((values[12] as u8).min(intro::INTRO_DONE), values[13] != 0) }
+        // A v3 não tinha a vila nem os recursos: 0 casa, 1 prefeito, 2 terreno, 3 pronto.
+        let (intro, outro) = if version4 { ((values[12] as u8).min(intro::INTRO_DONE), values[13] != 0) }
+            else if fields == 14 { ([intro::VILLAGE_STAGE, intro::MAYOR_STAGE, intro::PLOT_STAGE, intro::INTRO_DONE]
+                [usize::from((values[12] as u8).min(3))], values[13] != 0) }
             else if values[0] > 0 || crafted != 0 { (intro::INTRO_DONE, values[0] == u32::from(DONE)) }
             else { (0, false) };
         let dimension = lines.next()?.to_owned();
@@ -274,16 +288,20 @@ impl Progress {
         for block in &mut blocks { *block = parse(lines.next()?)?; }
         let plot = if fields >= 14 { parse(lines.next()?)? } else { None };
         let mut village_blocks = [None; 6];
-        let (village, village_crafted, village_base) = if fields == 17 {
+        let (village, village_crafted, village_base) = if version5 {
             for block in &mut village_blocks { *block = parse(lines.next()?)?; }
             ((values[14] as u8).min(village::DONE_VILLAGE), values[15] as u16, values[16] as i32)
         } else { (0, 0, 0) };
+        let mayor = if version4 { lines.next().and_then(|line| {
+            let coords: Vec<f64> = line.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
+            coords.try_into().ok()
+        }) } else { None };
         // Sem o terreno salvo, o prefeito escolhe outro.
         let intro = if intro == intro::PLOT_STAGE && plot.is_none() { intro::MAYOR_STAGE } else { intro };
         Some(Self { step: values[0] as u8, hidden: values[1] != 0, powered: values[2] != 0,
             plates: values[3].min(4), gears: values[4].min(1), copper: values[5].min(1),
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
-            delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro,
+            delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro, mayor,
             village, village_blocks, village_crafted, village_base, ..Self::default() })
     }
 }
@@ -520,7 +538,7 @@ fn record(s: &mut Session, host: &dyn Host, from: Pos, to: Pos, item: &str, coun
 /// `tick` fires in both the window and the integrated server. Never let the
 /// client's empty player list clear the authoritative session or advance its clock.
 pub(super) fn server_tick(host: &mut dyn Host) {
-    if host.window() { return; }
+    if host.window() { intro::client_view(host); return; }
     let now = SERVER_CLOCK.fetch_add(1, Ordering::Relaxed).wrapping_add(1);
     transport::flush(host, None);
     tick(host, now);
@@ -582,7 +600,7 @@ fn tick(host: &mut dyn Host, now: u64) {
                 }
             } else { p.last_status_notice = None; }
         }
-        if !p.hidden && p.step == DONE && !p.outro { intro::outro_bar(host, player); }
+        if !p.hidden && p.step == DONE && !p.outro { intro::outro_bar(host, player, p); }
         if p.dirty && (now % 100 == 0 || p.ready() || p.step == DONE) && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
             host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
         }
@@ -658,7 +676,7 @@ pub(super) fn world_changed() { intro::reset(); }
 
 mod intro;
 mod village;
-pub(super) use intro::MAYOR;
+pub(super) use intro::{mayor_seen, visuals, MAYOR};
 #[cfg(test)]
 mod tests;
 mod transport;

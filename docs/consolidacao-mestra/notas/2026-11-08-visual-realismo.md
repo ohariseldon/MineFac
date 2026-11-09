@@ -100,3 +100,48 @@ Photon v1.4, que liga os mapas LabPBR das nossas texturas e corta o que mais cus
 grande, luz colorida, TAA, GTAO, SSRT, POM com 40 amostras). Os nomes de opção foram conferidos nos
 próprios packs. Próximo: medir FPS (padrão × ajuste) no PC do Luiz e o launcher baixar e ligar o
 vencedor.
+
+## 3.2.1 (commit desta seção): menos reflexo, identidade do Minecraft
+
+Luiz (23:45): o ambiente "ficou bom, não precisa esquentar a cabeça"; alguns objetos refletem
+sem necessidade (preocupação com custo quando há muita coisa na tela); minérios e plantações
+devem ficar como no Minecraft, pacote de texturas só para o básico (areia, grama...); perdeu um
+pouco a identidade do Minecraft.
+
+- Reflexo na tela só a partir de lisura 0,45 (metal polido, vidro, chão molhado), antes 0,12, que
+  pegava pedra e madeira comuns com os mapas do pacote; mistura 0,75 → 0,55.
+- Pacote de texturas: só `textures/block/` do cenário. Ficam originais: minérios, plantações
+  (trigo, cenoura, batata, beterraba, caules, cacau, fungo do Nether, frutas, flor-tocha,
+  jarro), itens, criaturas, interface, partículas e água. 66 MB.
+- Próximas frentes do Luiz (loop de jogo, tutorial, aldeões, forma em cruz) são de outras
+  threads; não entram aqui.
+
+## 3.2.2 (commit desta seção): texturas com o brilho do Minecraft
+
+Luiz (23:59, com print): "ta meio ruim ainda". No print: grama verde-oliva escura, morro de pedra
+lavado, nuvens de chuva carvão, folhas com chuvisco de céu. Os riscos diagonais claros à direita
+são a chuva do Minecraft começando (vanilla), não defeito.
+
+- Causa principal medida: o PBR JG é calibrado para shaders PBR, que acendem a cena bem mais.
+  Com a luz do jogo, comparado ao Minecraft 26.3 (média de brilho): pedra 57%, pedregulho 57%,
+  grama 76%, terra 71%, cascalho 44%, andesito 49%.
+- `tools/build_realistic_textures.py` agora mede o brilho de cada textura original no client.jar
+  do 26.3 (baixado da Mojang, conferido por SHA-1; só as médias, nada da Mojang entra no zip) e
+  aplica uma curva de luz em linear até a média bater (sem estourar os claros). Texturas com
+  desenho diferente do original (mais de 6x de diferença, ex.: caldeirão) ficam como estão.
+- Folhas voltam ao original: os furos finos do 256x viravam chuvisco de céu a distância.
+- Nuvens com chuva: cinza da neblina da chuva (0,95, antes 0,75) e o sol ainda passa nas partes
+  finas (corte 65%, antes 80%).
+
+## 3.2.3 (commit desta seção): nuvens claras, morro sem véu, lado de bloco visível
+
+Print do Luiz com a 3.2.2 (00:09): grama melhor; morro lavado e azulado, nuvens escuras e
+pesadas, lado de terra dos blocos quase preto.
+
+- Nuvens: luz espalhada dentro da nuvem 0,35 → 0,6, céu de cima mais forte e luz que volta do
+  chão iluminado (as bases de cúmulo reais são cinza-claro, não ardósia).
+- Raios de sol sobre o terreno a 55% (olhando para o sol, lavavam o morro de branco); no céu
+  continuam iguais.
+- Névoa de distância começa mais longe (48 blocos ou 35% da distância de visão), no máximo 22%
+  (antes 30%) e menos azul.
+- Faces de costas para o sol: luz do céu 0,66 → 0,74 (de dia); a terra do lado mostra a textura.
