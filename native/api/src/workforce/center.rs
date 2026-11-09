@@ -24,7 +24,8 @@ use super::*;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 pub(crate) const CONTROL_CENTER: &str = "veio:control_center";
-pub(crate) const RADIUS: i32 = 64;
+/// Alcance do centro: a cidade pronta inteira (cerca a `town::HALF`) e as ruínas em volta dela.
+pub(crate) const RADIUS: i32 = super::town::HALF + 64;
 pub(crate) const META_UNIT: u32 = 16;
 pub(crate) const GOAL_SLOTS: std::ops::Range<usize> = 1..4;
 pub(crate) const PAGES: i32 = 4;

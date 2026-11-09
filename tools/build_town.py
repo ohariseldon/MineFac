@@ -18,8 +18,13 @@ Plano (x para leste, z para o sul, a partir do centro da praça):
 - **Residencial** (oeste e sul): casas de três paletas (carvalho, abeto, bétula) e sobrados.
 - **Distrito industrial** (leste): lote plano e marcado para a oficina do tutorial e um galpão.
 - **Lavouras** (sul): canteiros irrigados com trigo, cenoura, batata e beterraba, e um celeiro.
+- **Bairros** (2026-11-09, pedido do dono: a cidade era pequena para a escala do Veio): em volta
+  do centro (|x|, |z| <= `CORE`), até a cerca (`HALF`), quadras de quatro casas ou de sobrados com
+  casas, praças de bairro com laguinho, lavouras ao sul e galpões a leste, com ruas de terra e
+  avenidas até a cerca nos quatro sentidos. Cerca de 140 prédios novos e 300 camas: a cidade
+  nasce com 20 moradores e cabe crescer até o teto de 500. Encher as casas é tarefa do jogador.
 
-As casas têm 30 camas; a cidade nasce com 20 aldeões (`STARTING_VILLAGERS`), dois deles o casal
+As casas do centro têm 30 camas (300 com os bairros); a cidade nasce com 20 aldeões (`STARTING_VILLAGERS`), dois deles o casal
 fundador protegido (`workforce/founders.rs`). As posições que o Rust usa (lotes, refúgio, portão
 e lugares dos moradores) vão para `native/api/src/workforce/town_data.rs`.
 
@@ -35,7 +40,8 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "content/data/veio/function/town/build.mcfunction"
 DATA = ROOT / "native/api/src/workforce/town_data.rs"
 
-HALF = 44                 # perímetro em |x| = 44 e |z| = 44
+HALF = 96                 # perímetro em |x| = 96 e |z| = 96 (cerca)
+CORE = 44                 # o centro desenhado à mão fica em |x|, |z| <= 44; fora dele, os bairros
 CLEAR_UP = 40             # ar limpo do chão até 40 blocos acima
 FILL_DOWN = 8             # buracos e água preenchidos até 8 blocos abaixo do chão
 STARTING_VILLAGERS = 20
@@ -674,21 +680,151 @@ def plan():
                     t.set(x, 0, z, crop)
         t.set(x0, 1, z0, "minecraft:lantern[hanging=false]")
     t.place(barn(), 31, 28, 2, "celeiro")
+    # --- Bairros de fora (2026-11-09): a cidade cresceu 5 vezes para a escala do Veio ---
+    districts(t)
+
     # Portões da cerca.
-    t.reserved["gate"] = (0, 0, 40)
+    t.reserved["gate"] = (0, 0, HALF - 4)
 
     # --- Perímetro: cerca com portões nas avenidas e postes nos portões ---
     for i in range(-HALF, HALF + 1):
         for x, z in ((i, -HALF), (i, HALF), (-HALF, i), (HALF, i)):
-            opening = (abs(x) == HALF and -1 <= z <= 1) or (z == HALF and -1 <= x <= 1)
+            opening = (abs(x) == HALF and -1 <= z <= 1) or (abs(z) == HALF and -1 <= x <= 1)
             if not opening:
                 t.set(x, 0, z, "minecraft:oak_fence")
-    for x, z in ((HALF, -2), (HALF, 2), (-HALF, -2), (-HALF, 2), (-2, HALF), (2, HALF)):
+    for x, z in ((HALF, -2), (HALF, 2), (-HALF, -2), (-HALF, 2), (-2, HALF), (2, HALF), (-2, -HALF), (2, -HALF)):
         t.set(x, 1, z, "minecraft:lantern[hanging=false]")
     for x in range(-HALF, HALF + 1):
         for z in (-HALF, HALF):
             t.ground[(x, z)] = t.ground.get((x, z), "minecraft:grass_block")
     return t
+
+
+# ------------------------------------------------------------------ Bairros
+
+# Quadras dos bairros, em cada eixo; entre elas, ruas de terra de 3 blocos. As faixas -2..2 são a
+# avenida (calçada nas pontas) e 45..47 é a rua do anel em volta do centro.
+LOTS = [(-92, -72), (-68, -48), (-44, -25), (-21, -3), (3, 21), (25, 44), (48, 68), (72, 92)]
+PALETTE_ORDER = ["oak", "spruce", "birch", "stone"]
+FLOWER_ORDER = [("minecraft:poppy", "minecraft:dandelion"), ("minecraft:cornflower", "minecraft:allium"),
+                ("minecraft:azure_bluet", "minecraft:oxeye_daisy"), ("minecraft:allium", "minecraft:poppy")]
+
+
+def in_core(interval):
+    return -CORE <= interval[0] and interval[1] <= CORE
+
+
+def quarter_kind(ix, iz, xr, zr):
+    """Tipo da quadra: casas, sobrados com casas, parque, lavoura ou galpões (leste)."""
+    if xr == LOTS[-1] and abs(zr[0]) <= CORE:
+        return "industrial"
+    if zr == LOTS[-1] and xr in (LOTS[1], LOTS[2], LOTS[5], LOTS[6]):
+        return "farm"
+    if (ix, iz) in ((0, 0), (7, 0), (0, 7), (3, 0), (4, 7), (0, 4)):
+        return "park"
+    return "mixed" if (ix * 3 + iz * 5) % 3 == 0 else "houses"
+
+
+def districts(t):
+    """Enche o anel entre o centro (CORE) e a cerca (HALF) com quadras de casas e serviços."""
+    count = 0
+    for ix, xr in enumerate(LOTS):
+        for iz, zr in enumerate(LOTS):
+            if in_core(xr) and in_core(zr):
+                continue
+            kind = quarter_kind(ix, iz, xr, zr)
+            name = f"quadra {ix},{iz}"
+            seed = ix * 8 + iz
+            a, b = xr
+            c, d = zr
+            w, h = b - a + 1, d - c + 1
+            x0 = a + (w - 18) // 2
+            p = lambda k: PALETTE_ORDER[(seed + k) % len(PALETTE_ORDER)]
+            f = lambda k: FLOWER_ORDER[(seed + k) % len(FLOWER_ORDER)]
+            if kind == "houses" or (kind == "mixed" and h < 20):
+                # Duas casas de frente para a rua do norte, duas para a do sul, quintal no meio.
+                t.place(casa(p(0), f(0)), x0, c, 2, f"{name} casa 1")
+                t.place(casa(p(1), f(1)), x0 + 9, c, 2, f"{name} casa 2")
+                t.place(casa(p(2), f(2)), x0, d - 8, 0, f"{name} casa 3")
+                t.place(casa(p(3), f(3)), x0 + 9, d - 8, 0, f"{name} casa 4")
+                count += 4
+                if h > 18:
+                    t.tree(a + w // 2, c + h // 2, "minecraft:oak_log", "minecraft:oak_leaves")
+            elif kind == "mixed":
+                # Sobrados com loja para a rua do norte, casas para a do sul.
+                t.place(sobrado(p(0), seed % 2 == 0), x0, c, 2, f"{name} sobrado 1")
+                t.place(sobrado(p(1), seed % 3 == 0, "minecraft:dark_oak_trapdoor"), x0 + 9, c, 2, f"{name} sobrado 2")
+                t.place(casa(p(2), f(2)), x0, d - 8, 0, f"{name} casa 1")
+                t.place(casa(p(3), f(3)), x0 + 9, d - 8, 0, f"{name} casa 2")
+                count += 4
+            elif kind == "industrial":
+                t.place(shed(), a + (w - 13) // 2, c + (h - 11) // 2, 0, f"{name} galpão")
+                count += 1
+            elif kind == "farm":
+                farm(t, a, c, b, d, seed, name)
+            else:
+                park(t, a, c, b, d, seed, name)
+            for x, z in ((a - 1, c - 1), (b + 1, c - 1), (a - 1, d + 1), (b + 1, d + 1)):
+                if (x, z) not in t.owner and abs(x) < HALF and abs(z) < HALF:
+                    t.lamp(x, z)
+                    t.owner[(x, z)] = "poste"
+    # Avenidas até a cerca, nos quatro sentidos.
+    street(t, -HALF + 1, -1, -CORE - 1, 1, "avenida oeste (bairros)", True)
+    street(t, CORE + 1, -1, HALF - 1, 1, "avenida leste (bairros)", True)
+    street(t, -1, CORE + 1, 1, HALF - 1, "avenida sul (bairros)", True)
+    street(t, -1, -HALF + 1, 1, -CORE - 1, "avenida norte", True)
+    # O resto do anel de fora que não é quadra vira rua de terra.
+    for x in range(-HALF + 1, HALF):
+        for z in range(-HALF + 1, HALF):
+            if abs(x) <= CORE and abs(z) <= CORE:
+                continue
+            if (x, z) not in t.owner and (x, z) not in t.ground:
+                t.ground[(x, z)] = "minecraft:dirt_path"
+    return count
+
+
+def farm(t, a, c, b, d, seed, name):
+    """Lavoura de bairro: quatro canteiros irrigados com cerca e um poste."""
+    crops = ["minecraft:wheat[age=7]", "minecraft:carrots[age=7]", "minecraft:potatoes[age=7]", "minecraft:beetroots[age=3]"]
+    t.claim(a, c, b, d, name)
+    for x in range(a, b + 1):
+        for z in range(c, d + 1):
+            edge = x in (a, b) or z in (c, d)
+            if edge:
+                t.ground[(x, z)] = "minecraft:grass_block"
+                if not (z == c and abs(x - (a + b) // 2) <= 1):
+                    t.set(x, 0, z, "minecraft:oak_fence")
+            elif (x - a) % 5 == 0:
+                t.ground[(x, z)] = "minecraft:water"
+            else:
+                t.ground[(x, z)] = "minecraft:farmland[moisture=7]"
+                t.set(x, 0, z, crops[(seed + (x - a) // 5 + (z - c) // 10) % len(crops)])
+    t.set(a, 1, c, "minecraft:lantern[hanging=false]")
+
+
+def park(t, a, c, b, d, seed, name):
+    """Praça de bairro: grama, caminhos em cruz, árvores, bancos e um laguinho."""
+    t.claim(a, c, b, d, name)
+    mx, mz = (a + b) // 2, (c + d) // 2
+    for x in range(a, b + 1):
+        for z in range(c, d + 1):
+            t.ground[(x, z)] = "minecraft:dirt_path" if x == mx or z == mz else "minecraft:grass_block"
+    for x in range(mx - 2, mx + 3):
+        for z in range(mz - 2, mz + 3):
+            if abs(x - mx) == 2 or abs(z - mz) == 2:
+                t.ground[(x, z)] = "minecraft:stone_bricks"
+            else:
+                t.ground[(x, z)] = "minecraft:water"
+                t.blocks[(x, -2, z)] = "minecraft:clay"
+    logs = [("minecraft:oak_log", "minecraft:oak_leaves"), ("minecraft:birch_log", "minecraft:birch_leaves"),
+            ("minecraft:spruce_log", "minecraft:spruce_leaves")]
+    for k, (x, z) in enumerate(((a + 3, c + 3), (b - 3, c + 3), (a + 3, d - 3), (b - 3, d - 3))):
+        log, leaves = logs[(seed + k) % len(logs)]
+        t.tree(x, z, log, leaves)
+    t.bench(mx - 4, mz + 1, "east")
+    t.bench(mx + 4, mz - 1, "west")
+    t.lamp(mx + 3, mz + 3)
+    t.lamp(mx - 3, mz - 3)
 
 
 # ------------------------------------------------------------------ Saída

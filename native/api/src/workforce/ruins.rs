@@ -20,10 +20,10 @@ use horizon_client::mod_api::{NativeBlockEdit, NativeBlockRun, NativeHeightmap};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-/// Distâncias (em blocos, no plano) do centro da vila aos canteiros. O anel do projeto é de 48 a
-/// 80 blocos; os canteiros ficam até 62 para o centro de controle no meio da vila (a até
-/// `center::RADIUS`) alcançar a obra.
-pub(crate) const RING: [i32; 3] = [50, 56, 62];
+/// Distâncias (em blocos, no plano) do centro da cidade aos canteiros: fora da cerca da cidade
+/// pronta (`town::HALF`) e dentro do alcance do centro de controle (`center::RADIUS`). Canteiros
+/// que caem dentro do quadrado da cidade (perto das diagonais) são pulados.
+pub(crate) const RING: [i32; 4] = [town::HALF + 14, town::HALF + 24, town::HALF + 40, town::HALF + 54];
 /// Direções tentadas em volta do centro.
 pub(crate) const ANGLES: i32 = 16;
 /// Desnível máximo do terreno sob a planta.
@@ -169,7 +169,9 @@ pub(crate) fn choose(host: &dyn Host, dimension: &str, center: [i32; 3]) -> Vec<
                 let at = [x, center[1], z];
                 let rot = facing_center(at, center);
                 let (low, high) = site::territory(plan, at, rot);
-                if taken.iter().any(|other| overlaps(*other, (low, high))) {
+                let town = ([center[0] - town::HALF - 2, center[1], center[2] - town::HALF - 2],
+                    [center[0] + town::HALF + 2, center[1], center[2] + town::HALF + 2]);
+                if overlaps(town, (low, high)) || taken.iter().any(|other| overlaps(*other, (low, high))) {
                     continue;
                 }
                 let inner = blueprints::bounds(plan, at, rot);

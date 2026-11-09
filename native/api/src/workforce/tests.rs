@@ -1381,7 +1381,8 @@ fn new_players_arrive_near_the_village_and_the_control_center_takes_over() {
     assert!(joined.contains("positioned 90 70 90 run function veio:town/build"), "cidade no terreno plano do jogador\n{joined}");
     assert!(joined.contains("setworldspawn 90 70 90"), "o spawn fica na praça\n{joined}");
     // Dentro da cidade: vai para fora da cerca, ao sul (sem rumo), e a seta leva à praça.
-    assert!(joined.contains("unless entity @s[tag=veio_village] run tp @s 90 70 146"), "só quem chega pela primeira vez\n{joined}");
+    assert!(joined.contains(&format!("unless entity @s[tag=veio_village] run tp @s 90 70 {}", 90 + spawn::APPROACH)),
+        "só quem chega pela primeira vez\n{joined}");
     assert!(joined.contains("spawnpoint @s 90 70 90"), "renasce na praça");
     assert!(joined.contains("tag Steve add veio_village"));
     assert!(!joined.contains("bad name"), "nome inseguro não entra em comando");
@@ -1391,7 +1392,8 @@ fn new_players_arrive_near_the_village_and_the_control_center_takes_over() {
     spawn::logged_in(9, "Alex", 200);
     spawn::tick(&mut village, 220);
     let joined = village.commands.join("\n");
-    assert!(joined.contains("tp @s 130 70 130"), "convidado da LAN vai para perto da praça já conhecida\n{joined}");
+    let diagonal = 90 + (f64::from(spawn::APPROACH) / std::f64::consts::SQRT_2).round() as i32;
+    assert!(joined.contains(&format!("tp @s {diagonal} 70 {diagonal}")), "convidado da LAN vai para perto da praça já conhecida\n{joined}");
     assert!(!joined.contains("run function veio:town/build"), "não gera uma segunda cidade");
 
     // Sozinho e longe de tudo: espera os chunks e ergue a cidade pronta do Veio.
@@ -1409,7 +1411,7 @@ fn new_players_arrive_near_the_village_and_the_control_center_takes_over() {
     let joined = village.commands.join("\n");
     assert!(joined.contains("positioned 5000 70 5000 run function veio:town/build"), "{joined}");
     assert!(!joined.contains("place structure"), "a vila vanilla não é mais usada");
-    assert!(joined.contains("tp @s 5000 70 5056") && joined.contains("tag Alex add veio_village"), "nasce ao sul, fora da cerca\n{joined}");
+    assert!(joined.contains(&format!("tp @s 5000 70 {}", 5000 + spawn::APPROACH)) && joined.contains("tag Alex add veio_village"), "nasce ao sul, fora da cerca\n{joined}");
     assert_eq!(spawn::center(), Some(([5000, 70, 5000], false)));
     assert_eq!(town::center(), Some([5000, 70, 5000]));
     assert_eq!(village.summoned.len(), town::STARTING_VILLAGERS, "a cidade nasce com 20 moradores");
@@ -2929,7 +2931,8 @@ fn ruins_pick_firm_flat_spots_in_the_ring_facing_the_center() {
         let tier = projects::PROJECTS.iter().find(|project| project.key == plan.key).unwrap().tier;
         assert_eq!(tier, 0, "{}: só obras do começo viram ruína", plan.key);
         let distance = f64::from(ruin.pos[0]).hypot(f64::from(ruin.pos[2]));
-        assert!((48.0..=80.0).contains(&distance), "{:?} fora do anel", ruin.pos);
+        assert!((f64::from(town::HALF)..=f64::from(center::RADIUS)).contains(&distance), "{:?} fora do anel", ruin.pos);
+        assert!(ruin.pos[0].abs() > town::HALF || ruin.pos[2].abs() > town::HALF, "{:?} dentro da cidade", ruin.pos);
         assert_eq!(ruin.pos[1], 70, "o canteiro fica no chão");
         assert_eq!(ruin.rot, ruins::facing_center(ruin.pos, center), "entrada virada para o centro");
         // A entrada da planta aponta para o centro.
