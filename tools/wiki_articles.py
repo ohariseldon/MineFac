@@ -328,7 +328,7 @@ ARTICLES = [
 <tr><td>Quartel</td><td>treina milícia, guarda, arqueiro e mago (troca de classe: agachar com esmeralda)</td></tr>
 <tr><td>Centro de controle</td><td>sede da companhia: metas, holding por empresa, obras, decretos, comércio exterior</td></tr></table>
 <p><b>Comida:</b> cada tarefa custa 2 pontos. Trigo vale 1 (não paga uma colheita), cenoura e batata 1, pão 6 (paga 3), carne assada 8 (paga 4).</p>
-<p><b>Zonas:</b> marcos de lavoura e de cercado demarcam onde trabalhar; celeiro e silo guardam as sobras. A vila cresce até 150 aldeões, sempre com cama livre.</p>
+<p><b>Zonas:</b> marcos de lavoura e de cercado demarcam onde trabalhar; celeiro e silo guardam as sobras. A cidade nasce pronta com 20 aldeões e cresce até 500, sempre com cama livre; nunca zera (casal fundador e imigrantes).</p>
 <h3>Tutorial da vila (capítulo 2)</h3>
 <p>Depois do tutorial da fábrica, o prefeito <b>Otávio</b> conduz o capítulo da vila (ou use <code>/veiotutorial vila</code> a qualquer momento). Cada etapa traz a fala dele, a ficha da receita, a receita liberada no livro, a lista de materiais e passos numerados; a barra mostra a distância até o posto e faíscas marcam onde agir.</p>
 <table><tr><th>Etapa</th><th>O que fazer</th><th>Como o jogo confere</th></tr>
@@ -372,10 +372,10 @@ ARTICLES = [
 <p>Contrate um comerciante e abasteça o estoque (à mão, funil ou carregador). Os preços são <b>locais</b>: sobem quando a procura passa o estoque (até o dobro) e caem com estoque parado (até 70%). O comerciante compra no <b>atacado</b> (75% do preço) o que você entrega e paga com as vendas. Clique nele para comprar com esmeraldas.</p>
 <h3>Prefeitura e fases</h3>
 <table><tr><th>Fase</th><th>Pede</th><th>Libera</th><th>Casa nova pede</th></tr>
-<tr><td>Povoado</td><td>—</td><td>zonas nível 2, 30 aldeões, 4 casas</td><td>—</td></tr>
-<tr><td>Vila</td><td>12 moradores, 3 famílias, IDH 0,40</td><td>nível 3, 60 aldeões, 10 casas</td><td>poço a 24 blocos</td></tr>
-<tr><td>Cidade</td><td>36, 9 famílias, IDH 0,55, PIB 400/dia, emprego 60%</td><td>nível 4, 100 aldeões, 24 casas</td><td>+ poste a 12</td></tr>
-<tr><td>Metrópole</td><td>80, 20 famílias, IDH 0,70, Gini ≤ 0,45, 3 bairros</td><td>150 aldeões, 48 casas</td><td>+ loja a 40</td></tr></table>
+<tr><td>Povoado</td><td>—</td><td>zonas nível 2, 50 aldeões, 13 casas</td><td>—</td></tr>
+<tr><td>Vila</td><td>12 moradores, 3 famílias, IDH 0,40</td><td>nível 3, 150 aldeões, 38 casas</td><td>poço a 24 blocos</td></tr>
+<tr><td>Cidade</td><td>36, 9 famílias, IDH 0,55, PIB 400/dia, emprego 60%</td><td>nível 4, 300 aldeões, 76 casas</td><td>+ poste a 12</td></tr>
+<tr><td>Metrópole</td><td>80, 20 famílias, IDH 0,70, Gini ≤ 0,45, 3 bairros</td><td>500 aldeões, 125 casas</td><td>+ loja a 40</td></tr></table>
 <p><b>IDH</b> de cada família: comida, moradia, serviços (saneamento, energia, comércio e lazer) e renda, multiplicados pelo ânimo da vila. Se o IDH cai muito, o prefeito suspende novos níveis de zona e nascimentos.</p>
 <h3>Tutorial da cidade (capítulo 3)</h3>
 <p>Depois do capítulo da vila, o prefeito <b>Otávio</b> ensina a transformar a vila em cidade (ou use <code>/veiotutorial cidade</code>). As etapas fecham pelo que a própria vila registra: casas, lojas, contas e a prefeitura.</p>

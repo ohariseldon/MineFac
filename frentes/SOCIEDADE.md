@@ -131,10 +131,13 @@ cuidando do bem-estar, e por isso põe limites indiretos.
 
 | Fase | Para chegar | Libera |
 |---|---|---|
-| 1. Povoado | (sem prefeitura) | zonas até nível 2, até 30 aldeões, 4 alvarás de casa |
-| 2. Vila | prefeitura, 12 moradores, 3 famílias, IDH 0,40 | zonas até 3, 60 aldeões, 10 alvarás |
-| 3. Cidade | 36 moradores, 9 famílias, IDH 0,55, PIB 400/dia, emprego 60% | zonas até 4, 100 aldeões, 24 alvarás |
-| 4. Metrópole | 80 moradores, 20 famílias, IDH 0,70, Gini até 0,45, 3 bairros | 150 aldeões, 48 alvarás |
+| 1. Povoado | (sem prefeitura) | zonas até nível 2, até 50 aldeões, 13 alvarás de casa |
+| 2. Vila | prefeitura, 12 moradores, 3 famílias, IDH 0,40 | zonas até 3, 150 aldeões, 38 alvarás |
+| 3. Cidade | 36 moradores, 9 famílias, IDH 0,55, PIB 400/dia, emprego 60% | zonas até 4, 300 aldeões, 76 alvarás |
+| 4. Metrópole | 80 moradores, 20 famílias, IDH 0,70, Gini até 0,45, 3 bairros | 500 aldeões, 125 alvarás |
+
+A cidade nasce com 20 aldeões e nunca fica com menos de 2: veja a cidade pronta em
+[TRABALHADORES.md](../TRABALHADORES.md#cidade-pronta-piso-e-teto-de-população).
 
 - **Alvarás:** só casas com alvará recebem moradores. A partir da fase 2, uma casa só ganha alvará com
   saneamento; da 3, também com energia; da 4, também com comércio perto.

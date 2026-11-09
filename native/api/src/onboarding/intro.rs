@@ -242,6 +242,10 @@ fn overlaps_house(center: [i32; 2]) -> bool {
 
 /// Escolhe o terreno da oficina em volta da vila: o quadrado mais plano, sem água, fora da casa.
 pub(super) fn choose_plot(host: &dyn Host, around: [i32; 3]) -> Pos {
+    // Na cidade do Veio, a oficina vai para o lote do distrito industrial, já nivelado.
+    if let Some(lot) = workforce::town::workshop_lot() {
+        return lot;
+    }
     let mut best: Option<(i32, [i32; 2])> = None;
     for ring in RINGS {
         for (dx, dz) in DIRECTIONS {

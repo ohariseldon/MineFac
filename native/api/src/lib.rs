@@ -295,6 +295,7 @@ impl Hooks for Factory {
             let now = defense::clock();
             workforce::village::observe(host, event.dimension, event.entity, now);
             workforce::village::scan_homes(host, event.dimension, event.entity, now);
+            workforce::founders::observe(host, event.dimension, event.entity, now);
         }
         Flow::Continue
     }
@@ -326,6 +327,10 @@ impl Hooks for Factory {
             return Flow::Continue;
         }
         let held = event.stack.filter(|stack| stack.count > 0).map(|stack| stack.item.to_string());
+        // Fundador ferido: comida na mão o acorda; sem comida, o jogador ouve como ajudar.
+        if let Some(flow) = workforce::founders::interact(host, event.entity as u32, held.as_deref()) {
+            return flow;
+        }
         workforce::pick::interact(host, event.entity as u32, held.as_deref()).unwrap_or(Flow::Continue)
     }
 

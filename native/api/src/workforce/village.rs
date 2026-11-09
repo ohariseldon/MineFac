@@ -1,10 +1,10 @@
 //! Crescimento das vilas: natalidade de aldeões, com um teto que cresce junto com a vila.
 //!
-//! - **Teto:** `BASE_CAP` (30, o triplo de uma vila grande do Minecraft) mais o desenvolvimento a
-//!   até `DEVELOPMENT_RADIUS` blocos: cada posto com trabalhador soma 3, cada nível de zona soma 5,
-//!   cada armazém soma 2 e um centro de controle com administrador soma 20. Máximo `MAX_CAP` (150).
-//!   Assim uma vila só chega a 150 depois de virar uma fábrica grande; bases espalhadas em vários
-//!   lugares têm cada uma o seu teto.
+//! - **Teto:** `BASE_CAP` (20, a população com que a cidade nasce) mais o desenvolvimento a até
+//!   `DEVELOPMENT_RADIUS` blocos: cada posto com trabalhador soma 3, cada nível de zona soma 5,
+//!   cada armazém soma 2 e um centro de controle com administrador soma 20. Máximo `MAX_CAP` (500).
+//!   Assim uma cidade só chega a 500 depois de virar uma fábrica grande; bases espalhadas em vários
+//!   lugares têm cada uma o seu teto. O piso (nunca menos de 2) é da cidade (`town`).
 //! - **Natalidade:** a cada `CHECK` ticks (cerca de 5 min, fase espalhada pelo id), cada aldeão
 //!   adulto tem uma chance em `CHANCE` de ter um filho, se houver pelo menos `MIN_ADULTS` aldeões a
 //!   até `COUNT_RADIUS` blocos, menos que o teto e uma cama livre. A cama é a casa, como na vila
@@ -18,8 +18,8 @@
 use super::*;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-pub(crate) const BASE_CAP: usize = 30;
-pub(crate) const MAX_CAP: usize = 150;
+pub(crate) const BASE_CAP: usize = 20;
+pub(crate) const MAX_CAP: usize = 500;
 pub(crate) const COUNT_RADIUS: f64 = 48.0;
 pub(crate) const DEVELOPMENT_RADIUS: i32 = 64;
 /// Cerca de 5 min; ímpar para que todo id caia na fase mesmo com o relógio avançando de 2 em 2.
@@ -142,6 +142,8 @@ pub(crate) fn observe(host: &mut dyn Host, dimension: &str, id: u32, now: u64) {
     // Escola e festa (obras da vila) aumentam a chance; sem obras, 1 em `CHANCE`.
     // Racionamento (decreto): ninguém nasce.
     let Some(chance) = projects::birth_chance(projects::at(dimension, spot, now)) else { return };
+    // Cidade que perdeu mais da metade do recorde: nascimentos com o dobro da chance.
+    let chance = if town::recovering() { (chance / 2).max(1) } else { chance };
     if draw % chance != 0 {
         return;
     }

@@ -184,9 +184,15 @@ impl Host for Village {
     fn living_set_equipment(&mut self, living: horizon_client::mod_api::LivingRef,
         slot: horizon_client::mod_api::EquipmentSlot, stack: Option<ItemStack>) -> bool
     {
-        assert_eq!(slot, horizon_client::mod_api::EquipmentSlot::MainHand);
+        if slot != horizon_client::mod_api::EquipmentSlot::MainHand {
+            // O totem do casal fundador vai na mão secundária.
+            return true;
+        }
         self.hands.insert(living.id(), stack.map(|stack| stack.item.to_string()));
         true
+    }
+    fn world_dir(&self) -> Option<std::path::PathBuf> {
+        None
     }
     fn item_entities(&self, _: &str, min: [f64; 3], max: [f64; 3]) -> Vec<NativeItemEntity> {
         self.drops.iter().filter(|drop| (0..3).all(|axis| (min[axis]..=max[axis]).contains(&drop.position[axis]))).cloned().collect()
@@ -1300,21 +1306,23 @@ fn idle_foreman_inspects_a_few_posts_per_cycle() {
 }
 
 #[test]
-fn village_cap_grows_with_development_up_to_150() {
+fn village_cap_grows_with_development_up_to_500() {
     let dimension = "veio:test_work_cap";
     let at = [500, 64, 500];
-    assert_eq!(village::cap(dimension, at, 5), village::BASE_CAP, "sem desenvolvimento, 30");
+    assert_eq!(village::BASE_CAP, 20, "a cidade nasce com 20 e esse é o teto sem desenvolvimento");
+    assert_eq!(village::MAX_CAP, 500);
+    assert_eq!(village::cap(dimension, at, 5), village::BASE_CAP, "sem desenvolvimento, 20");
     // Cinco postos com trabalhador (+15), um centro com administrador (+3 +20).
     for (index, block_id) in [FARM_POST, FARM_POST, HAULER_POST, SHEPHERD_POST, FOREMAN_DESK, CONTROL_CENTER].iter().enumerate() {
         let mut post = block(block_id);
         post.nbt.insert("Worker".into(), Tag::IntArray(vec![60, index as i32, 0, 1]));
         center::report(dimension, [at[0] + index as i32 * 3, 64, at[2]], &post, 5);
     }
-    assert_eq!(village::cap(dimension, at, 5), 30 + 6 * 3 + 20);
-    // Muitas zonas no nível máximo: o teto para em 150.
+    assert_eq!(village::cap(dimension, at, 5), village::BASE_CAP + 6 * 3 + 20);
+    // Muitas zonas no nível máximo: o teto para em 500.
     let mut village = Village::new(dimension);
-    for index in 0..12 {
-        marker(&mut village, FIELD_MARKER, [at[0] + index * 4, 64, at[2] + 10], 4, None);
+    for index in 0..30 {
+        marker(&mut village, FIELD_MARKER, [at[0] - 40 + (index % 6) * 16, 64, at[2] + 10 + (index / 6) * 10], 4, None);
     }
     assert_eq!(village::cap(dimension, at, 5), village::MAX_CAP);
     assert_eq!(village::cap(dimension, [at[0] + 500, 64, at[2]], 5), village::BASE_CAP, "outra base, longe, tem o seu teto");
@@ -1323,9 +1331,10 @@ fn village_cap_grows_with_development_up_to_150() {
 // ---------- Spawn no centro da vila ----------
 
 #[test]
-fn the_new_village_goes_on_flat_dry_land_without_trees() {
-    // Plano e limpo: nota 0. Morro de 9 blocos e copas pesam; água recusa.
-    let flat = vec![70; 49];
+fn the_new_town_goes_on_flat_land_with_little_water() {
+    // Plano e limpo: nota 0. Desnível pesa mais que mata; um pouco de água a cidade aterra;
+    // um lago (mais de um sexto das colunas) recusa o lugar.
+    let flat = vec![70; 81];
     assert_eq!(spawn::site_score(&flat, &flat, &flat), Some(0));
     let mut hill = flat.clone();
     hill[10] = 79;
@@ -1333,10 +1342,13 @@ fn the_new_village_goes_on_flat_dry_land_without_trees() {
     let mut canopy = flat.clone();
     canopy[3] = 76;
     canopy[4] = 75;
-    assert_eq!(spawn::site_score(&flat, &flat, &canopy), Some(6));
+    assert_eq!(spawn::site_score(&flat, &flat, &canopy), Some(2), "a cidade limpa a mata: pesa pouco");
+    let mut pond = flat.clone();
+    pond[0] = 72;
+    assert_eq!(spawn::site_score(&flat, &pond, &pond), Some(6), "uma lagoa a cidade aterra");
     let mut lake = flat.clone();
-    lake[0] = 72;
-    assert_eq!(spawn::site_score(&flat, &lake, &lake), None, "água não serve");
+    for column in lake.iter_mut().take(14) { *column = 72; }
+    assert_eq!(spawn::site_score(&flat, &lake, &lake), None, "um lago não serve");
 }
 
 fn player(uuid: u128, name: &str, at: [f64; 3]) -> horizon_client::mod_api::NativeServerPlayer {
@@ -1348,12 +1360,13 @@ fn player(uuid: u128, name: &str, at: [f64; 3]) -> horizon_client::mod_api::Nati
 #[test]
 fn new_players_arrive_near_the_village_and_the_control_center_takes_over() {
     spawn::reset();
+    town::reset();
     let mut village = Village::new(spawn::OVERWORLD);
     village.crops.clear();
-    for (index, (x, z)) in [(98.5, 99.5), (101.5, 100.5), (100.5, 102.5), (99.5, 98.5), (102.5, 99.5)].iter().enumerate() {
+    // Uma vila vanilla por perto não é mais adotada: a cidade do Veio é sempre a de partida.
+    for (index, (x, z)) in [(98.5, 99.5), (101.5, 100.5), (100.5, 102.5)].iter().enumerate() {
         village.villager(16001 + index as u32, [*x, 64.0, *z], [70, 0, 0, index as i32]);
     }
-    village.villager(16010, [180.5, 64.0, 100.5], [70, 0, 0, 10]);
     spawn::logged_in(7, "Steve", 0);
     spawn::logged_in(8, "bad name;kill", 0);
     // A janela também roda o tick e não vê os jogadores do servidor: nada se perde.
@@ -1361,36 +1374,45 @@ fn new_players_arrive_near_the_village_and_the_control_center_takes_over() {
     assert!(village.commands.is_empty());
     village.players = vec![player(7, "Steve", [90.0, 64.0, 90.0]), player(9, "Alex", [5000.0, 64.0, 5000.0])];
     spawn::tick(&mut village, 40);
+    assert!(village.commands.is_empty(), "espera os chunks em volta carregarem");
+    spawn::tick(&mut village, spawn::TOWN_WAIT + 20);
     let joined = village.commands.join("\n");
-    assert!(joined.contains("setworldspawn 100 70 100"), "centro da vila: média do grupo, altura do terreno\n{joined}");
-    // Perto demais (14 blocos): vai para fora, a 44 blocos, do lado de onde estava; a seta leva à vila.
-    assert!(joined.contains("unless entity @s[tag=veio_village] run tp @s 69 70 69"), "só quem chega pela primeira vez\n{joined}");
-    assert!(joined.contains("spawnpoint @s 100 70 100"), "renasce na vila");
+    assert!(joined.contains("positioned 90 70 90 run function veio:town/build"), "cidade no terreno plano do jogador\n{joined}");
+    assert!(joined.contains("setworldspawn 90 70 90"), "o spawn fica na praça\n{joined}");
+    // Dentro da cidade: vai para fora da cerca, ao sul (sem rumo), e a seta leva à praça.
+    assert!(joined.contains("unless entity @s[tag=veio_village] run tp @s 90 70 146"), "só quem chega pela primeira vez\n{joined}");
+    assert!(joined.contains("spawnpoint @s 90 70 90"), "renasce na praça");
     assert!(joined.contains("tag Steve add veio_village"));
     assert!(!joined.contains("bad name"), "nome inseguro não entra em comando");
 
-    // Quem entra longe, com a vila do anfitrião já conhecida, vai para ela e não ganha outra.
+    // Quem entra longe, com a cidade do anfitrião já conhecida, vai para ela e não ganha outra.
     village.commands.clear();
-    spawn::logged_in(9, "Alex", 40);
-    spawn::tick(&mut village, 60);
+    spawn::logged_in(9, "Alex", 200);
+    spawn::tick(&mut village, 220);
     let joined = village.commands.join("\n");
-    assert!(joined.contains("tp @s 131 70 131"), "convidado da LAN vai para perto do centro já conhecido\n{joined}");
-    assert!(!joined.contains("place structure"), "não gera uma segunda vila");
+    assert!(joined.contains("tp @s 130 70 130"), "convidado da LAN vai para perto da praça já conhecida\n{joined}");
+    assert!(!joined.contains("run function veio:town/build"), "não gera uma segunda cidade");
 
-    // Sozinho e longe de tudo: espera os chunks, gera uma vila e só depois desiste.
+    // Sozinho e longe de tudo: espera os chunks e ergue a cidade pronta do Veio.
     spawn::reset();
+    town::reset();
+    founders::reset();
     village.commands.clear();
+    village.summoned.clear();
     village.players = vec![player(9, "Alex", [5000.0, 64.0, 5000.0])];
     spawn::logged_in(9, "Alex", 40);
     spawn::tick(&mut village, 60);
-    assert!(village.commands.is_empty(), "ainda esperando os aldeões carregarem");
-    spawn::tick(&mut village, 40 + spawn::WAIT + 20);
-    // Terreno todo plano no teste: a vila nasce onde o jogador está, e ele já vai para o centro.
+    assert!(village.commands.is_empty(), "ainda esperando os chunks carregarem");
+    spawn::tick(&mut village, 40 + spawn::TOWN_WAIT + 20);
+    // Terreno todo plano no teste: a cidade nasce onde o jogador está, e ele aparece fora da cerca.
     let joined = village.commands.join("\n");
-    assert!(joined.contains("place structure minecraft:village_plains 5000 70 5000"), "{joined}");
-    assert!(joined.contains("tp @s 5000 70 5044") && joined.contains("tag Alex add veio_village"), "nasce ao sul da vila nova\n{joined}");
-    assert!(!joined.contains("fill"), "sem árvores, nada a limpar");
+    assert!(joined.contains("positioned 5000 70 5000 run function veio:town/build"), "{joined}");
+    assert!(!joined.contains("place structure"), "a vila vanilla não é mais usada");
+    assert!(joined.contains("tp @s 5000 70 5056") && joined.contains("tag Alex add veio_village"), "nasce ao sul, fora da cerca\n{joined}");
     assert_eq!(spawn::center(), Some(([5000, 70, 5000], false)));
+    assert_eq!(town::center(), Some([5000, 70, 5000]));
+    assert_eq!(village.summoned.len(), town::STARTING_VILLAGERS, "a cidade nasce com 20 moradores");
+    assert_eq!(founders::count(), 2, "dois deles são o casal fundador");
 
     // O centro de controle vira o centro da vila; quem renasce volta para lá.
     village.commands.clear();
@@ -1894,13 +1916,15 @@ fn indicators_measure_families_inequality_and_districts() {
 }
 
 #[test]
-fn without_a_mayor_zones_stop_at_level_two_and_the_village_at_thirty() {
+fn without_a_mayor_zones_stop_at_level_two_and_the_village_at_fifty() {
     let dimension = "veio:test_society_gates";
     assert_eq!(society::zone_cap(dimension, [0, 64, 0], 0), (2, false));
-    assert!(society::birth_allowed(dimension, [0, 64, 0], 29, 0));
-    assert!(!society::birth_allowed(dimension, [0, 64, 0], 30, 0), "o povoado para em 30");
+    assert!(society::birth_allowed(dimension, [0, 64, 0], 49, 0));
+    assert!(!society::birth_allowed(dimension, [0, 64, 0], 50, 0), "o povoado para em 50");
     assert_eq!(society::zone_limit(4), 4);
-    assert_eq!(society::population_limit(4), 150);
+    assert_eq!((1..=4).map(society::population_limit).collect::<Vec<_>>(), vec![50, 150, 300, 500]);
+    assert!((1..=4).all(|phase| society::permits(phase) * society::CAPACITY >= society::population_limit(phase)),
+        "alvarás para abrigar o teto de cada fase");
 }
 
 #[test]
