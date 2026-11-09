@@ -32,9 +32,10 @@ def main():
     check_page_fit(languages, "first_steps")
     check_page_fit(languages, "transport_guide")
     # Dynamic native keys are not reachable from a book's JSON tree.
-    keys = ([f"veio.onboarding.goal.{i}" for i in range(8)]
-            + [f"veio.onboarding.{part}.{i}" for part in ("title", "why") for i in range(9)]
-            + [f"veio.onboarding.from.{i}" for i in range(8)] + [f"veio.onboarding.recipe.{i}.0" for i in (0, 1, 3, 4, 5, 6, 7)]
+    keys = ([f"veio.onboarding.goal.{i}" for i in range(16)]
+            + [f"veio.onboarding.{part}.{i}" for part in ("title", "why", "story") for i in range(17)]
+            + [f"veio.onboarding.from.{i}" for i in (*range(8), 8, 10, 11, 12)]
+            + [f"veio.onboarding.recipe.{i}.0" for i in (0, 1, 3, 4, 5, 6, 7, 8, 10, 11, 12)]
             + ["veio.onboarding.recipe.1.1", "veio.onboarding.book", "veio.onboarding.make", "veio.onboarding.done"]
             + [f"veio.onboarding.name.{item.rsplit(':', 1)[-1]}" for item in onboarding_items()]
             + [f"veio.village.{part}.{i}" for part in ("title", "why", "goal", "done") for i in range(8)]
@@ -52,6 +53,22 @@ def main():
             + [f"veio.night.first.{i}" for i in range(1, 4)] + [f"veio.night.dusk.{i}" for i in range(1, 5)] + [f"veio.night.end.{i}" for i in range(1, 4)]
             + ["veio.night.goal.home", "veio.night.goal.inside", "veio.night.goal.shelter", "veio.night.dawn", "veio.night.offer", "veio.night.villager"]
             + [f"veio.city.recipe.{i}" for i in (0, 1, 4, 5, 6)] + [f"veio.city.end.{i}" for i in range(1, 6)]
+            + [f"veio.onboarding.hint.{i}" for i in range(16)] + [f"veio.village.hint.{i}" for i in range(8)]
+            + [f"veio.onboarding.act.{i}{part}" for i in range(4) for part in ("", ".sub", ".line")]
+            + [f"veio.onboarding.diary.{i}" for i in range(5)] + ["veio.onboarding.hint.head", "veio.onboarding.far",
+               "veio.onboarding.act.end", "veio.onboarding.act.end.sub", "veio.onboarding.diary.title"]
+            + [f"veio.festival.{f}.{part}" for f in ("harvest", "governor") for part in
+               ("name", "when", "announce.1", "announce.2", "good.1", "good.2", "good_sub", "weak", "retry")]
+            + [f"veio.favor.{k}" for k in ("smith.name", "farmer.name", "bar", "done", "done.sub", "farmer.gift",
+               "farmer.plant", "farmer.planted", "farmer.more", "farmer.after", "farmer.wait", "smith.after", "smith.wait")]
+            + [f"veio.favor.{k}.{n}" for k, top in (("start", 2), ("mayor", 5), ("goal", 5), ("smith.ask", 4),
+               ("farmer.ask", 3), ("farmer.thanks", 3), ("smith.thanks", 3)) for n in range(1, top + 1)]
+            + [f"veio.{c}.story.{i}" for c, n in (("forge", 8), ("metro", 6)) for i in range(n)]
+            + [f"veio.forge.voice.{i}" for i in (0, 1, 2, 3, 4, 5, 7)] + [f"veio.metro.voice.{i}" for i in range(5)]
+            + [f"veio.onboarding.voice.{i}" for i in (2, 3, 7, 14)]
+            + ["veio.festival.countdown", "veio.festival.reminder", "veio.villager.who", "veio.villager.says"]
+            + [f"veio.villager.{t}.{n}" for t in ("mayor", "gather", "plot", "festival", "favor", "factory", "village", "free")
+               for n in range(1, 5)]
             + [f"veio.onboarding.blocked.{i}" for i in (3, 5, 9)]
             + ["veio.onboarding.hidden", "veio.onboarding.shown", "veio.onboarding.save_failed"])
     for language in languages:
@@ -133,6 +150,7 @@ def onboarding_items():
               "BELT": "belt", "HUB": "contract_hub", "PLATE": "copper_plate", "GEAR": "gear", "FARM_POST": "farm_post",
               "FIELD_MARKER": "field_marker", "HAULER_POST": "hauler_post", "FOREMAN_DESK": "foreman_desk", "HOUSE": "house",
               "TOWN_HALL": "town_hall", "WELL": "well", "SHOP": "shop", "PARK": "park",
+               "BOARD": "factory_board", "POLE": "pole", "SPLITTER": "splitter",
               "DRILL_MK2": "drill_mk2", "BARRACKS": "barracks", "TESLA": "tesla", "BATTERY": "battery"}
     return re.findall(r'"#?([a-z_]+:[a-z_]+)"', block) + [consts[name] for name in re.findall(r"\b([A-Z_]+)\b", block) if name in consts]
 

@@ -1,67 +1,347 @@
 """Player-facing text for the server-observed workshop tutorial."""
 def add_labels(label):
     goals=[
-      ('1/8 | Ponha o gerador no terreno e abasteça com carvão', '1/8 | Put the generator on the plot and fuel it with coal'),
-      ('2/8 | Leve energia até a prensa', '2/8 | Supply power to the press'),
-      ('3/8 | Produza chapas de cobre: %s/4', '3/8 | Produce copper plates: %s/4'),
-      ('4/8 | Produza uma engrenagem: %s/1', '4/8 | Produce a gear: %s/1'),
-      ('5/8 | Extraia cobre com a máquina: %s/1', '5/8 | Extract copper with a machine: %s/1'),
-      ('6/8 | Abasteça a prensa automaticamente: %s/2', '6/8 | Automatically feed the press: %s/2'),
-      ('7/8 | Guarde chapas automaticamente: %s/4', '7/8 | Automatically store plates: %s/4'),
-      ('8/8 | Central: entregue 24 chapas e 8 engrenagens', '8/8 | Hub: deliver 24 plates and 8 gears'),
+      ('1/16 | Ponha o gerador no terreno e abasteça com carvão', '1/16 | Put the generator on the plot and fuel it with coal'),
+      ('2/16 | Leve energia até a prensa', '2/16 | Supply power to the press'),
+      ('3/16 | Produza chapas de cobre: %s/4', '3/16 | Produce copper plates: %s/4'),
+      ('4/16 | Produza uma engrenagem: %s/1', '4/16 | Produce a gear: %s/1'),
+      ('5/16 | Extraia cobre com a máquina: %s/1', '5/16 | Extract copper with a machine: %s/1'),
+      ('6/16 | Abasteça a prensa automaticamente: %s/2', '6/16 | Automatically feed the press: %s/2'),
+      ('7/16 | Guarde chapas automaticamente: %s/4', '7/16 | Automatically store plates: %s/4'),
+      ('8/16 | Central: entregue 24 chapas e 8 engrenagens', '8/16 | Hub: deliver 24 plates and 8 gears'),
+      ('9/16 | Coloque o Quadro da fábrica perto das máquinas', '9/16 | Place the Factory board near the machines'),
+      ('10/16 | Quadro: entregue chapas de cobre %s/16', '10/16 | Board: deliver copper plates %s/16'),
+      ('11/16 | Dobre o minério: coloque outra extratora %s/1', '11/16 | Double the ore: place another extractor %s/1'),
+      ('12/16 | Coloque um divisor na esteira', '12/16 | Place a splitter on the belt'),
+      ('13/16 | Postes: leve energia longe, %s/2 postes', '13/16 | Poles: carry power far, %s/2 poles'),
+      ('14/16 | Pedido do dia no Quadro: %s entregues', '14/16 | Daily order at the board: %s delivered'),
+      ('15/16 | Coma em casa: tigela na mão, clique no Lar', '15/16 | Eat at home: bowl in hand, click the Home'),
+      ('16/16 | Abra o centro de controle da sua casa', '16/16 | Open the control center in your house'),
     ]
     # Cada etapa: título, por quê, passos numerados (DO_LINES em onboarding.rs) e o kit.
     steps=[
-      (('Etapa 1 de 8 · Energia', 'Step 1 of 8 · Power'),
+      (('Etapa 1 de 16 · Energia', 'Step 1 of 16 · Power'),
        ('Toda máquina do Veio precisa de energia. O gerador queima carvão e manda energia pelos cabos.', 'Every Veio machine needs power. The generator burns coal and sends power through cables.'),
        [('1. O prefeito montou o seu gerador. Para fazer outros, a receita está no livro de receitas (verde).', '1. The mayor built your generator. To make more, the recipe is in the recipe book (green).'),
         ('2. Coloque o gerador no terreno da oficina, o que você planificou.', '2. Place the generator on the workshop plot you flattened.'),
         ('3. Abra o gerador com a mão vazia e ponha carvão no espaço de combustível.', '3. Open the generator with an empty hand and put coal in its fuel slot.')]),
-      (('Etapa 2 de 8 · Ligar uma máquina', 'Step 2 of 8 · Power a machine'),
+      (('Etapa 2 de 16 · Ligar uma máquina', 'Step 2 of 16 · Power a machine'),
        ('A prensa transforma cobre bruto em chapas, mas só trabalha com energia chegando.', 'The press turns raw copper into plates, but only works with power arriving.'),
-       [('1. Fabrique a prensa e os cabos (fichas acima; siga a lista acima da barra de itens).', '1. Craft the press and the cables (cards above; follow the list above your hotbar).'),
+       [('1. A prensa e os cabos vêm do Seu Bento, o ferreiro, em troca de um favor (siga a barra). Depois você pode fabricar mais.', '1. The press and the cables come from Seu Bento, the smith, in exchange for a favour (follow the bar). Later you can craft more.'),
         ('2. Coloque a prensa e ligue-a ao gerador com cabos encostados: gerador > cabo > cabo > prensa.', '2. Place the press and connect it with touching cables: generator > cable > cable > press.'),
         ('3. Veja as marcas da prensa: faixas VERDES recebem itens; a moldura VERMELHA (atrás) solta a produção.', '3. Look at the press marks: GREEN strips take items; the RED frame (back) releases products.'),
         ('4. A etapa avança quando a prensa receber energia. Abra-a para ver a barra de energia.', '4. The step advances when the press receives power. Open it to see the power bar.')]),
-      (('Etapa 3 de 8 · Produzir à mão', 'Step 3 of 8 · Produce by hand'),
+      (('Etapa 3 de 16 · Produzir à mão', 'Step 3 of 16 · Produce by hand'),
        ('Antes de automatizar, veja como uma máquina trabalha: entrada, progresso e saída.', 'Before automating, see how a machine works: input, progress and output.'),
        [('1. Minere cobre bruto: minério de cobre com picareta de pedra ou melhor.', '1. Mine raw copper: copper ore with a stone pickaxe or better.'),
         ('2. Abra a prensa e ponha o cobre BRUTO no espaço da esquerda (entrada).', '2. Open the press and put RAW copper in the left slot (input).'),
         ('3. Espere a seta encher e retire as chapas da direita (saída).', '3. Wait for the arrow to fill and take the plates from the right (output).'),
         ('4. Faça 4 chapas novas. Se a máquina parar, passe o mouse no estado do painel: ele diz o motivo.', '4. Make 4 new plates. If the machine stops, hover over the panel status: it tells you why.')]),
-      (('Etapa 4 de 8 · Uma cadeia de produção', 'Step 4 of 8 · A production chain'),
+      (('Etapa 4 de 16 · Uma cadeia de produção', 'Step 4 of 16 · A production chain'),
        ('Fábricas encadeiam máquinas: a chapa da prensa vira engrenagem no montador.', 'Factories chain machines: the press plate becomes a gear in the assembler.'),
        [('1. Fabrique o montador (ficha acima) com 2 das chapas que você fez.', '1. Craft the assembler (card above) with 2 of your plates.'),
         ('2. Coloque-o, ligue energia e ponha 2 chapas na entrada.', '2. Place it, power it and put 2 plates in its input.'),
         ('3. Retire a engrenagem pronta da saída.', '3. Take the finished gear from the output.')]),
-      (('Etapa 5 de 8 · Extração automática', 'Step 5 of 8 · Automatic extraction'),
+      (('Etapa 5 de 16 · Extração automática', 'Step 5 of 16 · Automatic extraction'),
        ('Minerar à mão não escala. A extratora tira minério da jazida sozinha, sem acabar.', 'Mining by hand does not scale. The extractor mines the deposit on its own, forever.'),
        [('1. Fabrique a extratora (ficha acima).', '1. Craft the extractor (card above).'),
         ('2. Coloque-a EM CIMA de minério de cobre, sem quebrá-lo. Veio maior embaixo = mais rápido.', '2. Place it ON TOP of copper ore, without mining it. Bigger vein below = faster.'),
         ('3. Leve energia até ela. O cobre aparece na saída (moldura vermelha).', '3. Bring power to it. Copper appears at the output (red frame).')]),
-      (('Etapa 6 de 8 · Esteiras', 'Step 6 of 8 · Belts'),
+      (('Etapa 6 de 16 · Esteiras', 'Step 6 of 16 · Belts'),
        ('Agora a extratora alimenta a prensa: o cobre vai sozinho, sem você carregar.', 'Now the extractor feeds the press: copper travels on its own.'),
        [('1. Fabrique esteiras (ficha acima: cada receita rende 16).', '1. Craft belts (card above: each recipe makes 16).'),
         ('2. A primeira encosta na moldura VERMELHA da extratora. A esteira anda para LONGE de você.', '2. The first touches the extractor RED frame. A belt runs AWAY from you.'),
         ('3. A última entra numa face VERDE da prensa (frente ou lado; nunca na vermelha).', '3. The last one enters a GREEN face of the press (front or side; never the red one).'),
         ('4. Entregue 2 cobres pela esteira e deixe a prensa fazer 1 chapa com eles.', '4. Deliver 2 copper by belt and let the press make 1 plate from them.')]),
-      (('Etapa 7 de 8 · Saída e estoque', 'Step 7 of 8 · Output and storage'),
+      (('Etapa 7 de 16 · Saída e estoque', 'Step 7 of 16 · Output and storage'),
        ('Uma linha completa também leva a produção embora. Senão a saída enche e a máquina para.', 'A complete line also carries products away. Otherwise the output fills and the machine stops.'),
        [('1. Fabrique um baú e coloque-o perto da prensa.', '1. Craft a chest and place it near the press.'),
         ('2. Coloque esteiras saindo da moldura VERMELHA da prensa até o baú: ela despeja nele sozinha.', '2. Run belts from the press RED frame into the chest: it unloads by itself.'),
         ('3. Guarde 4 chapas feitas pela linha. Braços, funis e carregadores também valem.', '3. Store 4 plates made by the line. Arms, hoppers and haulers also count.')]),
-      (('Etapa 8 de 8 · A primeira encomenda', 'Step 8 of 8 · The first order'),
+      (('Etapa 8 de 16 · A primeira encomenda', 'Step 8 of 16 · The first order'),
        ('A central recebe as encomendas da vila e paga em materiais: é a meta da sua fábrica.', 'The hub takes village orders and pays in materials: it is your factory goal.'),
        [('1. Faça uma engrenagem no montador e fabrique a central (ficha acima).', '1. Make a gear in the assembler and craft the hub (card above).'),
         ('2. Junte 24 chapas e 8 engrenagens (2 chapas cada).', '2. Gather 24 plates and 8 gears (2 plates each).'),
         ('3. Na central: chapas na entrada 1, engrenagens na entrada 2; deixe as saídas livres.', '3. In the hub: plates in input 1, gears in input 2; keep outputs clear.'),
         ('4. Recompensa: 64 esteiras e 32 cabos. Dica: ligue a esteira da prensa à central.', '4. Reward: 64 belts and 32 cables. Tip: run the press belt into the hub.')]),
+      # Os sistemas da vila: o que faz a fábrica crescer depois da primeira linha.
+      (('Etapa 9 de 16 · O Quadro da fábrica', 'Step 9 of 16 · The Factory board'),
+       ('O Quadro é o plano da vila: diz a fase, o pedido do dia e onde a sua fábrica travou.', 'The board is the village plan: it shows the phase, the daily order and where your factory got stuck.'),
+       [('1. Fabrique o Quadro da fábrica (ficha acima).', '1. Craft the Factory board (card above).'),
+        ('2. Coloque-o perto das máquinas: ele enxerga tudo a até 96 blocos.', '2. Place it near the machines: it sees everything within 96 blocks.'),
+        ('3. Abra o Quadro: o painel conta máquinas trabalhando, sem energia, travadas e sem montar.', '3. Open the board: the panel counts machines working, unpowered, blocked and not set up.')]),
+      (('Etapa 10 de 16 · Uma fase do plano', 'Step 10 of 16 · A phase of the plan'),
+       ('Cada fase do Quadro pede uma entrega maior e libera máquinas novas. É assim que a vila cresce.', 'Each board phase asks for a bigger delivery and unlocks new machines. That is how the village grows.'),
+       [('1. A primeira fase pede 16 chapas de cobre no espaço de entrada do Quadro.', '1. The first phase asks for 16 copper plates in the board input slot.'),
+        ('2. Melhor ainda: leve uma esteira da prensa até o Quadro. Ele só aceita o que a fase pede.', '2. Even better: run a belt from the press into the board. It only accepts what the phase asks for.'),
+        ('3. Recompensa: 32 esteiras na saída do Quadro, e o divisor, o montador e a central liberados.', '3. Reward: 32 belts at the board output, and the splitter, assembler and hub unlocked.')]),
+      (('Etapa 11 de 16 · Dobrar o minério', 'Step 11 of 16 · Double the ore'),
+       ('A prensa faz mais do que uma extratora comum consegue tirar. Quando falta entrada, o gargalo é o minério.', 'The press makes more than one basic extractor can mine. When input runs short, the bottleneck is the ore.'),
+       [('1. Fabrique outra extratora (ficha acima).', '1. Craft another extractor (card above).'),
+        ('2. Coloque-a em cima de outro minério de cobre e leve energia até ela.', '2. Place it on top of other copper ore and bring power to it.'),
+        ('3. Ligue a saída dela com esteira na mesma linha que vai para a prensa.', '3. Run its output by belt into the same line that goes to the press.')]),
+      (('Etapa 12 de 16 · O divisor', 'Step 12 of 16 · The splitter'),
+       ('Com minério de sobra, uma prensa só vira o gargalo. O divisor reparte uma esteira em duas.', 'With ore to spare, one press becomes the bottleneck. The splitter shares one belt between two.'),
+       [('1. Fabrique o divisor (ficha acima: engrenagem, 2 esteiras e redstone rendem 2).', '1. Craft the splitter (card above: gear, 2 belts and redstone make 2).'),
+        ('2. Ponha o divisor no meio da esteira do cobre: ele manda metade para cada lado.', '2. Put the splitter in the middle of the copper belt: it sends half to each side.'),
+        ('3. Cada saída leva a uma prensa. Agachado com a chave, ele dá prioridade a um lado.', '3. Each output goes to a press. Sneaking with the wrench, it gives one side priority.')]),
+      (('Etapa 13 de 16 · Energia longe', 'Step 13 of 16 · Power far away'),
+       ('Cabo serve para perto. Para levar energia até outra parte do terreno, use postes: o fio vai pelo ar.', 'Cables are for short runs. To carry power to another part of the plot, use poles: the wire goes through the air.'),
+       [('1. Fabrique postes de madeira (ficha acima: cada receita rende 2).', '1. Craft wooden poles (card above: each recipe makes 2).'),
+        ('2. Ponha o primeiro a até 2 blocos do gerador: ele puxa a energia de lá.', '2. Put the first within 2 blocks of the generator: it pulls power from there.'),
+        ('3. Ponha o segundo a até 8 blocos do primeiro: o fio aparece sozinho. Máquinas a 2 blocos dele recebem energia.', '3. Put the second within 8 blocks of the first: the wire appears by itself. Machines within 2 blocks of it get power.')]),
+      (('Etapa 14 de 16 · O pedido do dia', 'Step 14 of 16 · The daily order'),
+       ('Todo dia a vila faz um pedido no Quadro e paga em esmeraldas. É o dinheiro para contratar gente.', 'Every day the village places an order at the board and pays in emeralds. It is the money to hire people.'),
+       [('1. Abra o Quadro: o painel mostra o pedido de hoje (o que e quanto).', '1. Open the board: the panel shows today order (what and how much).'),
+        ('2. Entregue no espaço de entrada do Quadro, de preferência por esteira, junto com a fase.', '2. Deliver it at the board input slot, by belt if you can, alongside the phase.'),
+        ('3. Completo o pedido, as esmeraldas aparecem na saída do Quadro. Guarde: o prefeito vai pedir.', '3. Once the order is complete, the emeralds appear at the board output. Keep them: the mayor will ask.')]),
+      (('Etapa 15 de 16 · Em casa', 'Step 15 of 16 · At home'),
+       ('O Lar, dentro da sua casa, é onde você descansa. Comer em casa dá mais força para o trabalho.', 'The Home block, inside your house, is where you rest. Eating at home gives you more strength for work.'),
+       [('1. No Lar: lenha ou carvão na lareira (1º espaço) e comida na despensa (espaços 2 a 4).', '1. At the Home: wood or coal in the fireplace (first slot) and food in the pantry (slots 2 to 4).'),
+        ('2. Com uma tigela na mão, clique no Lar: refeição em casa. Com a lareira acesa, ganha efeitos.', '2. Holding a bowl, click the Home: a home meal. With the fire lit, you get effects.'),
+        ('3. Pratos variados e uma casa confortável (cama, luz, janela) deixam os efeitos mais fortes.', '3. Varied dishes and a comfortable house (bed, light, window) make the effects stronger.')]),
+      (('Etapa 16 de 16 · A vila inteira', 'Step 16 of 16 · The whole village'),
+       ('O centro de controle, na sua casa, mostra a vila de uma vez: gente, comida, dinheiro e obras.', 'The control center, in your house, shows the whole village at once: people, food, money and works.'),
+       [('1. Vá até a sua casa e abra o centro de controle (o painel ao lado da cama).', '1. Go to your house and open the control center (the panel beside the bed).'),
+        ('2. Ali ficam a comida da vila, as metas, o caixa da empresa e as obras.', '2. It holds the village food, the goals, the company cash and the works.'),
+        ('3. A wiki do Veio (tecla J) explica cada sistema quando você quiser saber mais.', '3. The Veio wiki (J key) explains each system whenever you want to know more.')]),
       (('Tutorial concluído!', 'Tutorial complete!'),
-       ('Você aprendeu energia, máquinas, cadeias, extração, esteiras e estoque.', 'You learned power, machines, chains, extraction, belts and storage.'),
-       [('Próximo: volte ao prefeito, na varanda da sua casa. Ele conta o que vem a seguir.', 'Next: go back to the mayor, on your house porch. He tells you what comes next.'),
+       ('Você aprendeu energia, máquinas, esteiras, o Quadro, gargalos, o divisor, postes, o pedido do dia e a casa.', 'You learned power, machines, belts, the board, bottlenecks, the splitter, poles, the daily order and home.'),
+       [('Próximo: volte ao prefeito, na praça da vila. Ele conta o que vem a seguir.', 'Next: go back to the mayor, in the village square. He tells you what comes next.'),
         ('Ampliar: uma extratora comum alimenta uma prensa. Mais máquinas pedem mais energia.', 'Expanding: one basic extractor feeds one press. More machines need more power.'),
-        ('Consulta: livro de receitas (verde), guia da fábrica e guia da vila. /veiotutorial reiniciar refaz.', 'Reference: recipe book (green), factory guide and village guide. /veiotutorial reiniciar restarts.')]),
+        ('Consulta: livro de receitas (verde), wiki (J), guia da fábrica e guia da vila. /veiotutorial reiniciar refaz.', 'Reference: recipe book (green), wiki (J), factory guide and village guide. /veiotutorial reiniciar restarts.')]),
     ]
+    # A voz do prefeito em cada etapa: por que isso importa para a vila.
+    stories=[
+      ('A primeira chama da fábrica! Guarde carvão sempre: gerador apagado é fábrica parada.', 'The factory first flame! Always keep coal: a cold generator is a stopped factory.'),
+      ('O ferreiro da vila faz chapa no martelo, uma por dia. A prensa faz uma a cada segundo e meio.', 'The village smith hammers one plate a day. The press makes one every second and a half.'),
+      ('Veja a máquina trabalhar uma vez com as suas mãos. Depois você nunca mais vai querer fazer isso.', 'Watch the machine work once with your own hands. After that you will never want to do it again.'),
+      ('Uma máquina sozinha é ferramenta. Duas encadeadas já são uma fábrica.', 'One machine alone is a tool. Two chained together are already a factory.'),
+      ('Minério debaixo da terra não acaba: a extratora tira dele para sempre, se tiver energia.', 'Ore under the ground never runs out: the extractor mines it forever, as long as it has power.'),
+      ('Aqui começa a mágica: o cobre anda sozinho até a prensa. Você só olha.', 'This is where the magic starts: copper walks to the press on its own. You just watch.'),
+      ('Uma máquina com a saída cheia para. Sempre pergunte: para onde vai o que ela faz?', 'A machine with a full output stops. Always ask: where does what it makes go?'),
+      ('A vila precisa de chapas e engrenagens para as primeiras obras. É a sua primeira encomenda!', 'The village needs plates and gears for its first works. It is your first order!'),
+      ('Agora que a linha anda, vamos fazer a vila crescer. O Quadro é o plano que a gente segue junto.', 'Now that the line runs, let us grow the village. The board is the plan we follow together.'),
+      ('Cada fase do plano pede mais do que a anterior. Quando a entrega demorar, olhe o Quadro: ele mostra o gargalo.', 'Each phase asks for more than the last. When a delivery takes long, look at the board: it shows the bottleneck.'),
+      ('Fábrica boa não é a que trabalha mais, é a que não para. Descubra o que falta e dobre só essa parte.', 'A good factory is not the one that works hardest, it is the one that never stops. Find what is missing and double only that part.'),
+      ('Duas prensas com um minério só, ou duas extratoras com uma prensa só: sempre tem um lado esperando. O divisor equilibra.', 'Two presses with one ore, or two extractors with one press: one side always waits. The splitter balances it.'),
+      ('Um dia a sua fábrica vai ser grande demais para cabos. Os postes levam energia de um lado ao outro da vila.', 'One day your factory will be too big for cables. Poles carry power from one side of the village to the other.'),
+      ('O pedido do dia é como a vila paga a fábrica. Com essas esmeraldas, a gente contrata gente para trabalhar com você.', 'The daily order is how the village pays the factory. With those emeralds, we hire people to work with you.'),
+      ('E você também precisa comer! Uma refeição quente em casa e você trabalha o dobro.', 'And you need to eat too! A hot meal at home and you work twice as hard.'),
+      ('Daqui de casa você vê a vila toda. É o seu escritório de engenheiro.', 'From home you see the whole village. It is your engineer office.'),
+      ('Você aprendeu o que eu sabia ensinar. Venha me ver na praça.', 'You learned all I could teach. Come see me in the square.'),
+    ]
+    for step,(pt,en) in enumerate(stories): label(f'veio.onboarding.story.{step}',pt,en)
+    # Os 4 atos da fábrica (4 etapas cada): nome, subtítulo e a abertura no chat.
+    acts=[
+      (('Ato I · A primeira chama','Act I · The first flame'),('Energia e a primeira máquina','Power and the first machine'),
+       ('─── Ato I · A primeira chama ─── energia, a prensa e a primeira peça.','─── Act I · The first flame ─── power, the press and the first part.')),
+      (('Ato II · A linha que anda sozinha','Act II · The line that runs itself'),('Extrair, transportar, guardar, entregar','Mine, carry, store, deliver'),
+       ('─── Ato II · A linha que anda sozinha ─── o minério vai sozinho até a peça pronta.','─── Act II · The line that runs itself ─── ore travels on its own to the finished part.')),
+      (('Ato III · O plano da vila','Act III · The village plan'),('O Quadro e os gargalos','The board and the bottlenecks'),
+       ('─── Ato III · O plano da vila ─── o Quadro mostra o que travou; você dobra só essa parte.','─── Act III · The village plan ─── the board shows what got stuck; you double only that part.')),
+      (('Ato IV · A vila conta com você','Act IV · The village counts on you'),('Energia longe, o pedido do dia e a casa','Power far away, the daily order and home'),
+       ('─── Ato IV · A vila conta com você ─── a fábrica começa a pagar a vila.','─── Act IV · The village counts on you ─── the factory starts paying the village.')),
+    ]
+    for n,(title,sub,line) in enumerate(acts):
+        label(f'veio.onboarding.act.{n}',*title); label(f'veio.onboarding.act.{n}.sub',*sub); label(f'veio.onboarding.act.{n}.line',*line)
+    label('veio.onboarding.act.end','A fábrica está de pé!','The factory stands!')
+    label('veio.onboarding.act.end.sub','Volte ao prefeito na praça','Go back to the mayor in the square')
+    label('veio.onboarding.far','%s  ·  %s %s blocos','%s  ·  %s %s blocks')
+    # Dica do prefeito quando o jogador empaca (3 min na mesma etapa) e ao clicar nele.
+    label('veio.onboarding.hint.head','Faz um tempo que você está nessa etapa. Uma dica:','You have been on this step for a while. A tip:')
+    hints=[
+      ('Abra o gerador com a mão VAZIA (com um item na mão você coloca o bloco). Sem carvão? Carvão vegetal serve: tora na fornalha.',
+       'Open the generator with an EMPTY hand (holding an item places the block). No coal? Charcoal works: a log in the furnace.'),
+      ('Os cabos precisam se ENCOSTAR, sem buraco: gerador, cabo, cabo, prensa. E o gerador precisa estar queimando carvão.',
+       'Cables must TOUCH, with no gap: generator, cable, cable, press. And the generator must be burning coal.'),
+      ('Cobre BRUTO, não lingote: o minério quebrado com picareta de pedra. Tem nas encostas e logo abaixo da grama nas cavernas.',
+       'RAW copper, not ingots: the ore broken with a stone pickaxe. It is on hillsides and just below the grass in caves.'),
+      ('O montador precisa de energia também: um cabo encostado nele. Duas chapas na entrada fazem uma engrenagem.',
+       'The assembler needs power too: a cable touching it. Two plates in the input make one gear.'),
+      ('A extratora vai EM CIMA do minério, sem quebrá-lo. Se a barra dela não enche, falta energia ou o bloco de baixo não é minério.',
+       'The extractor goes ON TOP of the ore, without mining it. If its bar does not fill, it lacks power or the block below is not ore.'),
+      ('A esteira anda para longe de você. Coloque-a olhando da extratora para a prensa, e a última numa face VERDE da prensa.',
+       'A belt runs away from you. Place it looking from the extractor towards the press, and the last one on a GREEN face of the press.'),
+      ('A esteira de saída começa encostada na moldura VERMELHA (atrás da prensa) e termina dentro do baú.',
+       'The output belt starts against the RED frame (behind the press) and ends inside the chest.'),
+      ('Para as 8 engrenagens, ponha chapas no montador e deixe trabalhar. Chapas na entrada 1 da central, engrenagens na 2.',
+       'For the 8 gears, put plates in the assembler and let it work. Plates in hub input 1, gears in input 2.'),
+      ('O Quadro já está liberado no livro de receitas (verde): baú, 2 lingotes de cobre e um graveto.',
+       'The board is already unlocked in the recipe book (green): chest, 2 copper ingots and a stick.'),
+      ('O Quadro só aceita chapa de COBRE na fase 1. Veja o número no painel dele subir; uma esteira da prensa até ele faz isso sozinha.',
+       'The board only accepts COPPER plates in phase 1. Watch the number on its panel go up; a belt from the press does it by itself.'),
+      ('Qualquer extratora nova conta, até em outro minério. Ponha energia nela e uma esteira até a linha.',
+       'Any new extractor counts, even on another ore. Power it and run a belt into the line.'),
+      ('O divisor está no livro depois da fase 1 do Quadro. Precisa de engrenagem, 2 esteiras e redstone (minério vermelho nas cavernas).',
+       'The splitter is in the book after board phase 1. It needs a gear, 2 belts and redstone (red ore in caves).'),
+      ('O primeiro poste fica a até 2 blocos do gerador; o segundo, a até 8 do primeiro. Se o fio não aparece, aproxime os postes.',
+       'The first pole stands within 2 blocks of the generator; the second within 8 of the first. If no wire appears, move them closer.'),
+      ('O pedido muda todo dia e é da vila toda: abra o Quadro para ver o que é. Às vezes é chapa de ferro: ferro bruto na prensa.',
+       'The order changes every day and belongs to the whole village: open the board to see it. Sometimes it is iron plates: raw iron in the press.'),
+      ('A tigela é de madeira: 3 tábuas em V. O Lar fica dentro da sua casa, ao norte da praça; ponha comida na despensa dele.',
+       'The bowl is wooden: 3 planks in a V. The Home block is inside your house, north of the square; put food in its pantry.'),
+      ('O centro de controle é o painel da sua casa. Clique nele com a mão vazia.',
+       'The control center is the panel in your house. Click it with an empty hand.'),
+    ]
+    for step,(pt,en) in enumerate(hints): label(f'veio.onboarding.hint.{step}',pt,en)
+    village_hints=[
+      ('Esmeralda: troque com os aldeões da vila. O flecheiro compra gravetos; o fazendeiro, trigo, batata ou cenoura.',
+       'Emerald: trade with the village folk. The fletcher buys sticks; the farmer buys wheat, potatoes or carrots.'),
+      ('Ninguém contratado? O aldeão precisa estar a até 8 blocos e sem posto. Se não houver, o posto espera 30 s: clique no aldeão com a esmeralda.',
+       'Nobody hired? The villager must be within 8 blocks and without a post. If none, the post waits 30 s: click the villager with the emerald.'),
+      ('O marco precisa ficar dentro das faíscas verdes em volta do posto, na mesma altura (um bloco a mais ou a menos).',
+       'The marker must stand inside the green sparkles around the post, at the same height (one block up or down at most).'),
+      ('Trigo cru quase não alimenta: ponha pão no posto. E a plantação precisa estar madura para ele colher.',
+       'Raw wheat barely feeds: put bread in the post. And the crops must be ripe to be harvested.'),
+      ('O carregador só atende máquinas a até 6 blocos do posto. Ponha insumos à esquerda para ele levar às máquinas.',
+       'The hauler only serves machines within 6 blocks of the post. Put supplies on the left for him to bring to the machines.'),
+      ('A mesa do capataz precisa de um aldeão livre por perto e uma esmeralda na mão para contratar.',
+       'The foreman desk needs a free villager nearby and an emerald in hand to hire.'),
+      ('A casa só ganha moradores se houver aldeões a até 10 blocos dela. Ponha comida na despensa.',
+       'The house only gets residents if there are villagers within 10 blocks. Put food in its pantry.'),
+      ('A prefeitura precisa de um aldeão livre e uma esmeralda, como os postos.',
+       'The town hall needs a free villager and an emerald, like the posts.'),
+    ]
+    for step,(pt,en) in enumerate(village_hints): label(f'veio.village.hint.{step}',pt,en)
+    # Diário do Prefeito Otávio (livro dado com o gerador): a história e o caminho.
+    diary=[
+      ('Diário de Otávio\nPrefeito da vila\n\n\nPara o engenheiro que chegou do caminho de terra.',
+       'Otávio\'s Diary\nMayor of the village\n\n\nFor the engineer who came down the dirt road.'),
+      ('O veio\n\nMeu avô abriu a primeira mina destes morros. Dizia que lá embaixo corre um veio de cobre e ferro que não acaba nunca.\n\nA picareta não deu conta. A mina fechou, e a vila voltou a plantar.',
+       'The vein\n\nMy grandfather opened the first mine in these hills. He said a vein of copper and iron runs down there and never ends.\n\nThe pickaxe could not keep up. The mine closed, and the village went back to farming.'),
+      ('O trato\n\nA vila dá o chão, os trabalhadores e as encomendas. Você monta a fábrica, e a fábrica paga a vila.\n\nMáquina não cansa. Uma extratora segue o veio para sempre, se tiver energia.',
+       'The deal\n\nThe village gives the land, the workers and the orders. You build the factory, and the factory pays the village.\n\nMachines do not tire. An extractor follows the vein forever, as long as it has power.'),
+      ('O caminho\n\nAto I · A primeira chama\nAto II · A linha que anda sozinha\nAto III · O plano da vila\nAto IV · A vila conta com você\n\nDepois: a vila operária e a cidade.',
+       'The road\n\nAct I · The first flame\nAct II · The line that runs itself\nAct III · The village plan\nAct IV · The village counts on you\n\nThen: the working village and the town.'),
+      ('Conselhos\n\nMáquina parada tem motivo: passe o mouse no estado.\n\nSaída cheia para a linha.\n\nEmpacou? Fale comigo.\n\nA tecla J abre a wiki.',
+       'Advice\n\nA stopped machine has a reason: hover over its status.\n\nA full output stops the line.\n\nStuck? Talk to me.\n\nThe J key opens the wiki.'),
+    ]
+    for n,(pt,en) in enumerate(diary): label(f'veio.onboarding.diary.{n}',pt,en)
+    label('veio.onboarding.diary.title','Diário do Prefeito Otávio','Mayor Otávio\'s Diary')
+    # Festas do capítulo da vila (como os eventos do Stardew Valley): data marcada, contagem, festa.
+    festivals={
+        'harvest':('Festa da Colheita','Harvest Festival',
+            ('Daqui a %s dias é a Festa da Colheita! A vila inteira vai à praça ver o primeiro campo da fazenda.',
+             'The Harvest Festival is in %s days! The whole village will come to the square to see the farm\'s first field.'),
+            ('Até lá quero o posto do lavrador, alguém contratado, o campo marcado e a primeira colheita. Não me deixe passar vergonha!',
+             'By then I want the farmer post, someone hired, the field marked and the first harvest. Don\'t let me down!'),
+            ('A vila comemorou! Pão quente para todos, e um saco para os seus postos.',
+             'The village celebrated! Warm bread for everyone, and a sack for your posts.'),
+            ('Ouviu os sinos? É isso que o veio faz quando a vila trabalha junta.',
+             'Hear the bells? That is what the vein does when the village works together.'),
+            ('Pão para os postos e experiência','Bread for the posts and experience'),
+            'O campo não ficou pronto e a festa foi fraca. Vamos remarcar: mais 2 dias.',
+            'The field wasn\'t ready and the festival fell flat. Let\'s move it: 2 more days.',
+            'Remarquei a Festa da Colheita para daqui a %s dias. Desta vez vai!',
+            'I moved the Harvest Festival to %s days from now. This time it will work!'),
+        'governor':('Visita do Governador','Governor\'s Visit',
+            ('O governador vem nos visitar em %s dias! Ele decide se a vila merece estrada e comércio.',
+             'The governor visits in %s days! He decides whether the village deserves a road and trade.'),
+            ('Ele vai querer ver o carregador, o capataz, uma casa nova e a prefeitura de pé. Mãos à obra!',
+             'He will want to see the hauler, the foreman, a new house and the town hall standing. Get to work!'),
+            ('O governador saiu impressionado! Mandou um bolo para o Lar: hoje tem banquete.',
+             'The governor left impressed! He sent a cake for the Hearth: tonight there is a feast.'),
+            ('Ele disse que vai falar da nossa vila na capital. Isso é obra sua.',
+             'He said he will talk about our village in the capital. That is your doing.'),
+            ('Um bolo para o banquete e experiência','A cake for the feast and experience'),
+            'O governador viu a vila pela metade e torceu o nariz. Ele volta em 2 dias.',
+            'The governor saw a half-built village and frowned. He comes back in 2 days.',
+            'O governador volta daqui a %s dias. Vamos terminar o que falta!',
+            'The governor returns in %s days. Let\'s finish what is left!'),
+    }
+    for key,(name_pt,name_en,a1,a2,g1,g2,sub,weak_pt,weak_en,retry_pt,retry_en) in festivals.items():
+        label(f'veio.festival.{key}.name',name_pt,name_en)
+        label(f'veio.festival.{key}.when','em %s dias','in %s days')
+        for n,(pt,en) in enumerate([a1,a2],1): label(f'veio.festival.{key}.announce.{n}',pt,en)
+        for n,(pt,en) in enumerate([g1,g2],1): label(f'veio.festival.{key}.good.{n}',pt,en)
+        label(f'veio.festival.{key}.good_sub',*sub)
+        label(f'veio.festival.{key}.weak',weak_pt,weak_en)
+        label(f'veio.festival.{key}.retry',retry_pt,retry_en)
+    label('veio.festival.countdown','%s em %s dia(s)','%s in %s day(s)')
+    label('veio.festival.reminder','Não esqueça: %s.','Don\'t forget: %s.')
+    # O favor do primeiro ato (favors.rs): a prensa do Seu Bento em troca do campo da Dona Cida.
+    favor=[
+      ('smith.name','Seu Bento, o ferreiro','Seu Bento, the smith'),
+      ('farmer.name','Dona Cida, a lavradora','Dona Cida, the farmer'),
+      ('start.1','O gerador está de pé, mas sozinho ele não faz nada. Falta uma máquina para ligar nele: uma prensa.',
+       'The generator is up, but alone it does nothing. It needs a machine to power: a press.'),
+      ('start.2','O Seu Bento, o ferreiro, tem uma prensa velha sobrando na oficina dele, a leste da praça. Vá falar com ele.',
+       'Seu Bento, the smith, has an old spare press in his workshop, east of the square. Go and talk to him.'),
+      ('mayor.1','A prensa está com o Seu Bento, o ferreiro, a leste da praça. Siga a seta.','The press is with Seu Bento, the smith, east of the square. Follow the arrow.'),
+      ('mayor.2','O Seu Bento pediu um favor, não foi? Ele é assim. Fale com a Dona Cida, a oeste da praça.','Seu Bento asked a favour, didn\'t he? That\'s him. Talk to Dona Cida, west of the square.'),
+      ('mayor.3','Um campo de trigo ao lado da Dona Cida: isso ajuda a vila inteira. Use a farinha de osso para crescer rápido.','A wheat field next to Dona Cida: that helps the whole village. Use the bone meal to grow it fast.'),
+      ('mayor.4','Colha o trigo e leve para a Dona Cida. Trigo maduro é o dourado.','Harvest the wheat and take it to Dona Cida. Ripe wheat is the golden one.'),
+      ('mayor.5','A Dona Cida já está sorrindo. Agora volte ao Seu Bento: palavra dele vale.','Dona Cida is smiling already. Now go back to Seu Bento: his word is good.'),
+      ('goal.1','Fale com o Seu Bento, o ferreiro','Talk to Seu Bento, the smith'),
+      ('goal.2','Fale com a Dona Cida, a lavradora','Talk to Dona Cida, the farmer'),
+      ('goal.3','Plante trigo ao lado da Dona Cida: %s/12','Plant wheat next to Dona Cida: %s/12'),
+      ('goal.4','Colha 12 trigos e entregue à Dona Cida','Harvest 12 wheat and give it to Dona Cida'),
+      ('goal.5','Volte ao Seu Bento para pegar a prensa','Go back to Seu Bento for the press'),
+      ('bar','Favor · %s','Favour · %s'),
+      ('smith.ask.1','Prensa? Tenho, sim. Estava encostada desde que a mina fechou.','A press? Yes, I have one. It\'s been sitting there since the mine closed.'),
+      ('smith.ask.2','Mas olha, estou com a cabeça em outra coisa: o pão aqui está pela hora da morte.','But look, my head is somewhere else: bread here costs a fortune.'),
+      ('smith.ask.3','A Dona Cida não dá conta da roça sozinha, então tem pouco pão e ela cobra caro. Meus filhos comem pouco.','Dona Cida can\'t keep up with the fields alone, so there\'s little bread and she charges a lot. My kids eat little.'),
+      ('smith.ask.4','Ajuda ela com um campo de trigo e a prensa é sua. Com os cabos, de quebra.','Help her with a wheat field and the press is yours. The cables too, as a bonus.'),
+      ('farmer.ask.1','O Bento te mandou? Ai, que bom. Minhas costas não aguentam mais a enxada.','Bento sent you? Oh, good. My back can\'t take the hoe anymore.'),
+      ('farmer.ask.2','Lavre a terra aqui do lado de casa e plante %s pés de trigo. Perto da água a terra fica boa.','Till the soil next to my house and plant %s wheat. Near water the soil stays good.'),
+      ('farmer.ask.3','Tome sementes, farinha de osso para crescer logo e uma enxada. Depois me traga o trigo colhido.','Take seeds, bone meal so it grows fast and a hoe. Then bring me the harvested wheat.'),
+      ('farmer.gift','Você recebeu 16 sementes de trigo, 32 farinhas de osso e uma enxada de pedra.','You got 16 wheat seeds, 32 bone meal and a stone hoe.'),
+      ('farmer.plant','Estou contando: %s de %s pés plantados aqui do lado.','I\'m counting: %s of %s planted right here.'),
+      ('farmer.planted','Que campo bonito! Agora deixe crescer (farinha de osso ajuda) e me traga %s trigos.','What a lovely field! Now let it grow (bone meal helps) and bring me %s wheat.'),
+      ('farmer.more','Ainda faltam %s trigos. O maduro é o dourado, quebre e pegue.','Still %s wheat to go. The ripe one is golden: break it and pick it up.'),
+      ('farmer.thanks.1','Olha só quanto trigo! Com esse campo eu consigo fazer pão para a vila toda.','Look at all this wheat! With this field I can bake bread for the whole village.'),
+      ('farmer.thanks.2','Antes eu vendia 2 pães por esmeralda. Agora, com mais trigo, vendo 6. Pão barato é família de barriga cheia.','I used to sell 2 bread for an emerald. Now, with more wheat, I sell 6. Cheap bread means full families.'),
+      ('farmer.thanks.3','Vá lá contar para o Bento. E volte quando quiser pão: é só clicar em mim.','Go tell Bento. And come back whenever you want bread: just click me.'),
+      ('farmer.after','Pão fresquinho, 6 por esmeralda! O campo que você plantou rende todo dia.','Fresh bread, 6 for an emerald! The field you planted yields every day.'),
+      ('farmer.wait','Fale com o Bento primeiro, ele está te esperando.','Talk to Bento first, he\'s waiting for you.'),
+      ('smith.thanks.1','A Cida veio aqui toda contente. Pão barato na minha mesa: obrigado, de verdade.','Cida came by all happy. Cheap bread on my table: thank you, truly.'),
+      ('smith.thanks.2','Aqui está a prensa, e 16 cabos de cobre. Também te ensinei a fazer os dois: estão no seu livro de receitas.','Here is the press, and 16 copper cables. I also taught you to make both: they\'re in your recipe book.'),
+      ('smith.thanks.3','Ligue a prensa no gerador com os cabos. E se a vila precisar, ajude de novo: aqui um favor puxa o outro.','Connect the press to the generator with the cables. And if the village needs it, help again: here one favour leads to another.'),
+      ('smith.after','A prensa está te servindo? Cuida bem dela, era do meu pai.','Is the press serving you well? Take good care of it, it was my father\'s.'),
+      ('smith.wait','Ajude a Dona Cida com o campo e a prensa é sua.','Help Dona Cida with the field and the press is yours.'),
+      ('done','Favor feito!','Favour done!'),
+      ('done.sub','A prensa e os cabos são seus','The press and the cables are yours'),
+    ]
+    for key,pt,en in favor: label(f'veio.favor.{key}',pt,en)
+    # Aldeões comuns: só um resmungo curto. Quem conversa de verdade é o prefeito.
+    label('veio.villager.who','Aldeão','Villager')
+    label('veio.villager.says','§7§o%s: %s','§7§o%s: %s')
+    barks={
+        'mayor':[('Hrm! O prefeito está na praça.','Hrm! The mayor is in the square.'),
+                 ('Fala com o prefeito, ele sabe das coisas.','Talk to the mayor, he knows things.'),
+                 ('Hmm. Você é o novo do veio?','Hmm. You\'re the new one for the vein?'),
+                 ('O prefeito? Ali, o de casaco de pele.','The mayor? Over there, the one in the fur coat.')],
+        'gather':[('Hrm. Madeira tem no bosque.','Hrm. There\'s wood in the grove.'),
+                  ('Pedra? É só cavar um pouco.','Stone? Just dig a bit.'),
+                  ('O prefeito quer tudo de uma vez, hein.','The mayor wants it all at once, huh.'),
+                  ('Hmm! Cobre aparece nos morros.','Hmm! Copper shows up in the hills.')],
+        'plot':[('Hrm. Terreno torto não serve pra oficina.','Hrm. Crooked ground won\'t do for a workshop.'),
+                ('Aplana bem, hein.','Level it well, huh.'),
+                ('Uma fábrica! Na nossa vila!','A factory! In our village!'),
+                ('Hmm. Onze por onze, foi o que ele disse.','Hmm. Eleven by eleven, that\'s what he said.')],
+        'festival':[('A festa é logo! Hrm!','The festival is soon! Hrm!'),
+                    ('Já enfeitei a minha porta.','I already decorated my door.'),
+                    ('Hmm, tomara que a festa saia bonita.','Hmm, hope the festival turns out nice.'),
+                    ('O prefeito está nervoso com a festa.','The mayor is nervous about the festival.')],
+        'favor':[('Hrm. A Dona Cida não dá conta da roça.','Hrm. Dona Cida can\'t keep up with the fields.'),
+                 ('O pão anda caro, hein.','Bread is pricey lately, huh.'),
+                 ('O Bento tem uma prensa velha, sabia?','Bento has an old press, did you know?'),
+                 ('Hmm! Um campo novo ia bem.','Hmm! A new field would do nicely.')],
+        'factory':[('Hrm. Que barulho é esse da oficina?','Hrm. What\'s that noise from the workshop?'),
+                   ('As esteiras andam sozinhas! Hmm!','The belts move on their own! Hmm!'),
+                   ('O prefeito diz que o veio não acaba.','The mayor says the vein never ends.'),
+                   ('Hmm. Cuidado com os dedos na prensa.','Hmm. Mind your fingers on the press.')],
+        'village':[('Hrm! Tem trabalho pra mim?','Hrm! Got work for me?'),
+                   ('Um posto e eu trabalho, hein.','Give me a post and I\'ll work, huh.'),
+                   ('Hmm. A vila está crescendo.','Hmm. The village is growing.'),
+                   ('O prefeito está contente com você.','The mayor is happy with you.')],
+        'free':[('Hrm.','Hrm.'),('Hmm! Bom dia.','Hmm! Good day.'),
+                ('A vila está bonita, hein.','The village looks nice, huh.'),
+                ('Hrm. O veio ainda dá cobre.','Hrm. The vein still gives copper.')],
+    }
+    for topic,lines in barks.items():
+        for n,(pt,en) in enumerate(lines,1): label(f'veio.villager.{topic}.{n}',pt,en)
     # Nomes dos materiais (lista acima da barra de itens e fichas).
     names={
       'generator':('Gerador','Generator'), 'press':('Prensa','Press'), 'cable':('Cabo','Cable'),
@@ -72,6 +352,8 @@ def add_labels(label):
       'smooth_stone':('Pedra lisa','Smooth stone'), 'stick':('Graveto','Stick'),
       'crafting_table':('Bancada','Crafting table'), 'copper_plate':('Chapa de cobre','Copper plate'),
       'gear':('Engrenagem','Gear'), 'planks':('Tábuas','Planks'),
+      'factory_board':('Quadro da fábrica','Factory board'), 'pole':('Poste de madeira','Wooden pole'),
+      'splitter':('Divisor','Splitter'), 'redstone':('Redstone','Redstone'),
     }
     for key,(pt,en) in names.items(): label(f'veio.onboarding.name.{key}',pt,en)
     # Fichas de receita, geradas das receitas do jogo (nunca ficam desatualizadas).
@@ -88,7 +370,8 @@ def add_labels(label):
         out=data['result'].get('count',1)
         return (f"Receita · {names[item][0]} (bancada, em qualquer posição): {part(0)} = {out}× {names[item][0]}",
                 f"Recipe · {names[item][1]} (crafting table, any position): {part(1)} = {out}× {names[item][1]}")
-    plan={0:['generator'],1:['press','cable'],3:['assembler'],4:['drill'],5:['belt'],7:['contract_hub']}
+    plan={0:['generator'],1:['press','cable'],3:['assembler'],4:['drill'],5:['belt'],7:['contract_hub'],
+          8:['factory_board'],10:['drill'],11:['splitter'],12:['pole']}
     for step,items in plan.items():
         for index,item in enumerate(items): label(f'veio.onboarding.recipe.{step}.{index}',*recipe_line(item))
     label('veio.onboarding.recipe.6.0','Receita · Baú (bancada): 8 tábuas em volta, com o meio vazio = 1 baú',
@@ -112,6 +395,17 @@ def add_labels(label):
        'Where from: gear = 2 plates in the assembler · chest = 8 planks.'),
     ]
     for step,(pt,en) in enumerate(sources): label(f'veio.onboarding.from.{step}',pt,en)
+    # Etapas dos sistemas com receita (as outras não têm ficha).
+    for step,pt,en in [
+      (8,'De onde vem: baú = 8 tábuas · lingote de cobre na fornalha · graveto = 2 tábuas.',
+         'Where from: chest = 8 planks · copper ingot from the furnace · stick = 2 planks.'),
+      (10,'De onde vem: lingotes na fornalha; o pistão você já fez para a prensa.',
+          'Where from: ingots from the furnace; you already made the piston for the press.'),
+      (11,'De onde vem: engrenagem = 2 chapas no montador · esteira = a da etapa 6 · redstone = minério de redstone, nas cavernas.',
+          'Where from: gear = 2 plates in the assembler · belt = the one from step 6 · redstone = redstone ore, in caves.'),
+      (12,'De onde vem: graveto = 2 tábuas · lingote de cobre na fornalha.',
+          'Where from: stick = 2 planks · copper ingot from the furnace.')]:
+        label(f'veio.onboarding.from.{step}',pt,en)
     label('veio.onboarding.book','Livro de receitas: no inventário, clique no livro verde. A receita da etapa já está lá; clique nela e a grade se monta sozinha.',
           'Recipe book: in your inventory, click the green book. This step\'s recipe is there; click it and the grid fills itself.')
     label('veio.onboarding.make','Fabrique: %s','Craft: %s')
@@ -139,8 +433,8 @@ def add_labels(label):
       # A história e o pedido de recursos.
       ('mayor.hello.1','Um forasteiro! Seja bem-vindo. Aqui a gente vive da terra, mas a terra sozinha não basta mais.',
        'A stranger! Welcome. We live off the land here, but the land alone is no longer enough.'),
-      ('mayor.hello.2','Embaixo destes morros tem cobre e ferro. Com máquinas, isso vira chapa, engrenagem, trabalho e comida na mesa.',
-       'Under these hills there is copper and iron. With machines it becomes plates, gears, jobs and food on the table.'),
+      ('mayor.hello.2','Embaixo destes morros corre um veio de cobre e ferro que não acaba. Meu avô seguia o veio na picareta; com máquinas, ele vira chapa, engrenagem, trabalho e comida na mesa.',
+       'Under these hills runs a vein of copper and iron that never ends. My grandfather followed it with a pickaxe; with machines it becomes plates, gears, jobs and food on the table.'),
       ('mayor.hello.3','Proponho um trato: a vila dá o chão, os trabalhadores e as encomendas. Você monta a fábrica e ela paga a vila.',
        'Here is my deal: the village gives the land, the workers and the orders. You build the factory, and it pays the village.'),
       ('mayor.hello.4','Nossa oficina tem as peças de um gerador, a primeira máquina. Faltam os materiais. Traga para mim:',
@@ -162,8 +456,8 @@ def add_labels(label):
       # A primeira máquina e o terreno.
       ('intro.machine_title','Primeira máquina!','First machine!'),
       ('intro.machine_sub','O gerador é seu','The generator is yours'),
-      ('mayor.machine.1','Pronto, aqui está o seu gerador. E as receitas da prensa e dos cabos: estão no seu livro de receitas.',
-       'Done, here is your generator. And the press and cable recipes: they are in your recipe book.'),
+      ('mayor.machine.1','Pronto, montei o seu gerador com as minhas mãos. A prensa e os cabos, isso eu não tenho: na hora certa eu te digo com quem estão.',
+       'Done, I built your generator with my own hands. The press and the cables I don\'t have: when the time comes I\'ll tell you who has them.'),
       ('mayor.machine.2','Mas máquina não fica em qualquer lugar. Máquinas, cabos e esteiras precisam de chão plano.',
        'But machines cannot go just anywhere. Machines, cables and belts need flat ground.'),
       ('mayor.plot','Separei o terreno da sua oficina, %s blocos %s: %s x %s blocos marcados com faíscas verdes. Deixe tudo plano.',
@@ -191,14 +485,14 @@ def add_labels(label):
       ('outro.goal','Volte ao prefeito %s  %s blocos','Go back to the mayor %s  %s blocks'),
       ('outro.title','Fábrica fundada!','Factory founded!'),
       ('outro.sub','A vila conta com você','The village counts on you'),
-      ('mayor.next.1','A primeira encomenda chegou e a vila já fala da sua fábrica. Parabéns!',
-       'The first order arrived and the village is already talking about your factory. Congratulations!'),
-      ('mayor.next.2','Agora a vila vai pedir mais, e cada pedido maior trava em algum lugar: falta minério, energia, carvão ou esteira.',
-       'Now the village will ask for more, and every bigger order gets stuck somewhere: not enough ore, power, coal or belts.'),
-      ('mayor.next.3','Faça um Quadro da fábrica (baú, 2 lingotes de cobre e graveto) no terreno: ele mostra a fase, o pedido do dia e onde a fábrica travou.',
-       'Make a Factory board (chest, 2 copper ingots and a stick) on the plot: it shows the phase, the daily order and where the factory got stuck.'),
-      ('mayor.next.4','Contrate aldeões: com uma esmeralda na mão, clique num posto de trabalho. Eles carregam, colhem e cuidam das máquinas.',
-       'Hire villagers: holding an emerald, click a work post. They haul, harvest and look after the machines.'),
+      ('mayor.next.1','Olhe só o que você fez: energia, duas linhas, o plano da vila, o primeiro pedido pago e casa arrumada. Parabéns, engenheiro!',
+       'Look at what you did: power, two lines, the village plan, the first paid order and a tidy home. Congratulations, engineer!'),
+      ('mayor.next.2','Agora a vila vai pedir mais, e cada pedido maior trava em algum lugar: falta minério, energia, carvão, comida ou gente.',
+       'Now the village will ask for more, and every bigger order gets stuck somewhere: not enough ore, power, coal, food or people.'),
+      ('mayor.next.3','A próxima fase do Quadro pede 32 engrenagens. Uma prensa só não dá conta: o Quadro mostra onde a linha espera.',
+       'The next board phase asks for 32 gears. One press will not keep up: the board shows where the line waits.'),
+      ('mayor.next.4','E você não precisa fazer tudo sozinho: com as esmeraldas do pedido, a vila contrata gente para trabalhar com você.',
+       'And you do not have to do it all alone: with the order emeralds, the village hires people to work with you.'),
       ('mayor.next.5','Volte aqui quando quiser: eu digo o que a vila precisa e o que vai travar a seguir.',
        'Come back any time: I will tell you what the village needs and what will get stuck next.'),
       ('mayor.board.none','Ainda não vi o seu Quadro da fábrica. Faça um (baú, 2 lingotes de cobre e graveto) e ponha perto das máquinas.',
@@ -211,6 +505,7 @@ def add_labels(label):
     ]
     for key,pt,en in intro: label(f'veio.onboarding.{key}',pt,en)
     label('veio.onboarding.done','Etapa concluída!','Step complete!')
+    for i,(pt,en) in enumerate(goals): label(f'veio.onboarding.goal.{i}',pt,en)
     for i,(title,why,lines) in enumerate(steps):
         label(f'veio.onboarding.title.{i}',*title)
         label(f'veio.onboarding.why.{i}',*why)
@@ -230,6 +525,7 @@ def add_labels(label):
     add_night_labels(label)
     add_forge_labels(label, names, recipe_line)
     add_metro_labels(label)
+    add_story_labels(label)
 
 
 def add_village_labels(label, names, recipe_line):
@@ -785,12 +1081,12 @@ def add_forge_labels(label, names, recipe_line):
        ('Pronto para o que vier.', 'Ready for whatever comes.'), more('Poluição e defesa.', 'Pollution and defense.')),
     ]
     extra = {
-        'intro.1': ('A vila cresceu e pede mais: mais chapas, mais engrenagens, mais comida. A oficina de hoje não dá conta.', 'The village grew and asks for more: more plates, more gears, more food. Today\'s workshop cannot keep up.'),
-        'intro.2': ('Vamos levar a fábrica ao aço e à eletrônica, com a extratora Mk.II. Mas produzir mais é poluir mais.', 'Let us take the factory to steel and electronics, with the Mk.II extractor. But making more means polluting more.'),
-        'intro.3': ('E poluição traz Saqueadores. Desta vez a defesa vem junto: quartel, torre Tesla e energia para a noite.', 'And pollution brings Raiders. This time defense comes along: barracks, Tesla tower and power for the night.'),
-        'end.1': ('A fábrica virou indústria, e a vila tem defesa.', 'The factory became an industry, and the village has a defense.'),
-        'end.2': ('As ondas vão voltar, maiores com a poluição: até 12 Saqueadores, arqueiros e o Bruto. Mais Tesla, mais energia, mais soldados.', 'Waves will return, bigger with pollution: up to 12 Raiders, archers and the Brute. More Teslas, more power, more soldiers.'),
-        'end.3': ('Com a indústria de pé, a vila pode virar cidade. Fale comigo quando quiser.', 'With industry standing, the village can become a city. Talk to me whenever you like.'),
+        'intro.1': ('Lembra do trato? A vila cresceu e agora pede mais do que a oficina dá: mais chapas, mais engrenagens, mais comida na mesa.', 'Remember our deal? The village grew and now asks more than the workshop gives: more plates, more gears, more food on the table.'),
+        'intro.2': ('Meu avô fechou a mina porque não havia como ir mais fundo. Com aço, eletrônica e a extratora Mk.II, nós vamos.', 'My grandfather closed the mine because there was no way to dig deeper. With steel, electronics and the Mk.II extractor, we will.'),
+        'intro.3': ('Mas fábrica grande solta fumaça, e fumaça chama os Saqueadores. Desta vez a defesa cresce junto: quartel, torre Tesla e energia para a noite.', 'But a big factory gives off smoke, and smoke calls the Raiders. This time defense grows along: barracks, Tesla tower and power for the night.'),
+        'end.1': ('A fábrica virou indústria, e o veio do meu avô voltou a dar. Ele ia gostar de ver isto.', 'The factory became an industry, and my grandfather\'s vein gives again. He would have liked to see this.'),
+        'end.2': ('As ondas vão voltar, maiores com a poluição: até 12 Saqueadores, arqueiros e o Bruto. Mais Tesla, mais energia, mais soldados: crescer é saber que a noite vem.', 'Waves will return, bigger with pollution: up to 12 Raiders, archers and the Brute. More Teslas, more power, more soldiers: growing means knowing the night will come.'),
+        'end.3': ('Com trabalho e segurança, as famílias que foram embora estão voltando. A vila pode virar cidade. Fale comigo quando quiser.', 'With work and safety, the families who left are coming back. The village can become a city. Talk to me whenever you like.'),
         'end.4': ('E lembre: o Quadro da fábrica sempre diz o próximo gargalo.', 'And remember: the Factory board always tells you the next bottleneck.'),
         'start_title': ('Capítulo 5: a grande indústria', 'Chapter 5: heavy industry'),
         'start_sub': ('Aço, eletrônica, Mk.II e a defesa da fábrica', 'Steel, electronics, Mk.II and the factory defense'),
@@ -875,13 +1171,13 @@ def add_metro_labels(label):
        ('Somos uma Cidade!', 'We are a City!'), more('Sociedade da vila (fases).', 'Village society (phases).')),
     ]
     extra = {
-        'intro.1': ('A indústria trouxe trabalho, e o trabalho trouxe gente. Chegou a hora de a Vila virar Cidade.', 'Industry brought work, and work brought people. It is time for the Village to become a City.'),
-        'intro.2': ('Para Cidade: 36 moradores, 9 famílias, IDH 0,55, PIB de 400 por dia e 60% de emprego.', 'For a City: 36 residents, 9 families, HDI 0.55, GDP of 400 a day and 60% employment.'),
-        'intro.3': ('Uma coisa de cada vez. Comecemos pelas famílias.', 'One thing at a time. Let us start with families.'),
-        'end.1': ('Uma Cidade! Do punhado de casas que eu governava para isto.', 'A City! From the handful of houses I governed to this.'),
-        'end.2': ('A Metrópole pede 80 moradores, 20 famílias, IDH 0,70, 3 bairros e Gini até 0,45: renda bem distribuída.', 'A Metropolis asks for 80 residents, 20 families, HDI 0.70, 3 districts and Gini up to 0.45: income well spread.'),
-        'end.3': ('A vila agora produz mais do que consome. Lá fora tem gente querendo comprar.', 'The village now makes more than it consumes. Out there, people want to buy.'),
-        'end.4': ('Quando quiser saber o próximo passo, fale comigo.', 'Whenever you want the next step, talk to me.'),
+        'intro.1': ('Lembra das casas vazias quando você chegou? A indústria trouxe trabalho, e o trabalho trouxe gente de volta.', 'Remember the empty houses when you arrived? Industry brought work, and work brought people back.'),
+        'intro.2': ('Chegou a hora de a Vila virar Cidade: 36 moradores, 9 famílias, IDH 0,55, PIB de 400 por dia e 60% de emprego.', 'It is time for the Village to become a City: 36 residents, 9 families, HDI 0.55, GDP of 400 a day and 60% employment.'),
+        'intro.3': ('Cidade não é só número: é cada família com casa, salário, água, luz e um lugar para a festa. Comecemos pelas famílias.', 'A city is not just numbers: it is every family with a home, wages, water, light and a place to celebrate. Let us start with families.'),
+        'end.1': ('Uma Cidade! Quando você chegou eu governava um punhado de casas vazias. Hoje as janelas estão acesas.', 'A City! When you arrived I governed a handful of empty houses. Today the windows are lit.'),
+        'end.2': ('O trato está cumprido: a vila deu o chão e as mãos, a sua fábrica deu o futuro. A Metrópole pede 80 moradores, 20 famílias, IDH 0,70, 3 bairros e Gini até 0,45.', 'The deal is done: the village gave the ground and the hands, your factory gave the future. A Metropolis asks for 80 residents, 20 families, HDI 0.70, 3 districts and Gini up to 0.45.'),
+        'end.3': ('E a cidade agora produz mais do que consome. Lá fora tem gente querendo comprar o que fazemos aqui.', 'And the city now makes more than it consumes. Out there, people want to buy what we make here.'),
+        'end.4': ('Quando quiser saber o próximo passo, fale comigo. Eu continuo na praça.', 'Whenever you want the next step, talk to me. I am still in the square.'),
         'start_title': ('Capítulo 6: a cidade', 'Chapter 6: the city'), 'start_sub': ('De Vila a Cidade', 'From Village to City'),
         'end_title': ('Uma Cidade de verdade', 'A real City'), 'end_sub': ('Capítulo da cidade concluído', 'City chapter complete'),
         'bar': ('Cidade %s/6 | %s', 'City %s/6 | %s'), 'bar_prefix': ('Cidade %s/6 |', 'City %s/6 |'),
@@ -895,3 +1191,50 @@ def add_metro_labels(label):
         'check.idh': ('IDH %s/0,55', 'HDI %s/0.55'), 'check.gdp': ('PIB %s/400', 'GDP %s/400'), 'check.jobs': ('emprego %s%%/60%%', 'jobs %s%%/60%%'),
     }
     add_chapter(label, 'metro', steps, extra)
+
+
+def add_story_labels(label):
+    """A história em volta das etapas: o prefeito liga cada etapa ao que a vila vive e um morador
+    comenta (`veio.<capítulo>.story.<n>` e `veio.<capítulo>.voice.<n>`, onboarding/chapter.rs).
+    Na fábrica, o Seu Bento e a Dona Cida voltam depois do favor (`veio.onboarding.voice.<n>`)."""
+    factory = {
+      2: ('A prensa do meu pai batendo de novo! Esse barulho me lembra a mina aberta.', 'My father\'s press pounding again! That sound reminds me of the mine when it was open.'),
+      3: ('Engrenagem boa é a que ninguém escuta. Se rangir, a linha está pedindo graxa ou chapa.', 'A good gear is one nobody hears. If it squeaks, the line wants grease or plates.'),
+      7: ('A vila inteira está falando da sua encomenda. Até o meu forno ficou mais quente hoje.', 'The whole village is talking about your order. Even my oven feels warmer today.'),
+      14: ('Pão da minha roça na sua mesa. Come direito, que fábrica não anda de barriga vazia.', 'Bread from my field on your table. Eat properly, a factory doesn\'t run on an empty stomach.'),
+    }
+    for step, (pt, en) in factory.items(): label(f'veio.onboarding.voice.{step}', pt, en)
+    forge = [
+      (('A primeira fase grande: aço. É com ele que a gente vai mais fundo no veio.', 'The first big phase: steel. It is how we go deeper into the vein.'),
+       ('Aço! Meu pai dizia que o veio tinha ferro para cem anos de aço. Só faltava quem soubesse fazer.', 'Steel! My father said the vein had iron for a hundred years of steel. We only lacked someone who knew how.')),
+      (('A fábrica precisa pensar, não só bater. O Mestre Lumen, o vidreiro, veio ver de perto.', 'The factory needs to think, not just pound. Mestre Lumen, the glassmaker, came to see up close.'),
+       ('Silício sai da areia, como o meu vidro. Quem diria que o meu ofício ia virar circuito!', 'Silicon comes from sand, like my glass. Who would have thought my craft would become circuits!')),
+      (('A Mk.II desce até onde a mina do meu avô parou. Hoje o veio volta a dar.', 'The Mk.II goes down to where my grandfather\'s mine stopped. Today the vein gives again.'),
+       ('Foi nesse fundo que a mina fechou. Meu pai ia chorar de ver máquina tirando minério de lá.', 'That is the depth where the mine closed. My father would cry to see a machine pulling ore from there.')),
+      (('Repare no céu sobre a fábrica. Mais produção, mais fumaça: é o preço, e é bom saber o tamanho dele.', 'Look at the sky over the factory. More output, more smoke: that is the price, and it is good to know its size.'),
+       ('O ar está pesado e a roça sente. Cuide dessa fumaça, viu? E feche a porta de noite.', 'The air is heavy and the field feels it. Watch that smoke, will you? And close your door at night.')),
+      (('A muralha segura quem anda. Para quem luta, a vila precisa de um soldado de plantão.', 'The wall holds back those who walk. For those who fight, the village needs a soldier on duty.'),
+       ('No meu tempo a gente só trancava a porta e rezava. Soldado de plantão? É outra vila.', 'In my day we just locked the door and prayed. A soldier on duty? This is another village.')),
+      (('A torre Tesla defende sozinha, mas vive de energia. Sem carga, é só um enfeite.', 'The Tesla tower defends on its own, but lives on power. Without charge, it is just decoration.'),
+       ('Raio preso numa torre! Meu pai ia achar que é feitiço. Eu ajudo com o cobre.', 'Lightning caught in a tower! My father would think it was sorcery. I\'ll help with the copper.')),
+      (('A noite é quando os Saqueadores vêm, e é quando o sol não rende. Guarde energia de dia.', 'Night is when the Raiders come, and when the sun gives nothing. Store power by day.'), None),
+      (('Depois de cada onda, a vila acorda e conserta. Ninguém perde o que tinha: só o tempo parado.', 'After each wave, the village wakes up and mends. No one loses what they had: only the idle time.'),
+       ('Máquina amassada eu desamasso, mas o kit é mais rápido. Sempre leve um no bolso.', 'A dented machine I can straighten, but the kit is faster. Always keep one in your pocket.')),
+    ]
+    metro = [
+      (('As famílias que foram embora para a capital estão voltando. Cada casa nova é uma janela acesa.', 'The families who left for the capital are coming back. Each new house is a lit window.'),
+       ('Meus netos voltaram! Com pão barato e trabalho perto, ninguém precisa ir embora.', 'My grandchildren came back! With cheap bread and work nearby, no one needs to leave.')),
+      (('Gente sem trabalho é gente indo embora de novo. Os postos, as lojas e o quartel seguram a vila.', 'People without work are people leaving again. Posts, shops and the barracks hold the village together.'),
+       ('Eu cresci! Agora quero trabalhar na fábrica, igual a você. Tem vaga?', 'I grew up! Now I want to work at the factory, just like you. Is there a job?')),
+      (('Água e luz em cada casa: é a diferença entre um povoado e uma cidade.', 'Water and light in every house: that is the difference between a hamlet and a city.'),
+       ('Água na torneira e luz em casa. Morei aqui a vida toda e nunca pensei que ia ver.', 'Water from the tap and light at home. I have lived here all my life and never thought I would see it.')),
+      (('Cidade também precisa de lugar para a festa. O bairro mais carente vai ganhar a sua obra.', 'A city also needs a place to celebrate. The neediest district will get its work.'),
+       ('Uma praça nova! Vou tocar sanfona lá todo domingo, pode escrever.', 'A new square! I will play the accordion there every Sunday, mark my words.')),
+      (('O dinheiro agora gira dentro da vila: salário vira compra, compra vira imposto, imposto vira obra.', 'Money now circulates inside the village: wages become purchases, purchases become taxes, taxes become works.'),
+       ('A feira nunca vendeu tanto! Tem gente vindo de longe só para comprar aqui.', 'The fair has never sold so much! People come from far away just to buy here.')),
+      (('Falta a última conta, no fim do dia. Meu secretário confere tudo no gabinete e eu declaro a Cidade.', 'Only the last count is left, at the end of the day. My secretary checks everything at the office and I declare the City.'), None),
+    ]
+    for key, steps in (('forge', forge), ('metro', metro)):
+        for step, (story, voice) in enumerate(steps):
+            label(f'veio.{key}.story.{step}', *story)
+            if voice: label(f'veio.{key}.voice.{step}', *voice)

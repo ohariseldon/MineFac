@@ -17,6 +17,9 @@ pub(super) struct Spec {
     pub end: u8,
     /// Experiência da primeira etapa; cada etapa seguinte dá 5 a mais.
     pub xp: u32,
+    /// Quem da vila comenta cada etapa (chave do nome; vazio: só o prefeito). A fala é
+    /// `veio.<key>.voice.<etapa>`; a do prefeito, `veio.<key>.story.<etapa>`.
+    pub voices: &'static [&'static str],
 }
 
 impl Spec {
@@ -46,6 +49,7 @@ fn sound(host: &mut dyn Host, player: &NativeServerPlayer, sound: &str) {
 pub(super) fn announce(host: &mut dyn Host, player: &NativeServerPlayer, spec: &Spec, step: usize) {
     let (uuid, key) = (player.uuid, spec.key);
     host.tell(uuid, Text::tr(&format!("veio.{key}.title.{step}"), &[]));
+    story(host, uuid, spec, step);
     village::say(host, uuid, &format!("veio.{key}.why.{step}"));
     let (block, ingredients) = spec.parts[step];
     if !ingredients.is_empty() {
@@ -58,6 +62,16 @@ pub(super) fn announce(host: &mut dyn Host, player: &NativeServerPlayer, spec: &
         host.tell(uuid, Text::tr(&format!("veio.{key}.do.{step}.{line}"), &[]));
     }
     host.tell(uuid, Text::tr(&format!("veio.{key}.more.{step}"), &[]));
+}
+
+/// A história da etapa: o prefeito liga a etapa ao que a vila vive, e um morador comenta.
+pub(super) fn story(host: &mut dyn Host, uuid: u128, spec: &Spec, step: usize) {
+    let key = spec.key;
+    village::say(host, uuid, &format!("veio.{key}.story.{step}"));
+    if let Some(who) = spec.voices.get(step).copied().filter(|who| !who.is_empty()) {
+        let name = Text::tr(who, &[]).plain();
+        host.tell(uuid, Text::tr("veio.agenda.says", &[&name, &Text::tr(&format!("veio.{key}.voice.{step}"), &[]).plain()]));
+    }
 }
 
 /// A lista de materiais do bloco da etapa, enquanto ele não foi fabricado nem está no inventário.
@@ -98,6 +112,7 @@ pub(super) fn celebrate(host: &mut dyn Host, player: &NativeServerPlayer, spec: 
         else { format!("veio.{}.end_sub", spec.key) };
     title(host, player, "veio.onboarding.done", &next);
     sound(host, player, "minecraft:ui.toast.challenge_complete");
+    intro::react(host, intro::Mood::Happy);
     if spawn_safe(&player.name) {
         host.run_command(&format!("xp add {} {} points", player.name, spec.xp + 5 * finished as u32));
     }
@@ -114,5 +129,8 @@ pub(super) fn finish(host: &mut dyn Host, player: &NativeServerPlayer, spec: &Sp
     for line in 1..=spec.end { village::say(host, player.uuid, &format!("veio.{}.end.{line}", spec.key)); }
     title(host, player, &format!("veio.{}.end_title", spec.key), &format!("veio.{}.end_sub", spec.key));
     if spawn_safe(&player.name) { host.run_command(&format!("xp add {} {} points", player.name, spec.xp * 4)); }
+    // Fim de capítulo é festa na praça: fogos em volta do jogador e o prefeito comemorando.
+    fireworks(host, &player.name);
+    intro::react(host, intro::Mood::Happy);
     host.action_bar(player.uuid, Text::literal(""));
 }
