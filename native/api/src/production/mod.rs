@@ -39,6 +39,10 @@ pub(super) const PICK_SHIFT: i32 = 64;
 /// Botões do painel do fabricante (`menu_button`).
 pub(super) const PICK_PREVIOUS: i32 = 1;
 pub(super) const PICK_NEXT: i32 = 2;
+/// Misturador de tintas: corante + argila viram latas de tinta (e tintas misturadas).
+pub(super) const PAINT_MIXER: &str = "veio:paint_mixer";
+/// Cabine de pintura: peça + lata de tinta viram peças pintadas (e lã, terracota e vidro).
+pub(super) const PAINT_BOOTH: &str = "veio:paint_booth";
 // Itens criados pela produção; as receitas os citam pelo nome em `tools/production.json`.
 #[allow(dead_code)]
 pub(super) const FLOUR: &str = "veio:flour";
@@ -88,12 +92,13 @@ pub(crate) struct Fuel {
 pub(super) fn is_machine(block: &str) -> bool {
     matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | BIOMASS_GENERATOR | WATER_WHEEL |
         WIND_TURBINE | STEAM_ENGINE | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PANTRY |
-        PUMP | PIPE | SPRINKLER | HYDRO_TURBINE | FABRICATOR | MANUFACTURER)
+        PUMP | PIPE | SPRINKLER | HYDRO_TURBINE | FABRICATOR | MANUFACTURER | PAINT_MIXER | PAINT_BOOTH)
 }
 
 /// Máquinas que consomem energia: recebem pela rede, param com redstone, mostram métricas.
 pub(super) fn consumes(block: &str) -> bool {
-    matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PUMP | FABRICATOR | MANUFACTURER)
+    matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PUMP | FABRICATOR | MANUFACTURER
+        | PAINT_MIXER | PAINT_BOOTH)
 }
 
 /// Fontes de energia deste módulo (as antigas: gerador, geotérmico e solar).
@@ -109,14 +114,14 @@ pub(super) fn burns(block: &str) -> bool {
 /// Entrada de itens, sem alocar o `layout`.
 pub(super) fn has_inputs(block: &str) -> bool {
     matches!(block, ELECTRIC_FURNACE | MILL | PANTRY | KITCHEN | BIOMASS_GENERATOR | STEAM_ENGINE |
-        PLANTER | TREE_FARM | RANCH | SPRINKLER | FABRICATOR | MANUFACTURER)
+        PLANTER | TREE_FARM | RANCH | SPRINKLER | FABRICATOR | MANUFACTURER | PAINT_MIXER | PAINT_BOOTH)
 }
 
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
     Some(match block {
         DRILL_MK3 => (1, vec![], vec![0]),
         ELECTRIC_FURNACE | MILL | PANTRY => (2, vec![0], vec![1]),
-        KITCHEN => (3, vec![0, 1], vec![2]),
+        KITCHEN | PAINT_MIXER | PAINT_BOOTH => (3, vec![0, 1], vec![2]),
         FABRICATOR => (4, vec![0, 1, 2], vec![3]),
         BIOMASS_GENERATOR | STEAM_ENGINE | PLANTER | SPRINKLER => (1, vec![0], vec![]),
         WATER_WHEEL | WIND_TURBINE | GROW_LAMP | PUMP | HYDRO_TURBINE => (1, vec![], vec![]),
@@ -132,7 +137,7 @@ pub(super) fn outputs(block: &str) -> std::ops::Range<usize> {
     match block {
         DRILL_MK3 => 0..1,
         ELECTRIC_FURNACE | MILL | PANTRY => 1..2,
-        KITCHEN => 2..3,
+        KITCHEN | PAINT_MIXER | PAINT_BOOTH => 2..3,
         FABRICATOR => 3..4,
         TREE_FARM => 1..4,
         RANCH => 2..5,
@@ -177,8 +182,9 @@ pub(super) fn emission(block: &str) -> f32 {
     match block {
         DRILL_MK3 => 6.0,
         STEAM_ENGINE => 4.0,
-        BIOMASS_GENERATOR | ELECTRIC_FURNACE | FABRICATOR | MANUFACTURER => 2.0,
-        MILL | KITCHEN | TREE_FARM => 1.0,
+        // A cabine solta solvente: polui como uma fornalha.
+        BIOMASS_GENERATOR | ELECTRIC_FURNACE | FABRICATOR | MANUFACTURER | PAINT_BOOTH => 2.0,
+        MILL | KITCHEN | TREE_FARM | PAINT_MIXER => 1.0,
         _ => 0.0,
     }
 }
@@ -423,7 +429,7 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         DRILL_MK3 | BIOMASS_GENERATOR | STEAM_ENGINE | PLANTER | SPRINKLER => vec![Some([89.0, 45.0])],
         PUMP | HYDRO_TURBINE => vec![None],
         ELECTRIC_FURNACE | MILL | PANTRY => vec![Some([53.0, 45.0]), Some([125.0, 45.0])],
-        KITCHEN => vec![Some([35.0, 45.0]), Some([71.0, 45.0]), Some([143.0, 45.0])],
+        KITCHEN | PAINT_MIXER | PAINT_BOOTH => vec![Some([35.0, 45.0]), Some([71.0, 45.0]), Some([143.0, 45.0])],
         FABRICATOR => vec![Some([26.0, 45.0]), Some([53.0, 45.0]), Some([80.0, 45.0]), Some([143.0, 45.0])],
         WATER_WHEEL | WIND_TURBINE | GROW_LAMP => vec![None],
         TREE_FARM => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0])],
@@ -442,7 +448,7 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         PLANTER => &["seeds"],
         SPRINKLER => &["fertilizer"],
         PUMP | HYDRO_TURBINE => &[],
-        KITCHEN => &["input1", "input2", "output"],
+        KITCHEN | PAINT_MIXER | PAINT_BOOTH => &["input1", "input2", "output"],
         FABRICATOR => &["input1", "input2", "input3", "output"],
         TREE_FARM => &["saplings", "output", "", ""],
         RANCH => &["feed", "bucket", "output", "", ""],

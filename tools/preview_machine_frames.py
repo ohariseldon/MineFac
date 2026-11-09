@@ -22,7 +22,7 @@ PALETTE.update({"copper_block": "#c07a56", "polished_andesite": "#868b89", "deep
 NAMES = {"drill": "Extratora", "drill_mk2": "Extratora Mk.II", "drill_mk3": "Extratora Mk.III",
          "press": "Prensa", "assembler": "Montadora", "cutter": "Cortadora", "integrator": "Integradora",
          "crusher": "Britador", "alloy_furnace": "Fundição de liga", "electric_furnace": "Forno elétrico",
-         "electronics": "Eletrônica", "mill": "Moinho", "kitchen": "Cozinha", "fabricator": "Fabricadora",
+         "electronics": "Eletrônica", "mill": "Moinho", "kitchen": "Cozinha", "fabricator": "Fabricadora", "manufacturer": "Combinadora", "paint_mixer": "Misturador de tintas", "paint_booth": "Cabine de pintura",
          "generator": "Gerador", "biomass_generator": "Gerador a biomassa", "steam_engine": "Máquina a vapor",
          "geothermal": "Geotérmica", "research_lab": "Laboratório"}
 

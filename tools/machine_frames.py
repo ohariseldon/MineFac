@@ -747,8 +747,37 @@ def manufacturer():  # 3 x 3: combinadora com quatro tremonhas sobre a mesa e sa
     return m
 
 
+def paint_mixer():  # 2 x 2: dois tanques de tinta com agitador e passarela
+    m = Machine("paint_mixer", "copper", 2, 2, 0, [(0, 0, "out")])
+    m.plinth()
+    m.tank(9, 12, 6, 1.5, 18, bands=2, material="shell")
+    m.tank(23, 20, 5, 1.5, 15, bands=1, material="rust")
+    for cx, cz, top in ((9, 12, 18), (23, 20, 15)):
+        m.box([cx - 0.5, top, cz - 0.5], [cx + 0.5, top + 6, cz + 0.5], "metal")   # eixo do agitador
+        m.box([cx - 2, top + 5, cz - 2], [cx + 2, top + 6, cz + 2], "dark")        # motor
+    m.pipe([(9, 6, 19), (16, 6, 19), (16, 6, 26), (23, 6, 26)], r=1.2, material="metal")
+    m.cabinet(20, 2, 30, 9, 1.5, 12, face="s")
+    m.stripes(2, 30, 3, 31.4)
+    return m
+
+
+def paint_booth():  # 2 x 3: cabine fechada com janela, exaustor e esteira passando por dentro
+    m = Machine("paint_booth", "iron", 2, 3, 0, [(1, 0, "out"), (0, 2, "in")])
+    m.plinth()
+    m.box([1, 1.5, 6], [31, 20, 42], "shell")
+    for z in range(10, 40, 8):
+        m.box([30.9, 7, z], [31.3, 15, z + 5], "glass")
+    m.box([0, 20, 4], [32, 22, 44], "trim")
+    m.conveyor(12, 0, 20, 48, 6, axis="z")
+    m.round_v(16, 24, 5, 22, 26, "metal")                              # exaustor
+    m.chimney(16, 24, 4, 26, 34)
+    m.tank(26, 3, 2.5, 1.5, 10, bands=1, material="rust")
+    m.stripes(2, 30, 3, 47.5)
+    return m
+
+
 MACHINES = [drill, drill_mk2, drill_mk3, press, assembler, cutter, integrator, crusher, alloy_furnace,
-            electric_furnace, electronics, mill, kitchen, fabricator, manufacturer, generator, biomass_generator,
+            electric_furnace, electronics, mill, kitchen, fabricator, manufacturer, paint_mixer, paint_booth, generator, biomass_generator,
             steam_engine, geothermal, research_lab]
 LAYOUTS = {}
 

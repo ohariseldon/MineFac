@@ -19,6 +19,8 @@ pub(super) fn profile(block: &str) -> Option<Profile> {
         "veio:electric_furnace" => Profile { lamp: [12.000, 10.250, 15.850, 14.000, 11.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::Heat, center: [8.000, 8.000, 8.000], marker: [8.000, 16.250, 8.000] },
         "veio:mill" => Profile { lamp: [12.000, 9.250, 15.850, 14.000, 10.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::Mill, center: [8.000, 10.000, 8.000], marker: [8.000, 14.250, 8.000] },
         "veio:kitchen" => Profile { lamp: [12.000, 4.250, 15.850, 14.000, 5.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::Mixer, center: [5.000, 11.000, 8.000], marker: [8.000, 12.250, 8.000] },
+        "veio:paint_mixer" => Profile { lamp: [12.000, 4.250, 15.850, 14.000, 5.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::Mixer, center: [5.000, 11.000, 8.000], marker: [8.000, 12.250, 8.000] },
+        "veio:paint_booth" => Profile { lamp: [12.000, 4.250, 15.850, 14.000, 5.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::Turntable, center: [8.000, 9.500, 9.000], marker: [8.000, 12.250, 8.000] },
         "veio:pantry" => Profile { lamp: [12.000, 4.250, 15.850, 14.000, 5.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::None, center: [8.000, 8.000, 8.000], marker: [8.000, 10.250, 8.000] },
         "veio:biomass_generator" => Profile { lamp: [12.000, 11.250, 15.850, 14.000, 12.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::Motor, center: [8.000, 8.000, 14.500], marker: [8.000, 16.250, 8.000] },
         "veio:steam_engine" => Profile { lamp: [12.000, 11.250, 15.850, 14.000, 12.250, 16.000], badge: [2.000, 3.000, 15.850], motion: Motion::Motor, center: [8.000, 8.000, 14.500], marker: [8.000, 16.250, 8.000] },

@@ -76,11 +76,13 @@ const ERRAND: u64 = 400;
 pub(crate) const STALE: u64 = 3000;
 
 /// Bens de consumo (conforto): (item, preço base em moedas, pontos de conforto).
-pub(crate) const GOODS: [(&str, i32, i32); 12] = [
+pub(crate) const GOODS: [(&str, i32, i32); 14] = [
     ("minecraft:white_wool", 4, 8), ("minecraft:leather", 6, 12), ("minecraft:paper", 2, 4),
     ("minecraft:book", 10, 20), ("minecraft:candle", 4, 8), ("minecraft:torch", 1, 2),
     ("minecraft:glass_bottle", 2, 4), ("minecraft:flower_pot", 3, 6), ("minecraft:honey_bottle", 5, 10),
     ("minecraft:painting", 8, 16), ("minecraft:lantern", 6, 12), ("minecraft:feather", 1, 2),
+    // Bens com peças pintadas (fábrica de tintas): caros, mas dão muito conforto.
+    ("veio:wall_clock", 90, 60), ("veio:bicycle", 210, 150),
 ];
 
 pub(crate) fn is_society_block(block: &str) -> bool {

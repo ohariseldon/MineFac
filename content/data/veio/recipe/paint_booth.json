@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "veio:frame",
+    "veio:frame",
+    "veio:gear",
+    "minecraft:glass",
+    "veio:steel_plate"
+  ],
+  "result": {
+    "id": "veio:paint_booth",
+    "count": 1
+  }
+}

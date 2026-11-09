@@ -33,6 +33,9 @@ PALETTE = {
     "x": "c22a2a", "C": "3fd0d8",
     # Água encanada.
     "B": "3f76e4", "i": "8fb8ff",
+    # Tintas (misturador e cabine de pintura): preta, branca, amarela, azul, verde, laranja, vermelha.
+    "m": "26262b", "j": "f4f2ea", "l": "f2c230", "A": "3a5fd0", "P": "263c8a", "D": "3fa34a",
+    "E": "f07f1d", "F": "c8302c", "I": "7f1a17",
 }
 
 def hex_rgb(value):
@@ -107,6 +110,28 @@ MOTIFS = {
         "byY..Yyb",
         "b.YyyY.b",
         "bbbbbbbb",
+    ],
+    # Misturador de tintas: tanque com o redemoinho de três cores e a pá no meio.
+    "paint_mixer": [
+        "...ee...",
+        "...ce...",
+        "bbbccbbb",
+        "bFFlclAb",
+        "bFlAcAAb",
+        "blAAcFlb",
+        "bAAFcllb",
+        ".bbbbbb.",
+    ],
+    # Cabine de pintura: bico de spray sobre uma engrenagem meio pintada.
+    "paint_booth": [
+        "..eeec..",
+        "...ec...",
+        "...A....",
+        "..A.A...",
+        ".mmmjj..",
+        "mm.m.jj.",
+        ".mmmjj..",
+        "..m..j..",
     ],
     "drill": [
         ".ebbbbe.",
@@ -593,6 +618,7 @@ MOTIFS.update({
 })
 MACHINE_TIER = {
     "manufacturer": "steel",
+    "paint_mixer": "copper", "paint_booth": "iron",
     "drill": "copper", "press": "copper", "assembler": "copper", "generator": "copper",
     "contract_hub": "copper", "factory_board": "copper", "blueprint_designer": "steel", "cutter": "iron", "integrator": "iron", "crusher": "iron",
     "alloy_furnace": "iron", "harvester": "iron", "electronics": "steel", "geothermal": "steel",
@@ -1022,6 +1048,88 @@ ROTOR = [
     "................",
 ]
 
+
+def can(light, dark):
+    """Lata de tinta: tampa de metal, rótulo da cor e um pingo escorrendo."""
+    return render([
+        "................",
+        "................",
+        "....cccccccc....",
+        "...cbaaaaaabc...",
+        "...cbbbbbbbbc...",
+        "...e11111111e...",
+        "...e11111111e...",
+        "...e1w111111e...",
+        "...e2222222221..",
+        "...e11111111e.1.",
+        "...e11111111e.1.",
+        "...e11111111e...",
+        "...e22222222e...",
+        "...eeeeeeeeee...",
+        "................",
+        "................",
+    ], salt=19, mapping={"1": light, "2": dark})
+
+PAINTS = {"black": ("m", "h"), "white": ("j", "b"), "red": ("F", "I"), "yellow": ("l", "Y"),
+          "blue": ("A", "P"), "green": ("D", "K"), "orange": ("E", "r")}
+
+WALL_CLOCK = [
+    "................",
+    ".....nnnnnn.....",
+    "...nnjjjjjjnn...",
+    "..njjjjmjjjjjn..",
+    "..njjjjjjjjjjn..",
+    ".njjjjjmjjjjjjn.",
+    ".njmjjjmjjjjmjn.",
+    ".njjjjjmmmmjjjn.",
+    ".njjjjjjjjjjjjn.",
+    ".njjjjjjjjjjjjn.",
+    "..njjjjjjjjjjn..",
+    "..njjjjmjjjjjn..",
+    "...nnjjjjjjnn...",
+    ".....nnnnnn.....",
+    "................",
+    "................",
+]
+
+ROAD_SIGN = [
+    ".......m........",
+    "......mlm.......",
+    ".....mlllm......",
+    "....mllmllm.....",
+    "...mlllmlllm....",
+    "..mllllmllllm...",
+    ".mlllllmlllllm..",
+    "..mllllllllllm..",
+    "...mlllmlllm....",
+    "....mlllllm.....",
+    ".....mlllm......",
+    "......mlm.......",
+    ".......c........",
+    ".......c........",
+    ".......c........",
+    "......eee.......",
+]
+
+BICYCLE = [
+    "................",
+    "................",
+    "................",
+    "..........mm....",
+    "....mm.....F....",
+    ".....FFFFFFF....",
+    ".....F.F...F....",
+    "..mmmmFmm.mFmm..",
+    ".m...FFm.mFF..m.",
+    "m...F.cmmF.F...m",
+    "m...ccccFF..c..m",
+    "m.....cm.m.....m",
+    ".m...m.......m..",
+    "..mmm.........m.",
+    "............mm..",
+    "................",
+]
+
 def material():
     """Textura clara e uniforme que o bloco tinge nas luzes e peças animadas."""
     rows = []
@@ -1189,6 +1297,17 @@ def main():
     ], salt=18)
     out["block/express_belt_rail"] = render(stripes("x"), noise=False)
     out["item/permit_workshop"] = permit("qx")
+    # Cores: tintas, peças pintadas e bens finais.
+    for color, (light, dark) in PAINTS.items():
+        out[f"item/{color}_paint"] = can(light, dark)
+    out["item/black_gear"] = render(gear("e", "g", "h", "k"), salt=20)
+    out["item/white_gear"] = render(gear("w", "j", "a", "d"), salt=21)
+    out["item/red_plate"] = render(plate("R", "F", "I", "X"), salt=22)
+    out["item/yellow_plate"] = render(plate("y", "l", "Y", "z"), salt=23)
+    out["item/blue_steel_plate"] = render(plate("u", "A", "P", "T"), salt=24)
+    out["item/wall_clock"] = render(WALL_CLOCK, salt=25)
+    out["item/road_sign"] = render(ROAD_SIGN, salt=26)
+    out["item/bicycle"] = render(BICYCLE, salt=27)
     out["item/permit_steel"] = permit("ST")
     out["item/permit_electronics"] = permit("HG")
     out["item/reinforced_plate"] = render(riveted("a", "b", "c", "e"), salt=14)

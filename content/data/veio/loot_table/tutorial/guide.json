@@ -3890,7 +3890,7 @@
                             "text": "16 "
                           },
                           {
-                            "translate": "item.veio.steel_plate"
+                            "translate": "item.veio.blue_steel_plate"
                           },
                           {
                             "text": " > ",
@@ -3934,7 +3934,7 @@
                             "text": "40 "
                           },
                           {
-                            "translate": "item.veio.gear"
+                            "translate": "item.veio.black_gear"
                           },
                           {
                             "text": " > ",

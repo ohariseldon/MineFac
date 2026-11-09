@@ -226,7 +226,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 18
+                    "page": 20
                   }
                 },
                 {
@@ -238,7 +238,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 19
+                    "page": 18
                   }
                 },
                 {
@@ -250,7 +250,19 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 20
+                    "page": 19
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.19",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 43
                   }
                 },
                 {
@@ -351,6 +363,2328 @@
           },
           {
             "raw": {
+              "translate": "veio.industry.page.20"
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "veio.industry.page.21"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.color_recipes",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 42
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.manufacturer",
+                  "bold": true
+                },
+                {
+                  "text": " 1/3"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.iron_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.gear"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.reinforced_plate"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.iron_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.gear"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.wire"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.reinforced_plate"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.steel_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.gear"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.rotor"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "6 "
+                },
+                {
+                  "translate": "item.veio.copper_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.gear"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.wire"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.rotor"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.manufacturer",
+                  "bold": true
+                },
+                {
+                  "text": " 2/3"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.reinforced_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.rotor"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.veio.wire"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.motor"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.reinforced_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.rotor"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.wire"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.circuit"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.motor"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "3 "
+                },
+                {
+                  "translate": "item.veio.iron_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "veio.guide.group.coal"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "block.minecraft.sand"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.steel_plate"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.iron_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "block.minecraft.cobblestone"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "3 "
+                },
+                {
+                  "translate": "veio.guide.group.planks"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.redstone"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "block.minecraft.piston"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.manufacturer",
+                  "bold": true
+                },
+                {
+                  "text": " 3/3"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.iron_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.stick"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "24 "
+                },
+                {
+                  "translate": "block.minecraft.rail"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.reinforced_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "block.minecraft.chest"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "block.minecraft.hopper"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.reinforced_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.gear"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.minecart"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "block.minecraft.gravel"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.bone_meal"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "block.minecraft.sand"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "10 "
+                },
+                {
+                  "translate": "block.minecraft.white_concrete_powder"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.mill",
+                  "bold": true
+                },
+                {
+                  "text": " 1/2"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "veio.guide.group.red_pigment"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.red_dye"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "veio.guide.group.yellow_pigment"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.yellow_dye"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "veio.guide.group.white_pigment"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.white_dye"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "veio.guide.group.black_pigment"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.black_dye"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.mill",
+                  "bold": true
+                },
+                {
+                  "text": " 2/2"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.cornflower"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.blue_dye"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.orange_tulip"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.orange_dye"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.crusher",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.lapis_lazuli"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.blue_dye"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "veio.guide.group.coal"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.black_dye"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_mixer",
+                  "bold": true
+                },
+                {
+                  "text": " 1/3"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.black_dye"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.clay_ball"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.black_paint"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.white_dye"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.clay_ball"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.white_paint"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.red_dye"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.clay_ball"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.red_paint"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.yellow_dye"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.clay_ball"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.yellow_paint"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_mixer",
+                  "bold": true
+                },
+                {
+                  "text": " 2/3"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.blue_dye"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.clay_ball"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.blue_paint"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.green_dye"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.clay_ball"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.green_paint"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.minecraft.orange_dye"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.minecraft.clay_ball"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.orange_paint"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.blue_paint"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.yellow_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.green_paint"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_mixer",
+                  "bold": true
+                },
+                {
+                  "text": " 3/3"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.red_paint"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.yellow_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.orange_paint"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_booth",
+                  "bold": true
+                },
+                {
+                  "text": " 1/9"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.gear"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.black_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.black_gear"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.gear"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.white_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.white_gear"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.iron_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.red_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.red_plate"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_booth",
+                  "bold": true
+                },
+                {
+                  "text": " 2/9"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.iron_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.yellow_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.yellow_plate"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.steel_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.blue_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.blue_steel_plate"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.white_wool"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.black_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.black_wool"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_booth",
+                  "bold": true
+                },
+                {
+                  "text": " 3/9"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.white_wool"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.red_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.red_wool"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.white_wool"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.yellow_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.yellow_wool"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.white_wool"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.blue_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.blue_wool"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_booth",
+                  "bold": true
+                },
+                {
+                  "text": " 4/9"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.white_wool"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.green_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.green_wool"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.white_wool"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.orange_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.orange_wool"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.terracotta"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.black_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.black_terracotta"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_booth",
+                  "bold": true
+                },
+                {
+                  "text": " 5/9"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.terracotta"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.white_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.white_terracotta"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.terracotta"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.red_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.red_terracotta"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.terracotta"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.yellow_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.yellow_terracotta"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_booth",
+                  "bold": true
+                },
+                {
+                  "text": " 6/9"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.terracotta"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.blue_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.blue_terracotta"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.terracotta"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.green_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.green_terracotta"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.terracotta"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.orange_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.orange_terracotta"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_booth",
+                  "bold": true
+                },
+                {
+                  "text": " 7/9"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "block.minecraft.glass"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.black_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.black_stained_glass"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "block.minecraft.glass"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.white_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.white_stained_glass"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "block.minecraft.glass"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.red_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.red_stained_glass"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_booth",
+                  "bold": true
+                },
+                {
+                  "text": " 8/9"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "block.minecraft.glass"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.yellow_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.yellow_stained_glass"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "block.minecraft.glass"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.blue_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.blue_stained_glass"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "block.minecraft.glass"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.green_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.green_stained_glass"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_booth",
+                  "bold": true
+                },
+                {
+                  "text": " 9/9"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "block.minecraft.glass"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.orange_paint"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "8 "
+                },
+                {
+                  "translate": "item.minecraft.orange_stained_glass"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.integrator",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.black_gear"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.white_gear"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.wall_clock"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.frame"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.yellow_plate"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.road_sign"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.fabricator",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.red_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.frame"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.black_gear"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.bicycle"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "veio.industry.color_recipes",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.manufacturer",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 22
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.mill",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 25
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.crusher",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 27
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.paint_mixer",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 28
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.paint_booth",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 31
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.integrator",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 40
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.fabricator",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 41
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.paint_mixer",
+                  "color": "dark_gray",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 55
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.paint_booth",
+                  "color": "dark_gray",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 56
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
               "text": "",
               "extra": [
                 {
@@ -366,7 +2700,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 21
+                    "page": 44
                   }
                 },
                 {
@@ -378,7 +2712,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 22
+                    "page": 45
                   }
                 },
                 {
@@ -390,7 +2724,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 23
+                    "page": 46
                   }
                 },
                 {
@@ -402,7 +2736,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 24
+                    "page": 47
                   }
                 },
                 {
@@ -414,7 +2748,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 25
+                    "page": 48
                   }
                 },
                 {
@@ -426,7 +2760,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 26
+                    "page": 49
                   }
                 },
                 {
@@ -438,7 +2772,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 27
+                    "page": 50
                   }
                 },
                 {
@@ -450,7 +2784,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 28
+                    "page": 51
                   }
                 },
                 {
@@ -462,7 +2796,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 29
+                    "page": 52
                   }
                 },
                 {
@@ -474,7 +2808,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 30
+                    "page": 53
                   }
                 },
                 {
@@ -486,7 +2820,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 31
+                    "page": 54
                   }
                 },
                 {
@@ -872,6 +3206,76 @@
                 },
                 {
                   "translate": "veio.guide.craft.build_marker",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_mixer",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.paint_mixer"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.paint_mixer",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.paint_booth",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.paint_booth"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.paint_booth",
                   "color": "dark_gray"
                 },
                 {

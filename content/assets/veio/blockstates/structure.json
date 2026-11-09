@@ -4860,6 +4860,261 @@
       "model": "veio:block/structure/manufacturer_13",
       "y": 270
     },
+    "facing=south,piece=paint_mixer_0": {
+      "model": "veio:block/structure/paint_mixer_0"
+    },
+    "facing=west,piece=paint_mixer_0": {
+      "model": "veio:block/structure/paint_mixer_0",
+      "y": 90
+    },
+    "facing=north,piece=paint_mixer_0": {
+      "model": "veio:block/structure/paint_mixer_0",
+      "y": 180
+    },
+    "facing=east,piece=paint_mixer_0": {
+      "model": "veio:block/structure/paint_mixer_0",
+      "y": 270
+    },
+    "facing=south,piece=paint_mixer_1": {
+      "model": "veio:block/structure/paint_mixer_1"
+    },
+    "facing=west,piece=paint_mixer_1": {
+      "model": "veio:block/structure/paint_mixer_1",
+      "y": 90
+    },
+    "facing=north,piece=paint_mixer_1": {
+      "model": "veio:block/structure/paint_mixer_1",
+      "y": 180
+    },
+    "facing=east,piece=paint_mixer_1": {
+      "model": "veio:block/structure/paint_mixer_1",
+      "y": 270
+    },
+    "facing=south,piece=paint_mixer_2": {
+      "model": "veio:block/structure/paint_mixer_2"
+    },
+    "facing=west,piece=paint_mixer_2": {
+      "model": "veio:block/structure/paint_mixer_2",
+      "y": 90
+    },
+    "facing=north,piece=paint_mixer_2": {
+      "model": "veio:block/structure/paint_mixer_2",
+      "y": 180
+    },
+    "facing=east,piece=paint_mixer_2": {
+      "model": "veio:block/structure/paint_mixer_2",
+      "y": 270
+    },
+    "facing=south,piece=paint_mixer_3": {
+      "model": "veio:block/structure/paint_mixer_3"
+    },
+    "facing=west,piece=paint_mixer_3": {
+      "model": "veio:block/structure/paint_mixer_3",
+      "y": 90
+    },
+    "facing=north,piece=paint_mixer_3": {
+      "model": "veio:block/structure/paint_mixer_3",
+      "y": 180
+    },
+    "facing=east,piece=paint_mixer_3": {
+      "model": "veio:block/structure/paint_mixer_3",
+      "y": 270
+    },
+    "facing=south,piece=paint_mixer_4": {
+      "model": "veio:block/structure/paint_mixer_4"
+    },
+    "facing=west,piece=paint_mixer_4": {
+      "model": "veio:block/structure/paint_mixer_4",
+      "y": 90
+    },
+    "facing=north,piece=paint_mixer_4": {
+      "model": "veio:block/structure/paint_mixer_4",
+      "y": 180
+    },
+    "facing=east,piece=paint_mixer_4": {
+      "model": "veio:block/structure/paint_mixer_4",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_0": {
+      "model": "veio:block/structure/paint_booth_0"
+    },
+    "facing=west,piece=paint_booth_0": {
+      "model": "veio:block/structure/paint_booth_0",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_0": {
+      "model": "veio:block/structure/paint_booth_0",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_0": {
+      "model": "veio:block/structure/paint_booth_0",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_1": {
+      "model": "veio:block/structure/paint_booth_1"
+    },
+    "facing=west,piece=paint_booth_1": {
+      "model": "veio:block/structure/paint_booth_1",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_1": {
+      "model": "veio:block/structure/paint_booth_1",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_1": {
+      "model": "veio:block/structure/paint_booth_1",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_2": {
+      "model": "veio:block/structure/paint_booth_2"
+    },
+    "facing=west,piece=paint_booth_2": {
+      "model": "veio:block/structure/paint_booth_2",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_2": {
+      "model": "veio:block/structure/paint_booth_2",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_2": {
+      "model": "veio:block/structure/paint_booth_2",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_3": {
+      "model": "veio:block/structure/paint_booth_3"
+    },
+    "facing=west,piece=paint_booth_3": {
+      "model": "veio:block/structure/paint_booth_3",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_3": {
+      "model": "veio:block/structure/paint_booth_3",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_3": {
+      "model": "veio:block/structure/paint_booth_3",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_4": {
+      "model": "veio:block/structure/paint_booth_4"
+    },
+    "facing=west,piece=paint_booth_4": {
+      "model": "veio:block/structure/paint_booth_4",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_4": {
+      "model": "veio:block/structure/paint_booth_4",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_4": {
+      "model": "veio:block/structure/paint_booth_4",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_5": {
+      "model": "veio:block/structure/paint_booth_5"
+    },
+    "facing=west,piece=paint_booth_5": {
+      "model": "veio:block/structure/paint_booth_5",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_5": {
+      "model": "veio:block/structure/paint_booth_5",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_5": {
+      "model": "veio:block/structure/paint_booth_5",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_6": {
+      "model": "veio:block/structure/paint_booth_6"
+    },
+    "facing=west,piece=paint_booth_6": {
+      "model": "veio:block/structure/paint_booth_6",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_6": {
+      "model": "veio:block/structure/paint_booth_6",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_6": {
+      "model": "veio:block/structure/paint_booth_6",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_7": {
+      "model": "veio:block/structure/paint_booth_7"
+    },
+    "facing=west,piece=paint_booth_7": {
+      "model": "veio:block/structure/paint_booth_7",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_7": {
+      "model": "veio:block/structure/paint_booth_7",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_7": {
+      "model": "veio:block/structure/paint_booth_7",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_8": {
+      "model": "veio:block/structure/paint_booth_8"
+    },
+    "facing=west,piece=paint_booth_8": {
+      "model": "veio:block/structure/paint_booth_8",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_8": {
+      "model": "veio:block/structure/paint_booth_8",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_8": {
+      "model": "veio:block/structure/paint_booth_8",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_9": {
+      "model": "veio:block/structure/paint_booth_9"
+    },
+    "facing=west,piece=paint_booth_9": {
+      "model": "veio:block/structure/paint_booth_9",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_9": {
+      "model": "veio:block/structure/paint_booth_9",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_9": {
+      "model": "veio:block/structure/paint_booth_9",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_10": {
+      "model": "veio:block/structure/paint_booth_10"
+    },
+    "facing=west,piece=paint_booth_10": {
+      "model": "veio:block/structure/paint_booth_10",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_10": {
+      "model": "veio:block/structure/paint_booth_10",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_10": {
+      "model": "veio:block/structure/paint_booth_10",
+      "y": 270
+    },
+    "facing=south,piece=paint_booth_11": {
+      "model": "veio:block/structure/paint_booth_11"
+    },
+    "facing=west,piece=paint_booth_11": {
+      "model": "veio:block/structure/paint_booth_11",
+      "y": 90
+    },
+    "facing=north,piece=paint_booth_11": {
+      "model": "veio:block/structure/paint_booth_11",
+      "y": 180
+    },
+    "facing=east,piece=paint_booth_11": {
+      "model": "veio:block/structure/paint_booth_11",
+      "y": 270
+    },
     "facing=south,piece=generator_0": {
       "model": "veio:block/structure/generator_0"
     },

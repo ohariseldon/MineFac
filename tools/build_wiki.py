@@ -65,6 +65,17 @@ VANILLA = {
     "written_book": ("Livro escrito", "Written book"), "flower_pot": ("Vaso de flor", "Flower pot"), "powered_rail": ("Trilho elétrico", "Powered rail"),
     "chest_minecart": ("Carrinho com baú", "Minecart with chest"), "lava_bucket": ("Balde de lava", "Lava bucket"),
     "obsidian": ("Obsidiana", "Obsidian"), "glass_pane": ("Painel de vidro", "Glass pane"), "planks": ("Tábuas", "Planks"),
+    # Cores: corantes, flores e blocos tingidos.
+    "black_dye": ("Corante preto", "Black dye"), "black_wool": ("Lã preta", "Black wool"), "black_terracotta": ("Terracota preta", "Black terracotta"), "black_stained_glass": ("Vidro tingido de preto", "Black stained glass"),
+    "white_dye": ("Corante branco", "White dye"), "white_wool": ("Lã branca", "White wool"), "white_terracotta": ("Terracota branca", "White terracotta"), "white_stained_glass": ("Vidro tingido de branco", "White stained glass"),
+    "red_dye": ("Corante vermelho", "Red dye"), "red_wool": ("Lã vermelha", "Red wool"), "red_terracotta": ("Terracota vermelha", "Red terracotta"), "red_stained_glass": ("Vidro tingido de vermelho", "Red stained glass"),
+    "yellow_dye": ("Corante amarelo", "Yellow dye"), "yellow_wool": ("Lã amarela", "Yellow wool"), "yellow_terracotta": ("Terracota amarela", "Yellow terracotta"), "yellow_stained_glass": ("Vidro tingido de amarelo", "Yellow stained glass"),
+    "blue_dye": ("Corante azul", "Blue dye"), "blue_wool": ("Lã azul", "Blue wool"), "blue_terracotta": ("Terracota azul", "Blue terracotta"), "blue_stained_glass": ("Vidro tingido de azul", "Blue stained glass"),
+    "green_dye": ("Corante verde", "Green dye"), "green_wool": ("Lã verde", "Green wool"), "green_terracotta": ("Terracota verde", "Green terracotta"), "green_stained_glass": ("Vidro tingido de verde", "Green stained glass"),
+    "orange_dye": ("Corante laranja", "Orange dye"), "orange_wool": ("Lã laranja", "Orange wool"), "orange_terracotta": ("Terracota laranja", "Orange terracotta"), "orange_stained_glass": ("Vidro tingido de laranja", "Orange stained glass"),
+    "terracotta": ("Terracota", "Terracotta"), "glass": ("Vidro", "Glass"), "red_tulip": ("Tulipa vermelha", "Red tulip"), "orange_tulip": ("Tulipa laranja", "Orange tulip"),
+    "rose_bush": ("Roseira", "Rose bush"), "sunflower": ("Girassol", "Sunflower"), "cornflower": ("Centáurea", "Cornflower"), "lily_of_the_valley": ("Lírio-do-vale", "Lily of the valley"),
+    "ink_sac": ("Bolsa de tinta", "Ink sac"), "wither_rose": ("Rosa de Wither", "Wither rose")
 }
 for wood, (pt, en) in WOODS.items():
     VANILLA[f"{wood}_log"] = (f"Tronco de {pt}", f"{en} log")
@@ -121,6 +132,22 @@ TEXT = {
                 "Biomass: plants, leaves and logs in the mill. Fuel for the biomass generator."),
     "repair_kit": ("Kit de reparo: botão direito numa máquina danificada por Saqueadores recupera 50% da integridade.",
                    "Repair kit: right-click a machine damaged by Raiders to restore 50% integrity."),
+    # Cores: tintas, peças pintadas e bens finais.
+    "black_paint": ("Tinta preta: 2 corantes e 1 argila no misturador de tintas. Pinta 4 peças na cabine.", "Black paint: 2 dyes and 1 clay in the paint mixer. Paints 4 parts in the booth."),
+    "white_paint": ("Tinta branca: 2 corantes e 1 argila no misturador de tintas. Pinta 4 peças na cabine.", "White paint: 2 dyes and 1 clay in the paint mixer. Paints 4 parts in the booth."),
+    "red_paint": ("Tinta vermelha: 2 corantes e 1 argila no misturador de tintas. Pinta 4 peças na cabine.", "Red paint: 2 dyes and 1 clay in the paint mixer. Paints 4 parts in the booth."),
+    "yellow_paint": ("Tinta amarela: 2 corantes e 1 argila no misturador de tintas. Pinta 4 peças na cabine.", "Yellow paint: 2 dyes and 1 clay in the paint mixer. Paints 4 parts in the booth."),
+    "blue_paint": ("Tinta azul: 2 corantes e 1 argila no misturador de tintas. Pinta 4 peças na cabine.", "Blue paint: 2 dyes and 1 clay in the paint mixer. Paints 4 parts in the booth."),
+    "green_paint": ("Tinta verde: 2 corantes e 1 argila no misturador de tintas. Pinta 4 peças na cabine.", "Green paint: 2 dyes and 1 clay in the paint mixer. Paints 4 parts in the booth."),
+    "orange_paint": ("Tinta laranja: 2 corantes e 1 argila no misturador de tintas. Pinta 4 peças na cabine.", "Orange paint: 2 dyes and 1 clay in the paint mixer. Paints 4 parts in the booth."),
+    "black_gear": ("Engrenagem preta: 4 engrenagens e 1 tinta preta na cabine. Kit Mk.II, relógio e bicicleta.", "Black gear: 4 gears and 1 black paint in the booth. Mk.II kit, clock and bicycle."),
+    "white_gear": ("Engrenagem branca: o mostrador do relógio de parede.", "White gear: the wall clock face."),
+    "red_plate": ("Chapa vermelha: 4 chapas de ferro e 1 tinta vermelha. Quadro da bicicleta.", "Red plate: 4 iron plates and 1 red paint. The bicycle frame."),
+    "yellow_plate": ("Chapa amarela: 4 chapas de ferro e 1 tinta amarela. Placa de sinalização.", "Yellow plate: 4 iron plates and 1 yellow paint. Road sign."),
+    "blue_steel_plate": ("Chapa de aço azul: aço com tinta anticorrosão. Pedida pelo núcleo de automação.", "Blue steel plate: steel with anti-rust paint. Needed by the automation core."),
+    "wall_clock": ("Relógio de parede: 2 engrenagens pretas e 1 branca no integrador. Bem de conforto vendido nas lojas.", "Wall clock: 2 black gears and 1 white in the integrator. A comfort good sold in shops."),
+    "road_sign": ("Placa de sinalização: moldura e chapa amarela no integrador. Exportação.", "Road sign: frame and yellow plate in the integrator. Export good."),
+    "bicycle": ("Bicicleta: chapas vermelhas, molduras e engrenagens pretas na fabricadora. O bem mais caro das lojas.", "Bicycle: red plates, frames and black gears in the fabricator. The priciest shop good."),
 }
 
 

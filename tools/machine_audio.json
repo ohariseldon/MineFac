@@ -258,7 +258,8 @@
     {
       "blocks": [
         "assembler",
-        "integrator"
+        "integrator",
+        "paint_booth"
       ],
       "work": "assembly",
       "finish": "finish",
@@ -331,7 +332,8 @@
     },
     {
       "blocks": [
-        "kitchen"
+        "kitchen",
+        "paint_mixer"
       ],
       "work": "rustle",
       "finish": "finish",

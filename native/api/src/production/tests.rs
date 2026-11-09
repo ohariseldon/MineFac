@@ -493,8 +493,10 @@ fn a_ranch_never_treats_saddled_transport_pigs_as_surplus_meat() {
     assert_eq!(number(&pen, "Status"), NO_ANIMALS);
 }
 
-fn stocked(items: &[(usize, &str, u32)]) -> ModBlockEntity {
-    let mut entity = machine(MANUFACTURER);
+// ---------- Cores: pigmento, tinta, peça pintada e bens finais ----------
+
+fn stocked(id: &str, items: &[(usize, &str, u32)]) -> ModBlockEntity {
+    let mut entity = machine(id);
     for &(slot, item, count) in items {
         entity.items[slot] = Some(ItemStack::new(item, count));
     }
@@ -504,11 +506,11 @@ fn stocked(items: &[(usize, &str, u32)]) -> ModBlockEntity {
 #[test]
 fn manufacturer_makes_more_from_a_fuller_mix() {
     // Engrenagem + chapa: uma placa reforçada.
-    let mut plain = stocked(&[(0, "veio:iron_plate", 4), (1, GEAR, 2)]);
+    let mut plain = stocked(MANUFACTURER, &[(0, "veio:iron_plate", 4), (1, GEAR, 2)]);
     run(&mut plain, 120);
     assert_eq!(plain.items[4], Some(ItemStack::new("veio:reinforced_plate", 1)));
     // Engrenagem + chapa + fiação: a receita maior vence e rende o dobro.
-    let mut stitched = stocked(&[(0, "veio:iron_plate", 4), (1, GEAR, 2), (2, "veio:wire", 4)]);
+    let mut stitched = stocked(MANUFACTURER, &[(0, "veio:iron_plate", 4), (1, GEAR, 2), (2, "veio:wire", 4)]);
     run(&mut stitched, 160);
     assert_eq!(stitched.items[4], Some(ItemStack::new("veio:reinforced_plate", 2)));
     assert!(stitched.items[2].is_none(), "a fiação foi usada");
@@ -516,12 +518,12 @@ fn manufacturer_makes_more_from_a_fuller_mix() {
 
 #[test]
 fn byproduct_goes_to_its_slot_and_stops_the_line_when_full() {
-    let mut steel = stocked(&[(0, "veio:iron_plate", 3), (1, "minecraft:coal", 2), (2, "minecraft:sand", 1)]);
+    let mut steel = stocked(MANUFACTURER, &[(0, "veio:iron_plate", 3), (1, "minecraft:coal", 2), (2, "minecraft:sand", 1)]);
     run(&mut steel, 160);
     assert_eq!(steel.items[4], Some(ItemStack::new("veio:steel_plate", 2)));
     assert_eq!(steel.items[5], Some(ItemStack::new("minecraft:gravel", 1)));
     // Sobra entupida: nada é consumido, a máquina avisa saída bloqueada.
-    let mut jammed = stocked(&[(0, "veio:iron_plate", 3), (1, "minecraft:coal", 2), (2, "minecraft:sand", 1),
+    let mut jammed = stocked(MANUFACTURER, &[(0, "veio:iron_plate", 3), (1, "minecraft:coal", 2), (2, "minecraft:sand", 1),
         (5, "minecraft:gravel", 64)]);
     run(&mut jammed, 200);
     assert!(jammed.items[4].is_none());
@@ -531,7 +533,7 @@ fn byproduct_goes_to_its_slot_and_stops_the_line_when_full() {
 
 #[test]
 fn locked_recipe_waits_for_its_own_ingredients() {
-    let mut entity = stocked(&[(0, "veio:iron_plate", 4), (1, GEAR, 2)]);
+    let mut entity = stocked(MANUFACTURER, &[(0, "veio:iron_plate", 4), (1, GEAR, 2)]);
     let motor = recipes(MANUFACTURER).position(|recipe| recipe.id == "motor").unwrap() as i32 + 1;
     for _ in 0..motor {
         press(&mut entity, PICK_NEXT);
@@ -565,4 +567,65 @@ fn manufacturer_slots_route_each_ingredient_to_one_place() {
     assert_eq!(click(MANUFACTURER, [150.0, 110.0]), Some(PICK_NEXT));
     assert_eq!(click(MANUFACTURER, [150.0, 60.0]), None);
     assert_eq!(click(KITCHEN, [150.0, 110.0]), None);
+}
+
+#[test]
+fn a_red_plate_goes_from_flower_to_dye_to_paint_to_part() {
+    // Moinho: papoula vira corante.
+    let mut mill = stocked(MILL, &[(0, "minecraft:poppy", 1)]);
+    run(&mut mill, 30);
+    assert_eq!(mill.items[1], Some(ItemStack::new("minecraft:red_dye", 2)));
+    // Misturador: 2 corantes + 1 argila = 2 latas.
+    let mut mixer = stocked(PAINT_MIXER, &[(0, "minecraft:red_dye", 2), (1, "minecraft:clay_ball", 1)]);
+    run(&mut mixer, 70);
+    assert_eq!(mixer.items[2], Some(ItemStack::new("veio:red_paint", 2)));
+    // Cabine: 4 chapas + 1 lata = 4 chapas vermelhas.
+    let mut booth = stocked(PAINT_BOOTH, &[(0, "veio:iron_plate", 4), (1, "veio:red_paint", 1)]);
+    run(&mut booth, 50);
+    assert_eq!(booth.items[2], Some(ItemStack::new("veio:red_plate", 4)));
+    assert!(booth.items[0].is_none() && booth.items[1].is_none());
+}
+
+#[test]
+fn paints_mix_into_secondary_colors_and_paint_vanilla_blocks() {
+    let mut mixer = stocked(PAINT_MIXER, &[(0, "veio:blue_paint", 1), (1, "veio:yellow_paint", 1)]);
+    run(&mut mixer, 50);
+    assert_eq!(mixer.items[2], Some(ItemStack::new("veio:green_paint", 2)), "azul + amarelo = verde");
+    let mut booth = stocked(PAINT_BOOTH, &[(0, "minecraft:white_wool", 8), (1, "veio:green_paint", 1)]);
+    run(&mut booth, 70);
+    assert_eq!(booth.items[2], Some(ItemStack::new("minecraft:green_wool", 8)));
+}
+
+#[test]
+fn the_deep_chain_and_end_goods_need_painted_parts() {
+    let needs = |output: &str, part: &str| data::RECIPES.iter().filter(|recipe| recipe.output.0 == output)
+        .all(|recipe| recipe.inputs.iter().any(|input| input.items.contains(&part)));
+    assert!(needs("veio:mk2_kit", "veio:black_gear"), "kit Mk.II com engrenagens pretas");
+    assert!(needs("veio:automation_core", "veio:blue_steel_plate"), "núcleo com aço azul");
+    assert!(needs("veio:wall_clock", "veio:white_gear") && needs("veio:wall_clock", "veio:black_gear"));
+    assert!(needs("veio:road_sign", "veio:yellow_plate"));
+    assert!(needs("veio:bicycle", "veio:red_plate") && needs("veio:bicycle", "veio:black_gear"));
+    // Tudo isso tem preço no mercado e o relógio e a bicicleta são bens de conforto das famílias.
+    for item in ["veio:black_paint", "veio:black_gear", "veio:wall_clock", "veio:road_sign", "veio:bicycle"] {
+        assert!(crate::veio::workforce::society::trade::product(item).is_some(), "{item}");
+    }
+    assert!(crate::veio::workforce::society::goods("veio:wall_clock").is_some());
+}
+
+#[test]
+fn every_ingredient_has_one_slot_in_the_machines_that_share_them() {
+    // A esteira entrega no primeiro slot que aceita: o mesmo item em dois slots travaria a receita.
+    for machine in [PAINT_MIXER, PAINT_BOOTH, KITCHEN, FABRICATOR, "veio:integrator"] {
+        let mut slot_of: Vec<(&str, usize)> = Vec::new();
+        for recipe in recipes(machine) {
+            for (slot, input) in recipe.inputs.iter().enumerate() {
+                for item in input.items {
+                    match slot_of.iter().find(|(known, _)| known == item) {
+                        Some((_, known)) => assert_eq!(*known, slot, "{machine}: {item} em dois slots"),
+                        None => slot_of.push((item, slot)),
+                    }
+                }
+            }
+        }
+    }
 }

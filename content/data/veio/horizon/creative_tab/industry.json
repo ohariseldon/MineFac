@@ -45,6 +45,23 @@
     "veio:mk2_kit",
     "veio:permit_workshop",
     "veio:permit_steel",
-    "veio:permit_electronics"
+    "veio:permit_electronics",
+    "veio:paint_mixer",
+    "veio:paint_booth",
+    "veio:black_paint",
+    "veio:white_paint",
+    "veio:red_paint",
+    "veio:yellow_paint",
+    "veio:blue_paint",
+    "veio:green_paint",
+    "veio:orange_paint",
+    "veio:black_gear",
+    "veio:white_gear",
+    "veio:red_plate",
+    "veio:yellow_plate",
+    "veio:blue_steel_plate",
+    "veio:wall_clock",
+    "veio:road_sign",
+    "veio:bicycle"
   ]
 }

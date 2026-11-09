@@ -37,6 +37,8 @@ pub(crate) fn heat(block: &str) -> Option<Heat> {
         ALLOY => (0xff7a2a, 6.0, Exhaust::Smoke),
         production::ELECTRIC_FURNACE => (0xff9a55, 5.0, Exhaust::None),
         production::KITCHEN => (0xffb060, 3.5, Exhaust::Steam),
+        // Névoa de tinta saindo da cabine de pintura.
+        production::PAINT_BOOTH => (0xc890ff, 3.0, Exhaust::Steam),
         TESLA => (0x8cc4ff, 6.0, Exhaust::None),
         _ => return None,
     };

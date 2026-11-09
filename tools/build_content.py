@@ -65,6 +65,9 @@ BLOCKS = {
     "electric_furnace": ("machine", "copper", 2, [1], 1.5),
     "mill": ("machine", "copper", 2, [1], 1.5),
     "kitchen": ("machine", "iron", 3, [2], 1.5),
+    # Cores: pigmento + liga viram tinta; a cabine pinta peças e blocos.
+    "paint_mixer": ("machine", "copper", 3, [2], 1.5),
+    "paint_booth": ("machine", "iron", 3, [2], 1.5),
     "pantry": ("machine", "wood", 2, [1], 1.5),
     "biomass_generator": ("generator", "copper", 1, [], 1.5),
     "steam_engine": ("generator", "steel", 1, [], 2.0),
@@ -156,6 +159,22 @@ ITEMS = {
     # Peças do fabricante (o motor é o mesmo da Fabricadora, acima).
     "reinforced_plate": ("minecraft:iron_ingot", 64),
     "rotor": ("minecraft:iron_nugget", 64),
+    # Cores: latas de tinta, peças pintadas e bens finais.
+    "black_paint": ("minecraft:brick", 16),
+    "white_paint": ("minecraft:brick", 16),
+    "red_paint": ("minecraft:brick", 16),
+    "yellow_paint": ("minecraft:brick", 16),
+    "blue_paint": ("minecraft:brick", 16),
+    "green_paint": ("minecraft:brick", 16),
+    "orange_paint": ("minecraft:brick", 16),
+    "black_gear": ("minecraft:iron_nugget", 64),
+    "white_gear": ("minecraft:iron_nugget", 64),
+    "red_plate": ("minecraft:iron_ingot", 64),
+    "yellow_plate": ("minecraft:iron_ingot", 64),
+    "blue_steel_plate": ("minecraft:iron_ingot", 64),
+    "wall_clock": ("minecraft:brick", 16),
+    "road_sign": ("minecraft:brick", 16),
+    "bicycle": ("minecraft:brick", 4),
 }
 
 TABS = {
@@ -163,7 +182,10 @@ TABS = {
         "crusher", "alloy_furnace", "electronics", "manufacturer", "electric_furnace", "factory_board", "blueprint_designer", "build_marker", "contract_hub", "wrench", "copper_plate", "iron_plate",
         "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module", "reinforced_plate", "rotor", "speed_module",
         "efficiency_module", "productivity_module", "fabricator", "research_lab", "factory_monitor", "chunk_anchor", "cargo_station", "unloading_station",
-        "motor", "processor", "automation_core", "mk2_kit", "permit_workshop", "permit_steel", "permit_electronics"]),
+        "motor", "processor", "automation_core", "mk2_kit", "permit_workshop", "permit_steel", "permit_electronics",
+        "paint_mixer", "paint_booth", "black_paint", "white_paint", "red_paint", "yellow_paint", "blue_paint", "green_paint",
+        "orange_paint", "black_gear", "white_gear", "red_plate", "yellow_plate", "blue_steel_plate", "wall_clock", "road_sign",
+        "bicycle"]),
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
         "geothermal", "hydro_turbine", "solar", "battery", "pole", "steel_pole", "cable", "pump", "pipe",
         "minecraft:coal", "minecraft:lava_bucket"]),

@@ -43,7 +43,7 @@ const MAX_CONTRACTS: usize = 3;
 pub(crate) const TIER_AT: [i32; 3] = [1, 3, 6];
 
 /// Produtos do mercado mundial: (item, chave de nome, valor base em moedas, camada de complexidade).
-pub(crate) const PRODUCTS: [(&str, &str, i32, i32); 37] = [
+pub(crate) const PRODUCTS: [(&str, &str, i32, i32); 50] = [
     ("minecraft:raw_iron", "item.minecraft.raw_iron", 2, 0),
     ("minecraft:raw_copper", "item.minecraft.raw_copper", 1, 0),
     ("minecraft:raw_gold", "item.minecraft.raw_gold", 4, 0),
@@ -82,6 +82,21 @@ pub(crate) const PRODUCTS: [(&str, &str, i32, i32); 37] = [
     ("veio:reinforced_plate", "item.veio.reinforced_plate", 34, 2),
     ("veio:rotor", "item.veio.rotor", 42, 3),
     ("veio:motor", "item.veio.motor", 110, 4),
+    // Cores (sempre no fim: contratos e saves guardam a posição). Tintas, peças pintadas e bens
+    // finais: a fábrica de tintas tem mercado próprio e entra nos contratos.
+    ("veio:black_paint", "item.veio.black_paint", 4, 1),
+    ("veio:white_paint", "item.veio.white_paint", 4, 1),
+    ("veio:red_paint", "item.veio.red_paint", 4, 1),
+    ("veio:yellow_paint", "item.veio.yellow_paint", 4, 1),
+    ("veio:blue_paint", "item.veio.blue_paint", 4, 1),
+    ("veio:black_gear", "item.veio.black_gear", 9, 2),
+    ("veio:white_gear", "item.veio.white_gear", 9, 2),
+    ("veio:red_plate", "item.veio.red_plate", 6, 2),
+    ("veio:yellow_plate", "item.veio.yellow_plate", 6, 2),
+    ("veio:blue_steel_plate", "item.veio.blue_steel_plate", 12, 2),
+    ("veio:road_sign", "item.veio.road_sign", 16, 2),
+    ("veio:wall_clock", "item.veio.wall_clock", 30, 3),
+    ("veio:bicycle", "item.veio.bicycle", 70, 3),
 ];
 
 /// Comida que as lojas podem importar (a que a loja mais vende, ou pão).

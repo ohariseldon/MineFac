@@ -9,7 +9,7 @@ GROUPS = {
     "drill": "rig", "drill_mk2": "rig", "drill_mk3": "rig", "press": "press",
     "assembler": "assembly", "integrator": "assembly", "cutter": "saw", "crusher": "crusher",
     "alloy_furnace": "oven", "electric_furnace": "oven", "electronics": "electronics",
-    "mill": "mill", "kitchen": "kitchen", "pantry": "counter", "contract_hub": "desk",
+    "mill": "mill", "kitchen": "kitchen", "paint_mixer": "kitchen", "paint_booth": "assembly", "pantry": "counter", "contract_hub": "desk",
     "generator": "boiler", "biomass_generator": "boiler", "steam_engine": "boiler", "geothermal": "tanks",
     "planter": "planter", "harvester": "harvester", "tree_farm": "saw", "ranch": "ranch",
     "farm_post": "desk", "hauler_post": "loading", "foreman_desk": "desk", "shepherd_post": "ranch",
