@@ -23,3 +23,8 @@
 - A branch recebeu o #59 na 0.31.0 (`2c9c9a2`). O jogador nasce a uns 44 blocos da vila, uma seta na barra de ação aponta "Vá para a vila" e depois "Fale com o prefeito", e o prefeito fica na praça e pede recursos antes de entregar o gerador.
 - Houve um conflito em `workforce/spawn.rs`: ficou a nova assinatura de `settle` (com a posição do jogador), e as ruínas do #53 continuam aparecendo na primeira chegada. As línguas foram juntadas chave a chave, sem choque.
 - E1: `python3 tools/check_rust.py` → 375 passam. Os geradores rodaram sem diferença.
+
+## Adendo: máquinas multibloco (#60)
+- A branch recebeu o #60 (`a3d5d0c`), em que cada máquina monta sua estrutura grande. Houve um conflito em `lib.rs` (`visuals`): ficaram as duas chamadas, `onboarding::visuals` (contornos do tutorial) e `frames::visuals` (contorno vermelho de estrutura recusada), porque as duas só acrescentam contornos. As línguas foram juntadas chave a chave, sem choque.
+- E1: `python3 tools/check_rust.py` → 384 passam. Os geradores rodaram sem diferença.
+- Testar em jogo: se a estrutura do gerador cabe no terreno 11x11 da etapa 1 do tutorial.
