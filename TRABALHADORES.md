@@ -508,7 +508,7 @@ O teto de aldeões de cada vila passou a depender do desenvolvimento a até 64 b
 
 ### Spawn no centro da vila
 
-- **Mundo novo e jogador novo:** no login, o Veio procura uma vila a até 96 blocos pelos aldeões registrados. O centro é a média dos aldeões em volta daquele com mais vizinhos (onde a vila se reúne). O jogador é levado para lá, e o spawn do mundo e o dele ficam nesse ponto. Se não houver vila em 30 s, o Veio gera uma vila de planície onde o jogador está (`/place structure minecraft:village_plains`) e procura de novo; se ainda assim nada aparecer, avisa no chat.
+- **Mundo novo e jogador novo:** substituído pela [cidade pronta](#cidade-pronta-piso-e-teto-de-população): o Veio ergue a própria cidade perto do jogador em vez de procurar ou gerar uma vila vanilla.
 - **Centro de controle:** com administrador, o centro de controle passa a ser o centro da vila. O spawn do mundo e o de todos os jogadores vão para cima dele, e quem renasce é levado para lá, mesmo tendo cama em outro lugar.
 - Cada jogador recebe a tag `veio_village` depois da primeira chegada; os comandos de chegada só valem para quem não tem a tag, então voltar ao mundo não muda nada.
 - Usa os ganchos `player_logged_in` e `player_respawned` e `Host::run_command` (console do servidor), conferidos no Horizon `66f3981`. Só no Overworld.
@@ -557,7 +557,7 @@ O guia principal estava com 99 de 100 páginas. Os sistemas da vila foram para u
 
 ### Vilas maiores
 
-- A cada 5 minutos (fase espalhada pelo id), cada aldeão adulto tem 1 chance em 6 de ter um filho, se houver pelo menos 2 aldeões perto, menos que o teto da vila e uma cama livre. O teto começa em 30 e cresce com o desenvolvimento até 150. A casa é a cama do Minecraft: conta a cabeceira, não o pé. Sem cama livre, ninguém nasce e o jogador ouve “construa mais casas”. A vila gerada no começo já traz camas para quem está lá. O bebê nasce no tick seguinte de um bloco do Veio na mesma dimensão.
+- A cada 5 minutos (fase espalhada pelo id), cada aldeão adulto tem 1 chance em 6 de ter um filho, se houver pelo menos 2 aldeões perto, menos que o teto da vila e uma cama livre. O teto começa em 20 e cresce com o desenvolvimento até 500 (antes: 30 a 150). A casa é a cama do Minecraft: conta a cabeceira, não o pé. Sem cama livre, ninguém nasce e o jogador ouve “construa mais casas”. A vila gerada no começo já traz camas para quem está lá. O bebê nasce no tick seguinte de um bloco do Veio na mesma dimensão.
 
 ## Terceira entrega: fila de tarefas e pastor
 
@@ -617,6 +617,66 @@ Cada posto reserva o alvo atual (planta, máquina ou posto atendido) num registr
 | --- | --- |
 | Nada a fazer | Carregador ou capataz sem tarefa nesta volta. O aldeão fica livre (vanilla). |
 | Sem esmeralda para contratar | O capataz achou um posto vazio, mas a mesa não tem esmeralda. |
+
+## Cidade pronta, piso e teto de população
+
+A vila inicial deixa de ser a vila vanilla. O Veio ergue uma **cidade desenhada**, pronta, que
+sobrescreve tudo no seu volume: o gerador limpa o ar do chão até 40 blocos acima (copas, galhos,
+troncos, água rasa, morros baixos), tapa buracos e água até 8 blocos abaixo, nivela o chão e só então
+constrói. Planta em `tools/build_town.py` (gera `function/town/build.mcfunction` e
+`workforce/town_data.rs`); código em `workforce/town.rs` e `workforce/founders.rs`.
+
+**Planta** (89 x 89, centro na praça; x para leste, z para o sul):
+
+| Zona | Onde | O que tem |
+|---|---|---|
+| Praça | centro, 17 x 17 | calçamento, chafariz ao norte, sino (ponto de encontro), bancos, árvores, postes; o centro fica livre para o renascimento e o prefeito |
+| Lote do fundador | norte da praça, 15 x 14 | reservado e nivelado; a casa do jogador (`home.rs`) vai para lá, de frente para a praça |
+| Avenidas e ruas | leste-oeste e sul (pedra, 3 de largura); anel de ruas de terra | postes a cada 8 blocos; cerca no perímetro com portões nas avenidas |
+| Comércio | leste da praça | praça do mercado com 6 barracas (defumador, composteira, barril, mesa de flechas, tear, cartografia: os ofícios vanilla) e 2 sobrados com loja embaixo e moradia em cima |
+| Cívico | noroeste | lote da prefeitura (refúgio do casal fundador, com materiais de obra) e jardim; parque com lagoa |
+| Residencial | oeste e sul | 10 casas térreas (carvalho, abeto, bétula e taipa) e 2 sobrados |
+| Industrial | leste | galpão aberto e o **lote da oficina** do tutorial (o prefeito escolhe ele em vez de procurar terreno) |
+| Lavouras | sul | 5 canteiros irrigados (trigo, cenoura, batata, beterraba) e celeiro |
+
+São **28 camas**. A cidade nasce com **20 aldeões** (16 adultos e 4 crianças) dentro das casas.
+
+**Escolha do terreno:** depois de 5 s (os chunks carregarem), o terreno mais plano a até 48 blocos do
+jogador, conferindo 9 x 9 colunas da área inteira (todas carregadas). Desnível pesa mais que mata;
+até um sexto de água a cidade aterra; um lago recusa o lugar. Sem terreno carregado em 6 tentativas,
+ela sai onde o jogador está. O jogador aparece fora da cerca (56 blocos do centro). Vilas vanilla por
+perto não são mais adotadas. O centro e o recorde de população ficam em `veio/town.txt` no mundo, e a
+praça vale como centro da vila mesmo depois de reabrir.
+
+**Teto e fases:** o teto de desenvolvimento começa em **20** (`BASE_CAP`) e vai até **500**
+(`MAX_CAP`). O prefeito limita por fase: 50, 150, 300 e 500 aldeões, com 13, 38, 76 e 125 alvarás de
+casa (casas de até 4 moradores para o teto de cada fase).
+
+**Piso de 2 e recuperação:**
+
+- **Casal fundador** (Helena e Joaquim, a família do prefeito; marca `veio_founder`): aldeões comuns,
+  que contam no censo e têm filhos. Seguram um totem na mão secundária (que não cai). Com a vida em 6
+  ou menos, ou depois do totem, caem **feridos e desacordados**: sem IA, invulneráveis, levados ao lote
+  da prefeitura, com aviso aos jogadores a até 96 blocos. Acordam sozinhos em 2 min ou na hora com
+  comida (botão direito com comida na mão; a comida é gasta). Depois de reabrir o mundo, são
+  reconhecidos pela marca (um aldeão lido a cada 97 ticks, só nos primeiros 5 min e só se faltar
+  algum); quem estava desacordado volta ferido.
+- **Casal de recomeço:** a cada minuto, com um jogador a até 96 blocos (chunks da cidade carregados),
+  a cidade conta a população. Abaixo de 2, um casal chega pelo portão sul na hora, de dia ou de noite.
+  Se o casal fundador se perdeu (o totem não segurou), os recém-chegados herdam o papel.
+- **Imigrantes:** abaixo da metade do recorde (recorde de pelo menos 8), chega uma família (2 adultos e
+  1 criança) por dia, de dia, se houver 3 camas livres e espaço no teto.
+- **Janela de recuperação:** enquanto a cidade estiver abaixo da metade do recorde, cada sorteio de
+  nascimento tem o dobro da chance.
+
+**Custo:** a cidade é uma função rodada uma vez por mundo (cerca de 5 mil comandos, cada `fill` dentro
+do limite de 32 768 blocos). Por tick, o casal fundador custa uma comparação por aldeão e uma leitura
+de NBT de cada fundador a cada 10 ticks; a contagem da população usa o censo já existente, uma vez por
+minuto.
+
+**Não mudou:** os requisitos das fases (12, 36 e 80 moradores) e o desempenho de vilas muito grandes.
+Com 500 aldeões, vale medir com `bench_large_village` (frente Grok) e, se preciso, simular aldeões
+longe do jogador por fórmula.
 
 ## Regras implementadas
 
@@ -727,7 +787,7 @@ Lavrador: contratação: 1 esmeralda. Comida: 2 pontos por tarefa, valores de `t
 
 ## Teste sugerido ao usuário (quinta entrega)
 
-1. Mundo novo: você deve aparecer no meio de uma vila (ou de uma vila de planície gerada) e receber o Guia da Vila Operária. Morra longe e veja onde renasce.
+1. Mundo novo: você deve aparecer perto da cidade pronta do Veio e receber o Guia da Vila Operária. Morra longe e veja onde renasce.
 2. Construa um centro de controle com administrador: o spawn passa para cima dele; renascer leva você para lá.
 3. Com vários postos, zonas e um centro, deixe o jogo correr perto da vila: a população deve passar de 30. Compare o desempenho com a vila pequena.
 4. Siga a aba de avanços Vila operária e o guia novo: diga o que ficou confuso.

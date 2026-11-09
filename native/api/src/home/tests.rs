@@ -128,8 +128,8 @@ fn site_avoids_water_and_slopes() {
         }
     }
     let [x, y, z] = site(&Lake, [0, 70, 0]);
-    assert_eq!(x, 0, "fora do lago, o mais perto do centro");
-    assert_eq!(z, -29, "a fileira mais perto está na encosta; a seguinte é plana");
+    assert_eq!(x, -1, "fora do lago, o mais perto do centro (a casa tem 15 colunas: canto 1 a oeste)");
+    assert_eq!(z, -31, "a fileira mais perto está na encosta; a seguinte é plana");
     assert_eq!(y, 69, "piso no topo do terreno");
 }
 

@@ -1,9 +1,12 @@
 """Casa do fundador: gera `function/home/build.mcfunction` a partir da planta abaixo.
 
-A casa segue o estilo das casas de planície da vila (fundação de pedregulho, cantos de tronco,
-paredes de tábua de carvalho, telhado de escadas) e já vem mobiliada: centro de controle (painel),
-o Lar das obras no lugar da lareira, sofá, tapete, mesa com cadeiras, estante, cama ao lado do painel, criado-mudo com velas,
-lanternas e um mural de 2x2 mapas na parede oeste.
+A casa segue o estilo das casas da cidade (fundação de pedregulho, cantos de tronco, paredes de
+tábua de carvalho, telhado de duas águas com chaminé) e já vem mobiliada, em dois ambientes:
+- sala com cozinha (oeste): o Lar das obras no lugar da lareira, sofá, tapete, estante, mesa com
+  cadeiras, defumador, caldeirão, barril, bancada e o mural de 2x2 mapas na parede oeste;
+- escritório com quarto (leste): o centro de controle (painel), atril, estante, baú e a cama ao
+  lado do painel, com criado-mudo e vela;
+- varanda coberta com bancos virados para a praça, lanternas no parapeito e jardim florido.
 
 O Rust roda a função uma vez por mundo com `execute positioned X Y Z run function veio:home/build`;
 (X, Y, Z) é o canto noroeste da planta, com Y no nível do piso. As posições que o Rust usa
@@ -17,152 +20,106 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 OUT = root / "content/data/veio/function/home/build.mcfunction"
 
-# Planta: 13 x 11 colunas (x para leste, z para o sul), uma camada por altura a partir do piso.
-# Paredes em x 1..11 e z 1..9; a borda é o beiral do telhado. "." não coloca nada (o volume é
-# limpo antes). A porta fica no sul, em x = 6.
+# Planta: 15 x 14 colunas (x para leste, z para o sul), uma camada por altura a partir do piso.
+# Paredes em x 1..13 e z 1..10; a parede interna em x = 9 separa a sala com cozinha (oeste) do
+# escritório com quarto (leste). Varanda coberta em z 11..12 e jardim em z 13. A porta fica no
+# sul, em x = 7, de frente para a praça. "." não coloca nada (o volume é limpo antes).
 LAYERS = [
-    [  # 0: piso
-        "ggggggggggggg",
-        "gCCCCCCCCCCCg",
-        "gCSSSSSSSSSCg",
-        "gCSSSSSSSSSCg",
-        "gCSSSSSSSSSCg",
-        "gCSSSSSSSSSCg",
-        "gCSSSSSSSSSCg",
-        "gCSSSSSSSSSCg",
-        "gCSSSSSSSSSCg",
-        "gCCCCCCCCCCCg",
-        "ggggggqgggggg",
+    [  # 0: piso, varanda e jardim
+        "ggggggggggggggg",
+        "gCCCCCCCCCCCCCg",
+        "gCSSSSSSSSSSSCg",
+        "gCSSSSSSSSSSSCg",
+        "gCSSSSSSSSSSSCg",
+        "gCSSSSSSSSSSSCg",
+        "gCSSSSSSSSSSSCg",
+        "gCSSSSSSSSSSSCg",
+        "gCSSSSSSSSSSSCg",
+        "gCSSSSSSSSSSSCg",
+        "gCCCCCCCCCCCCCg",
+        "gSSSSSSSSSSSSSg",
+        "gSSSSSSSSSSSSSg",
+        "gggggggqggggggg",
     ],
     [  # 1: móveis
-        ".............",
-        ".LPPPPBPPPPL.",
-        ".Pk..BFB...P.",
-        ".P...rrr...P.",
-        ".P...rrr...P.",
-        ".P..annnb.KP.",
-        ".P.........P.",
-        ".P.hTj....fP.",
-        ".PX......OeP.",
-        ".LPPPPdPPPPL.",
-        ".....!.......",
+        "...............",
+        ".LPPBPPPPLPPPL.",
+        ".Pk.F...yPk.cP.",
+        ".P.rrr...P...P.",
+        ".P.rrr...PE..P.",
+        ".Pannnb..P..KP.",
+        ".P...........P.",
+        ".PhTj....P..XP.",
+        ".PswO....P..eP.",
+        ".PQQQ....P.OfP.",
+        ".LPPPPPdPLPPPL.",
+        ".TVV.......VVT.",
+        ".TTTTTT.TTTTTT.",
+        ".YZY.......ZYZ.",
     ],
-    [  # 2
-        ".............",
-        ".LP-PPBPP-PL.",
-        ".Pk..B.B...P.",
-        ".P.........|.",
-        ".P.........P.",
-        ".P.........P.",
-        ".P.........P.",
-        ".|..p......P.",
-        ".P.......c.P.",
-        ".LP--PuP--PL.",
-        ".....l.......",
+    [  # 2: janelas
+        "...............",
+        ".LP-BPP-PLP-PL.",
+        ".Pk......Pk..P.",
+        ".|.......P...|.",
+        ".P.......P...P.",
+        ".P.......P...P.",
+        ".P...........P.",
+        ".|.p.....P...|.",
+        ".P.......P...P.",
+        ".P.c.....P.c.P.",
+        ".LP-P-PuPLP-PL.",
+        ".T...........T.",
+        ".T.l.......l.T.",
+        "...............",
     ],
-    [  # 3
-        ".............",
-        ".LP-PPBPP-PL.",
-        ".Py..BBB...P.",
-        ".P.........|.",
-        ".P.........P.",
-        ".P.........P.",
-        ".P.........P.",
-        ".|.........P.",
-        ".P.........P.",
-        ".LP--PPP--PL.",
-        ".............",
+    [  # 3: lanternas penduradas
+        "...............",
+        ".LPPBPPPPLPPPL.",
+        ".P.......P...P.",
+        ".P.......P.H.P.",
+        ".P.......P...P.",
+        ".P...H...P...P.",
+        ".P.......P...P.",
+        ".P.......P...P.",
+        ".P.......P...P.",
+        ".P.......P...P.",
+        ".LPPPPPPPLPPPL.",
+        ".T...........T.",
+        ".T...........T.",
+        "...............",
     ],
-    [  # 4: lanternas penduradas, meia luz
-        ".............",
-        ".LPPPPBPPPPL.",
-        ".P....B....P.",
-        ".P.........P.",
-        ".P.........P.",
-        ".P.......H.P.",
-        ".P.........P.",
-        ".P..H......P.",
-        ".P.........P.",
-        ".LPPPPPPPPPL.",
-        ".............",
+    [  # 4: forro, beirais e telhado da varanda
+        "NNNNNNNNNNNNNNN",
+        ".SSSBSSSSSSSSS.",
+        ".SSSSSSSSSSSSS.",
+        ".SSSSSSSSSSSSS.",
+        ".SSSSSSSSSSSSS.",
+        ".SSSSSSSSSSSSS.",
+        ".SSSSSSSSSSSSS.",
+        ".SSSSSSSSSSSSS.",
+        ".SSSSSSSSSSSSS.",
+        ".SSSSSSSSSSSSS.",
+        ".SSSSSSSSSSSSS.",
+        "MMMMMMMMMMMMMMM",
+        "GGGGGGGGGGGGGGG",
+        "...............",
     ],
-    [  # 5: forro
-        "NNNNNNNNNNNNN",
-        ".SSSSSBSSSSS.",
-        ".SSSSSSSSSSS.",
-        ".SSSSSSSSSSS.",
-        ".SSSSSSSSSSS.",
-        ".SSSSSSSSSSS.",
-        ".SSSSSSSSSSS.",
-        ".SSSSSSSSSSS.",
-        ".SSSSSSSSSSS.",
-        ".SSSSSSSSSSS.",
-        "MMMMMMMMMMMMM",
-    ],
-    [  # 6: telhado
-        ".............",
-        "NNNNNNBNNNNNN",
-        ".P.........P.",
-        ".P.........P.",
-        ".P.........P.",
-        ".P.........P.",
-        ".P.........P.",
-        ".P.........P.",
-        ".P.........P.",
-        "MMMMMMMMMMMMM",
-        ".............",
-    ],
-    [  # 7
-        ".............",
-        "......B......",
-        "NNNNNNNNNNNNN",
-        ".P.........P.",
-        ".P.........P.",
-        ".|.........|.",
-        ".P.........P.",
-        ".P.........P.",
-        "MMMMMMMMMMMMM",
-        ".............",
-        ".............",
-    ],
-    [  # 8
-        ".............",
-        "......B......",
-        ".............",
-        "NNNNNNNNNNNNN",
-        ".P.........P.",
-        ".P.........P.",
-        ".P.........P.",
-        "MMMMMMMMMMMMM",
-        ".............",
-        ".............",
-        ".............",
-    ],
-    [  # 9
-        ".............",
-        "......B......",
-        ".............",
-        ".............",
-        "NNNNNNNNNNNNN",
-        ".P.........P.",
-        "MMMMMMMMMMMMM",
-        ".............",
-        ".............",
-        ".............",
-        ".............",
-    ],
+] + [
+    # 5 a 9: as duas águas do telhado, com a empena de tábuas e a chaminé
+    [
+        ("NNNNNNNNNNNNNNN" if z == level - 4 else
+         "MMMMMMMMMMMMMMM" if z == 15 - level else
+         ".P...........P." if level - 4 < z < 15 - level else
+         "...............")
+        if not (z == 1 and level <= 7) else
+        ("NNNNBNNNNNNNNNN" if level == 5 else "....B.........." if level == 6 else "....A..........")
+        for z in range(14)
+    ]
+    for level in range(5, 10)
+] + [
     [  # 10: cumeeira
-        ".............",
-        ".............",
-        ".............",
-        ".............",
-        ".............",
-        "RRRRRRRRRRRRR",
-        ".............",
-        ".............",
-        ".............",
-        ".............",
-        ".............",
+        "..............." if z not in (5, 6) else "RRRRRRRRRRRRRRR" for z in range(14)
     ],
 ]
 
@@ -186,7 +143,7 @@ BLOCKS = {
     "K": "veio:control_center[facing=west]",
     "f": "minecraft:red_bed[facing=south,part=foot]",
     "e": "minecraft:red_bed[facing=south,part=head]",
-    "X": "minecraft:chest[facing=east]",
+    "X": "minecraft:chest[facing=west]",
     "O": "minecraft:barrel[facing=up]",
     "c": "minecraft:candle[candles=3,lit=true]",
     "h": "minecraft:oak_stairs[facing=west,half=bottom]",
@@ -203,9 +160,20 @@ BLOCKS = {
     "N": "minecraft:oak_stairs[facing=south,half=bottom]",
     "M": "minecraft:oak_stairs[facing=north,half=bottom]",
     "R": "minecraft:oak_slab[type=bottom]",
+    # Varanda: bancos virados para a praça, telhado de meia laje e jardim.
+    "V": "minecraft:spruce_stairs[facing=north,half=bottom]",
+    "G": "minecraft:spruce_slab[type=bottom]",
+    "Y": "minecraft:poppy",
+    "Z": "minecraft:dandelion",
+    # Escritório e cozinha.
+    "E": "minecraft:lectern[facing=east]",
+    "s": "minecraft:smoker[facing=east]",
+    "w": "minecraft:water_cauldron[level=3]",
+    "Q": "minecraft:smooth_stone_slab[type=top]",
+    "A": "minecraft:campfire[lit=true,signal_fire=false]",
 }
 
-WIDTH, DEPTH, HEIGHT = 13, 11, len(LAYERS)
+WIDTH, DEPTH, HEIGHT = 15, 14, len(LAYERS)
 # Mural: quatro molduras na parede oeste (x = 2, encostadas na parede x = 1), viradas para leste.
 # Quem olha para oeste tem o sul à esquerda: a moldura de z maior mostra a metade oeste do mapa.
 MURAL_ID = 1_970_000

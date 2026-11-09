@@ -26,13 +26,14 @@ pub(crate) mod mural;
 
 pub(crate) const FUNCTION: &str = "veio:home/build";
 /// Planta da casa (ver `tools/build_house.py`): colunas em x e z a partir do canto noroeste.
-pub(crate) const FOOTPRINT: [i32; 2] = [13, 11];
+pub(crate) const FOOTPRINT: [i32; 2] = [15, 14];
 /// O painel e a cabeceira da cama da casa, relativos ao canto noroeste no nível do piso.
-pub(crate) const DASHBOARD: [i32; 3] = [10, 1, 5];
+pub(crate) const DASHBOARD: [i32; 3] = [12, 1, 5];
 #[cfg(test)]
-pub(crate) const HOUSE_BED: [i32; 3] = [10, 1, 8];
-/// Dentro de casa: até `REACH` blocos do painel na horizontal e `REACH_Y` na vertical.
-pub(crate) const REACH: i32 = 9;
+pub(crate) const HOUSE_BED: [i32; 3] = [12, 1, 8];
+/// Dentro de casa: até `REACH` blocos do painel na horizontal e `REACH_Y` na vertical (a sala,
+/// na outra ponta da casa, fica a 10 blocos do painel).
+pub(crate) const REACH: i32 = 11;
 pub(crate) const REACH_Y: i32 = 4;
 /// Quem está em casa conta até `WINDOW` ticks depois da última verificação.
 const WINDOW: u64 = 60;
@@ -127,16 +128,20 @@ fn block_of(at: [f64; 3]) -> [i32; 3] {
 
 // ---------- Construção ----------
 
-/// Canto noroeste da casa perto de `around`: o terreno mais plano, sem água nem árvores, ao norte do
-/// centro (a porta, no sul, fica de frente para a vila). `y` é o nível do piso.
+/// Canto noroeste da casa perto de `around`. Na cidade do Veio, é o lote do fundador, já nivelado,
+/// ao norte da praça. Fora dela, o terreno mais plano, sem água nem árvores, ao norte do centro
+/// (a porta, no sul, fica de frente para a vila). `y` é o nível do piso.
 pub(crate) fn site(host: &dyn Host, around: [i32; 3]) -> [i32; 3] {
+    if let Some(lot) = workforce::town::founder_lot() {
+        return lot;
+    }
     let [cx, cy, cz] = around;
     let fallback = [cx - FOOTPRINT[0] / 2, cy - 1, cz - 23];
     let candidates: Vec<[i32; 2]> = [-18, -24, -30].iter()
         .flat_map(|dz| [0, -6, 6, -12, 12].map(|dx| [cx + dx - FOOTPRINT[0] / 2, cz + dz - FOOTPRINT[1] / 2]))
         .collect();
     let samples: Vec<(i32, i32)> = candidates.iter()
-        .flat_map(|[x, z]| (1..=11).step_by(2).flat_map(move |dx| (1..=9).step_by(2).map(move |dz| (x + dx, z + dz))))
+        .flat_map(|[x, z]| (1..FOOTPRINT[0] - 1).step_by(2).flat_map(move |dx| (1..FOOTPRINT[1] - 3).step_by(2).map(move |dz| (x + dx, z + dz))))
         .collect();
     let per = samples.len() / candidates.len();
     let (Ok(top), Ok(ground)) = (

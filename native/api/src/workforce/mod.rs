@@ -52,6 +52,9 @@ pub(super) mod staff;
 pub(super) mod focus;
 pub(super) mod home;
 pub(super) mod pick;
+pub(super) mod town;
+mod town_data;
+pub(super) mod founders;
 
 pub(super) const FARM_POST: &str = "veio:farm_post";
 pub(super) const HAULER_POST: &str = "veio:hauler_post";
@@ -1626,6 +1629,7 @@ pub(super) fn maintenance(now: u64) { foreman::maintenance(now); }
 /// Tick global do jogo: chegada na vila e o foco dos jogadores.
 pub(super) fn world_tick(host: &mut dyn Host, now: u64) {
     spawn::tick(host, now);
+    town::tick(host, now);
     focus::tick(host, now);
 }
 

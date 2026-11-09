@@ -321,11 +321,12 @@ pub(crate) fn zone_limit(phase: i32) -> i32 {
 }
 
 pub(crate) fn population_limit(phase: i32) -> usize {
-    match phase { 1 => 30, 2 => 60, 3 => 100, _ => 150 }
+    match phase { 1 => 50, 2 => 150, 3 => 300, _ => 500 }
 }
 
+/// Alvarás de casa por fase: casas de até `CAPACITY` moradores para o teto da fase.
 pub(crate) fn permits(phase: i32) -> usize {
-    match phase { 1 => 4, 2 => 10, 3 => 24, _ => 48 }
+    match phase { 1 => 13, 2 => 38, 3 => 76, _ => 125 }
 }
 
 /// O padrão de casa exigido na fase: saneamento (2+), energia (3+), comércio (4).

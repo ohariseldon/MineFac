@@ -1603,8 +1603,8 @@ v_expand=vpage(
  "Expandir as zonas\n\nEsmeralda no marco libera o próximo nível:\n13x13: 8 esm., 32 tarefas, 6 aldeões\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nA chave escolhe o tamanho entre os liberados.",
  "Grow the zones\n\nEmerald on the marker unlocks the next level:\n13x13: 8 emer., 32 tasks, 6 villagers\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nThe wrench picks the size among unlocked ones.")
 v_grow=vpage(
- "A vila cresce\n\nFilhos até o teto: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle.\n\nO prefeito limita: 30 sem prefeitura, depois 60, 100 e 150. Sem cama livre ninguém nasce; com o secretário, também é preciso vaga em casa.",
- "The village grows\n\nChildren up to the cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center.\n\nThe mayor limits it: 30 without a town hall, then 60, 100 and 150. No free bed, no birth; with a clerk, a free home too.")
+ "A cidade cresce\n\nNasce com 20. Teto: 20, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro, até 500.\n\nO prefeito limita: 50, 150, 300 e 500. Nunca zera: o casal fundador cai ferido e se recupera, e imigrantes repõem quem se foi.",
+ "The town grows\n\nStarts with 20. Cap: 20, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center, up to 500.\n\nThe mayor limits it: 50, 150, 300 and 500. It never empties: the founding couple gets wounded and recovers, and immigrants replace who is gone.")
 v_lan=vpage(
  "Na mesma rede\n\nAnfitrião: Esc, Abrir para a LAN, Iniciar mundo LAN.\n\nQuem entra: mesmo Wi-Fi, Multijogador; o mundo aparece na lista. Mesma versão do Veio.\n\nAs máquinas são as do anfitrião.",
  "On your network\n\nHost: Esc, Open to LAN, Start LAN World.\n\nJoin: same Wi-Fi, Multiplayer; the world shows in the list. Same Veio version.\n\nThe machines are the host's.")
@@ -1648,8 +1648,8 @@ v_prices=vpage(
  "Preços locais\n\nCada loja tem seus preços. Muita procura e pouco estoque: até o dobro. Estoque parado: barateia até 70%. Família sem achar comida empurra o preço.\n\nCada vila tem seu mercado: abasteça onde está caro.",
  "Local prices\n\nEach shop sets its own prices. High demand and low stock: up to double. Idle stock: drops to 70%. Families who find no food push prices up.\n\nEach village has its own market: supply where it is expensive.")
 v_phases=vpage(
- "Fases\n\n1 Povoado: zona nível 2, 30 aldeões, 4 casas.\n2 Vila: 12 moradores, 3 famílias, IDH 0,40.\n3 Cidade: 36, 9, IDH 0,55, PIB 400, emprego 60%.\n4 Metrópole: 80, 20, IDH 0,70, Gini 0,45, 3 bairros.\n\nCasas pedem poço (fase 2), poste (3) e loja (4).",
- "Phases\n\n1 Hamlet: zone level 2, 30 villagers, 4 homes.\n2 Village: 12 residents, 3 families, HDI 0.40.\n3 Town: 36, 9, HDI 0.55, GDP 400, jobs 60%.\n4 City: 80, 20, HDI 0.70, Gini 0.45, 3 districts.\n\nHomes need a well (phase 2), pole (3) and shop (4).")
+ "Fases\n\n1 Povoado: zona nível 2, 50 aldeões, 13 casas.\n2 Vila: 12 moradores, 3 famílias, IDH 0,40.\n3 Cidade: 36, 9, IDH 0,55, PIB 400, emprego 60%.\n4 Metrópole: 80, 20, IDH 0,70, Gini 0,45, 3 bairros.\n\nCasas pedem poço (fase 2), poste (3) e loja (4).",
+ "Phases\n\n1 Hamlet: zone level 2, 50 villagers, 13 homes.\n2 Village: 12 residents, 3 families, HDI 0.40.\n3 Town: 36, 9, HDI 0.55, GDP 400, jobs 60%.\n4 City: 80, 20, HDI 0.70, Gini 0.45, 3 districts.\n\nHomes need a well (phase 2), pole (3) and shop (4).")
 v_numbers=vpage(
  "Indicadores\n\nIDH: comida, moradia, serviços e renda de cada família (0 a 1).\nGini: desigualdade da renda.\nPIB: tarefas feitas e vendas do último dia.\nEmprego: adultos com posto.\n\nLivro na prefeitura: relatório com bairros e pedidos.",
  "Indicators\n\nHDI: food, housing, services and income of each family (0 to 1).\nGini: income inequality.\nGDP: tasks done and sales in the last day.\nEmployment: adults with a post.\n\nBook on the town hall: report with districts and requests.")
@@ -1763,13 +1763,20 @@ label("veio.village.tab","Vila operária","Worker Village")
 label("veio.village.tab.description","Abra o Guia da Vila Operária e contrate seu primeiro aldeão.","Open the Worker Village Guide and hire your first villager.")
 label("veio.village.welcome","Você recebeu o Guia da Vila Operária: aldeões podem trabalhar por você.","You received the Worker Village Guide: villagers can work for you.")
 label("veio.village.need_houses","%s aldeões e %s camas. Construa mais casas.","%s villagers and %s beds. Build more houses.")
-label("veio.spawn.village","Há uma vila aqui perto. Siga a seta acima da barra de itens.","There is a village nearby. Follow the arrow above your hotbar.")
-label("veio.spawn.none","Nenhuma vila encontrada por perto. Construa um centro de controle para fixar o centro da sua vila.","No village found nearby. Build a control center to set your village center.")
+label("veio.spawn.village","Sua cidade está pronta aqui perto. Siga a seta acima da barra de itens.","Your town is ready nearby. Follow the arrow above your hotbar.")
+label("veio.spawn.none","Não foi possível erguer a cidade aqui. Construa um centro de controle para fixar o centro da sua vila.","The town could not be raised here. Build a control center to set your village center.")
+label("veio.founder.name.0","Helena","Helena")
+label("veio.founder.name.1","Joaquim","Joaquim")
+label("veio.founder.down","%s caiu ferido e foi levado ao lote da prefeitura. Dê comida para acordá-lo antes.","%s was wounded and carried to the town hall lot. Give them food to wake them sooner.")
+label("veio.founder.up","%s se recuperou e voltou para a cidade.","%s recovered and is back in town.")
+label("veio.founder.resting","%s está desacordado, se recuperando. Com comida na mão, clique para acordá-lo.","%s is unconscious, recovering. Click with food in hand to wake them.")
+label("veio.town.refugees","A cidade ficou vazia. Um casal chegou pelo portão sul para recomeçar.","The town was left empty. A couple arrived through the south gate to start over.")
+label("veio.town.immigrants","Uma família de imigrantes chegou pelo portão sul procurando trabalho e casa.","A family of immigrants arrived through the south gate looking for work and a home.")
 label("veio.world.requires_normal","O mapa completo do Veio precisa de geração Normal e estruturas ativadas.","Veio's complete world requires Normal generation with structures enabled.")
 label("veio.world.generation_failed","Não foi possível preparar um mundo com todo o conteúdo. Tente criar outro mundo.","Could not prepare a world with all required content. Please try creating another world.")
 label("veio.world.portal_blocked","Nenhuma saída segura encontrada. Você permaneceu na origem.","No safe portal exit was found. You stayed at the origin.")
 label("veio.world.outside","Esse destino fica além da muralha do mapa.","That destination is beyond the world wall.")
-label("veio.home.built","Sua casa está pronta, com o painel em %s: lareira, sofá, cama e o mural com o mapa. Durma lá primeiro.","Your house is ready, with the panel at %s: fireplace, sofa, bed and the map mural. Sleep there first.")
+label("veio.home.built","Sua casa está pronta, de frente para a praça, com o painel em %s: sala com lareira e mural, cozinha, escritório com a cama e varanda. Durma lá primeiro.","Your house is ready, facing the square, with the panel at %s: living room with hearth and mural, kitchen, office with the bed and a porch. Sleep there first.")
 label("veio.home.inside","Em casa, com o painel: as fábricas rendem 15% mais.","At home with the panel: factories produce 15% more.")
 label("veio.home.left","Fora de casa: as fábricas voltam ao ritmo normal.","Away from home: factories are back to normal pace.")
 label("veio.home.bed_first","Sua primeira cama é a da casa, ao lado do painel. Durma nela antes.","Your first bed is the one at home, next to the panel. Sleep there first.")
