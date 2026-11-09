@@ -1427,7 +1427,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.30.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.31.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -1722,7 +1722,7 @@ label("veio.village.tab","Vila operária","Worker Village")
 label("veio.village.tab.description","Abra o Guia da Vila Operária e contrate seu primeiro aldeão.","Open the Worker Village Guide and hire your first villager.")
 label("veio.village.welcome","Você recebeu o Guia da Vila Operária: aldeões podem trabalhar por você.","You received the Worker Village Guide: villagers can work for you.")
 label("veio.village.need_houses","%s aldeões e %s camas. Construa mais casas.","%s villagers and %s beds. Build more houses.")
-label("veio.spawn.village","Você está no centro da vila. Ela vai crescer com a sua fábrica.","You are at the village center. It will grow with your factory.")
+label("veio.spawn.village","Há uma vila aqui perto. Siga a seta acima da barra de itens.","There is a village nearby. Follow the arrow above your hotbar.")
 label("veio.spawn.none","Nenhuma vila encontrada por perto. Construa um centro de controle para fixar o centro da sua vila.","No village found nearby. Build a control center to set your village center.")
 label("veio.world.requires_normal","O mapa completo do Veio precisa de geração Normal e estruturas ativadas.","Veio's complete world requires Normal generation with structures enabled.")
 label("veio.world.generation_failed","Não foi possível preparar um mundo com todo o conteúdo. Tente criar outro mundo.","Could not prepare a world with all required content. Please try creating another world.")
