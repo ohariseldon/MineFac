@@ -1202,3 +1202,104 @@ fn the_mayor_leads_from_the_town_to_industry_and_then_to_the_city() {
     assert_eq!(p.metro, 1, "depois, a cidade");
     assert!(town.commands.iter().any(|line| line.contains("veio.metro.start_title")));
 }
+
+#[test]
+fn the_village_errands_teach_bricks_commerce_cattle_and_power_in_any_order() {
+    use errands::{Person, ERRANDS, ROOF, SHOP, HERD, COAL, FORGE};
+    struct Village { player: NativeServerPlayer, lines: Vec<String>, bag: HashMap<String, u32> }
+    impl Host for Village {
+        fn acting_player(&self) -> Option<NativeServerPlayer> { Some(self.player.clone()) }
+        fn run_command(&mut self, line: &str) -> bool { self.lines.push(line.to_owned()); !line.starts_with("execute if entity") }
+        fn tell(&mut self, _: u128, text: Text) -> bool { self.lines.push(text.plain()); true }
+        fn action_bar(&mut self, _: u128, text: Text) -> bool { self.lines.push(format!("bar {}", text.plain())); true }
+        fn entity(&self, _: u32) -> Option<horizon_client::mod_api::EntityRef> { None }
+        fn surface_heights(&self, _: &str, _: &[(i32, i32)], _: horizon_client::mod_api::NativeHeightmap)
+            -> Result<Vec<Option<i32>>, String> { Err("sem mundo".into()) }
+        fn summon(&mut self, _: &str, kind: &str, _: [f64; 3], _: Compound) -> Option<u32> { self.lines.push(format!("summon {kind}")); None }
+        fn take_items(&mut self, item: &str, count: u32) -> u32 {
+            let have = self.bag.entry(item.to_owned()).or_default();
+            let n = (*have).min(count); *have -= n; n
+        }
+        fn give_items(&mut self, item: &str, count: u32) -> u32 { *self.bag.entry(item.to_owned()).or_default() += count; count }
+    }
+    let player = NativeServerPlayer { uuid: 21, name: "Ana".into(), dimension: workforce::spawn::OVERWORLD.into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut v = Village { player: player.clone(), lines: vec![], bag: HashMap::new() };
+    let mut p = Progress { intro: intro::GATHER_STAGE, mayor: Some([0.5, 64.0, 0.5]), ..Progress::default() };
+    let says = |v: &Village| v.lines.iter().filter(|l| *l == "veio.agenda.says").count();
+    // O prefeito apresenta a vila em declínio e pede o telhado; depois conta de um morador por conversa.
+    errands::queue(&mut v, &mut p);
+    errands::tick(&mut v, &player, &mut p, 20);
+    assert_eq!(says(&v), 0, "a conversa do primeiro encontro já é longa: o telhado vem depois");
+    errands::tick(&mut v, &player, &mut p, 220);
+    assert_eq!(says(&v), 3);
+    errands::suggest(&mut v, &player, &mut p);
+    errands::suggest(&mut v, &player, &mut p);
+    errands::suggest(&mut v, &player, &mut p);
+    assert_eq!(says(&v), 6, "vendinha, rebanho e carvoaria, um de cada vez");
+    errands::suggest(&mut v, &player, &mut p);
+    assert_eq!(says(&v), 6, "a forja só depois do favor da prensa");
+    // O telhado: a oleira se apresenta e pede tijolo; entrega parcial volta para o inventário.
+    assert!(errands::talk(&mut v, &player, &mut p, Person::Potter));
+    assert_eq!(p.errands[ROOF], 2);
+    v.bag.insert("minecraft:brick".into(), 10);
+    assert!(errands::talk(&mut v, &player, &mut p, Person::Potter));
+    assert_eq!((p.errands[ROOF], v.bag["minecraft:brick"]), (2, 10));
+    v.bag.insert("minecraft:brick".into(), 16);
+    errands::talk(&mut v, &player, &mut p, Person::Potter);
+    assert_eq!((p.errands[ROOF], v.bag["minecraft:brick_stairs"]), (3, 8));
+    // As telhas contam perto do prefeito, não longe.
+    errands::placed(&mut p, workforce::spawn::OVERWORLD, [40, 64, 40], "minecraft:brick_stairs");
+    for x in 0..8 { errands::placed(&mut p, workforce::spawn::OVERWORLD, [x - 4, 67, 2], "minecraft:brick_stairs"); }
+    assert_eq!(p.errand_built, 8);
+    errands::tick(&mut v, &player, &mut p, 20);
+    assert_eq!(p.errands[ROOF], ERRANDS[ROOF].done());
+    assert!(v.lines.iter().any(|l| l.contains("data merge") && l.contains(errands::POTTER) && l.contains("clay_ball")));
+    // Depois do pedido, o clique abre a troca vanilla.
+    assert!(!errands::talk(&mut v, &player, &mut p, Person::Potter));
+    // A vendinha: pão, lã (de qualquer cor) e a primeira venda.
+    errands::talk(&mut v, &player, &mut p, Person::Grocer);
+    v.bag.insert("minecraft:bread".into(), 6);
+    errands::talk(&mut v, &player, &mut p, Person::Grocer);
+    v.bag.insert("minecraft:white_wool".into(), 5);
+    v.bag.insert("minecraft:black_wool".into(), 3);
+    errands::talk(&mut v, &player, &mut p, Person::Grocer);
+    assert_eq!(p.errands[SHOP], 4);
+    assert!(!errands::talk(&mut v, &player, &mut p, Person::Grocer), "na última tarefa a troca abre");
+    errands::traded(&mut p, Person::Grocer);
+    errands::tick(&mut v, &player, &mut p, 20);
+    assert_eq!(p.errands[SHOP], ERRANDS[SHOP].done());
+    // O rebanho: a Mimosa chega, o gado cresce, ovelhas e a tesoura.
+    errands::talk(&mut v, &player, &mut p, Person::Cowherd);
+    assert_eq!(p.errand_flags & errands::MIMOSA, 0, "sem pasto conhecido, a Mimosa chega depois");
+    for need in [2, 4, 2] { p.errand_counts[HERD] = need; errands::tick(&mut v, &player, &mut p, 20); }
+    assert_eq!(p.errands[HERD], ERRANDS[HERD].done());
+    assert_eq!((v.bag["minecraft:shears"], v.bag["minecraft:lead"]), (1, 2));
+    // A carvoaria: lenha de qualquer árvore, carvão vegetal e a roda d'água.
+    errands::talk(&mut v, &player, &mut p, Person::Collier);
+    v.bag.insert("minecraft:oak_log".into(), 10);
+    v.bag.insert("minecraft:birch_log".into(), 6);
+    errands::talk(&mut v, &player, &mut p, Person::Collier);
+    v.bag.insert("minecraft:charcoal".into(), 8);
+    errands::talk(&mut v, &player, &mut p, Person::Collier);
+    assert!(v.lines.iter().any(|l| l == "recipe give Ana veio:water_wheel"));
+    errands::placed(&mut p, workforce::spawn::OVERWORLD, [9, 60, 9], production::WATER_WHEEL);
+    errands::tick(&mut v, &player, &mut p, 20);
+    assert_eq!(p.errands[COAL], ERRANDS[COAL].done());
+    // A forja: depois do favor, ferro à mão e a chapa da prensa. Com ela, a vila respira.
+    assert!(!errands::available(FORGE, &p));
+    p.favor = favors::FAVOR_DONE;
+    errands::talk(&mut v, &player, &mut p, Person::Smith);
+    v.bag.insert("minecraft:iron_ingot".into(), 8);
+    errands::talk(&mut v, &player, &mut p, Person::Smith);
+    v.bag.insert("veio:iron_plate".into(), 4);
+    errands::talk(&mut v, &player, &mut p, Person::Smith);
+    assert_eq!(p.errands[FORGE], ERRANDS[FORGE].done());
+    assert!(p.errand_flags & errands::REVIVED != 0);
+    assert!(v.lines.iter().any(|l| l.contains("veio.errand.revival.title")));
+    // O save guarda os pedidos numa linha própria; um save sem ela abre com tudo por fazer.
+    let loaded = Progress::decode(&p.encode()).unwrap();
+    assert_eq!((loaded.errands, loaded.errand_built, loaded.errand_flags), (p.errands, p.errand_built, p.errand_flags));
+    let old: String = p.encode().lines().filter(|l| !l.starts_with("pedidos")).map(|l| format!("{l}\n")).collect();
+    assert_eq!(Progress::decode(&old).unwrap().errands, [0; errands::COUNT]);
+}

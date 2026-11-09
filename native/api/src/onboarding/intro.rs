@@ -168,7 +168,7 @@ pub(super) fn react(host: &mut dyn Host, mood: Mood) {
 }
 
 /// Onde o prefeito está: a entidade, ou o lugar salvo quando ela está longe (chunk descarregado).
-fn mayor_at(host: &dyn Host, p: &Progress) -> Option<[f64; 3]> {
+pub(super) fn mayor_at(host: &dyn Host, p: &Progress) -> Option<[f64; 3]> {
     let id = MAYOR_ID.lock().ok().and_then(|id| *id);
     id.and_then(|id| host.entity(id)).and_then(|handle| handle.position(host)).or(p.mayor)
 }
@@ -523,6 +523,8 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
                 say(host, uuid, "veio.onboarding.mayor.need", &[&count, &Text::tr(key, &[]).plain()]);
             }
             for line in 1..=3 { host.tell(uuid, Text::tr(&format!("veio.onboarding.mayor.how.{line}"), &[])); }
+            // A vila em declínio: o prefeito pede o telhado e os moradores aparecem.
+            super::errands::queue(host, p);
             p.intro = GATHER_STAGE; p.dirty = true;
         }
         GATHER_STAGE => {

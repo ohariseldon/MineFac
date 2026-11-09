@@ -22,6 +22,9 @@ pub(super) fn topic(host: &dyn Host, p: &Progress) -> &'static str {
     else if p.step == 1 && p.favor < favors::FAVOR_DONE { "favor" }
     else if p.step < DONE { "factory" }
     else if village::step(p).is_some() { "village" }
+    // Fora dos capítulos: os pedidos da vila em aberto, ou a vila que voltou a respirar.
+    else if p.errand_flags & errands::REVIVED != 0 { "revived" }
+    else if (0..errands::COUNT).any(|index| errands::task(index, p.errands[index]).is_some()) { "errands" }
     else { "free" }
 }
 

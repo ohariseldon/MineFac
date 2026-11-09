@@ -15,6 +15,7 @@ ARTICLES = [
             "• 13. Postes  • 14. Pedido do dia  • 15. Refeição no Lar  • 16. Centro de controle",
             "As receitas do Veio aparecem no livro de receitas (o livro verde do inventário) assim que são liberadas pelos avanços.",
             "Esta wiki abre com J. Clique num item para ver como fabricar, onde é produzido e onde é usado.",
+            "Pedidos da vila (em paralelo, na ordem que quiser): o telhado do coreto (tijolo), a vendinha (pão, lã, a primeira venda), o rebanho (vacas e ovelhas), a carvoaria (lenha, carvão vegetal, roda d'água) e a forja (ferro e chapa). /veiotutorial pedidos mostra o caderno.",
         ], [
             "Veio is industrial automation inside Minecraft: mine the world's deposits, turn them into parts and build lines that run on their own.",
             "The on-screen tutorial (above the hotbar) goes from the generator to the first daily order in 16 steps. Each step shows the recipe, where materials come from and a checklist of what you already have.",
@@ -24,6 +25,7 @@ ARTICLES = [
             "• 13. Poles  • 14. Daily order  • 15. Meal at the Home  • 16. Control center",
             "Veio recipes show up in the recipe book (the green book in your inventory) as soon as advancements unlock them.",
             "This wiki opens with J. Click an item to see how to craft it, where it is made and where it is used.",
+            "Village requests (in parallel, any order): the bandstand roof (bricks), the little shop (bread, wool, the first sale), the herd (cows and sheep), the charcoal kiln (logs, charcoal, water wheel) and the forge (iron and plates). /veiotutorial pedidos shows the book.",
         ]),
         "web": """
 <p>O Veio é um jogo de <b>automação industrial</b> dentro do Minecraft. Você extrai minério das jazidas que o próprio mundo gera, transforma em peças nas máquinas e monta <b>linhas de produção</b> que continuam trabalhando enquanto você explora. Em volta da fábrica cresce uma <b>vila</b> com trabalhadores, famílias, lojas e uma prefeitura.</p>
@@ -47,8 +49,17 @@ ARTICLES = [
 <tr><td>15</td><td>Refeição no Lar</td><td>A casa e os efeitos</td></tr>
 <tr><td>16</td><td>Abrir o centro de controle</td><td>A vila inteira</td></tr></table>
 <p><b>O primeiro favor:</b> o prefeito monta o gerador, mas a prensa e os cabos estão com o Seu Bento, o ferreiro (a leste da praça). Ele pede que você ajude a Dona Cida, a lavradora (a oeste): plante 12 pés de trigo ao lado da casa dela (ela dá sementes, farinha de osso e enxada), colha e entregue 12 trigos. Com o campo novo ela vende pão mais barato (6 por esmeralda em vez de 2), e o Seu Bento entrega a prensa, 16 cabos e as receitas.</p>
-<p>Depois, o prefeito abre o capítulo 2, a vila operária (ver Trabalhadores).</p>
-<p>Comandos: <code>/veiotutorial ocultar</code>, <code>/veiotutorial mostrar</code>, <code>/veiotutorial reiniciar</code>. A wiki dentro do jogo abre com <kbd>J</kbd>.</p>
+<h3>Os pedidos da vila</h3>
+<p>A vila está em declínio: a mina fechou e os jovens foram embora. Quem ficou tem um problema, e cada problema é uma porta para uma área do jogo, feita à mão como no começo do Minecraft. Os pedidos correm <b>em paralelo</b> ao tutorial da fábrica, na ordem que você quiser. Logo depois do primeiro encontro, o prefeito pede o telhado (nível 1); a cada conversa, ele conta de mais alguém que precisa de ajuda (nível 2). Quem tem algo para você solta faíscas verdes; perto dessa pessoa, a barra mostra o pedido. <code>/veiotutorial pedidos</code> mostra o caderno, com quem pede, onde e o que falta. Com todos atendidos, <b>a vila respira</b> (nível 3).</p>
+<table><tr><th>Pedido</th><th>Quem pede</th><th>O que fazer</th><th>O que você aprende</th><th>Depois</th></tr>
+<tr><td>O telhado do coreto</td><td>Prefeito e Dona Zefa, a oleira (sul)</td><td>16 tijolos (argila do rio na fornalha); ela devolve 8 telhas; cobrir o coreto perto do prefeito</td><td>argila, fornalha e combustível, construção</td><td>troca argila por esmeralda e vende tijolo</td></tr>
+<tr><td>A vendinha</td><td>Seu Zé (sudeste)</td><td>6 pães, 8 lãs de qualquer cor, a primeira venda a ele</td><td>trigo e pão, lã, comércio e esmeralda</td><td>compra trigo, pão e lã; a Loja do capítulo 4</td></tr>
+<tr><td>O rebanho</td><td>Seu Tonho, o vaqueiro, e a Mimosa (sudoeste)</td><td>2 vacas no pasto (trigo na mão), 4 com bezerro, 2 ovelhas (ele dá a tesoura)</td><td>atrair, criar, tosquiar</td><td>2 cordas, receitas do posto de pastor e do cercado</td></tr>
+<tr><td>A carvoaria</td><td>Seu Lino, o carvoeiro (nordeste)</td><td>16 troncos, 8 carvões vegetais (devolve 8 para o gerador), uma roda d'água num rio</td><td>lenha, carvão vegetal, energia sem queimar</td><td>vende carvão vegetal e compra lenha</td></tr>
+<tr><td>A forja</td><td>Seu Bento, depois do favor da prensa</td><td>8 lingotes de ferro à mão, 4 chapas de ferro da prensa</td><td>minério de ferro, a prensa no lugar do martelo</td><td>compra ferro</td></tr></table>
+<p>As recompensas são itens, receitas, experiência e as trocas vanilla de cada morador.</p>
+<p>Depois da fábrica, o prefeito abre o capítulo 2, a noite (ver Poluição e defesa), e o 3, a vila operária (ver Trabalhadores).</p>
+<p>Comandos: <code>/veiotutorial pedidos</code> (o caderno), <code>/veiotutorial ocultar</code>, <code>/veiotutorial mostrar</code>, <code>/veiotutorial reiniciar</code>. A wiki dentro do jogo abre com <kbd>J</kbd>.</p>
 """,
     },
     {
@@ -636,7 +647,7 @@ ARTICLES = [
             "• Pausada: um sinal de redstone está chegando nela",
             "• Esteira laranja: parada de verdade (o destino não aceita). Esteira que entra na face vermelha não é aceita.",
             "• Trabalhador ausente: o aldeão está longe, num chunk descarregado ou morreu; contrate de novo",
-            "Comandos: /veiotutorial ocultar · mostrar · reiniciar · noite · vila · crescer · industria · cidade. Wiki: tecla J.",
+            "Comandos: /veiotutorial pedidos · ocultar · mostrar · reiniciar · noite · vila · crescer · industria · cidade. Wiki: tecla J.",
         ], [
             "Hover over the machine panel status: it tells you why it stopped.",
             "• No power: generator fuel, touching cables, pole reach",
@@ -645,7 +656,7 @@ ARTICLES = [
             "• Paused: a redstone signal is reaching it",
             "• Orange belt: truly stuck (the target refuses). A belt entering the red face is not accepted.",
             "• Worker missing: the villager is far, in an unloaded chunk or dead; hire again",
-            "Commands: /veiotutorial ocultar · mostrar · reiniciar · noite · vila · crescer · industria · cidade. Wiki: J key.",
+            "Commands: /veiotutorial pedidos · ocultar · mostrar · reiniciar · noite · vila · crescer · industria · cidade. Wiki: J key.",
         ]),
         "web": """
 <p>Primeiro passo, sempre: <b>passe o mouse no estado do painel</b> da máquina. Ele diz o motivo.</p>
@@ -661,6 +672,7 @@ ARTICLES = [
 <table><tr><th>Comando / tecla</th><th>Faz</th></tr>
 <tr><td><kbd>J</kbd></td><td>abre e fecha a wiki dentro do jogo</td></tr>
 <tr><td><kbd>L</kbd></td><td>avanços: o caminho das receitas</td></tr>
+<tr><td><code>/veiotutorial pedidos</code></td><td>o caderno de pedidos da vila: quem pede, onde e o que falta</td></tr>
 <tr><td><code>/veiotutorial ocultar</code></td><td>esconde o objetivo (a fábrica continua)</td></tr>
 <tr><td><code>/veiotutorial mostrar</code></td><td>mostra de novo</td></tr>
 <tr><td><code>/veiotutorial reiniciar</code></td><td>refaz os exercícios</td></tr>

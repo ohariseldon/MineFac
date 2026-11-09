@@ -478,6 +478,9 @@ def main():
     # Vizinhos do primeiro favor (onboarding/favors.rs): o ferreiro com a prensa e a lavradora.
     write(D / "horizon/entity_type/smith.json", {"template": "minecraft:villager"})
     write(D / "horizon/entity_type/farmer.json", {"template": "minecraft:villager"})
+    # Moradores dos pedidos da vila (onboarding/errands.rs): oleira, vendeiro, vaqueiro e carvoeiro.
+    for kind in ("potter", "grocer", "cowherd", "collier"):
+        write(D / f"horizon/entity_type/{kind}.json", {"template": "minecraft:villager"})
     write(D / "horizon/entity_type/raider.json", {"template": "minecraft:zombie",
         "attributes": {"minecraft:max_health": 24.0, "minecraft:movement_speed": 0.25,
             "minecraft:follow_range": 40.0}})

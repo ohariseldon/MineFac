@@ -171,6 +171,14 @@ struct Progress {
     forge_announced: Option<u8>,
     metro: u8,
     metro_announced: Option<u8>,
+    /// Os pedidos da vila (`errands`): o estado de cada um, os tijolos do telhado e as marcas.
+    /// Salvos numa linha própria; a contagem do que a tarefa pede é só da sessão.
+    errands: [u8; errands::COUNT],
+    errand_built: u16,
+    errand_flags: u16,
+    errand_counts: [u32; errands::COUNT],
+    /// Quando o prefeito conta do telhado depois do primeiro encontro (relógio do tutorial).
+    errand_due: u64,
     // Unsaved transient evidence must not survive a reload or manual intervention.
     input_credit: u32,
     output_credit: u32,
@@ -379,6 +387,9 @@ impl Progress {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
         }
+        // Os pedidos da vila numa linha própria, no fim: saves sem ela abrem com os pedidos por fazer.
+        let [a, b, c, d, e] = self.errands;
+        text.push_str(&format!("pedidos {a} {b} {c} {d} {e} {} {}\n", self.errand_built, self.errand_flags));
         text
     }
 
@@ -462,6 +473,15 @@ impl Progress {
         if version >= 7 { for pos in &mut more { *pos = parse(lines.next()?)?; } }
         let [board, pole] = more;
         if version >= 11 { for block in &mut forge_blocks { *block = parse(lines.next()?)?; } }
+        let (mut errands, mut errand_built, mut errand_flags) = ([0u8; errands::COUNT], 0u16, 0u16);
+        if let Some(line) = text.lines().find_map(|line| line.strip_prefix("pedidos ")) {
+            let numbers: Vec<u32> = line.split_whitespace().filter_map(|n| n.parse().ok()).collect();
+            if numbers.len() == errands::COUNT + 2 {
+                for (index, errand) in errands::ERRANDS.iter().enumerate() { errands[index] = (numbers[index] as u8).min(errand.done()); }
+                errand_built = (numbers[errands::COUNT] as u16).min(64);
+                errand_flags = numbers[errands::COUNT + 1] as u16;
+            }
+        }
         // Até a v6 a fábrica acabava na etapa 8. Quem já abriu o capítulo da vila (ou da cidade)
         // fica nele (a fábrica conta como pronta); os outros seguem para as etapas dos sistemas e
         // voltam ao prefeito no fim das 16.
@@ -479,7 +499,7 @@ impl Progress {
             village, village_blocks, village_crafted, village_base, city, city_crafted, board, pole, drills, events,
             festival, festival_day, favor, poles: u32::from(pole.is_some()),
             night_first, night, night_lights, night_wall, night_factory_wall, night_flags,
-            forge, forge_crafted, forge_blocks, forge_flags, metro, ..Self::default() })
+            forge, forge_crafted, forge_blocks, forge_flags, metro, errands, errand_built, errand_flags, ..Self::default() })
     }
 }
 
@@ -562,7 +582,8 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     let system = system_block(block);
     let night_block = !clicked && (night::is_light(block) || night::is_wall(block) || night::is_gate(block));
     let opened = clicked && pollution::emission(block) > 0.0;
-    if !tutorial && tip.is_none() && !part && !village_block && !system && !night_block && !opened && !forge_block { return; }
+    let errand_block = !clicked && errands::placement(block);
+    if !tutorial && tip.is_none() && !part && !village_block && !system && !night_block && !opened && !forge_block && !errand_block { return; }
     let Some(player) = host.acting_player() else { return; };
     let Ok(mut slot) = SESSION.lock() else { return; };
     if !session(host, &mut slot) { return; }
@@ -572,8 +593,9 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     if village_block { village::placed(progress, &player.dimension, pos, block); }
     if night_block { night::placed(progress, &player.dimension, pos, block); }
     if forge_block { forge::placed(progress, &player.dimension, pos, block); }
+    if errand_block { errands::placed(progress, &player.dimension, pos, block); }
     if clicked { night::opened(progress, block); }
-    if (night_block || opened || forge_block) && !tutorial && tip.is_none() && !part && !village_block && !system { return; }
+    if (night_block || opened || forge_block || errand_block) && !tutorial && tip.is_none() && !part && !village_block && !system { return; }
     // Colocou o produto da etapa: já foi fabricado (a lista de materiais não volta).
     if part && let Some(parts) = CRAFT.get(usize::from(progress.step)) {
         for (index, (target, _)) in parts.iter().enumerate() {
@@ -916,6 +938,16 @@ fn tick(host: &mut dyn Host, now: u64) {
             host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
         }
     }
+    // Os pedidos da vila correm em paralelo ao tutorial (menos na primeira noite) e, perto de um
+    // morador, mostram o pedido dele na barra.
+    for player in &online {
+        let Some(p) = s.players.get_mut(&player.uuid) else { continue };
+        if p.night_first == 1 { continue; }
+        errands::tick(host, player, p, now);
+        if p.dirty && now % 100 == 0 && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
+            host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
+        }
+    }
     // Offline players must neither gain progress nor retain volatile flow tokens.
     s.players.retain(|uuid, p| {
         if online.iter().any(|player| player.uuid == *uuid) { true }
@@ -941,13 +973,14 @@ pub(super) fn logout(_host: &dyn Host, uuid: u128) {
 pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command: &str) -> bool {
     let action = match command.trim() {
         "veiotutorial ocultar" => 0, "veiotutorial mostrar" => 1, "veiotutorial reiniciar" => 2, "veiotutorial vila" => 3, "veiotutorial crescer" => 4, "veiotutorial noite" => 5,
-        "veiotutorial industria" => 6, "veiotutorial cidade" => 7,
+        "veiotutorial industria" => 6, "veiotutorial cidade" => 7, "veiotutorial pedidos" => 8,
         _ => return false,
     };
     let Ok(mut slot) = SESSION.lock() else { return true; };
     if !session(host, &mut slot) { return true; }
     let s = slot.as_mut().unwrap();
     let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
+    if action == 8 { errands::book(host, player, p); return true; }
     if action >= 3 {
         // Capítulo da vila ou da cidade direto (quem já conhece o anterior): pula o prólogo.
         if p.intro < intro::INTRO_DONE { p.intro = intro::INTRO_DONE; }
@@ -989,7 +1022,10 @@ pub(super) fn talk(host: &mut dyn Host) -> bool {
     if !session(host, &mut slot) { return true; }
     let s = slot.as_mut().unwrap();
     let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
+    // Depois do primeiro encontro, o prefeito conta de mais alguém que precisa de ajuda.
+    let met = p.intro >= intro::GATHER_STAGE;
     intro::talk(host, &player, p);
+    if met { errands::suggest(host, &player, p); }
     if p.dirty && save(&s.root, player.uuid, p).is_err() {
         host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[]));
     }
@@ -1005,7 +1041,9 @@ pub(super) fn neighbor_talk(host: &mut dyn Host, kind: &str) -> bool {
     if !session(host, &mut slot) { return true; }
     let s = slot.as_mut().unwrap();
     let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
-    let took = favors::talk(host, &player, p, who);
+    // Depois do favor, o Seu Bento tem o pedido da forja.
+    let took = if who == favors::Who::Smith && p.favor >= favors::FAVOR_DONE { errands::talk(host, &player, p, errands::Person::Smith) }
+        else { favors::talk(host, &player, p, who) };
     if p.dirty && save(&s.root, player.uuid, p).is_err() {
         host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[]));
     }
@@ -1013,12 +1051,39 @@ pub(super) fn neighbor_talk(host: &mut dyn Host, kind: &str) -> bool {
 }
 
 /// Outro mundo vai abrir: esquece o prefeito e os vizinhos do mundo anterior.
-pub(super) fn world_changed() { intro::reset(); favors::reset(); }
+pub(super) fn world_changed() { intro::reset(); favors::reset(); errands::reset(); }
+
+/// Clique num morador dos pedidos da vila. `true` se o Veio tomou o clique.
+pub(super) fn errand_talk(host: &mut dyn Host, kind: &str) -> bool {
+    let Some(who) = errands::person(kind) else { return false };
+    let Some(player) = host.acting_player() else { return true };
+    let Ok(mut slot) = SESSION.lock() else { return true };
+    if !session(host, &mut slot) { return true; }
+    let s = slot.as_mut().unwrap();
+    let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
+    let took = errands::talk(host, &player, p, who);
+    if p.dirty && save(&s.root, player.uuid, p).is_err() {
+        host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[]));
+    }
+    took
+}
+
+/// Uma troca vanilla com um morador dos pedidos (a primeira venda na vendinha).
+pub(super) fn errand_traded(host: &dyn Host, kind: &str) {
+    let Some(who) = errands::person(kind) else { return };
+    let Some(player) = host.acting_player() else { return };
+    let Ok(mut slot) = SESSION.lock() else { return };
+    if !session(host, &mut slot) { return; }
+    let s = slot.as_mut().unwrap();
+    if let Some(p) = s.players.get_mut(&player.uuid) { errands::traded(p, who); }
+}
 
 mod intro;
 mod festival;
 mod favors;
 pub(super) use favors::{seen as neighbor_seen, FARMER, SMITH};
+mod errands;
+pub(super) use errands::{seen as errand_seen, COLLIER, COWHERD, GROCER, POTTER};
 mod barks;
 pub(super) use barks::villager_seen;
 mod village;

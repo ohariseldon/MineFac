@@ -45,6 +45,11 @@ muralhas, luz e cama no começo; quartel, torre Tesla e defesas automáticas dep
 | **Você, o fundador** | o forasteiro que sabe montar máquinas | sim |
 | **Prefeito Otávio** | o único prefeito: o guia da história, como um primeiro-ministro; propõe o trato, entrega o gerador, conduz os capítulos e diz o que a vila precisa | sim (`veio:mayor`, na praça) |
 | **O secretário (vice-prefeito)** | um aldeão contratado na prefeitura que faz o trabalho duro do gabinete: mede a vila, recolhe o imposto, paga os serviços e libera as fases | sim (o funcionário da prefeitura) |
+| **Seu Bento, o ferreiro** e **Dona Cida, a lavradora** | o favor da prensa (a prensa pelo campo de trigo); depois, a forja do Bento | sim (`veio:smith`, `veio:farmer`) |
+| **Dona Zefa, a oleira** | o forno rachou e ela não busca mais argila: ensina tijolo e faz as telhas do coreto | sim (`veio:potter`, ao sul da praça) |
+| **Seu Zé da vendinha** | a única venda da vila, prestes a fechar: sem mercadoria, sem freguês, sem conta que feche | sim (`veio:grocer`, a sudeste) |
+| **Seu Tonho, o vaqueiro**, e a **Mimosa** | perdeu o gado no inverno; só ficou a Mimosa | sim (`veio:cowherd`, a sudoeste) |
+| **Seu Lino, o carvoeiro** | a carvoaria velha que dá fogo e luz à vila, apagada | sim (`veio:collier`, a nordeste) |
 | **Os aldeões** | viram trabalhadores, famílias, comerciantes e o funcionário da prefeitura | sim |
 | **Os visitantes do calendário** | Seu Anselmo (o primeiro morador), Dona Margarida (floristas), Seu Benedito (sanfoneiro), Tia Ceres (lavradores), Mestre Lumen (vidreiro), a pequena Aurora, Dona Lia (feira), Juca (baile) e o pescador Tião | sim (pedem as festas, 2 dias antes) |
 | **Os Saqueadores e o Bruto** | atraídos pela poluição; vêm à noite | sim (sem fala) |
@@ -60,6 +65,7 @@ são marcos, não paredes: a noite e a cidade atravessam todos eles.
 | Parte | Capítulo | O que acontece na história | O que o jogador aprende | Situação |
 |---|---|---|---|---|
 | Prólogo | A chegada | Você nasce perto da vila, segue a seta, conhece Otávio na praça e faz o trato. Junta pedra, ferro e cobre; a oficina da vila monta o **gerador**. Otávio separa o terreno da oficina, que você planifica. | o começo, a casa e o painel, planificar | **no jogo** (0.31) |
+| Prólogo / Ato I | Os pedidos da vila | A vila em declínio pede socorro, em paralelo à fábrica. Nível 1: o telhado do coreto (Otávio e a **Dona Zefa, a oleira**). Nível 2: a vendinha do **Seu Zé**, o rebanho do **Seu Tonho** (e a Mimosa), a carvoaria do **Seu Lino**, a forja do **Seu Bento**. Nível 3: "a vila respira". | argila e tijolo, construção, trigo e pão, comércio e esmeralda, pecuária, lenha, carvão vegetal, roda d'água, ferro e a prensa | **no jogo** (0.38, `/veiotutorial pedidos`) |
 | Ato I | 1. A fábrica | A primeira linha: energia, prensa, engrenagem, extratora, esteiras e a **primeira encomenda**. | energia, máquinas, cadeias, transporte | **no jogo** (8 etapas); etapas 9 a 16 em produção (outro agente) |
 | Ato I | 2. A primeira noite | No primeiro anoitecer, Otávio avisa: a vila fecha as portas, os monstros caçam quem fica fora. Dormir em casa, iluminar a praça, erguer a **muralha** da vila. | o perigo da noite, luz, muralha, cama, poluição, gargalos da defesa | **no jogo** (0.36–0.37: primeira noite, sino e 6 etapas) |
 | Ato I | 3. A vila operária | "A vila precisa de mãos": o primeiro trabalhador, a lavoura demarcada, o carregador, o capataz, a primeira família e o gabinete com o **secretário**. | contratar, zonas, organizar, morar, governar | **no jogo** |
@@ -103,6 +109,7 @@ pessoal, ligada ao crescimento da vila. Exemplos:
 
 ## Onde está cada coisa
 
+- Os pedidos da vila: `onboarding/errands.rs`; textos em `add_errand_labels`.
 - Prólogo e capítulo 1: `native/api/src/onboarding/intro.rs`, `onboarding.rs`; textos em
   `tools/build_onboarding.py`.
 - A noite (capítulo 2): `onboarding/night.rs`; textos em `add_night_labels`.

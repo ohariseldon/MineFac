@@ -287,6 +287,11 @@ impl Hooks for Factory {
         if matches!(event.kind, onboarding::SMITH | onboarding::FARMER) && (now + u64::from(event.entity)) % 41 == 0 {
             onboarding::neighbor_seen(host, event.dimension, event.kind, event.entity);
         }
+        if matches!(event.kind, onboarding::POTTER | onboarding::GROCER | onboarding::COWHERD | onboarding::COLLIER)
+            && (now + u64::from(event.entity)) % 41 == 0
+        {
+            onboarding::errand_seen(host, event.dimension, event.kind, event.entity);
+        }
         if event.kind == workforce::society::agenda::VISITOR && (now + u64::from(event.entity)) % 41 == 0 {
             workforce::society::agenda::visitor_seen(host, event.dimension, event.entity);
         }
@@ -324,6 +329,9 @@ impl Hooks for Factory {
         if matches!(event.kind, onboarding::SMITH | onboarding::FARMER) {
             return if onboarding::neighbor_talk(host, event.kind) { Flow::Cancel } else { Flow::Continue };
         }
+        if matches!(event.kind, onboarding::POTTER | onboarding::GROCER | onboarding::COWHERD | onboarding::COLLIER) {
+            return if onboarding::errand_talk(host, event.kind) { Flow::Cancel } else { Flow::Continue };
+        }
         if event.kind == workforce::society::agenda::VISITOR
             && let Ok(id) = u32::try_from(event.entity)
             && workforce::society::agenda::talk(host, id)
@@ -341,6 +349,7 @@ impl Hooks for Factory {
         if event.kind == "minecraft:villager" {
             workforce::society::traded(host, event.merchant, event.offer);
         }
+        onboarding::errand_traded(host, event.kind);
     }
 
     fn player_respawned(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerRespawnedEvent<'_>) {
@@ -430,7 +439,7 @@ impl Hooks for Factory {
     }
 
     fn register_commands(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::RegisterCommandsEvent<'_>) {
-        for action in ["ocultar", "mostrar", "reiniciar", "noite", "vila", "crescer", "industria", "cidade"] {
+        for action in ["ocultar", "mostrar", "reiniciar", "noite", "vila", "crescer", "industria", "cidade", "pedidos"] {
             event.commands.push(horizon_client::mod_api::NativeCommand::new(&format!("veiotutorial {action}")));
         }
     }

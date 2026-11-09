@@ -524,6 +524,7 @@ def add_labels(label):
     add_city_labels(label, names, recipe_line)
     add_night_labels(label)
     add_forge_labels(label, names, recipe_line)
+    add_errand_labels(label)
     add_metro_labels(label)
 
 
@@ -1190,3 +1191,234 @@ def add_metro_labels(label):
         'check.idh': ('IDH %s/0,55', 'HDI %s/0.55'), 'check.gdp': ('PIB %s/400', 'GDP %s/400'), 'check.jobs': ('emprego %s%%/60%%', 'jobs %s%%/60%%'),
     }
     add_chapter(label, 'metro', steps, extra)
+
+
+def add_errand_labels(label):
+    """Os pedidos da vila (onboarding/errands.rs): a vila em declínio, um morador por área do jogo."""
+    L = label
+    for key, pt, en in [("potter", "Dona Zefa, a oleira", "Zefa, the potter"), ("grocer", "Seu Zé da vendinha", "Zé, the grocer"),
+                        ("cowherd", "Seu Tonho, o vaqueiro", "Tonho, the cowherd"), ("collier", "Seu Lino, o carvoeiro", "Lino, the collier")]:
+        L(f"veio.errand.{key}.name", pt, en)
+    L("veio.errand.task", "→ Pedido: %s", "→ Request: %s")
+    L("veio.errand.bar", "Pedido · %s: %s", "Request · %s: %s")
+    L("veio.errand.meet", "clique para conversar", "click to talk")
+    L("veio.errand.done", "Pedido atendido!", "Request done!")
+    L("veio.errand.book.title", "─── Caderno de pedidos da vila ───", "─── The village request book ───")
+    L("veio.errand.book.done", "✔ %s", "✔ %s")
+    L("veio.errand.book.later", "· %s: depois do favor da prensa (%s)", "· %s: after the press favor (%s)")
+    L("veio.errand.book.open", "• %s: %s · %s, %s blocos %s", "• %s: %s · %s, %s blocks %s")
+    L("veio.errand.book.new", "? %s: fale com %s, %s blocos %s", "? %s: talk to %s, %s blocks %s")
+    L("veio.errand.book.level", "Nível %s · %s de %s pedidos atendidos · perto de quem pede, a barra mostra o pedido.",
+      "Level %s · %s of %s requests done · near whoever asks, the bar shows the request.")
+    L("veio.errand.decline.1", "Antes que você vá: olhe em volta. A mina fechou, os jovens foram embora e a vila foi minguando.",
+      "Before you go: look around. The mine closed, the young left and the village dwindled.")
+    L("veio.errand.decline.2", "A vendinha quase fechando, a carvoaria fria, uma vaca no pasto. Cada um que ficou tem um problema; ajudar um é ajudar todos.",
+      "The little shop about to close, the charcoal kiln cold, one cow in the pasture. Everyone who stayed has a problem; helping one helps all.")
+    for n, pt, en in [(1, "Telhado no coreto, pão na venda, gado no pasto, fogo na carvoaria, ferro na forja.",
+                          "A roof on the bandstand, bread in the shop, cattle in the pasture, fire in the kiln, iron in the forge."),
+                      (2, "Faz dez anos que eu não via a vila assim. Você não consertou coisas: você deu ao povo motivo para ficar.",
+                          "I have not seen the village like this in ten years. You did not fix things: you gave people a reason to stay."),
+                      (3, "Agora a vila respira. Mas respirar não é crescer: para crescer, ela precisa de trabalho, e trabalho vem da fábrica.",
+                          "Now the village breathes. But breathing is not growing: to grow it needs work, and work comes from the factory."),
+                      (4, "Continue a fábrica. Quando ela estiver de pé, a vila põe as mãos nela com você.",
+                          "Keep building the factory. When it stands, the village will lend you its hands.")]:
+        L(f"veio.errand.revival.{n}", pt, en)
+    L("veio.errand.revival.title", "A vila respira", "The village breathes")
+    L("veio.errand.revival.sub", "Todos os pedidos da vila atendidos", "Every village request done")
+
+    def errand(key, texts):
+        for name, (pt, en) in texts.items():
+            L(f"veio.errand.{key}.{name}", pt, en)
+
+    for topic, lines in {
+        "errands": [("A Dona Zefa disse que você assa tijolo melhor que ela.", "Zefa says you bake bricks better than she does."),
+                    ("Ouvi dizer que a vendinha do Zé vai abrir de novo.", "I hear Zé's little shop will open again."),
+                    ("O Tonho anda sorrindo para a vaca. Coisa boa.", "Tonho keeps smiling at his cow. Good sign."),
+                    ("Se precisar saber quem pede o quê: /veiotutorial pedidos.", "If you need to know who asks for what: /veiotutorial pedidos.")],
+        "revived": [("Tem fumaça na carvoaria de novo. Fumaça boa.", "There is smoke at the kiln again. Good smoke."),
+                    ("Comprei pão hoje. Pão! Na nossa vila!", "I bought bread today. Bread! In our village!"),
+                    ("Meu primo quer voltar para cá. Dá para acreditar?", "My cousin wants to move back here. Can you believe it?"),
+                    ("O coreto está bonito. Ninguém mais quer ir embora.", "The bandstand looks lovely. Nobody wants to leave any more.")],
+    }.items():
+        for n, (pt, en) in enumerate(lines, 1): L(f"veio.villager.{topic}.{n}", pt, en)
+
+    errand("roof", {
+        "title": ("O telhado do coreto", "The bandstand roof"),
+        "hint": ("O telhado do coreto da praça caiu na última chuva, e é lá que o conselho se reúne. A Dona Zefa, a oleira, sabe fazer telha: ela mora a %s blocos %s.",
+                 "The bandstand roof on the square fell in the last rain, and that is where the council meets. Zefa, the potter, knows how to make tiles: she lives %s blocks %s."),
+        "ask.0.1": ("Telha? Faço desde menina. Mas o forno da olaria rachou na geada, e argila eu não busco mais: o joelho não deixa.",
+                    "Tiles? I have made them since I was a girl. But the kiln cracked in the frost, and I cannot fetch clay any more: my knee will not let me."),
+        "ask.0.2": ("Argila fica no fundo dos rios e lagoas, em blocos cinza-azulados. Quebre com a pá: cada bloco dá 4 bolas de argila.",
+                    "Clay sits at the bottom of rivers and ponds, in blue-grey blocks. Break it with a shovel: each block gives 4 clay balls."),
+        "ask.0.3": ("Na sua fornalha, cada bola de argila vira um tijolo. É o mesmo fogo que derrete o minério.",
+                    "In your furnace, each clay ball becomes a brick. It is the same fire that smelts ore."),
+        "ask.1.1": ("Me traga 16 tijolos e eu faço as telhas do coreto.", "Bring me 16 bricks and I will make the bandstand tiles."),
+        "ask.1.2": ("Combustível conta: carvão, carvão vegetal ou madeira. Cada carvão assa 8.", "Fuel matters: coal, charcoal or wood. Each coal bakes 8."),
+        "ask.1.3": ("Dica de oleira: ponha as 16 de uma vez e vá fazer outra coisa. A fornalha trabalha sozinha.",
+                    "Potter's tip: put all 16 in at once and go do something else. The furnace works on its own."),
+        "goal.1": ("Traga à Dona Zefa: %s/%s tijolos (argila na fornalha)", "Bring Zefa: %s/%s bricks (clay in the furnace)"),
+        "more.1": ("Ainda faltam %s de %s tijolos. Guardei os seus de volta.", "Still %s of %s bricks missing. I gave yours back."),
+        "done.1.1": ("Que tijolo bem assado! Olhe só.", "What well-baked bricks! Look at that."),
+        "done.1.2": ("Pronto: telhas do jeito antigo. Escada de tijolo, que deita certinho no telhado.", "There: tiles, the old way. Brick stairs, which sit just right on a roof."),
+        "done.1.3": ("Leve ao coreto, perto do Prefeito Otávio, e cubra o que caiu.", "Take them to the bandstand, near Mayor Otávio, and cover what fell."),
+        "gift": ("+ 8 escadas de tijolo (as telhas)", "+ 8 brick stairs (the tiles)"),
+        "ask.2.1": ("Ponha as telhas em volta e por cima do prefeito, na praça. Escada, laje ou bloco de tijolo: tudo vale.",
+                    "Place the tiles around and above the mayor, on the square. Brick stairs, slabs or blocks: all count."),
+        "ask.2.2": ("Tijolo é material para a vida toda: casas, chaminés, e um dia a prefeitura de pedra da vila.",
+                    "Brick lasts a lifetime: houses, chimneys, and one day the village's stone town hall."),
+        "goal.2": ("Cubra o coreto: %s/%s telhas perto do prefeito", "Cover the bandstand: %s/%s tiles near the mayor"),
+        "wait.2": ("Já tem %s de %s telhas no coreto. Perto do prefeito, por favor!", "There are %s of %s tiles on the bandstand. Near the mayor, please!"),
+        "done.2.1": ("Ouvi daqui as marteladas! O coreto tem telhado de novo.", "I heard the hammering from here! The bandstand has a roof again."),
+        "done.2.2": ("Faz anos que ninguém consertava nada nesta vila.", "Nobody had fixed anything in this village for years."),
+        "done.2.3": ("A olaria volta a trabalhar: compro a sua argila e vendo tijolo, quando quiser.", "The pottery is back at work: I buy your clay and sell bricks, whenever you like."),
+        "done.2.4": ("(Clique na Dona Zefa para trocar: argila por esmeralda, esmeralda por tijolo.)", "(Click Zefa to trade: clay for emeralds, emeralds for bricks.)"),
+        "mayor.1": ("Veja só: o coreto de pé de novo! O conselho volta a se reunir debaixo de telhado.", "Look at that: the bandstand standing again! The council meets under a roof once more."),
+        "mayor.2": ("É disso que a vila precisava: alguém de fora consertando, em vez de ir embora.", "This is what the village needed: someone from outside fixing things instead of leaving."),
+        "mayor.3": ("Ainda tem gente com problema por aqui. Fale comigo quando quiser, que eu conto quem.", "There are still people in trouble here. Talk to me whenever you like and I will tell you who."),
+        "next": ("Mais tarde: o bloco Prefeitura pede tijolos de pedra (pedregulho na fornalha vira pedra; 4 pedras na bancada, 4 tijolos de pedra).",
+                 "Later: the Town hall block needs stone bricks (cobblestone in the furnace becomes stone; 4 stone on the table, 4 stone bricks)."),
+        "after": ("O coreto ficou lindo. Precisando de tijolo, é comigo.", "The bandstand looks lovely. If you need bricks, come to me."),
+    })
+    errand("shop", {
+        "title": ("A vendinha do Seu Zé", "Zé's little shop"),
+        "hint": ("O Seu Zé, da vendinha, anda de cabeça baixa: diz que fecha no fim do mês. A venda fica a %s blocos %s. Sem ela, a vila não tem onde comprar nada.",
+                 "Zé, from the little shop, walks with his head down: he says he closes at the end of the month. The shop is %s blocks %s. Without it, the village has nowhere to buy anything."),
+        "ask.0.1": ("Pode entrar, a casa é sua... o que sobrou dela. Olhe as prateleiras: vazias.", "Come in, make yourself at home... what is left of it. Look at the shelves: empty."),
+        "ask.0.2": ("Não chega mercadoria. A roça não produz, o Tonho só tem uma vaca, ninguém traz nada.", "No goods arrive. The fields do not yield, Tonho has one cow, nobody brings anything."),
+        "ask.0.3": ("E quando chega, não vendo: o povo daqui não tem trabalho, não tem dinheiro.", "And when something comes, I cannot sell it: folks here have no work, no money."),
+        "ask.0.4": ("As contas não fecham. Compro caro, vendo pouco. Se nada mudar, fecho no fim do mês.", "The books do not balance. I buy dear, sell little. If nothing changes, I close at the end of the month."),
+        "ask.1.1": ("Comecemos pelo pão, que todo mundo come. Me traga 6 pães.", "Let us start with bread, everybody eats it. Bring me 6 loaves."),
+        "ask.1.2": ("Pão se faz com 3 trigos na bancada, em linha. Trigo nasce de semente: lavre a terra perto da água e plante.",
+                    "Bread is 3 wheat in a row on the crafting table. Wheat grows from seeds: till the soil near water and plant."),
+        "ask.1.3": ("A Dona Cida, a lavradora, entende de roça. Sem semente? Quebre o capim alto: às vezes cai.", "Cida, the farmer, knows the fields. No seeds? Break tall grass: they sometimes drop."),
+        "goal.1": ("Traga ao Seu Zé: %s/%s pães (3 trigos na bancada)", "Bring Zé: %s/%s bread (3 wheat on the table)"),
+        "more.1": ("Faltam %s de %s pães. Devolvi os que você trouxe.", "%s of %s loaves missing. I gave back the ones you brought."),
+        "done.1.1": ("Pão quentinho na prateleira! Primeiro dia em meses que alguém entra e compra.", "Warm bread on the shelf! The first day in months someone comes in and buys."),
+        "done.1.2": ("Agora, uma coisa que não estraga e vende bem: lã.", "Now, something that does not spoil and sells well: wool."),
+        "ask.2.1": ("Traga 8 de lã, de qualquer cor. Ovelha dá lã quando você tosquia com a tesoura, e a lã cresce de novo.",
+                    "Bring 8 wool, any colour. Sheep give wool when you shear them, and the wool grows back."),
+        "ask.2.2": ("Quem entende de bicho é o Seu Tonho, no pasto. Mas ele só tem a Mimosa... ajude ele e a lã vem.",
+                    "Tonho, in the pasture, knows animals. But he only has Mimosa... help him and the wool will come."),
+        "ask.2.3": ("Sem tesoura? Lã também sai de 4 linhas na bancada.", "No shears? Wool also comes from 4 string on the table."),
+        "goal.2": ("Traga ao Seu Zé: %s/%s de lã (ovelha + tesoura)", "Bring Zé: %s/%s wool (sheep + shears)"),
+        "more.2": ("Faltam %s de %s de lã. Devolvi a sua.", "%s of %s wool missing. I gave yours back."),
+        "done.2.1": ("Lã boa! Isso vira cobertor, vira roupa, vira dinheiro.", "Good wool! This becomes blankets, clothes, money."),
+        "done.2.2": ("Agora a parte que mais me tira o sono: as contas.", "Now the part that keeps me up at night: the books."),
+        "done.2.3": ("Uma venda só vive se o dinheiro gira: eu compro de quem produz e vendo para quem precisa.", "A shop only lives if money moves: I buy from whoever produces and sell to whoever needs."),
+        "ask.3.1": ("Então vamos fazer a primeira compra do jeito certo: eu compro o que você produz.", "So let us make the first purchase the right way: I buy what you produce."),
+        "ask.3.2": ("Clique em mim e me venda trigo, pão ou lã. Você recebe esmeraldas: é a moeda da vila.", "Click me and sell me wheat, bread or wool. You get emeralds: the village currency."),
+        "ask.3.3": ("Com esmeralda você contrata gente, e gente com salário compra na venda. É assim que a roda gira.", "With emeralds you hire people, and people with wages buy at the shop. That is how the wheel turns."),
+        "goal.3": ("Venda algo ao Seu Zé: clique nele e escolha uma troca", "Sell something to Zé: click him and pick a trade"),
+        "wait.3": ("Escolha uma troca: eu pago em esmeralda.", "Pick a trade: I pay in emeralds."),
+        "done.3.1": ("Negócio fechado! Viu? A venda não fecha mais no fim do mês.", "Deal! See? The shop will not close at the end of the month after all."),
+        "done.3.2": ("Cada esmeralda que entra é o salário de alguém amanhã.", "Every emerald that comes in is someone's wage tomorrow."),
+        "done.3.3": ("Quando a vila tiver prefeitura, a vendinha vira loja de verdade: estoque, preço que sobe e desce, imposto.",
+                     "When the village has a town hall, the little shop becomes a real one: stock, prices that rise and fall, taxes."),
+        "done.3.4": ("Até lá, o que sobrar da sua roça, traga aqui.", "Until then, whatever your fields spare, bring it here."),
+        "next": ("Mais tarde, no capítulo 4: a Loja do Veio tem estoque, comerciante e preço local. Wiki (J) → Sociedade da vila.",
+                 "Later, in chapter 4: the Veio Shop has stock, a merchant and local prices. Wiki (J) → Village society."),
+        "after": ("Volte sempre! O que tiver, eu compro.", "Come back any time! I buy what you have."),
+    })
+    errand("herd", {
+        "title": ("O rebanho do Seu Tonho", "Tonho's herd"),
+        "hint": ("O Seu Tonho, o vaqueiro, perdeu o gado no inverno e só ficou a Mimosa. Sem rebanho não tem leite, couro nem lã na vila. O pasto dele fica a %s blocos %s.",
+                 "Tonho, the cowherd, lost his cattle in the winter and only Mimosa is left. Without a herd there is no milk, leather or wool in the village. His pasture is %s blocks %s."),
+        "ask.0.1": ("Ê, forasteiro. Tinha vinte cabeças aqui. O inverno levou, os lobos levaram, e só me sobrou a Mimosa.",
+                    "Hey, stranger. I had twenty head here. Winter took them, wolves took them, and only Mimosa is left."),
+        "ask.0.2": ("Vaca sozinha não dá bezerro. Sem bezerro não tem leite, couro nem carne para a vila.", "A lone cow gives no calf. Without calves there is no milk, leather or meat for the village."),
+        "ask.0.3": ("Mas gado se refaz, se tiver quem cuide.", "But a herd comes back, if someone tends it."),
+        "ask.1.1": ("Primeiro, uma companheira para a Mimosa. Tem vaca solta por aí, nos campos.", "First, a companion for Mimosa. There are loose cows out in the fields."),
+        "ask.1.2": ("Vaca segue quem tem trigo na mão. Ande devagar até o meu pasto e ela vem atrás.", "Cows follow whoever holds wheat. Walk slowly to my pasture and she will follow."),
+        "ask.1.3": ("Duas vacas no meu pasto e a gente começa.", "Two cows in my pasture and we can start."),
+        "goal.1": ("Traga uma vaca ao pasto do Seu Tonho: %s/%s vacas (trigo na mão)", "Bring a cow to Tonho's pasture: %s/%s cows (wheat in hand)"),
+        "wait.1": ("Tem %s de %s vacas no pasto. Trigo na mão, que elas seguem.", "%s of %s cows in the pasture. Wheat in hand, and they follow."),
+        "done.1.1": ("Olha a Mimosa toda faceira! Duas é o começo.", "Look at Mimosa, all perky! Two is a start."),
+        "done.1.2": ("Agora, bezerro.", "Now, a calf."),
+        "ask.2.1": ("Dê trigo para as duas, uma depois da outra: elas se gostam e nasce um bezerro.", "Feed wheat to both, one after the other: they take a liking and a calf is born."),
+        "ask.2.2": ("Depois de dar cria, a vaca descansa uns minutos. Paciência de vaqueiro.", "After calving, a cow rests a few minutes. Cowherd's patience."),
+        "ask.2.3": ("Um rebanho começa com quatro cabeças. Uma cerca em volta ajuda a não fugir.", "A herd starts at four head. A fence around keeps them from wandering."),
+        "goal.2": ("Crie o rebanho: %s/%s vacas no pasto (trigo para duas)", "Raise the herd: %s/%s cows in the pasture (wheat for two)"),
+        "wait.2": ("Tem %s de %s cabeças. Trigo para duas vacas adultas.", "%s of %s head. Wheat for two grown cows."),
+        "done.2.1": ("Quatro cabeças! Tem leite para a vila de novo: um balde e ela dá.", "Four head! There is milk for the village again: a bucket and she gives."),
+        "done.2.2": ("Agora, uma coisa que o Zé vive pedindo: lã.", "Now, something Zé keeps asking for: wool."),
+        "ask.3.1": ("Traga duas ovelhas para o pasto, do mesmo jeito: trigo na mão.", "Bring two sheep to the pasture, the same way: wheat in hand."),
+        "ask.3.2": ("Tome a minha tesoura velha. Tosquie a ovelha e a lã cresce de novo depois que ela come capim.", "Take my old shears. Shear a sheep and the wool grows back after it eats grass."),
+        "ask.3.3": ("Duas ovelhas dão cria também. Lã para o Zé, para camas, para tudo.", "Two sheep breed too. Wool for Zé, for beds, for everything."),
+        "gift": ("+ 1 tesoura", "+ 1 shears"),
+        "goal.3": ("Traga ao pasto: %s/%s ovelhas (trigo na mão)", "Bring to the pasture: %s/%s sheep (wheat in hand)"),
+        "wait.3": ("Tem %s de %s ovelhas no pasto.", "%s of %s sheep in the pasture."),
+        "done.3.1": ("Vaca, bezerro, ovelha: isto voltou a ser um pasto!", "Cows, a calf, sheep: this is a pasture again!"),
+        "done.3.2": ("Tome duas cordas: com corda, qualquer bicho vai aonde você levar.", "Take two leads: with a lead, any animal goes where you take it."),
+        "done.3.3": ("Quando a vila puder pagar um pastor, ele cuida do rebanho num cercado: guardei as receitas no seu livro.",
+                     "When the village can pay a shepherd, they tend the herd in a pen: I put the recipes in your book."),
+        "done.3.4": ("Precisando de corda, troco por esmeralda. E se sobrar trigo, eu compro: bicho come muito.", "If you need leads, I trade them for emeralds. And spare wheat, I buy: animals eat a lot."),
+        "next": ("Mais tarde, no capítulo 3: o Posto de pastor e o Marcador de cercado põem um aldeão no rebanho. O Rancho, depois, faz tudo com máquinas.",
+                 "Later, in chapter 3: the Shepherd post and the Pen marker put a villager on the herd. The Ranch, later, does it all with machines."),
+        "after": ("O rebanho vai bem, graças a você.", "The herd is doing well, thanks to you."),
+    })
+    errand("coal", {
+        "title": ("A carvoaria do Seu Lino", "Lino's charcoal kiln"),
+        "hint": ("E tem a energia. A vila vive da carvoaria velha do Seu Lino: forno, forja, o lampião da praça. Está apagada, e ele está velho. Ele fica a %s blocos %s.",
+                 "And there is power. The village lives off Lino's old charcoal kiln: ovens, the forge, the square's lamp. It is out, and he is old. He is %s blocks %s."),
+        "ask.0.1": ("Apagada. Quarenta anos de fogo e a carvoaria apagou.", "Out. Forty years of fire and the kiln went out."),
+        "ask.0.2": ("Carvão é a força da vila: assa o pão, derrete o ferro do Bento, acende a praça de noite.", "Charcoal is the village's strength: it bakes bread, melts Bento's iron, lights the square at night."),
+        "ask.0.3": ("Sem lenha não tem carvão, e eu não aguento mais o machado.", "No wood, no charcoal, and I cannot swing the axe any more."),
+        "ask.0.4": ("A vila precisa de mais energia do que este forninho dá. Mas um passo de cada vez.", "The village needs more power than this little kiln gives. But one step at a time."),
+        "ask.1.1": ("Me traga 16 troncos, de qualquer árvore. Machado ajuda: quebra mais rápido.", "Bring me 16 logs, from any tree. An axe helps: it breaks them faster."),
+        "ask.1.2": ("Corte a árvore inteira e plante a muda que cair: floresta também se planta.", "Cut the whole tree and plant the sapling it drops: forests are planted too."),
+        "ask.1.3": ("Tronco é tronco: carvalho, bétula, pinheiro, tanto faz.", "A log is a log: oak, birch, spruce, it does not matter."),
+        "goal.1": ("Traga ao Seu Lino: %s/%s troncos (qualquer árvore)", "Bring Lino: %s/%s logs (any tree)"),
+        "more.1": ("Faltam %s de %s troncos. Devolvi os seus.", "%s of %s logs missing. I gave yours back."),
+        "done.1.1": ("Lenha boa! A carvoaria acende hoje.", "Good wood! The kiln lights today."),
+        "done.1.2": ("Agora você aprende o segredo do carvoeiro.", "Now you learn the collier's secret."),
+        "ask.2.1": ("Ponha tronco na fornalha: em vez de queimar, ele vira carvão vegetal.", "Put a log in the furnace: instead of burning, it turns into charcoal."),
+        "ask.2.2": ("Carvão vegetal queima igual ao carvão de pedra: 8 itens por pedaço, na fornalha e no seu gerador.", "Charcoal burns just like coal: 8 items a piece, in the furnace and in your generator."),
+        "ask.2.3": ("Me traga 8 carvões vegetais para reacender a praça.", "Bring me 8 charcoal to relight the square."),
+        "goal.2": ("Traga ao Seu Lino: %s/%s carvões vegetais (tronco na fornalha)", "Bring Lino: %s/%s charcoal (log in the furnace)"),
+        "more.2": ("Faltam %s de %s carvões. Devolvi os seus.", "%s of %s charcoal missing. I gave yours back."),
+        "done.2.1": ("Isso, carvoeiro! O lampião da praça acende hoje à noite.", "That's it, collier! The square's lamp lights tonight."),
+        "done.2.2": ("Fique com 8: é para o seu gerador. Gerador apagado é fábrica parada.", "Keep 8: they are for your generator. A cold generator is a stopped factory."),
+        "done.2.3": ("Mas fogo come lenha todo dia. A vila precisa de energia que não acaba.", "But fire eats wood every day. The village needs power that does not run out."),
+        "gift": ("+ 8 carvões vegetais (para o gerador)", "+ 8 charcoal (for the generator)"),
+        "ask.3.1": ("Meu pai dizia: água corre sempre. A roda d'água gera energia sem queimar nada.", "My father used to say: water always runs. The water wheel makes power without burning anything."),
+        "ask.3.2": ("Faça uma roda d'água (receita no livro) e ponha num rio, com a água correndo nela.", "Make a water wheel (recipe in the book) and place it in a river, with water flowing through it."),
+        "ask.3.3": ("Ela gera pouco, mas não para: de dia, de noite, sem fumaça.", "It makes little, but it never stops: day, night, no smoke."),
+        "goal.3": ("Coloque uma roda d'água num rio (receita no livro)", "Place a water wheel in a river (recipe in the book)"),
+        "wait.3": ("A roda d'água, num rio com correnteza. A receita está no seu livro.", "The water wheel, in a flowing river. The recipe is in your book."),
+        "done.3.1": ("Ouviu? Esse barulhinho é energia de graça.", "Hear that? That little sound is free power."),
+        "done.3.2": ("Fogo para quando precisa de muito; água para nunca faltar. A vila vai precisar das duas.", "Fire for when you need a lot; water so it never runs out. The village will need both."),
+        "done.3.3": ("Mais tarde vêm o gerador a biomassa, a máquina a vapor, o solar. Cada um com o seu preço.", "Later come the biomass generator, the steam engine, solar. Each with its price."),
+        "done.3.4": ("Carvão vegetal é comigo: troco 8 por uma esmeralda. E compro lenha.", "Charcoal is my business: 8 for an emerald. And I buy wood."),
+        "next": ("Energia é a base da fábrica. Wiki (J) → Energia: gerador, roda d'água, solar, vapor e acumulador.",
+                 "Power is the factory's foundation. Wiki (J) → Power: generator, water wheel, solar, steam and battery."),
+        "after": ("A carvoaria está acesa.", "The kiln is lit."),
+    })
+    errand("forge", {
+        "title": ("A forja do Seu Bento", "Bento's forge"),
+        "hint": ("O Seu Bento quer voltar a forjar, mas não tem ferro: a mina fechou. Passe na oficina dele, a %s blocos %s.",
+                 "Bento wants to forge again, but has no iron: the mine closed. Drop by his workshop, %s blocks %s."),
+        "busy": ("Primeiro o favor da Dona Cida. Depois a gente conversa de ferro.", "First Cida's favor. Then we talk iron."),
+        "ask.0.1": ("A prensa está em boas mãos, já vi. Agora, um pedido de ferreiro para ferreiro.", "The press is in good hands, I can see. Now, a request from one smith to another."),
+        "ask.0.2": ("Desde que a mina fechou, não vejo ferro. Ferradura, dobradiça, prego: a vila conserta tudo com corda.", "Since the mine closed I have seen no iron. Horseshoes, hinges, nails: the village fixes everything with rope."),
+        "ask.0.3": ("Ferro se tira com picareta de pedra, nas encostas e cavernas. Minério na fornalha vira lingote.", "Iron comes out with a stone pickaxe, on slopes and in caves. Ore in the furnace becomes an ingot."),
+        "ask.1.1": ("Me traga 8 lingotes de ferro, tirados com as suas mãos.", "Bring me 8 iron ingots, mined with your own hands."),
+        "ask.1.2": ("Minério de ferro é a pedra com pintas cor de ferrugem. Mais fundo, tem mais.", "Iron ore is the stone with rust-coloured spots. Deeper down, there is more."),
+        "ask.1.3": ("Ferro bruto na fornalha dá um lingote cada. Guarde carvão, que ferro come fogo.", "Raw iron in the furnace gives one ingot each. Keep coal, iron eats fire."),
+        "goal.1": ("Traga ao Seu Bento: %s/%s lingotes de ferro (minério na fornalha)", "Bring Bento: %s/%s iron ingots (ore in the furnace)"),
+        "more.1": ("Faltam %s de %s lingotes. Devolvi os seus.", "%s of %s ingots missing. I gave yours back."),
+        "done.1.1": ("Ferro de verdade! Faz tempo que a bigorna não canta.", "Real iron! The anvil has not sung in a long time."),
+        "done.1.2": ("Mas olhe a minha mão: uma chapa por dia, no martelo.", "But look at my hand: one plate a day, by hammer."),
+        "done.1.3": ("A sua prensa faz uma por segundo. Vamos ver.", "Your press makes one a second. Let us see."),
+        "ask.2.1": ("Ponha lingote de ferro na sua prensa: ela faz chapa de ferro, igual à de cobre.", "Put iron ingots in your press: it makes iron plates, just like copper ones."),
+        "ask.2.2": ("Me traga 4 chapas de ferro. Quero ver com os meus olhos.", "Bring me 4 iron plates. I want to see it with my own eyes."),
+        "ask.2.3": ("Chapa de ferro vira moldura na cortadora, aço no forno de ligas, kit de reparo. É peça de fábrica.", "An iron plate becomes a frame in the cutter, steel in the alloy furnace, a repair kit. It is a factory part."),
+        "goal.2": ("Traga ao Seu Bento: %s/%s chapas de ferro (lingote na prensa)", "Bring Bento: %s/%s iron plates (ingot in the press)"),
+        "more.2": ("Faltam %s de %s chapas. Devolvi as suas.", "%s of %s plates missing. I gave yours back."),
+        "done.2.1": ("Lisinhas, todas iguais. Isto eu não faço nem em cem anos.", "Smooth, all the same. I could not do this in a hundred years."),
+        "done.2.2": ("Ferreiro de martelo é coisa do passado. Ferreiro agora é quem cuida das máquinas.", "Hammer smiths are a thing of the past. A smith now is whoever tends the machines."),
+        "done.2.3": ("Enquanto a mina não volta, compro o seu ferro: lingote por esmeralda.", "Until the mine returns, I buy your iron: ingots for emeralds."),
+        "done.2.4": ("E quando a fábrica crescer, me chame: aço, circuito, quero aprender tudo.", "And when the factory grows, call me: steel, circuits, I want to learn it all."),
+        "next": ("Mais tarde: o Quadro da fábrica mostra as fases da indústria (Oficina, Aço, Eletrônica). Wiki (J) → Fases e pesquisa.",
+                 "Later: the Factory board shows the industry phases (Workshop, Steel, Electronics). Wiki (J) → Phases and research."),
+        "after": ("A bigorna voltou a cantar.", "The anvil sings again."),
+    })
