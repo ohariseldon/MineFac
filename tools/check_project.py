@@ -32,9 +32,10 @@ def main():
     check_page_fit(languages, "first_steps")
     check_page_fit(languages, "transport_guide")
     # Dynamic native keys are not reachable from a book's JSON tree.
-    keys = ([f"veio.onboarding.goal.{i}" for i in range(8)]
-            + [f"veio.onboarding.{part}.{i}" for part in ("title", "why") for i in range(9)]
-            + [f"veio.onboarding.from.{i}" for i in range(8)] + [f"veio.onboarding.recipe.{i}.0" for i in (0, 1, 3, 4, 5, 6, 7)]
+    keys = ([f"veio.onboarding.goal.{i}" for i in range(16)]
+            + [f"veio.onboarding.{part}.{i}" for part in ("title", "why", "story") for i in range(17)]
+            + [f"veio.onboarding.from.{i}" for i in (*range(8), 8, 10, 11)]
+            + [f"veio.onboarding.recipe.{i}.0" for i in (0, 1, 3, 4, 5, 6, 7, 8, 10, 11)]
             + ["veio.onboarding.recipe.1.1", "veio.onboarding.book", "veio.onboarding.make", "veio.onboarding.done"]
             + [f"veio.onboarding.name.{item.rsplit(':', 1)[-1]}" for item in onboarding_items()]
             + [f"veio.onboarding.blocked.{i}" for i in (3, 5, 9)]
@@ -111,8 +112,9 @@ def onboarding_items():
     source = (ROOT / "native/api/src/onboarding.rs").read_text(encoding="utf-8")
     block = source[source.index("const CRAFT"):source.index("fn craft_bit")]
     consts = {"GENERATOR": "generator", "PRESS": "press", "CABLE": "cable", "ASSEMBLER": "assembler", "DRILL": "drill",
-              "BELT": "belt", "HUB": "contract_hub", "PLATE": "copper_plate", "GEAR": "gear"}
-    return re.findall(r'"#?([a-z_]+:[a-z_]+)"', block) + [consts[name] for name in re.findall(r"\b([A-Z]+)\b", block) if name in consts]
+              "BELT": "belt", "HUB": "contract_hub", "PLATE": "copper_plate", "GEAR": "gear",
+              "BOARD": "factory_board", "POLE": "pole", "HAULER_POST": "hauler_post"}
+    return re.findall(r'"#?([a-z_]+:[a-z_]+)"', block) + [consts[name] for name in re.findall(r"\b([A-Z_]+)\b", block) if name in consts]
 
 
 def check_page_fit(languages, name, strict=True):

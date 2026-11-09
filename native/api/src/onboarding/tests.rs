@@ -212,7 +212,7 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     p.crafted = 0b101; p.tips = TIP_BELT;
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.crafted, loaded.tips), (0b101, TIP_BELT));
-    let old = p.encode().replace("veio-onboarding-4", "veio-onboarding-1").replacen(" 5 2 0 0\n", "\n", 1);
+    let old = p.encode().replace("veio-onboarding-5", "veio-onboarding-1").replacen(" 5 2 0 0 0 0\n", "\n", 1);
     assert_eq!(Progress::decode(&old).map(|old| (old.step, old.crafted)), Some((6, 0)));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
@@ -456,7 +456,9 @@ fn old_saves_skip_the_prologue_once_the_factory_started_and_v3_keeps_the_plot() 
     let fresh = "veio-onboarding-2\n0 0 0 0 0 0 0 0 0 0 0 0\nminecraft:overworld\n-\n-\n-\n-\n-\n";
     assert_eq!(Progress::decode(fresh).unwrap().intro, intro::VILLAGE_STAGE);
     let finished = "veio-onboarding-1\n8 0 1 4 1 1 2 1 4 1\nminecraft:overworld\n-\n-\n-\n-\n-\n";
-    assert!(Progress::decode(finished).unwrap().outro, "quem já terminou não precisa voltar ao prefeito");
+    let finished = Progress::decode(finished).unwrap();
+    // O tutorial antigo acabava na etapa 8: quem terminou segue para os sistemas da vila.
+    assert_eq!((finished.step, finished.intro, finished.outro), (BOARD_STEP, intro::INTRO_DONE, false));
     let mut p = Progress { intro: intro::PLOT_STAGE, plot: Some([30, 65, -4]), dimension: "minecraft:overworld".into(), ..Progress::default() };
     p = Progress::decode(&p.encode()).unwrap();
     assert_eq!((p.intro, p.plot), (intro::PLOT_STAGE, Some([30, 65, -4])));
@@ -544,4 +546,66 @@ fn the_arrow_turns_with_the_player() {
     assert_eq!(arrow(from, south, 90.0), "←");
     assert_eq!(arrow(from, south, -90.0), "→");
     assert_eq!(arrow(from, [30.0, 64.0, 30.0], 0.0), "↖", "sudeste, olhando para o sul: à frente e à esquerda");
+}
+
+#[test]
+fn the_village_systems_steps_follow_the_board_the_poles_the_worker_and_the_house() {
+    struct World { blocks: HashMap<Pos, ModBlockEntity> }
+    impl Host for World {
+        fn mod_block_entity(&self, pos: Pos) -> Option<ModBlockEntity> { self.blocks.get(&pos).cloned() }
+    }
+    let player = NativeServerPlayer { uuid: 5, name: "Fundador".into(), dimension: "minecraft:overworld".into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut world = World { blocks: HashMap::new() };
+    let mut p = line(BOARD_STEP);
+    assert!(!p.ready());
+    // Abrir um Quadro antes da etapa não conta; colocar conta.
+    p.step = 7; p.systems([1, 64, 5], milestones::BOARD, true);
+    assert_eq!(p.board, None);
+    p.step = BOARD_STEP; p.systems([1, 64, 5], milestones::BOARD, false);
+    assert!(p.ready());
+    // Fase: lê as chapas entregues e a fase do Quadro colocado.
+    p.step = PHASE_STEP;
+    let mut board = ModBlockEntity::default(); board.id = milestones::BOARD.into();
+    set_number(&mut board, "Delivered", 9);
+    world.blocks.insert([1, 64, 5], board.clone());
+    look(&mut world, &player, &mut p);
+    assert_eq!((goal_count(&p), p.ready()), (9, false));
+    set_number(&mut board, "Phase", 1); set_number(&mut board, "Delivered", 0);
+    world.blocks.insert([1, 64, 5], board);
+    look(&mut world, &player, &mut p);
+    assert!(p.ready());
+    // Postes: dois colocados, e o último com energia.
+    p.step = POLE_STEP;
+    p.systems([3, 64, 0], POLE, false); p.systems([10, 64, 0], POLE, false);
+    let mut pole = ModBlockEntity::default(); pole.id = POLE.into();
+    world.blocks.insert([10, 64, 0], pole.clone());
+    look(&mut world, &player, &mut p);
+    assert!(!p.ready(), "poste sem energia ainda não leva nada");
+    set_number(&mut pole, "energy", 40); world.blocks.insert([10, 64, 0], pole);
+    look(&mut world, &player, &mut p);
+    assert!(p.ready());
+    // Posto colocado; contratar vem dos registros do trabalho; comida no posto.
+    p.step = POST_STEP; p.systems([6, 64, 6], workforce::HAULER_POST, false);
+    assert!(p.ready());
+    p.step = FOOD_STEP;
+    let mut post = ModBlockEntity::default(); post.id = workforce::HAULER_POST.into(); post.items = vec![None; 7];
+    world.blocks.insert([6, 64, 6], post.clone());
+    look(&mut world, &player, &mut p);
+    assert!(!p.ready());
+    post.items[0] = Some(ItemStack::new("minecraft:bread", 4)); world.blocks.insert([6, 64, 6], post);
+    look(&mut world, &player, &mut p);
+    assert!(p.ready());
+    // Refeição no Lar e centro de controle só contam na etapa deles.
+    p.step = MEAL_STEP; p.events |= EVENT_MEAL; assert!(p.ready());
+    p.step = CENTER_STEP;
+    p.systems([0, 64, -8], workforce::CONTROL_CENTER, false);
+    assert!(!p.ready(), "colocar não é abrir");
+    p.systems([0, 64, -8], workforce::CONTROL_CENTER, true);
+    assert!(p.ready());
+    // O save v5 guarda os blocos e os eventos dos sistemas.
+    let loaded = Progress::decode(&p.encode()).unwrap();
+    assert_eq!((loaded.board, loaded.post, loaded.pole, loaded.poles, loaded.events),
+        (Some([1, 64, 5]), Some([6, 64, 6]), Some([10, 64, 0]), 2, EVENT_MEAL | EVENT_CENTER));
+    assert_eq!(loaded.step, CENTER_STEP);
 }
