@@ -1,4 +1,6 @@
-# Veio 0.34.0
+# Veio 0.35.0
+
+A 0.35.0 cuida dos detalhes do **capítulo 3 (a cidade)**. O prefeito **não interrompe mais**: só depois de 20 minutos numa etapa a barra avisa, discreta, que ele tem uma dica, e ela sai quando você clica nele. Nas etapas com várias condições, a barra vira uma **lista ✔/✘ ao vivo**: a primeira venda (comerciante no balcão, ser de dia, salários pagos, famílias com dinheiro) e a fase (funcionário, moradores, famílias, IDH e a parte mais fraca). A barra também mostra os saldos da companhia e da conta pública e em quantos dias chega o visitante da próxima festa. Um "plim" discreto toca quando um número sobe (mais uma casa atendida, mais uma família). Cada etapa indica o artigo da wiki (tecla J) que explica o sistema, e a etapa seguinte espera 3 segundos para não chegar junto com a comemoração. Os sons de comemoração dos tutoriais agora tocam onde o jogador está (antes saíam no spawn do mundo).
 
 A 0.34.0 completa o **capítulo 3 (a cidade)**: agora são 10 etapas, com **impostos e a conta pública** (a prefeitura vive do imposto retido em cada venda) e **uma festa** (atender um visitante da Agenda) antes da subida para a fase Vila. A barra mostra os números da vila em cada etapa (casas com saneamento, energia e lazer, famílias, o pedido aberto da festa e a parte mais fraca do IDH na fase) e aponta para a loja ou a prefeitura quando a etapa depende delas. Parado 3 minutos numa etapa, o prefeito percebe e dá uma dica; na fase, diz como melhorar a parte mais fraca do IDH (comida, moradia, serviços ou renda).
 

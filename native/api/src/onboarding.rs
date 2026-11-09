@@ -90,6 +90,8 @@ struct Progress {
     /// Quando a etapa da cidade começou (relógio da sociedade) e se o prefeito já deu a dica.
     city_since: Option<u64>,
     city_hinted: bool,
+    /// O número que a etapa da cidade acompanha, para o "plim" quando ele sobe.
+    city_metric: Option<i32>,
     // Unsaved transient evidence must not survive a reload or manual intervention.
     input_credit: u32,
     output_credit: u32,
@@ -488,7 +490,7 @@ fn celebrate(host: &mut dyn Host, player: &NativeServerPlayer, step: u8) {
     let name = &player.name;
     host.run_command(&format!(r#"title {name} subtitle {{"translate":"veio.onboarding.title.{step}"}}"#));
     host.run_command(&format!(r#"title {name} title {{"translate":"veio.onboarding.done","color":"gold"}}"#));
-    host.run_command(&format!("playsound minecraft:ui.toast.challenge_complete master {name}"));
+    host.run_command(&format!("execute as {name} at @s run playsound minecraft:ui.toast.challenge_complete master @s"));
     host.run_command(&format!("xp add {name} {} points", 10 + 5 * u32::from(step)));
 }
 

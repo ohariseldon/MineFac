@@ -192,7 +192,7 @@ pub(super) fn celebrate(host: &mut dyn Host, player: &NativeServerPlayer, finish
     let next = if finished + 1 < usize::from(STEPS) { format!("veio.village.title.{}", finished + 1) } else { "veio.village.end_sub".into() };
     host.run_command(&format!(r#"title {name} subtitle {{"translate":"{next}"}}"#));
     host.run_command(&format!(r#"title {name} title {{"translate":"veio.onboarding.done","color":"gold"}}"#));
-    host.run_command(&format!("playsound minecraft:ui.toast.challenge_complete master {name}"));
+    host.run_command(&format!("execute as {name} at @s run playsound minecraft:ui.toast.challenge_complete master @s"));
     host.run_command(&format!("xp add {name} {} points", 20 + 5 * finished));
 }
 
