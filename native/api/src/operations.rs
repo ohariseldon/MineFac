@@ -152,6 +152,7 @@ pub(crate) fn accepts_delivery(host: &dyn Host, event: &ContainerAcceptsEvent<'_
     if freight::owns(&event.entity.id) { return freight::accepts_delivery(event.entity, event.slot, event.stack); }
     accepts_material(event.entity, event.slot, event.stack)
         && (event.entity.id != MERGER || logistics::accepts_merger(host, event))
+        && logistics::accepts_face(host, event)
 }
 
 pub(crate) fn advice_key(status: i32) -> String {

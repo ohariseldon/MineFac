@@ -3,8 +3,9 @@
 //! - **Mundo novo / jogador novo:** no login, o Veio procura uma vila a até `SEARCH` blocos do
 //!   jogador pelos aldeões que já registra (`ranch::villager_positions`); o centro é a média dos
 //!   aldeões em volta daquele que tem mais vizinhos (onde a vila se reúne). O jogador vai para lá,
-//!   e o spawn do mundo e o dele ficam nesse ponto. Sem vila em `WAIT` ticks, o Veio gera uma vila de
-//!   planície onde o jogador está (`/place structure`) e procura de novo.
+//!   e o spawn do mundo e o dele ficam nesse ponto. Sem vila em `WAIT` ticks, o Veio escolhe um
+//!   terreno plano, seco e sem árvores a até `SITE_REACH` blocos (`flat_site`), tira as árvores
+//!   que sobrarem em volta, gera uma vila de planície ali (`/place structure`) e leva o jogador.
 //! - **Centro de controle:** com administrador, ele vira o centro da vila: o spawn do mundo e o de
 //!   todos os jogadores passam para cima dele, e quem renasce volta para lá.
 //!
@@ -24,6 +25,15 @@ pub(crate) const SEARCH: f64 = 96.0;
 pub(crate) const WAIT: u64 = 600;
 pub(crate) const MIN_VILLAGERS: usize = 3;
 const NEIGHBORS: f64 = 16.0;
+/// Até onde procurar terreno para a vila nova (dentro da distância em que os chunks já carregaram).
+pub(crate) const SITE_REACH: i32 = 96;
+/// O núcleo da vila: 7 x 7 colunas a cada 8 blocos (48 x 48 blocos).
+const SITE_HALF: i32 = 24;
+const SITE_STEP: i32 = 8;
+/// Bom o bastante: no máximo 3 blocos de desnível e 2 colunas com copa de árvore.
+const GOOD_SITE: i32 = 3 * 4 + 2 * 3;
+/// Área limpa de árvores em volta do centro (64 x 64), em blocos de 16 x 16 x 32 por comando.
+const CLEAR_HALF: i32 = 32;
 const TAG: &str = "veio_village";
 
 struct Arrival {
@@ -112,6 +122,65 @@ pub(crate) fn find_village(host: &dyn Host, around: [f64; 3]) -> Option<[i32; 3]
     Some([x, y, z])
 }
 
+/// Nota de um terreno para a vila (menor é melhor), pelas alturas das colunas: chão sólido
+/// (`floor`), chão com água (`ground`, sem folhas) e topo com folhas (`top`). Água recusa o lugar;
+/// desnível e copas de árvore pesam.
+pub(crate) fn site_score(floor: &[i32], ground: &[i32], top: &[i32]) -> Option<i32> {
+    if floor.is_empty() || floor.len() != ground.len() || floor.len() != top.len() { return None; }
+    if floor.iter().zip(ground).any(|(floor, ground)| ground > floor) { return None; }
+    let leaves = ground.iter().zip(top).filter(|(ground, top)| top > ground).count() as i32;
+    let range = floor.iter().max()? - floor.iter().min()?;
+    Some(range * 4 + leaves * 3)
+}
+
+fn site_columns(x: i32, z: i32) -> Vec<(i32, i32)> {
+    let steps = (-SITE_HALF..=SITE_HALF).step_by(SITE_STEP as usize);
+    steps.clone().flat_map(|dx| steps.clone().map(move |dz| (x + dx, z + dz))).collect()
+}
+
+fn heights(host: &dyn Host, columns: &[(i32, i32)], map: NativeHeightmap) -> Option<Vec<i32>> {
+    host.surface_heights(OVERWORLD, columns, map).ok()?.into_iter().collect()
+}
+
+/// O terreno mais plano e sem árvores perto de `around`: anéis de 16 em 16 blocos, 8 direções,
+/// o primeiro bom o bastante ou o melhor visto. Coluna em chunk não carregado descarta o lugar.
+/// Devolve o centro, a altura do chão e se ainda há copas para tirar.
+pub(crate) fn flat_site(host: &dyn Host, around: [i32; 2]) -> Option<([i32; 3], bool)> {
+    let mut best: Option<(i32, [i32; 3])> = None;
+    for ring in (0..=SITE_REACH).step_by(16) {
+        let points: Vec<[i32; 2]> = if ring == 0 { vec![around] } else {
+            [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)].iter()
+                .map(|(dx, dz)| [around[0] + dx * ring, around[1] + dz * ring]).collect()
+        };
+        for [x, z] in points {
+            let columns = site_columns(x, z);
+            let (Some(floor), Some(ground), Some(top)) = (heights(host, &columns, NativeHeightmap::OceanFloor),
+                heights(host, &columns, NativeHeightmap::MotionBlockingNoLeaves),
+                heights(host, &columns, NativeHeightmap::MotionBlocking)) else { continue };
+            let Some(score) = site_score(&floor, &ground, &top) else { continue };
+            let mut sorted = floor.clone();
+            sorted.sort_unstable();
+            let at = [x, sorted[sorted.len() / 2], z];
+            if best.is_none_or(|(known, _)| score < known) { best = Some((score, at)); }
+            if score <= GOOD_SITE { return Some((at, score > 0)); }
+        }
+    }
+    best.map(|(score, at)| (at, score > 0))
+}
+
+/// Tira folhas e troncos de árvore em volta do centro, antes de gerar a vila.
+fn clear_trees(host: &mut dyn Host, [x, y, z]: [i32; 3]) {
+    for dx in (-CLEAR_HALF..CLEAR_HALF).step_by(16) {
+        for dz in (-CLEAR_HALF..CLEAR_HALF).step_by(16) {
+            let (x0, z0) = (x + dx, z + dz);
+            for tag in ["minecraft:leaves", "minecraft:logs"] {
+                host.run_command(&format!("execute in {OVERWORLD} run fill {x0} {} {z0} {} {} {} minecraft:air replace #{tag}",
+                    y - 1, x0 + 15, y + 30, z0 + 15));
+            }
+        }
+    }
+}
+
 /// Leva o jogador ao centro e fixa os spawns, só se ele ainda não tem a tag.
 fn settle(host: &mut dyn Host, name: &str, [x, y, z]: [i32; 3]) -> bool {
     let only_new = format!("execute in {OVERWORLD} as {name} unless entity @s[tag={TAG}] run");
@@ -180,9 +249,23 @@ pub(crate) fn tick(host: &mut dyn Host, now: u64) {
         let name = arrival.name.clone();
         let only_new = format!("execute in {OVERWORLD} as {name} unless entity @s[tag={TAG}] at @s run");
         if !arrival.placed {
-            // Nenhuma vila perto: gera uma onde o jogador está e procura de novo.
-            host.run_command(&format!("{only_new} place structure minecraft:village_plains ~ ~ ~"));
+            // Nenhuma vila perto: escolhe terreno plano e sem árvores, limpa e gera a vila lá.
             arrival.placed = true;
+            let around = [player.position[0].floor() as i32, player.position[2].floor() as i32];
+            if let Some((site, trees)) = flat_site(host, around) {
+                if trees { clear_trees(host, site); }
+                let [x, y, z] = site;
+                if host.run_command(&format!("execute in {OVERWORLD} run place structure minecraft:village_plains {x} {y} {z}"))
+                    && settle(host, &name, site)
+                {
+                    if let Ok(mut center) = CENTER.lock() && center.is_none() {
+                        *center = Some((site, false));
+                    }
+                    continue;
+                }
+            } else {
+                host.run_command(&format!("{only_new} place structure minecraft:village_plains ~ ~ ~"));
+            }
             arrival.deadline = now + WAIT;
             waiting.push(arrival);
         } else {

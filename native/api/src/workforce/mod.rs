@@ -241,8 +241,10 @@ pub(super) fn claim(uuid: Uuid, dimension: &str, post: [i32; 3], now: u64) -> bo
         claim.seen = now;
         return true;
     }
-    // Limpa reivindicações vencidas antes de crescer.
-    claims.retain(|(_, claim)| now.saturating_sub(claim.seen) <= CLAIM_STALE);
+    // Limpa reivindicações vencidas quando a lista cresce (a busca já trata as vencidas).
+    if claims.len() >= 128 {
+        claims.retain(|(_, claim)| now.saturating_sub(claim.seen) <= CLAIM_STALE);
+    }
     claims.push((uuid, Claim { dimension: dimension.to_owned(), post, entity: None, seen: now }));
     true
 }
@@ -1165,6 +1167,15 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         publish_ration(entity);
         return;
     }
+    // Feriado: a vila para para comemorar (o quartel continua de plantão).
+    if entity.id != BARRACKS && society::agenda::holiday(dimension, pos, host.day_time(), now) {
+        show_load(host, entity, id, false);
+        cancel(id);
+        unreserve(dimension, pos);
+        set_number(entity, "Status", society::agenda::HOLIDAY);
+        publish_ration(entity);
+        return;
+    }
     if entity.id == FOREMAN_DESK {
         foreman::organize(host, pos, entity, now);
     }
@@ -1282,7 +1293,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             cancel(id);
             unreserve(dimension, pos);
             return match status {
-                KEEP if number(entity, "Status") == RESTING => IDLE_WORK,
+                KEEP if matches!(number(entity, "Status"), RESTING | society::agenda::HOLIDAY) => IDLE_WORK,
                 KEEP => number(entity, "Status"),
                 status => status,
             };

@@ -15,6 +15,29 @@ const HUB_SLOT: usize = 4;
 const MAX_TRACE: usize = 128;
 // Workers may walk and wait with a load. No short conveyor-speed deadline.
 const TRACE_TTL: u64 = 6000;
+/// Linhas "faça" de cada etapa (`veio.onboarding.do.<etapa>.<n>`), na ordem.
+const DO_LINES: [u8; 9] = [3, 4, 4, 3, 3, 4, 3, 4, 3];
+/// O que fabricar em cada etapa: o produto e os ingredientes da receita (sem repetir). A ficha
+/// da etapa (texto gerado das receitas em `build_onboarding.py`) explica a receita; a lista de
+/// materiais acima da barra de itens marca o que o jogador já tem. Nada é dado de graça.
+const CRAFT: [&[(&str, &[&str])]; 8] = [
+    &[(GENERATOR, &["minecraft:furnace", "minecraft:iron_ingot", "minecraft:copper_ingot"])],
+    &[(PRESS, &["minecraft:copper_ingot", "minecraft:iron_ingot", "minecraft:piston", "minecraft:smooth_stone"]),
+      (CABLE, &["minecraft:copper_ingot", "minecraft:stick"])],
+    &[("minecraft:raw_copper", &[])],
+    &[(ASSEMBLER, &[PLATE, "minecraft:piston", "minecraft:crafting_table"])],
+    &[(DRILL, &["minecraft:copper_ingot", "minecraft:iron_ingot", "minecraft:piston"])],
+    &[(BELT, &["minecraft:copper_ingot", "minecraft:stick"])],
+    &[("minecraft:chest", &["#minecraft:planks"])],
+    &[(HUB, &["minecraft:chest", GEAR, "minecraft:iron_ingot", "minecraft:copper_ingot"])],
+];
+
+fn craft_bit(step: usize, part: usize) -> u16 { 1 << (step * 2 + part) }
+
+/// Dicas de uma vez só, na hora em que fazem sentido (como as do Factorio).
+const TIP_FACES: u16 = 1;
+const TIP_BELT: u16 = 2;
+const TIPS: [(u16, &str); 2] = [(TIP_FACES, "faces"), (TIP_BELT, "belt")];
 static ACTIVE: AtomicBool = AtomicBool::new(false);
 static FLOW_ACTIVE: AtomicBool = AtomicBool::new(false);
 static SERVER_CLOCK: AtomicU64 = AtomicU64::new(0);
@@ -37,6 +60,18 @@ struct Progress {
     made: u32,
     stored: u32,
     delivered: bool,
+    /// Produtos da etapa já fabricados (`craft_bit`) e dicas já vistas (bits), salvos.
+    crafted: u16,
+    tips: u16,
+    pending_tips: u16,
+    /// Prólogo (`intro`): casa, prefeito e terreno; `plot` é o centro do terreno e o nível dele;
+    /// `outro` marca a última conversa com o prefeito. Salvos.
+    intro: u8,
+    plot: Option<Pos>,
+    outro: bool,
+    intro_announced: Option<u8>,
+    intro_since: Option<u64>,
+    plot_level: Option<intro::Level>,
     // Unsaved transient evidence must not survive a reload or manual intervention.
     input_credit: u32,
     output_credit: u32,
@@ -196,10 +231,11 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-1\n{} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-3\n{} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
-            self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.dimension);
-        for pos in self.blocks {
+            self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips,
+            self.intro, u8::from(self.outro), self.dimension);
+        for pos in self.blocks.iter().chain([&self.plot]) {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
         }
@@ -208,23 +244,30 @@ impl Progress {
 
     fn decode(text: &str) -> Option<Self> {
         let mut lines = text.lines();
-        if lines.next()? != "veio-onboarding-1" { return None; }
+        let fields = match lines.next()? { "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, "veio-onboarding-3" => 14, _ => return None };
         let values: Vec<u32> = lines.next()?.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
-        if values.len() != 10 || values[0] > u32::from(DONE) { return None; }
+        if values.len() != fields || values[0] > u32::from(DONE) { return None; }
+        let (crafted, tips) = if fields >= 12 { (values[10] as u16, values[11] as u16) } else { (0, 0) };
+        // Saves de antes do prólogo: quem já começou a fábrica não volta para a casa e o prefeito.
+        let (intro, outro) = if fields == 14 { ((values[12] as u8).min(intro::INTRO_DONE), values[13] != 0) }
+            else if values[0] > 0 || crafted != 0 { (intro::INTRO_DONE, values[0] == u32::from(DONE)) }
+            else { (0, false) };
         let dimension = lines.next()?.to_owned();
         if dimension.len() > 128 { return None; }
+        let parse = |line: &str| -> Option<Option<Pos>> {
+            if line == "-" { return Some(None); }
+            let coords: Vec<i32> = line.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
+            Some(Some(coords.try_into().ok()?))
+        };
         let mut blocks = [None; 5];
-        for block in &mut blocks {
-            let line = lines.next()?;
-            if line != "-" {
-                let coords: Vec<i32> = line.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
-                *block = Some(coords.try_into().ok()?);
-            }
-        }
+        for block in &mut blocks { *block = parse(lines.next()?)?; }
+        let plot = if fields == 14 { parse(lines.next()?)? } else { None };
+        // Sem o terreno salvo, o prefeito escolhe outro.
+        let intro = if intro == intro::PLOT_STAGE && plot.is_none() { intro::MAYOR_STAGE } else { intro };
         Some(Self { step: values[0] as u8, hidden: values[1] != 0, powered: values[2] != 0,
             plates: values[3].min(4), gears: values[4].min(1), copper: values[5].min(1),
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
-            delivered: values[9] != 0, dimension, blocks, ..Self::default() })
+            delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro, ..Self::default() })
     }
 }
 
@@ -248,7 +291,8 @@ pub(super) fn tracking() -> bool { ACTIVE.load(Ordering::Relaxed) }
 
 pub(super) fn visible_goal(uuid: u128) -> bool {
     SESSION.lock().ok().and_then(|slot| slot.as_ref().and_then(|session|
-        session.players.get(&uuid).map(|progress| progress.step < DONE && !progress.hidden)))
+        session.players.get(&uuid).map(|progress| (progress.step < DONE || progress.intro < intro::INTRO_DONE || !progress.outro)
+            && !progress.hidden)))
         .unwrap_or(false)
 }
 
@@ -296,13 +340,23 @@ fn save(root: &Path, uuid: u128, progress: &mut Progress) -> std::io::Result<()>
 /// machine by opening it. No nearest-player guessing; another player's factory
 /// cannot complete your workshop unless you explicitly select that machine.
 pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
-    if !matches!(block, GENERATOR | PRESS | ASSEMBLER | DRILL | DRILL_MK2 | production::DRILL_MK3 | HUB) { return; }
+    let tutorial = matches!(block, GENERATOR | PRESS | ASSEMBLER | DRILL | DRILL_MK2 | production::DRILL_MK3 | HUB);
+    let tip = tip_for(block).filter(|_| !clicked);
+    let part = !clicked && CRAFT.iter().any(|parts| parts.iter().any(|(target, _)| *target == block));
+    if !tutorial && tip.is_none() && !part { return; }
     let Some(player) = host.acting_player() else { return; };
     let Ok(mut slot) = SESSION.lock() else { return; };
     if !session(host, &mut slot) { return; }
     let s = slot.as_mut().unwrap();
     let progress = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
-    if progress.step == DONE { return; }
+    if let Some(bit) = tip && progress.tips & bit == 0 { progress.pending_tips |= bit; }
+    // Colocou o produto da etapa: já foi fabricado (a lista de materiais não volta).
+    if part && let Some(parts) = CRAFT.get(usize::from(progress.step)) {
+        for (index, (target, _)) in parts.iter().enumerate() {
+            if *target == block { progress.crafted |= craft_bit(usize::from(progress.step), index); progress.dirty = true; }
+        }
+    }
+    if !tutorial || progress.step == DONE { return; }
     if clicked { progress.bind(&player.dimension, pos, block); }
     else { progress.placed(&player.dimension, pos, block); }
     if clicked && block == PRESS {
@@ -312,6 +366,86 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     }
     ACTIVE.store(true, Ordering::Relaxed);
 }
+
+/// A dica que colocar este bloco desperta: esteira (direção e carga) ou máquina (entrada e saída).
+fn tip_for(block: &str) -> Option<u16> {
+    if logistics::is_belt(block) { return Some(TIP_BELT); }
+    (is_factory_block(block) && !logistics::transport(block) && !output_slots(block).is_empty()
+        && has_item_inputs(block)).then_some(TIP_FACES)
+}
+
+/// Anuncia a etapa: título, por quê, a ficha (receita e de onde vem cada material), o livro de
+/// receitas com a receita liberada, e os passos numerados.
+fn announce(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) {
+    let step = usize::from(p.step);
+    host.tell(player.uuid, Text::tr(&format!("veio.onboarding.title.{step}"), &[]));
+    host.tell(player.uuid, Text::tr(&format!("veio.onboarding.why.{step}"), &[]));
+    if let Some(parts) = CRAFT.get(step) {
+        for (index, (target, _)) in parts.iter().enumerate() {
+            if target.starts_with("veio:") || *target == "minecraft:chest" {
+                host.tell(player.uuid, Text::tr(&format!("veio.onboarding.recipe.{step}.{index}"), &[]));
+                if target.starts_with("veio:") && spawn_safe(&player.name) {
+                    host.run_command(&format!("recipe give {} {target}", player.name));
+                }
+            }
+        }
+        host.tell(player.uuid, Text::tr(&format!("veio.onboarding.from.{step}"), &[]));
+        if parts.iter().any(|(target, _)| target.starts_with("veio:")) {
+            host.tell(player.uuid, Text::tr("veio.onboarding.book", &[]));
+        }
+    }
+    for line in 1..=DO_LINES.get(step).copied().unwrap_or(0) {
+        host.tell(player.uuid, Text::tr(&format!("veio.onboarding.do.{step}.{line}"), &[]));
+    }
+    if step == 0 { host.tell(player.uuid, Text::tr("veio.wiki.open", &[])); }
+}
+
+fn name_key(item: &str) -> String {
+    format!("veio.onboarding.name.{}", item.rsplit(':').next().unwrap_or(item))
+}
+
+fn has_item(host: &mut dyn Host, name: &str, item: &str) -> bool {
+    host.run_command(&format!("execute if items entity {name} container.* {item}"))
+}
+
+/// Contagem do objetivo da etapa (o que aparece como x/N na barra).
+fn goal_count(p: &Progress) -> u32 {
+    match p.step { 2 => p.plates, 3 => p.gears, 4 => p.copper, 5 => p.fed.min(2), 6 => p.stored, _ => 0 }
+}
+
+/// Lista de materiais acima da barra de itens, enquanto o produto da etapa não foi fabricado:
+/// "Fabrique: Prensa  ✔ lingote de cobre  ✘ pistão ...", verde o que já tem, vermelho o que falta.
+/// Devolve se mostrou (então o objetivo comum espera).
+fn checklist(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) -> bool {
+    let step = usize::from(p.step);
+    let Some(parts) = CRAFT.get(step) else { return false };
+    if goal_count(p) > 0 || !spawn_safe(&player.name) { return false; }
+    for (index, (target, ingredients)) in parts.iter().enumerate() {
+        let bit = craft_bit(step, index);
+        if p.crafted & bit != 0 { continue; }
+        if has_item(host, &player.name, target) { p.crafted |= bit; p.dirty = true; continue; }
+        let mut line = vec![format!(r#"{{"translate":"veio.onboarding.make","with":[{{"translate":"{}"}}],"color":"gold"}}"#, name_key(target))];
+        for item in *ingredients {
+            let (mark, color) = if has_item(host, &player.name, item) { ("✔", "green") } else { ("✘", "red") };
+            line.push(format!(r#"{{"text":"  {mark} ","color":"{color}"}},{{"translate":"{}","color":"{color}"}}"#, name_key(item)));
+        }
+        host.run_command(&format!(r#"title {} actionbar ["",{}]"#, player.name, line.join(",")));
+        return true;
+    }
+    false
+}
+
+/// Etapa concluída: título na tela, som de conquista e um pouco de experiência.
+fn celebrate(host: &mut dyn Host, player: &NativeServerPlayer, step: u8) {
+    if !spawn_safe(&player.name) { return; }
+    let name = &player.name;
+    host.run_command(&format!(r#"title {name} subtitle {{"translate":"veio.onboarding.title.{step}"}}"#));
+    host.run_command(&format!(r#"title {name} title {{"translate":"veio.onboarding.done","color":"gold"}}"#));
+    host.run_command(&format!("playsound minecraft:ui.toast.challenge_complete master {name}"));
+    host.run_command(&format!("xp add {name} {} points", 10 + 5 * u32::from(step)));
+}
+
+fn spawn_safe(name: &str) -> bool { workforce::spawn::safe_name(name) }
 
 #[cfg(test)]
 pub(super) fn observe(dimension: &str, pos: Pos, entity: &ModBlockEntity, before: i32, contract_before: i32, time: i64) {
@@ -380,19 +514,39 @@ fn tick(host: &mut dyn Host, now: u64) {
     let s = slot.as_mut().unwrap();
     for player in &online {
         let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
+        // Prólogo primeiro: casa, prefeito e terreno. A fábrica só começa depois dele.
+        if p.intro < intro::INTRO_DONE {
+            intro::tick(host, player, p, now);
+            if p.dirty && (now % 100 == 0 || p.intro == intro::INTRO_DONE) && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
+                host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
+            }
+            continue;
+        }
         // Exactly one transition per update. Never skip an unperformed exercise.
         if player.dimension == p.dimension && p.ready() {
             p.step += 1; p.dirty = true; p.status = 0; p.last_status_notice = None;
+            celebrate(host, player, p.step);
             if p.step == DONE { host.action_bar(player.uuid, Text::literal("")); }
         }
         if !p.hidden && p.announced != Some(p.step) {
-            host.tell(player.uuid, Text::tr(&format!("veio.onboarding.hint.{}", p.step), &[]));
+            announce(host, player, p);
             p.announced = Some(p.step);
         }
+        if !p.hidden && p.pending_tips != 0 {
+            for (bit, key) in TIPS {
+                if p.pending_tips & bit != 0 && p.tips & bit == 0 {
+                    host.tell(player.uuid, Text::tr(&format!("veio.onboarding.tip.{key}"), &[]));
+                    p.tips |= bit;
+                    p.dirty = true;
+                }
+            }
+            p.pending_tips = 0;
+        }
         if !p.hidden && p.step < DONE {
-            let count = match p.step { 2 => p.plates, 3 => p.gears, 4 => p.copper,
-                5 => p.fed.min(2), 6 => p.stored, _ => 0 };
-            host.action_bar(player.uuid, Text::tr(&format!("veio.onboarding.goal.{}", p.step), &[&count]));
+            let count = goal_count(p);
+            if !checklist(host, player, p) {
+                host.action_bar(player.uuid, Text::tr(&format!("veio.onboarding.goal.{}", p.step), &[&count]));
+            }
             if matches!(p.status, 3 | 5 | 9) {
                 if p.last_status_notice != Some(p.status) && now >= p.next_status_notice {
                     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.blocked.{}", p.status), &[]));
@@ -400,6 +554,7 @@ fn tick(host: &mut dyn Host, now: u64) {
                 }
             } else { p.last_status_notice = None; }
         }
+        if !p.hidden && p.step == DONE && !p.outro { intro::outro_bar(host, player); }
         if p.dirty && (now % 100 == 0 || p.ready() || p.step == DONE) && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
             host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
         }
@@ -436,7 +591,9 @@ pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command:
     let s = slot.as_mut().unwrap();
     let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
     match action { 0 => { p.hidden = true; }, 1 => { p.hidden = false; p.announced = None; },
-        _ => { *p = Progress::default(); } }
+        // Refazer não repete as dicas já vistas.
+        _ => { *p = Progress { tips: p.tips, ..Progress::default() }; } }
+    if action == 1 { p.intro_announced = None; }
     p.dirty = true;
     if save(&s.root, player.uuid, p).is_err() { host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); }
     host.tell(player.uuid, Text::tr(if action == 0 { "veio.onboarding.hidden" } else { "veio.onboarding.shown" }, &[]));
@@ -445,6 +602,26 @@ pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command:
     true
 }
 
+/// Clique no prefeito (`intro::MAYOR`): a fala do momento para quem clicou. `true` se o Veio
+/// tomou o clique.
+pub(super) fn talk(host: &mut dyn Host) -> bool {
+    let Some(player) = host.acting_player() else { return true };
+    let Ok(mut slot) = SESSION.lock() else { return true };
+    if !session(host, &mut slot) { return true; }
+    let s = slot.as_mut().unwrap();
+    let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
+    intro::talk(host, &player, p);
+    if p.dirty && save(&s.root, player.uuid, p).is_err() {
+        host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[]));
+    }
+    true
+}
+
+/// Outro mundo vai abrir: esquece o prefeito do mundo anterior.
+pub(super) fn world_changed() { intro::reset(); }
+
+mod intro;
+pub(super) use intro::MAYOR;
 #[cfg(test)]
 mod tests;
 mod transport;

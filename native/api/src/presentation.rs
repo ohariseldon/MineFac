@@ -16,7 +16,7 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 44] = [
+pub(super) const STATUS_KEYS: [&str; 45] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
@@ -31,6 +31,8 @@ pub(super) const STATUS_KEYS: [&str; 44] = [
     "site_plan", "site_blocked", "site_building", "site_done",
     // Terminais de transporte (`freight`): rota, caravana sem animal, sem ração, animal ocupado.
     "freight_route", "caravan_animal", "caravan_feed", "caravan_busy",
+    // Feriado da agenda da vila (`workforce::society::agenda`).
+    "holiday",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {

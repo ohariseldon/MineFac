@@ -42,6 +42,7 @@ pub(crate) struct Indicators {
     pub unlicensed: i32,
     pub districts: i32,
     pub company_owed: i32,
+    pub no_leisure: i32,
 }
 
 /// Gini (centésimos) da renda por pessoa, cada grupo com seu peso: (renda por pessoa, pessoas).
@@ -110,6 +111,7 @@ pub(crate) fn measure(homes: &[Home], homeless: i32) -> Indicators {
         out.crowded += i32::from(home.crowded);
         out.smog += i32::from(home.smog);
         out.company_owed += i32::from(home.owed);
+        out.no_leisure += i32::from(!home.leisure);
     }
     out.unlicensed = homes.iter().filter(|home| !home.licensed).count() as i32;
     out.districts = districts(&lived).len() as i32;
@@ -144,6 +146,7 @@ pub(crate) fn request(numbers: &Indicators, broke: bool, phase: i32) -> (i32, i3
     let issues = [
         (1, numbers.company_owed), (11, i32::from(broke)), (2, numbers.hungry), (3, numbers.homeless),
         (4, numbers.no_sanitation), (5, numbers.no_commerce), (6, if phase >= 2 { numbers.no_power } else { 0 }),
+        (13, if phase >= 2 { numbers.no_leisure } else { 0 }),
         (7, unemployed), (8, numbers.smog), (9, numbers.crowded),
     ];
     if let Some(issue) = issues.into_iter().find(|(_, value)| *value > 0) {
@@ -206,14 +209,20 @@ pub(crate) fn hall_cycle(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
         }
     }
     set_number(entity, "Public", coins);
+    // Agenda: calendário, visitantes, entregas, obras cívicas e o ânimo da vila.
+    agenda::cycle(host, pos, entity, time, staffed);
     let phase = number(entity, "Phase").max(1);
     upsert(&HALLS, Hall {
-        dimension: dimension.to_owned(), pos, phase, suspended: number(entity, "DSuspended") != 0, staffed, mayor, seen: now,
+        dimension: dimension.to_owned(), pos, phase, suspended: number(entity, "DSuspended") != 0, staffed, mayor,
+        morale: agenda::morale(entity), seen: now,
     }, |known| known.dimension == dimension && known.pos == pos, |known| now.saturating_sub(known.seen) <= STALE);
 }
 
 /// Os 13 valores do painel da prefeitura.
 pub(crate) fn hall_data(entity: &ModBlockEntity) -> [i32; 13] {
+    if number(entity, "Tab") == 1 {
+        return agenda::data(entity, i64::from(number(entity, "AgendaDay")));
+    }
     let phase = number(entity, "Phase").max(1);
     [number(entity, "Status"), phase, number(entity, "DPop"), number(entity, "DFamilies"), number(entity, "DEmploy"),
         number(entity, "DIdh"), number(entity, "DGini"), number(entity, "DSold") + number(entity, "DExport"),
@@ -232,6 +241,15 @@ pub(crate) fn draw_hall(pen: &mut ui::Pen<'_>, view: &ui::screens::View<'_>) {
     use ui::icons;
     let read = |index: usize| view.read(index);
     let tr = |key: &str, args: &[&dyn std::fmt::Display]| Text::tr(key, args).plain();
+    // Abas: indicadores e agenda (setas no canto do título).
+    pen.text("<", 152.0, 7.0, ui::INFO);
+    pen.text(">", 166.0, 7.0, ui::INFO);
+    if read(0) >= 1000 {
+        for (index, (line, color)) in agenda::lines(view.data).iter().enumerate() {
+            pen.text(line, 8.0, 22.0 + index as f32 * 11.0, *color);
+        }
+        return;
+    }
     ui::screens::status_strip(pen, view);
     let phase = tr(&format!("veio.mayor.phase_name{}", read(1).clamp(1, 4)), &[]);
     pen.text_right(&phase, 186.0, ui::STATUS_Y + 2.0, ui::INFO);
@@ -314,6 +332,16 @@ pub(crate) fn report_to_chat(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow>
     if let Some((residents, families, idh, gdp, employment, gini, districts)) = PHASES.get((phase - 1) as usize).copied() {
         host.tell(player, Text::tr("veio.mayor.report.next", &[&(phase + 1), &residents, &families, &decimal(idh), &gdp,
             &employment, &decimal(gini), &districts]));
+    }
+    // Agenda: o calendário e os pedidos abertos.
+    let mut agenda_lines = Vec::new();
+    host.change_mod_block_entity(pos, &mut |entity| {
+        if entity.id == TOWN_HALL {
+            agenda_lines = agenda::report(entity, i64::from(number(entity, "AgendaDay")));
+        }
+    });
+    for line in agenda_lines {
+        host.tell(player, line);
     }
     // Global: todas as prefeituras da dimensão.
     let halls: Vec<[i32; 3]> = HALLS.lock().map(|halls| halls.iter()

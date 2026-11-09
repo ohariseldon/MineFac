@@ -2,6 +2,19 @@
 
 Primeira etapa da ordem em [frentes/CLOUD.md](frentes/CLOUD.md): um aldeão contratado trabalha numa lavoura. Integrada na 0.10.0 com a interface de postos do Codex e o lote 1 do Grok.
 
+
+## 0.27.0: agenda da vila
+
+Desenho completo em [frentes/AGENDA.md](frentes/AGENDA.md). Feita sobre a build consolidada (`claude/project-thread-mrtok9`, 0.26.0).
+
+- **Calendário** sobre as estações do clima: domingo no 6º dia de cada estação; 6 feriados fixos (Fundação, Flores, São João, Colheita, Luzes, Virada do Ano). No feriado os postos param (estado *Feriado*, o quartel segue) e os aldeões vão à praça.
+- **Visitantes** (`veio:visitor`, comerciante viajante parado e com nome) chegam à prefeitura 2 dias antes; clique mostra a conversa (gancho `interact_entity`). Pedido entregue no novo espaço *Agenda* da prefeitura; a prefeitura reembolsa a companhia.
+- **Obras cívicas**: parque, praça e monumento (blocos novos) pedidos para bairros sem lazer; construir o bloco lá cumpre a missão e a prefeitura paga a obra.
+- **Ânimo** (0 a 100) multiplica o IDH de 0,9x a 1,1x; **lazer** vira o 4º serviço do IDH; pedido 13 do prefeito (casas sem lazer).
+- **Aba Agenda** na prefeitura (setas no título, `menu_button`), agenda no relatório do livro.
+- Defeito corrigido de passagem: depois do descanso, um posto em planejamento ficava mostrando o estado anterior (agora vale também para o feriado).
+- Testes: calendário, pedido e entrega com reembolso e ânimo, feriado parando o posto, obra cívica com lazer, ânimo e lazer no IDH.
+
 ## Para o jogador
 
 1. Obtenha a colheitadeira. O avanço **Lavoura mecanizada** passa a liberar a receita do **Posto do lavrador** (composteira, enxada de ferro, esmeralda e barril, em qualquer posição).

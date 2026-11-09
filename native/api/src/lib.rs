@@ -32,6 +32,7 @@ mod onboarding;
 mod upgrades;
 mod holding;
 mod workforce;
+mod wiki;
 
 use horizon_client::mod_api::{
     BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
@@ -95,6 +96,7 @@ impl Hooks for Factory {
         // A casa, as camas e os bônus em memória pertencem ao mundo que abre.
         // O painel carrega os próprios dados salvos quando começar a funcionar.
         home::reset();
+        onboarding::world_changed();
         milestones::census::reset();
         blueprint::reset();
         workforce::ruins::reset();
@@ -279,6 +281,10 @@ impl Hooks for Factory {
         let now = defense::clock();
         // As caravanas acompanham seus animais em todo tick (`freight::caravan`).
         freight::caravan::observe(host, event.dimension, event.entity, event.kind);
+        // Visitante que nenhum pedido da agenda conhece sai do mundo (de antes de reabrir, por exemplo).
+        if event.kind == workforce::society::agenda::VISITOR && (now + u64::from(event.entity)) % 41 == 0 {
+            workforce::society::agenda::visitor_seen(host, event.dimension, event.entity);
+        }
         if (now + u64::from(event.entity)) % OBSERVE_EVERY == 0 {
             defense::observe(event.dimension, event.entity, event.kind);
             production::ranch::observe(event.dimension, event.entity, event.kind);
@@ -302,7 +308,18 @@ impl Hooks for Factory {
 
     /// Clique num aldeão: escolher quem contratar para o posto que espera, ou (agachado, mão
     /// vazia) ver onde ele trabalha. Fora disso o comércio vanilla segue.
+    /// Também: conversa com o prefeito do tutorial e com o visitante da agenda (em vez da troca).
     fn interact_entity(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::InteractEntityEvent<'_>) -> Flow {
+        if event.kind == onboarding::MAYOR {
+            onboarding::talk(host);
+            return Flow::Cancel;
+        }
+        if event.kind == workforce::society::agenda::VISITOR
+            && let Ok(id) = u32::try_from(event.entity)
+            && workforce::society::agenda::talk(host, id)
+        {
+            return Flow::Cancel;
+        }
         if event.kind != "minecraft:villager" || event.entity < 0 {
             return Flow::Continue;
         }
@@ -337,6 +354,26 @@ impl Hooks for Factory {
         if let Some(player) = host.acting_player() {
             home::food::eaten(player.uuid, &player.name, &player.dimension, player.position, &event.stack.item, defense::clock());
         }
+    }
+
+    fn key(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::KeyEvent<'_>) {
+        wiki::key(host, event.key, event.pressed);
+    }
+
+    fn screen_render_post(&self, host: &dyn Host, event: &mut horizon_client::mod_api::ScreenRenderPostEvent<'_>) {
+        wiki::draw(host, event.batch, event.screen);
+    }
+
+    fn screen_mouse_button_pressed_pre(&self, host: &dyn Host,
+        event: &mut horizon_client::mod_api::ScreenMouseButtonPressedPreEvent<'_>) -> Flow
+    {
+        if wiki::click(host, event.screen, event.button) { Flow::Cancel } else { Flow::Continue }
+    }
+
+    fn screen_mouse_scrolled_pre(&self, host: &dyn Host,
+        event: &mut horizon_client::mod_api::ScreenMouseScrolledPreEvent<'_>) -> Flow
+    {
+        if wiki::scroll(host, event.screen, event.scroll[1]) { Flow::Cancel } else { Flow::Continue }
     }
 
     fn tick(&self, host: &mut dyn Host, _event: &mut horizon_client::mod_api::TickEvent) {
@@ -448,10 +485,26 @@ impl Hooks for Factory {
         // Aba da holding; nas outras páginas da vila (Atenção, Obras, Pedidos) não há saque.
         let first = event.data.first().copied().unwrap_or(0);
         let tab = if first < 1000 && (first / 100) % 10 != 0 { -1 } else { first / 1000 };
+        if event.block == workforce::TOWN_HALL && !event.right && (3.0..17.0).contains(&event.at[1]) {
+            return if (149.0..161.0).contains(&event.at[0]) {
+                Some(workforce::society::agenda::TAB_PREVIOUS)
+            } else if (162.0..175.0).contains(&event.at[0]) {
+                Some(workforce::society::agenda::TAB_NEXT)
+            } else {
+                None
+            };
+        }
         (event.block == workforce::CONTROL_CENTER && !event.right).then(|| holding::click(event.at, tab)).flatten()
     }
 
     fn menu_button(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::MenuButtonEvent<'_>) {
+        // Prefeitura: troca entre os indicadores e a agenda.
+        if event.entity.id == workforce::TOWN_HALL
+            && matches!(event.id, workforce::society::agenda::TAB_PREVIOUS | workforce::society::agenda::TAB_NEXT)
+        {
+            set_number(event.entity, "Tab", 1 - number(event.entity, "Tab").clamp(0, 1));
+            return;
+        }
         if event.entity.id == workforce::CONTROL_CENTER {
             let time = host.level(host.dimension()).and_then(|level| level.game_time(host)).unwrap_or(0);
             holding::press(host.dimension(), event.pos, event.entity, event.id, time);
@@ -981,6 +1034,10 @@ fn nbt_key(name: &str) -> &'static JavaString {
         "UpkeepHalf" => key!("UpkeepHalf"),
         "Wallet" => key!("Wallet"),
         "Wealth" => key!("Wealth"),
+        "Morale" => key!("Morale"),
+        "Agenda" => key!("Agenda"),
+        "AgendaDay" => key!("AgendaDay"),
+        "HolidayToday" => key!("HolidayToday"),
         "Tier" => key!("Tier"),
         "RecipeIndex" => key!("RecipeIndex"),
         "Tab" => key!("Tab"),

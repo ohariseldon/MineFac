@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/monument"
+    },
+    "facing=west": {
+      "model": "veio:block/monument",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/monument",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/monument",
+      "y": 270
+    }
+  }
+}
