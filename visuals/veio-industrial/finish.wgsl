@@ -1,6 +1,10 @@
 override edge_smoothing: bool = true;
 override color_strength: f32 = 0.65;
 override sharpen: f32 = 0.35;
+// Player's own picture controls (Opções > Shaders > Imagem), 1 = as tuned.
+override brightness: f32 = 1.0;
+override contrast: f32 = 1.0;
+override saturation: f32 = 1.0;
 
 // Ambient occlusion from the half-size pass, upscaled along the depth: of four nearby texels,
 // those at this pixel's distance count, so no dark halo leaks around the edges of things.
@@ -142,7 +146,7 @@ fn post(input: PostInput) -> vec4<f32> {
     let opened = select(1.0 + 1.0 * (1.0 - smoothstep(0.02, 0.75, surround)), 1.0, frame.dimension != 0);
     let night_out = (1.0 - veio_daylight()) * frame.eye_light_smooth.y * (1.0 - frame.eye_light_smooth.x);
     // Exposure works on light, not on the encoded picture.
-    color = pow(max(color, vec3<f32>(0.0)), vec3<f32>(2.2)) * opened;
+    color = pow(max(color, vec3<f32>(0.0)), vec3<f32>(2.2)) * opened * brightness;
     color = pow(color, vec3<f32>(1.0 / 2.2));
     // Night vision of the eye (Purkinje): colours fade at night outdoors.
     let grey = veio_luma(color);
@@ -162,7 +166,8 @@ fn post(input: PostInput) -> vec4<f32> {
     let luma = veio_luma(bounded);
     let lifted = pow(luma, mix(1.0, 0.80, levels));
     let curve = lifted * lifted * (3.0 - 2.0 * lifted);
-    let target_luma = mix(lifted, curve, 0.35 * levels);
+    // The player's contrast scales the S curve: 0 none, 1 as tuned, 2.5 nearly the full curve.
+    let target_luma = clamp(mix(lifted, curve, 0.35 * levels * contrast), 0.0, 1.0);
     var graded = bounded * select(1.0, target_luma / max(luma, 0.00001), luma > 0.00001);
     // Time of day: warm golden hours, cool blue nights; the seasons tint the light a little.
     if frame.dimension == 0 {
@@ -174,7 +179,7 @@ fn post(input: PostInput) -> vec4<f32> {
         tint += vec3<f32>(0.010, 0.006, -0.012) * w.y + vec3<f32>(0.018, 0.004, -0.018) * w.z + vec3<f32>(-0.006, -0.001, 0.008) * w.w;
         graded *= mix(vec3<f32>(1.0), tint, color_strength);
     }
-    graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + 0.20 * levels);
+    graded = mix(vec3<f32>(veio_luma(graded)), graded, (1.0 + 0.20 * levels) * saturation);
     if vignette > 0.0 {
         let centred = input.uv - 0.5;
         let fall = dot(centred, centred) * 1.6;

@@ -171,3 +171,22 @@ médio em 74/255 e saturação mediana 0,25: imagem lavada e escura ao mesmo tem
   (expoente 0,80 na luminância), curva S 0,10 → 0,35, saturação +0,10 → +0,20. Tudo escala com
   a opção "Cor e clima da imagem" (valor padrão 0,65 = ajuste completo). Simulado nos dois prints: cinza médio 74 → 88, preto mais limpo
   (comparação em /mnt/project-files/visual/comparacao-contraste-3.2.5.png).
+
+## 3.3.0 e launcher 0.17.0 (commit desta seção): BSL no launcher e controles na tela
+
+Luiz (02:39): "não mudou praticamente nada... Não tem como você só usar o BSL mais adaptado? Ou
+colocar um jeito de eu configurar na minha tela essas questões?" (as versões 3.2.4 e 3.2.5 ainda
+não foram montadas no PC dele; o teste no PC está pausado).
+
+- Launcher: terceira opção, **Realismo máximo** (`--visual maximo`). Baixa o BSL 10.1.8 do
+  Modrinth no PC de quem joga (nunca dentro do zip do Veio), confere o SHA-512 publicado (SHA-512
+  próprio no launcher, sem dependências; download pelo curl que vem no Windows 10 e 11), põe o
+  ajuste "Veio 8 GB" (`visuals/iris-presets/BSL_v10.1.8.zip.txt`) e escolhe
+  `pickedShaderPack:BSL_v10.1.8.zip`. O pacote de texturas do Veio continua ligado (o ajuste
+  liga os mapas LabPBR no BSL). Conferido no código do Horizon: pack clássico é escolhido pelo nome
+  do zip e as opções ficam em `shaderpacks/<zip>.txt`, as mesmas que a tela Opções do Shader grava.
+  O ajuste do Veio só é copiado se a pessoa não tiver mudado nada, ou se ela escolher o perfil de
+  novo. Sem internet ou com hash errado, abre com o Realismo leve.
+- Pacote Veio 3.3.0: Brilho, Contraste e Saturação na página Imagem (Opções > Shaders), 1 = ajuste
+  do Veio.
+- O BSL já tem na própria tela exposição, curvas de tom, saturação e vibração (página Cor).

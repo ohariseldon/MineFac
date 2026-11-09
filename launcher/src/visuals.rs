@@ -16,9 +16,14 @@ const TEXTURES_FOLDER: &str = "texturas";
 const TEXTURES_PREFIX: &str = "Veio-Texturas-";
 const MARKER: &str = ".veio-visual-profile";
 
+mod iris;
+mod sha512;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Profile {
     Realism,
+    /// O BSL (shader Iris), baixado do Modrinth, com o ajuste "Veio 8 GB". Mais pesado.
+    Maximum,
     Light,
 }
 
@@ -26,14 +31,16 @@ impl Profile {
     fn parse(value: &str) -> Result<Self, String> {
         match value {
             "realismo" | "realismo-8gb" => Ok(Self::Realism),
+            "maximo" | "realismo-maximo" | "bsl" => Ok(Self::Maximum),
             "leve" => Ok(Self::Light),
-            _ => Err(format!("visual '{value}' desconhecido. Use --visual realismo ou --visual leve.")),
+            _ => Err(format!("visual '{value}' desconhecido. Use --visual realismo, --visual maximo ou --visual leve.")),
         }
     }
 
     fn id(self) -> &'static str {
         match self {
             Self::Realism => "realismo-8gb",
+            Self::Maximum => "realismo-maximo",
             Self::Light => "leve",
         }
     }
@@ -41,6 +48,7 @@ impl Profile {
     fn label(self) -> &'static str {
         match self {
             Self::Realism => "Realismo leve — pensado para 8 GB",
+            Self::Maximum => "Realismo máximo — BSL ajustado para o Veio",
             Self::Light => "Leve — sem pacote de shaders",
         }
     }
@@ -55,7 +63,7 @@ pub(super) struct Selection {
 
 pub(super) fn choose(args: &[String], config: &mut BTreeMap<String, String>) -> Result<Selection, String> {
     let explicit = args.iter().position(|arg| arg == "--visual")
-        .map(|i| args.get(i + 1).ok_or("informe realismo ou leve depois de --visual"))
+        .map(|i| args.get(i + 1).ok_or("informe realismo, maximo ou leve depois de --visual"))
         .transpose()?.map(|value| Profile::parse(value)).transpose()?;
     let menu = args.iter().any(|arg| arg == "--graphics");
     let saved = config.get("visual_profile").map(|value| Profile::parse(value)).transpose()?;
@@ -67,6 +75,8 @@ pub(super) fn choose(args: &[String], config: &mut BTreeMap<String, String>) -> 
         println!("Escolha o visual antes de abrir o jogo:");
         println!("  1. Realismo leve (padrão): iluminação industrial, metais e água; pensado para 8 GB.");
         println!("  2. Leve: sem shaders, para computadores com menos capacidade gráfica.");
+        println!("  3. Realismo máximo: o shader BSL (baixado do Modrinth), ajustado para o Veio; mais pesado.");
+        println!("     Brilho, contraste e cor dele se ajustam no jogo: Opções > Shaders > Opções do Shader.");
         println!("A escolha fica salva. Use Escolher-Visual.cmd para mudar depois.");
         // Execuções sem uma pessoa no terminal nunca precisam carregar o pacote para chegar ao menu.
         if !io::stdin().is_terminal() {
@@ -74,7 +84,7 @@ pub(super) fn choose(args: &[String], config: &mut BTreeMap<String, String>) -> 
             Profile::Light
         } else {
             loop {
-                print!("Visual [1/2; Enter = 1]: ");
+                print!("Visual [1/2/3; Enter = 1]: ");
                 io::stdout().flush().map_err(|error| error.to_string())?;
                 let mut line = String::new();
                 if io::stdin().read_line(&mut line).map_err(|error| error.to_string())? == 0 {
@@ -83,7 +93,8 @@ pub(super) fn choose(args: &[String], config: &mut BTreeMap<String, String>) -> 
                 match line.trim() {
                     "" | "1" => break Profile::Realism,
                     "2" => break Profile::Light,
-                    _ => println!("Digite 1 para Realismo leve ou 2 para Leve."),
+                    "3" => break Profile::Maximum,
+                    _ => println!("Digite 1 para Realismo leve, 2 para Leve ou 3 para Realismo máximo."),
                 }
             }
         }
@@ -98,7 +109,7 @@ pub(super) fn choose(args: &[String], config: &mut BTreeMap<String, String>) -> 
 pub(super) fn launch_environment(command: &mut Command, profile: Profile) {
     match profile {
         Profile::Light => { command.env("HORIZON_SHADER_PACK", ""); }
-        Profile::Realism => { command.env_remove("HORIZON_SHADER_PACK"); }
+        Profile::Realism | Profile::Maximum => { command.env_remove("HORIZON_SHADER_PACK"); }
     }
 }
 
@@ -117,9 +128,26 @@ fn remove_stale_shaders(source: &Path, target: &Path) -> Result<(), String> {
 }
 
 pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Result<(), String> {
+    install_with(root, instance, selection, iris::curl)
+}
+
+fn install_with(
+    root: &Path,
+    instance: &Path,
+    selection: Selection,
+    fetch: impl Fn(&str, &Path) -> Result<(), String>,
+) -> Result<(), String> {
+    // Realismo máximo: sem internet ou com o download errado, joga com o Realismo leve.
+    let mut selection = selection;
+    if selection.profile == Profile::Maximum {
+        if let Err(error) = iris::install(root, instance, &iris::BSL, selection.reset, fetch) {
+            println!("      Realismo máximo indisponível agora ({error}); usando o Realismo leve.");
+            selection.profile = Profile::Realism;
+        }
+    }
     // Não há shaders no pacote de conteúdo do mod: desligar aqui remove a seleção sem
     // um gancho nativo voltar a ativá-la. A instalação não executa nenhum WGSL.
-    if selection.profile == Profile::Realism {
+    if selection.profile != Profile::Light {
         let source = root.join("visuals").join(PACK_FOLDER);
         if !source.join("horizon-shaders.toml").is_file() {
             return Err("o pacote visual veio-industrial está faltando. Extraia o ZIP completo, ou abra Jogar-Leve.cmd.".into());
@@ -139,7 +167,12 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
     let graphics = instance.join("horizon-graphics.txt");
     let mut game = read_options(&options)?;
     let mut extra = read_options(&graphics)?;
-    let realism = selection.profile == Profile::Realism;
+    let realism = selection.profile != Profile::Light;
+    let picked = match selection.profile {
+        Profile::Realism => PACK_FOLDER,
+        Profile::Maximum => iris::BSL.file,
+        Profile::Light => "",
+    };
     let game_values = [
         ("renderDistance", if realism { "8" } else { "6" }),
         ("simulationDistance", "5"),
@@ -172,7 +205,7 @@ pub(super) fn install(root: &Path, instance: &Path, selection: Selection) -> Res
         ("hdr", "false"),
         ("caveCulling", "true"),
         ("framePacing", "efficient"),
-        ("pickedShaderPack", if realism { PACK_FOLDER } else { "" }),
+        ("pickedShaderPack", picked),
     ];
     for (key, value) in extra_values {
         extra = set_option(&extra, key, value);
@@ -202,13 +235,13 @@ fn install_textures(root: &Path, instance: &Path, profile: Profile) -> Result<Op
     if let Ok(entries) = fs::read_dir(&target) {
         for entry in entries.flatten() {
             let file = entry.file_name().to_string_lossy().into_owned();
-            let keep = profile == Profile::Realism && Some(&file) == name.as_ref();
+            let keep = profile != Profile::Light && Some(&file) == name.as_ref();
             if file.starts_with(TEXTURES_PREFIX) && !keep {
                 fs::remove_file(entry.path()).map_err(|error| format!("{}: {error}", entry.path().display()))?;
             }
         }
     }
-    let (Some(zip), Some(name), Profile::Realism) = (zip, name, profile) else { return Ok(None) };
+    let (Some(zip), Some(name), false) = (zip, name, profile == Profile::Light) else { return Ok(None) };
     let destination = target.join(&name);
     let same = fs::metadata(&destination).ok().map(|m| m.len()) == fs::metadata(&zip).ok().map(|m| m.len());
     if !same {

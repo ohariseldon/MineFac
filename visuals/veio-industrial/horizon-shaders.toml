@@ -1,7 +1,7 @@
 schema = 1
 id = "veio_industrial"
 name = "Veio — Realismo"
-version = "3.2.5"
+version = "3.3.0"
 api = "0.1"
 description = "Nuvens volumétricas, água espelhada, profundidade nas texturas, sombras suaves com penumbra e sombra das nuvens no chão, céu com atmosfera e estrelas, relevo nas texturas, sombra de cantos, luz volumétrica, reflexos em chão molhado e metal, água com refração e cáusticas, plantas em movimento, luz colorida, estações do ano e fumaça da fábrica. Três níveis de qualidade; o Leve foi pensado para PCs de 8 GB."
 authors = ["Veio"]
@@ -333,6 +333,36 @@ max = 1.0
 step = 0.05
 
 [[options]]
+id = "brightness"
+name = "Brilho"
+description = "Luz da imagem inteira. 1 é o ajuste do Veio."
+type = "float"
+default = 1.0
+min = 0.6
+max = 1.6
+step = 0.05
+
+[[options]]
+id = "contrast"
+name = "Contraste"
+description = "Diferença entre claros e escuros. 0 deixa chapado, 1 é o ajuste do Veio."
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.5
+step = 0.1
+
+[[options]]
+id = "saturation"
+name = "Saturação"
+description = "Intensidade das cores. 0 é preto e branco, 1 é o ajuste do Veio."
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
 id = "vignette"
 name = "Vinheta"
 type = "float"
@@ -367,8 +397,8 @@ items = ["colored_lights", "bloom", "metal_highlights", "ambient_occlusion", "re
 [[pages]]
 id = "image"
 name = "Imagem"
-description = "Cor, vinheta e suavização."
-items = ["color_strength", "vignette", "edge_smoothing", "sharpen"]
+description = "Brilho, contraste, cor, vinheta e suavização."
+items = ["brightness", "contrast", "saturation", "color_strength", "vignette", "edge_smoothing", "sharpen"]
 
 [[pages]]
 id = "shadow_quality"
