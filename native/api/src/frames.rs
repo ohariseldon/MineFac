@@ -175,7 +175,24 @@ fn refuse(host: &mut dyn Host, layout: &Layout, blocked: &[[i32; 3]]) {
 // ---------- Colocar ----------
 
 /// Antes de pôr uma máquina grande: recusa se a planta não cabe ali.
-pub(super) fn use_item(host: &mut dyn Host, item: &str, pos: [i32; 3], face: Direction) -> Flow {
+/// A face clicada: a API real entrega a normal (`[i32; 3]`); os testes usam `Direction`.
+pub(super) trait Face {
+    fn normal(&self) -> [i32; 3];
+}
+
+impl Face for [i32; 3] {
+    fn normal(&self) -> [i32; 3] {
+        *self
+    }
+}
+
+impl Face for Direction {
+    fn normal(&self) -> [i32; 3] {
+        Direction::normal(*self)
+    }
+}
+
+pub(super) fn use_item(host: &mut dyn Host, item: &str, pos: [i32; 3], face: impl Face) -> Flow {
     let Some(layout) = layout(item) else { return Flow::Continue };
     let clicked = host.block(pos);
     // Clicar num bloco do Veio abre o painel dele; nada é posto.
