@@ -473,6 +473,9 @@ fn observe_inner(dimension: &str, pos: Pos, entity: &ModBlockEntity, before: i32
 /// generate credit. Trace both raw input and the plates made from that input.
 pub(super) fn transferred(host: &dyn Host, from: Pos, to: Pos, item: &str, count: u32) {
     if count == 0 || !FLOW_ACTIVE.load(Ordering::Relaxed) || !matches!(item, "minecraft:raw_copper" | PLATE) { return; }
+    // Máquina grande: o que sai pela escotilha de saída ou entra pela de entrada conta como
+    // saindo do núcleo ou entrando nele.
+    let (from, to) = (frames::owner(host, from), frames::owner(host, to));
     if let Ok(mut session) = SESSION.lock() && let Some(s) = session.as_mut() {
         record(s, host, from, to, item, count);
     }

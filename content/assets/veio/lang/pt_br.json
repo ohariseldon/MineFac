@@ -2787,5 +2787,12 @@
   "veio.onboarding.mayor.next.4": "A vila cresce com casas e camas para os moradores. Mais gente, mais trabalho para a fábrica.",
   "veio.onboarding.mayor.next.5": "A wiki (tecla J) explica cada máquina. E quando quiser saber o que fazer, venha falar comigo.",
   "veio.village.page.52": "Casa do fundador\n\nA vila já vem com ela: painel, o Lar no lugar da lareira, sofá, cama e mural.\n\nO Lar dá a refeição e os bônus de casa.\n\nA primeira cama é a da casa; fora, só mais uma.",
-  "veio.village.page.53": "Refeições fora de casa\n\nRefeição (assados, pão, torta): trabalho mais rápido e fábricas +5% por 5 min.\n\nBanquete (sopas, cenoura dourada): +10% por 8 min e regeneração.\n\nEm casa, coma no Lar."
+  "veio.village.page.53": "Refeições fora de casa\n\nRefeição (assados, pão, torta): trabalho mais rápido e fábricas +5% por 5 min.\n\nBanquete (sopas, cenoura dourada): +10% por 8 min e regeneração.\n\nEm casa, coma no Lar.",
+  "block.veio.structure": "Estrutura de máquina",
+  "block.veio.hatch_in": "Escotilha de entrada",
+  "block.veio.hatch_out": "Escotilha de saída",
+  "veio.frame.blocked": "Esta máquina precisa de %s×%s de chão plano e firme e %s de altura livre: %s bloco(s) no caminho, contornados em vermelho.",
+  "veio.frame.built": "Máquina montada: %s×%s de chão, %s de altura. Painel na frente; a saída é a escotilha de trás.",
+  "veio.frame.part": "Parte de: %s. O painel fica no núcleo, na frente, onde está a luz.",
+  "veio.frame.fixed": "Máquina montada não gira: desmonte (quebre) e coloque de novo virada para o outro lado."
 }

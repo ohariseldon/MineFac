@@ -464,7 +464,7 @@ fn output_mark(facing: &str) -> ([f32; 3], [f32; 3]) {
 }
 
 pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
-    if !is_factory_block(event.block) {
+    if !is_factory_block(event.block) || frames::is_hatch(event.block) {
         return;
     }
     if !inserters::is_arm(event.block) { logistics_controls::draw_filter(host, event); }

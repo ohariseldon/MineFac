@@ -1,0 +1,45 @@
+{
+  "template": "minecraft:black_glazed_terracotta",
+  "item": false,
+  "properties": {
+    "hardness": 2.0,
+    "occludes": false
+  },
+  "state_properties": {
+    "tier": {
+      "type": "enum",
+      "values": [
+        "copper",
+        "iron",
+        "steel"
+      ]
+    }
+  },
+  "default_state": {
+    "tier": "iron"
+  },
+  "shapes": {
+    "default": [
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1
+      ]
+    ]
+  },
+  "collision_shapes": {
+    "default": [
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1
+      ]
+    ]
+  }
+}

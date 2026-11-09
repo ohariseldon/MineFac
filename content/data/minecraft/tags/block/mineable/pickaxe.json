@@ -78,6 +78,9 @@
     "veio:express_belt",
     "veio:belt_tunnel",
     "veio:cargo_station",
-    "veio:unloading_station"
+    "veio:unloading_station",
+    "veio:structure",
+    "veio:hatch_in",
+    "veio:hatch_out"
   ]
 }

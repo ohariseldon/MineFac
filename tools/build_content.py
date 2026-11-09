@@ -9,6 +9,7 @@ e as texturas 16x16 de `tools/build_textures.py`.
 import json
 from pathlib import Path
 from machine_forms import form as machine_form, shapes as machine_shapes, native_profiles
+import machine_frames
 
 ROOT = Path(__file__).resolve().parents[1] / "content"
 A, D = ROOT / "assets/veio", ROOT / "data/veio"
@@ -558,11 +559,15 @@ def main():
         {"rolls": 1, "entries": [{"type": "minecraft:item", "name": "minecraft:iron_nugget",
             "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 1, "max": 3}}]}]},
     ], "random_sequence": "veio:entities/raider"})
-    write(ROOT / "data/minecraft/tags/block/mineable/pickaxe.json", {"values": [f"veio:{name}" for name in BLOCKS]})
+    write(ROOT / "data/minecraft/tags/block/mineable/pickaxe.json", {"values": [f"veio:{name}" for name in BLOCKS]
+        + [f"veio:{name}" for name in (machine_frames.STRUCTURE, machine_frames.HATCH_IN, machine_frames.HATCH_OUT)]})
     for tab, (icon, members) in TABS.items():
         write(D / f"horizon/creative_tab/{tab}.json", {"title": f"itemGroup.veio.{tab}", "icon": icon,
             "items": [name if ":" in name else f"veio:{name}" for name in members]})
     native_profiles(ROOT, BLOCKS, box)
+    # Estrutura das máquinas grandes: peças e escotilhas, sem item (machine_frames.py).
+    machine_frames.build(ROOT, box, write)
+    machine_frames.native_layouts(ROOT)
     print(f"{len(BLOCKS)} blocos e {len(ITEMS)} itens gerados")
 
 if __name__ == "__main__":

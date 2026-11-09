@@ -2787,5 +2787,12 @@
   "veio.onboarding.mayor.next.4": "The village grows with houses and beds for its people. More people, more work for the factory.",
   "veio.onboarding.mayor.next.5": "The wiki (J key) explains every machine. And whenever you want to know what to do, come talk to me.",
   "veio.village.page.52": "Founder's house\n\nThe village comes with it: panel, the Hearth as the fireplace, sofa, bed and mural.\n\nThe Hearth gives home meals and bonuses.\n\nYour first bed is the one at home; outside, just one more.",
-  "veio.village.page.53": "Meals away from home\n\nMeal (roasts, bread, pie): faster work, factories +5% for 5 min.\n\nFeast (stews, soups, golden carrot): +10% for 8 min, regeneration.\n\nAt home, eat at the Hearth."
+  "veio.village.page.53": "Meals away from home\n\nMeal (roasts, bread, pie): faster work, factories +5% for 5 min.\n\nFeast (stews, soups, golden carrot): +10% for 8 min, regeneration.\n\nAt home, eat at the Hearth.",
+  "block.veio.structure": "Machine Structure",
+  "block.veio.hatch_in": "Input Hatch",
+  "block.veio.hatch_out": "Output Hatch",
+  "veio.frame.blocked": "This machine needs %s×%s of flat, solid ground and %s blocks of clear height: %s block(s) in the way, outlined in red.",
+  "veio.frame.built": "Machine assembled: %s×%s footprint, %s tall. Panel at the front; output from the back hatch.",
+  "veio.frame.part": "Part of: %s. The panel is on the core, at the front, where the light is.",
+  "veio.frame.fixed": "An assembled machine doesn't rotate: break it and place it again facing the other way."
 }
