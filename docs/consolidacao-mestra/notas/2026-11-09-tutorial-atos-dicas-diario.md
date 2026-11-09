@@ -1,7 +1,7 @@
 # Começo do jogo: 4 atos, dicas do prefeito, setas e o Diário de Otávio
 
 - **Data / frente / autor:** 2026-11-09 · tutorial · Claude, thread "Tornar o início de jogo claro e envolvente"
-- **Onde:** branch `claude/project-thread-hckdtj` (Veio 0.35.0), PR #61
+- **Onde:** branch `claude/project-thread-hckdtj` (Veio 0.35.0), PR #61, que também junta o capítulo 3 com 10 etapas (0.34.0 da outra sessão, eb14d54)
 - **Sistemas:** tutorial (fábrica e capítulo 2 da vila) · **FUN:** sem ID novo
 - **Tipo:** código · conteúdo
 - **Continua** `2026-11-09-tutorial-16-etapas.md`. O capítulo 3 (cidade) não mudou: outra sessão está mexendo nele.
@@ -19,7 +19,7 @@ Luiz (2026-11-09): aprimorar o começo, as 16 etapas e o capítulo 2, para ficar
 - `check_project.py` confere as chaves novas.
 
 ## Evidência
-- E1: `python tools/check_rust.py` → 371 testes passando. O teste novo `acts_end_with_fireworks_and_a_stuck_player_gets_one_hint_from_the_mayor` cobre os títulos dos atos, os 3 fogos, a dica só depois do tempo e uma vez, a contagem que recomeça em outra etapa e o alvo da seta. Os 3 ignorados passam com `--ignored --test-threads=1`. `python tools/check_project.py` ok.
+- E1: `python tools/check_rust.py` → 372 testes passando (com os do capítulo 3). O teste novo `acts_end_with_fireworks_and_a_stuck_player_gets_one_hint_from_the_mayor` cobre os títulos dos atos, os 3 fogos, a dica só depois do tempo e uma vez, a contagem que recomeça em outra etapa e o alvo da seta. Os 3 ignorados passam com `--ignored --test-threads=1`. `python tools/check_project.py` ok.
 - J: não testado em jogo. A confirmar no PC:
   - o SNBT dos fogos (`components` do 1.21);
   - o livro do diário com páginas `translate`;
