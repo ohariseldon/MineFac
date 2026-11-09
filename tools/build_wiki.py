@@ -148,6 +148,14 @@ TEXT = {
     "wall_clock": ("Relógio de parede: 2 engrenagens pretas e 1 branca no integrador. Bem de conforto vendido nas lojas.", "Wall clock: 2 black gears and 1 white in the integrator. A comfort good sold in shops."),
     "road_sign": ("Placa de sinalização: moldura e chapa amarela no integrador. Exportação.", "Road sign: frame and yellow plate in the integrator. Export good."),
     "bicycle": ("Bicicleta: chapas vermelhas, molduras e engrenagens pretas na fabricadora. O bem mais caro das lojas.", "Bicycle: red plates, frames and black gears in the fabricator. The priciest shop good."),
+    "electric_fan": ("Ventilador: motor, moldura e 2 engrenagens brancas na fabricadora. Conforto nas lojas.", "Electric fan: motor, frame and 2 white gears in the fabricator. Comfort in shops."),
+    "radio": ("Rádio: 2 chapas amarelas, 2 circuitos e 1 engrenagem preta na fabricadora.", "Radio: 2 yellow plates, 2 circuits and 1 black gear in the fabricator."),
+    "sewing_machine": ("Máquina de costura: motor, circuito e 2 engrenagens pretas na fabricadora.", "Sewing machine: motor, circuit and 2 black gears in the fabricator."),
+    "television": ("Televisão: 2 molduras e 4 circuitos no integrador. Muito conforto para as famílias.", "Television: 2 frames and 4 circuits in the integrator. Lots of comfort for families."),
+    "refrigerator": ("Geladeira: motor, 2 circuitos e 2 chapas de aço azuis na fabricadora. O maior conforto das lojas.", "Refrigerator: motor, 2 circuits and 2 blue steel plates in the fabricator. The most comfort in shops."),
+    "motorcycle": ("Motocicleta: bicicleta, motor e 2 molduras na fabricadora. Exportação de camada 4.", "Motorcycle: bicycle, motor and 2 frames in the fabricator. Tier 4 export."),
+    "electric_car": ("Carro elétrico: 2 motores, 4 molduras e 6 chapas de aço azuis. O produto mais caro do mercado mundial.", "Electric car: 2 motors, 4 frames and 6 blue steel plates. The world market's priciest product."),
+    "helper_robot": ("Robô ajudante: 2 motores, 2 processadores e 4 engrenagens brancas. Exportação de luxo.", "Helper robot: 2 motors, 2 processors and 4 white gears. A luxury export."),
 }
 
 

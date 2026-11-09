@@ -15,6 +15,24 @@ vem de uma fábrica própria, que se liga à produção final.
 | Bens finais | Fabricadora | 2 chapas vermelhas + 2 molduras + 4 engrenagens pretas → bicicleta |
 | Cadeia funda | Fabricadora | **kit Mk.II** pede 8 engrenagens **pretas** (antes: comuns); **núcleo de automação** pede 4 chapas de aço **azuis** (antes: aço) |
 
+## Bens avançados
+
+| Bem | Máquina | Receita | Onde vende |
+|---|---|---|---|
+| Ventilador | Fabricadora | motor + moldura + 2 engrenagens brancas | lojas (conforto 100) e mercado, camada 3 |
+| Rádio | Fabricadora | 2 chapas amarelas + 2 circuitos + 1 engrenagem preta | lojas (90) e mercado, camada 3 |
+| Máquina de costura | Fabricadora | motor + circuito + 2 engrenagens pretas | lojas (110) e mercado, camada 3 |
+| Televisão | Integrador | 2 molduras + 4 circuitos | lojas (160) e mercado, camada 3 |
+| Geladeira | Fabricadora | motor + 2 circuitos + 2 chapas de aço azuis | lojas (240) e mercado, camada 4 |
+| Motocicleta | Fabricadora | motor + 2 molduras + **bicicleta** | só exportação, camada 4 |
+| Carro elétrico | Fabricadora | 2 motores + 4 molduras + 6 chapas de aço azuis | só exportação, camada 4 (o mais caro) |
+| Robô ajudante | Fabricadora | 2 motores + 2 processadores + 4 engrenagens brancas | só exportação, camada 4 |
+
+Na fabricadora, cada ingrediente tem um slot só (a esteira entrega no primeiro que aceita):
+1 motor ou chapa vermelha/amarela; 2 processador, moldura ou circuito; 3 aço azul, engrenagem
+pintada ou bicicleta. Nenhuma receita é a mesma combinação de itens de outra. Avanço "Linha de
+bens avançados" ao montar geladeira, moto, carro ou robô; página própria no Guia da Grande Indústria.
+
 Uma lata pinta 4 peças: um misturador abastece três cabines (razão inteira, como nas outras linhas).
 
 ## Onde entra no jogo

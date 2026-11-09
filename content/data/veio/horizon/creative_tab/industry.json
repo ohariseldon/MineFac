@@ -62,6 +62,14 @@
     "veio:blue_steel_plate",
     "veio:wall_clock",
     "veio:road_sign",
-    "veio:bicycle"
+    "veio:bicycle",
+    "veio:electric_fan",
+    "veio:radio",
+    "veio:sewing_machine",
+    "veio:television",
+    "veio:refrigerator",
+    "veio:motorcycle",
+    "veio:electric_car",
+    "veio:helper_robot"
   ]
 }

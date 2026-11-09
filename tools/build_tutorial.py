@@ -875,8 +875,8 @@ help.update({
  "Pesquisa da fábrica: entregue\ncentenas de peças. Consome 2/s\nde cada entrada com 24 FE/t.\nVários laboratórios somam.",
  "Factory research: deliver\nhundreds of parts. Eats 2/s\nper input with 24 FE/t.\nSeveral labs add up."),
  "fabricator":(
- "Três entradas. Núcleo:\nmotores, proc., aço azul.\nKit Mk.II: motores, proc.,\nengrenagens pretas.\nTambém a bicicleta.",
- "Three inputs. Core: motors,\nproc., blue steel. Mk.II\nkit: motors, proc., black\ngears. Also the bicycle."),
+ "Três entradas. Núcleo,\nkit Mk.II e os bens\navançados: geladeira,\ncarro, robô, rádio...\nVeja as receitas de cor.",
+ "Three inputs. Core, Mk.II\nkit and advanced goods:\nfridge, car, robot,\nradio... See the color\nrecipes."),
  "factory_monitor":(
  "Estatísticas da dimensão:\nmáquinas paradas e itens\nproduzidos e gastos por\nminuto. Avisa os problemas.",
  "Dimension statistics:\nidle machines and items\nmade and used per minute.\nWarns about problems."),
@@ -993,7 +993,7 @@ slothelp={
  "press":["Coloque cobre, ferro ou ouro BRUTO.","Recolha as chapas ou os lingotes."],
  "assembler":["Coloque DUAS chapas de cobre.","Recolha as engrenagens."],
  "cutter":["Coloque chapa de ferro ou de cobre.","Recolha molduras ou fiação."],
- "integrator":["Coloque UMA moldura.","Coloque UMA engrenagem.","Recolha o módulo mecânico."],
+ "integrator":["Moldura, aço ou engrenagem preta.","Engrenagem, fiação, engr. branca, chapa amarela ou circuito.","Recolha o produto."],
  "crusher":["Quartzo, osso, pedregulho, cascalho, lápis ou carvão.","Recolha o produto triturado."],
  "alloy_furnace":["Coloque DUAS chapas de ferro.","Coloque UM carvão ou carvão vegetal.","Recolha as chapas de aço."],
  "electronics":["Coloque DUAS fiações de cobre.","Coloque UMA pastilha de silício.","Recolha as placas de circuito."],
@@ -1047,7 +1047,7 @@ slot_en={
  "press":["Insert RAW copper, iron or gold.","Collect plates or ingots."],
  "assembler":["Insert TWO copper plates.","Collect the gears."],
  "cutter":["Insert iron or copper plates.","Collect frames or wiring."],
- "integrator":["Insert ONE frame.","Insert ONE gear.","Collect the mechanical module."],
+ "integrator":["Frame, steel or black gear.","Gear, wire, white gear, yellow plate or circuit.","Collect the product."],
  "crusher":["Quartz, bone, cobblestone, gravel, lapis or coal.","Collect the crushed product."],
  "alloy_furnace":["Insert TWO iron plates.","Insert ONE coal or charcoal.","Collect the steel plates."],
  "electronics":["Insert TWO copper wiring.","Insert ONE silicon wafer.","Collect the circuit boards."],
@@ -1104,7 +1104,7 @@ slothelp["caravan_station"].append("Ração: cavalo/burro aceitam trigo, maçã 
 slot_en["caravan_station"].append("Feed: horse/donkey eat wheat, apples or hay; pig eats carrots, potatoes or beetroots.")
 slothelp.update({
  "research_lab":["Primeira peça da pesquisa atual.","Segunda peça da pesquisa atual."],
- "fabricator":["Coloque DOIS motores.","Coloque processadores.","Aço azul (núcleo) ou engrenagens pretas (kit Mk.II).","Recolha o produto."],
+ "fabricator":["Motor ou chapa vermelha/amarela.","Processador, moldura ou circuito.","Aço azul, engrenagem pintada ou bicicleta.","Recolha o produto."],
  "express_belt":["Itens guardados neste trecho da esteira."],
  "belt_tunnel":["Itens a caminho da saída do túnel."],
  "cargo_station":["Itens para mandar pelo canal."]*4,
@@ -1112,7 +1112,7 @@ slothelp.update({
 })
 slot_en.update({
  "research_lab":["First part of the current research.","Second part of the current research."],
- "fabricator":["Put TWO motors.","Put processors.","Blue steel (core) or black gears (Mk.II kit).","Collect the product."],
+ "fabricator":["Motor or red/yellow plate.","Processor, frame or circuit.","Blue steel, painted gear or bicycle.","Collect the product."],
  "express_belt":["Items held by this conveyor segment."],
  "belt_tunnel":["Items on their way to the tunnel exit."],
  "cargo_station":["Items to ship on the channel."]*4,
@@ -1852,6 +1852,16 @@ for key, pt, en in [
  ("advancement.veio.colors.description", "Com o aço, monte o misturador de tintas e a cabine de pintura.", "With steel, build the paint mixer and the paint booth."),
  ("advancement.veio.painted.title", "Pintado na linha", "Painted on the line"),
  ("advancement.veio.painted.description", "Pinte uma peça na cabine de pintura.", "Paint a part in the paint booth."),
+ ("item.veio.electric_fan", "Ventilador", "Electric Fan"),
+ ("item.veio.radio", "Rádio", "Radio"),
+ ("item.veio.sewing_machine", "Máquina de costura", "Sewing Machine"),
+ ("item.veio.television", "Televisão", "Television"),
+ ("item.veio.refrigerator", "Geladeira", "Refrigerator"),
+ ("item.veio.motorcycle", "Motocicleta", "Motorcycle"),
+ ("item.veio.electric_car", "Carro elétrico", "Electric Car"),
+ ("item.veio.helper_robot", "Robô ajudante", "Helper Robot"),
+ ("advancement.veio.advanced_goods.title", "Linha de bens avançados", "Advanced goods line"),
+ ("advancement.veio.advanced_goods.description", "Monte uma geladeira, uma motocicleta, um carro elétrico ou um robô ajudante.", "Build a refrigerator, a motorcycle, an electric car or a helper robot."),
  ("advancement.veio.consumer_goods.title", "Bens de consumo", "Consumer goods"),
  ("advancement.veio.consumer_goods.description", "Monte um relógio de parede, uma placa ou uma bicicleta com peças pintadas.", "Build a wall clock, a road sign or a bicycle with painted parts."),
 ]:
@@ -1864,7 +1874,15 @@ for name,texts in {
  "blue_steel_plate":("Aço com tinta azul anticorrosão. Pedido pelo núcleo de automação.","Steel with blue anti-rust paint. Required by the automation core."),
  "wall_clock":("Duas engrenagens pretas e uma branca no integrador. Bem de consumo: as famílias compram nas lojas.","Two black gears and a white one in the integrator. A consumer good families buy in shops."),
  "road_sign":("Moldura e chapa amarela no integrador. Vende bem no comércio exterior.","Frame and a yellow plate in the integrator. Sells well abroad."),
- "bicycle":("Chapas vermelhas, molduras e engrenagens pretas na fabricadora. O bem mais caro das lojas.","Red plates, frames and black gears in the fabricator. The priciest shop good."),
+ "bicycle":("Chapas vermelhas, molduras e engrenagens pretas na fabricadora. Base da motocicleta.","Red plates, frames and black gears in the fabricator. Base of the motorcycle."),
+ "electric_fan":("Motor, moldura e 2 engrenagens brancas na fabricadora. Eletrodoméstico das lojas.","Motor, frame and 2 white gears in the fabricator. A shop appliance."),
+ "radio":("2 chapas amarelas, 2 circuitos e 1 engrenagem preta na fabricadora.","2 yellow plates, 2 circuits and 1 black gear in the fabricator."),
+ "sewing_machine":("Motor, circuito e 2 engrenagens pretas na fabricadora.","Motor, circuit and 2 black gears in the fabricator."),
+ "television":("2 molduras e 4 circuitos no integrador. Muito conforto para as famílias.","2 frames and 4 circuits in the integrator. Lots of comfort for families."),
+ "refrigerator":("Motor, 2 circuitos e 2 chapas de aço azuis na fabricadora. O sonho de consumo das famílias.","Motor, 2 circuits and 2 blue steel plates in the fabricator. Every family's dream."),
+ "motorcycle":("Bicicleta, motor e 2 molduras na fabricadora. Só exportação, camada mais alta.","Bicycle, motor and 2 frames in the fabricator. Export only, top tier."),
+ "electric_car":("2 motores, 4 molduras e 6 chapas de aço azuis na fabricadora. O produto mais caro do mercado.","2 motors, 4 frames and 6 blue steel plates in the fabricator. The market's priciest product."),
+ "helper_robot":("2 motores, 2 processadores e 4 engrenagens brancas na fabricadora. Exportação de luxo.","2 motors, 2 processors and 4 white gears in the fabricator. A luxury export."),
 }.items(): label(f"veio.componenthelp.{name}",*texts)
 for color,(pt,en) in COLOR_NAMES.items():
  label(f"veio.componenthelp.{color}_paint",f"Lata de tinta {pt}: 2 corantes e 1 argila no misturador. Vai na cabine de pintura.",f"{en} paint can: 2 dyes and 1 clay in the mixer. Goes into the paint booth.")
@@ -1881,6 +1899,7 @@ def color_advancement(name,parent,icon,items,recipes=None):
 color_advancement("colors","veio:steel","veio:red_paint","veio:steel_plate",["veio:paint_mixer","veio:paint_booth"])
 color_advancement("painted","veio:colors","veio:black_gear",["veio:black_gear","veio:white_gear","veio:red_plate","veio:yellow_plate","veio:blue_steel_plate"])
 color_advancement("consumer_goods","veio:painted","veio:wall_clock",["veio:wall_clock","veio:road_sign","veio:bicycle"])
+color_advancement("advanced_goods","veio:consumer_goods","veio:electric_car",["veio:refrigerator","veio:motorcycle","veio:electric_car","veio:helper_robot"])
 # ---------- Guia da Grande Indústria ----------
 # Terceiro livro: pesquisa, razões, cadeia funda, monitor, âncora, logística nova e o grande
 # projeto. Entregue pelo avanço do aço, quando a fábrica passa a crescer por volume.
@@ -2031,11 +2050,14 @@ i_colors=ipage(
 i_goods=ipage(
  "Linha de pintura\n\nUma lata pinta 4 peças: um misturador abastece 3 cabines.\n\nRelógio, placa e bicicleta: as famílias compram nas lojas e o mundo importa.",
  "Paint line\n\nOne can paints 4 parts: one mixer feeds 3 booths.\n\nClock, sign and bicycle: families buy them in shops and the world imports them.")
+i_advanced=ipage(
+ "Bens avançados\n\nLojas: ventilador, rádio, máquina de costura, TV e geladeira dão muito conforto.\n\nExportação (camada 4): motocicleta (bicicleta + motor), carro elétrico e robô ajudante.",
+ "Advanced goods\n\nShops: fan, radio, sewing machine, TV and fridge give lots of comfort.\n\nExport (tier 4): motorcycle (bicycle + motor), electric car and helper robot.")
 color_recipes=[r for r in production_data["recipes"] if r.get("book")=="industry"]
 color_pages=[]
 for machine in [m for m in dict.fromkeys(r["machine"] for r in color_recipes)]:
  entries=[r for r in color_recipes if r["machine"]==machine]
- per=3 if machine=="paint_booth" else 4
+ per={"paint_booth":3,"fabricator":2}.get(machine,4)
  for start in range(0,len(entries),per):
   extra=[{"translate":f"block.veio.{machine}","bold":True}]
   if len(entries)>per:
@@ -2085,7 +2107,7 @@ ipages[i_blocks-1]={"text":"","extra":extra}
 ilinks=[("Começar","Start here",i_intro),("Laboratório","Research lab",i_research),("Pesquisas","Research tree",i_tree),("Pesquisa contínua","Ongoing research",i_ongoing),("Por que fluxo","Why flow",i_flow),
  ("Razões","Ratios",i_ratio),("Razões no painel","Ratios on the panel",i_panel),("Cadeia funda","Deep chain",i_chain),
  ("Kit Mk.II","Mk.II kit",i_mk2),("Monitor","Monitor",i_monitor),("Postos distantes","Distant outposts",i_stations),("Longe de você","While away",i_away),("Âncora de chunk","Chunk anchor",i_anchor),
- ("Logística nova","New logistics",i_logistics),("Lava encanada","Piped lava",i_lava),("Grande projeto","Grand project",i_project),("Cores","Colors",i_colors),("Clima","Weather",i_climate),("Visual","Visuals",i_visual),("Blocos","Blocks",i_blocks)]
+ ("Logística nova","New logistics",i_logistics),("Lava encanada","Piped lava",i_lava),("Grande projeto","Grand project",i_project),("Cores","Colors",i_colors),("Bens avançados","Advanced goods",i_advanced),("Clima","Weather",i_climate),("Visual","Visuals",i_visual),("Blocos","Blocks",i_blocks)]
 label("veio.industry.title","Guia da Grande Indústria","Large Industry Guide")
 extra=[{"translate":"veio.industry.title","bold":True},{"text":"\n"}]
 for n,(pt,en,target) in enumerate(ilinks):

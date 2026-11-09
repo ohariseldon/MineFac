@@ -238,7 +238,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 18
+                    "page": 22
                   }
                 },
                 {
@@ -250,7 +250,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 19
+                    "page": 18
                   }
                 },
                 {
@@ -262,7 +262,19 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 43
+                    "page": 19
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.industry.contents.20",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 47
                   }
                 },
                 {
@@ -382,10 +394,15 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 42
+                    "page": 46
                   }
                 }
               ]
+            }
+          },
+          {
+            "raw": {
+              "translate": "veio.industry.page.22"
             }
           },
           {
@@ -2481,6 +2498,34 @@
                   "text": "\n"
                 },
                 {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.frame"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.circuit"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.television"
+                },
+                {
+                  "text": "\n"
+                },
+                {
                   "translate": "veio.guide.back",
                   "color": "dark_blue",
                   "click_event": {
@@ -2498,6 +2543,9 @@
                 {
                   "translate": "block.veio.fabricator",
                   "bold": true
+                },
+                {
+                  "text": " 1/4"
                 },
                 {
                   "text": "\n"
@@ -2543,6 +2591,349 @@
                   "text": "\n"
                 },
                 {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.motor"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.frame"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.white_gear"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.electric_fan"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.fabricator",
+                  "bold": true
+                },
+                {
+                  "text": " 2/4"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.yellow_plate"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.circuit"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.black_gear"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.radio"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.motor"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.circuit"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.black_gear"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.sewing_machine"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.fabricator",
+                  "bold": true
+                },
+                {
+                  "text": " 3/4"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.motor"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.circuit"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.blue_steel_plate"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.refrigerator"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.motor"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.frame"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.bicycle"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.motorcycle"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.fabricator",
+                  "bold": true
+                },
+                {
+                  "text": " 4/4"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.motor"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.frame"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "6 "
+                },
+                {
+                  "translate": "item.veio.blue_steel_plate"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.electric_car"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.motor"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "2 "
+                },
+                {
+                  "translate": "item.veio.processor"
+                },
+                {
+                  "text": " + "
+                },
+                {
+                  "text": "4 "
+                },
+                {
+                  "translate": "item.veio.white_gear"
+                },
+                {
+                  "text": " > ",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "1 "
+                },
+                {
+                  "translate": "item.veio.helper_robot"
+                },
+                {
+                  "text": "\n"
+                },
+                {
                   "translate": "veio.guide.back",
                   "color": "dark_blue",
                   "click_event": {
@@ -2570,7 +2961,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 22
+                    "page": 23
                   }
                 },
                 {
@@ -2582,7 +2973,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 25
+                    "page": 26
                   }
                 },
                 {
@@ -2594,7 +2985,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 27
+                    "page": 28
                   }
                 },
                 {
@@ -2606,7 +2997,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 28
+                    "page": 29
                   }
                 },
                 {
@@ -2618,7 +3009,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 31
+                    "page": 32
                   }
                 },
                 {
@@ -2630,7 +3021,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 40
+                    "page": 41
                   }
                 },
                 {
@@ -2642,7 +3033,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 41
+                    "page": 42
                   }
                 },
                 {
@@ -2654,7 +3045,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 55
+                    "page": 59
                   }
                 },
                 {
@@ -2666,7 +3057,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 56
+                    "page": 60
                   }
                 },
                 {
@@ -2700,7 +3091,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 44
+                    "page": 48
                   }
                 },
                 {
@@ -2712,7 +3103,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 45
+                    "page": 49
                   }
                 },
                 {
@@ -2724,7 +3115,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 46
+                    "page": 50
                   }
                 },
                 {
@@ -2736,7 +3127,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 47
+                    "page": 51
                   }
                 },
                 {
@@ -2748,7 +3139,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 48
+                    "page": 52
                   }
                 },
                 {
@@ -2760,7 +3151,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 49
+                    "page": 53
                   }
                 },
                 {
@@ -2772,7 +3163,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 50
+                    "page": 54
                   }
                 },
                 {
@@ -2784,7 +3175,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 51
+                    "page": 55
                   }
                 },
                 {
@@ -2796,7 +3187,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 52
+                    "page": 56
                   }
                 },
                 {
@@ -2808,7 +3199,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 53
+                    "page": 57
                   }
                 },
                 {
@@ -2820,7 +3211,7 @@
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
-                    "page": 54
+                    "page": 58
                   }
                 },
                 {

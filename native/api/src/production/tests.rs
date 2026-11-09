@@ -629,3 +629,27 @@ fn every_ingredient_has_one_slot_in_the_machines_that_share_them() {
         }
     }
 }
+
+#[test]
+fn advanced_goods_build_on_painted_parts_and_sell() {
+    use crate::veio::workforce::society::{goods, trade};
+    let made_from = |output: &str| data::RECIPES.iter().find(|recipe| recipe.output.0 == output)
+        .map(|recipe| recipe.inputs.iter().flat_map(|input| input.items.iter().copied()).collect::<Vec<_>>())
+        .unwrap_or_default();
+    assert!(made_from("veio:motorcycle").contains(&"veio:bicycle"), "a moto nasce da bicicleta");
+    assert!(made_from("veio:electric_car").contains(&"veio:blue_steel_plate"));
+    assert!(made_from("veio:helper_robot").contains(&"veio:white_gear"));
+    assert!(made_from("veio:radio").contains(&"veio:yellow_plate"));
+    for item in ["veio:electric_fan", "veio:radio", "veio:sewing_machine", "veio:television", "veio:refrigerator",
+        "veio:motorcycle", "veio:electric_car", "veio:helper_robot"] {
+        assert!(!made_from(item).is_empty(), "{item} tem receita");
+        assert!(trade::product(item).is_some(), "{item} tem preço");
+    }
+    // Eletrodomésticos são conforto das famílias; veículos e robô, só exportação.
+    assert!(goods("veio:refrigerator").is_some() && goods("veio:television").is_some());
+    assert!(goods("veio:electric_car").is_none() && goods("veio:helper_robot").is_none());
+    // Uma geladeira sai de uma fabricadora abastecida.
+    let mut fabricator = stocked(FABRICATOR, &[(0, "veio:motor", 1), (1, "veio:circuit", 2), (2, "veio:blue_steel_plate", 2)]);
+    run(&mut fabricator, 260);
+    assert_eq!(fabricator.items[3], Some(ItemStack::new("veio:refrigerator", 1)));
+}
