@@ -104,6 +104,14 @@ pub(crate) static RECIPES: &[Recipe] = &[
     Recipe { machine: "veio:integrator", inputs: &[Input { items: &["veio:black_gear"], count: 2 }, Input { items: &["veio:white_gear"], count: 1 }], output: ("veio:wall_clock", 1), ticks: 80, power: 12, alt: false },
     Recipe { machine: "veio:integrator", inputs: &[Input { items: &["veio:frame"], count: 1 }, Input { items: &["veio:yellow_plate"], count: 1 }], output: ("veio:road_sign", 2), ticks: 60, power: 10, alt: false },
     Recipe { machine: "veio:fabricator", inputs: &[Input { items: &["veio:red_plate"], count: 2 }, Input { items: &["veio:frame"], count: 2 }, Input { items: &["veio:black_gear"], count: 4 }], output: ("veio:bicycle", 1), ticks: 200, power: 24, alt: false },
+    Recipe { machine: "veio:fabricator", inputs: &[Input { items: &["veio:motor"], count: 1 }, Input { items: &["veio:frame"], count: 1 }, Input { items: &["veio:white_gear"], count: 2 }], output: ("veio:electric_fan", 1), ticks: 160, power: 20, alt: false },
+    Recipe { machine: "veio:fabricator", inputs: &[Input { items: &["veio:yellow_plate"], count: 2 }, Input { items: &["veio:circuit"], count: 2 }, Input { items: &["veio:black_gear"], count: 1 }], output: ("veio:radio", 1), ticks: 160, power: 20, alt: false },
+    Recipe { machine: "veio:fabricator", inputs: &[Input { items: &["veio:motor"], count: 1 }, Input { items: &["veio:circuit"], count: 1 }, Input { items: &["veio:black_gear"], count: 2 }], output: ("veio:sewing_machine", 1), ticks: 180, power: 22, alt: false },
+    Recipe { machine: "veio:integrator", inputs: &[Input { items: &["veio:frame"], count: 2 }, Input { items: &["veio:circuit"], count: 4 }], output: ("veio:television", 1), ticks: 200, power: 20, alt: false },
+    Recipe { machine: "veio:fabricator", inputs: &[Input { items: &["veio:motor"], count: 1 }, Input { items: &["veio:circuit"], count: 2 }, Input { items: &["veio:blue_steel_plate"], count: 2 }], output: ("veio:refrigerator", 1), ticks: 240, power: 28, alt: false },
+    Recipe { machine: "veio:fabricator", inputs: &[Input { items: &["veio:motor"], count: 1 }, Input { items: &["veio:frame"], count: 2 }, Input { items: &["veio:bicycle"], count: 1 }], output: ("veio:motorcycle", 1), ticks: 260, power: 30, alt: false },
+    Recipe { machine: "veio:fabricator", inputs: &[Input { items: &["veio:motor"], count: 2 }, Input { items: &["veio:frame"], count: 4 }, Input { items: &["veio:blue_steel_plate"], count: 6 }], output: ("veio:electric_car", 1), ticks: 400, power: 40, alt: false },
+    Recipe { machine: "veio:fabricator", inputs: &[Input { items: &["veio:motor"], count: 2 }, Input { items: &["veio:processor"], count: 2 }, Input { items: &["veio:white_gear"], count: 4 }], output: ("veio:helper_robot", 1), ticks: 400, power: 40, alt: false },
 ];
 
 pub(crate) static NODES: &[Node] = &[

@@ -43,7 +43,7 @@ const MAX_CONTRACTS: usize = 3;
 pub(crate) const TIER_AT: [i32; 3] = [1, 3, 6];
 
 /// Produtos do mercado mundial: (item, chave de nome, valor base em moedas, camada de complexidade).
-pub(crate) const PRODUCTS: [(&str, &str, i32, i32); 47] = [
+pub(crate) const PRODUCTS: [(&str, &str, i32, i32); 55] = [
     ("minecraft:raw_iron", "item.minecraft.raw_iron", 2, 0),
     ("minecraft:raw_copper", "item.minecraft.raw_copper", 1, 0),
     ("minecraft:raw_gold", "item.minecraft.raw_gold", 4, 0),
@@ -93,6 +93,15 @@ pub(crate) const PRODUCTS: [(&str, &str, i32, i32); 47] = [
     ("veio:road_sign", "item.veio.road_sign", 16, 2),
     ("veio:wall_clock", "item.veio.wall_clock", 30, 3),
     ("veio:bicycle", "item.veio.bicycle", 70, 3),
+    // Bens avançados: a camada 4 (reputação 6) é onde estão os mais caros.
+    ("veio:electric_fan", "item.veio.electric_fan", 60, 3),
+    ("veio:radio", "item.veio.radio", 55, 3),
+    ("veio:sewing_machine", "item.veio.sewing_machine", 70, 3),
+    ("veio:television", "item.veio.television", 90, 3),
+    ("veio:refrigerator", "item.veio.refrigerator", 120, 4),
+    ("veio:motorcycle", "item.veio.motorcycle", 180, 4),
+    ("veio:electric_car", "item.veio.electric_car", 400, 4),
+    ("veio:helper_robot", "item.veio.helper_robot", 500, 4),
 ];
 
 /// Comida que as lojas podem importar (a que a loja mais vende, ou pão).

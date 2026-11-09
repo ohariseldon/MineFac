@@ -1,0 +1,31 @@
+{
+  "parent": "veio:consumer_goods",
+  "display": {
+    "icon": {
+      "id": "veio:electric_car"
+    },
+    "title": {
+      "translate": "advancement.veio.advanced_goods.title"
+    },
+    "description": {
+      "translate": "advancement.veio.advanced_goods.description"
+    }
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "veio:refrigerator",
+              "veio:motorcycle",
+              "veio:electric_car",
+              "veio:helper_robot"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

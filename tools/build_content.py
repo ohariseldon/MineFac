@@ -170,6 +170,15 @@ ITEMS = {
     "wall_clock": ("minecraft:brick", 16),
     "road_sign": ("minecraft:brick", 16),
     "bicycle": ("minecraft:brick", 4),
+    # Bens avançados: eletrodomésticos, veículos e o robô (peças pintadas + motor e eletrônica).
+    "electric_fan": ("minecraft:brick", 16),
+    "radio": ("minecraft:brick", 16),
+    "sewing_machine": ("minecraft:brick", 8),
+    "television": ("minecraft:brick", 8),
+    "refrigerator": ("minecraft:brick", 4),
+    "motorcycle": ("minecraft:brick", 1),
+    "electric_car": ("minecraft:brick", 1),
+    "helper_robot": ("minecraft:brick", 1),
 }
 
 TABS = {
@@ -180,7 +189,8 @@ TABS = {
         "motor", "processor", "automation_core", "mk2_kit", "permit_workshop", "permit_steel", "permit_electronics",
         "paint_mixer", "paint_booth", "black_paint", "white_paint", "red_paint", "yellow_paint", "blue_paint", "green_paint",
         "orange_paint", "black_gear", "white_gear", "red_plate", "yellow_plate", "blue_steel_plate", "wall_clock", "road_sign",
-        "bicycle"]),
+        "bicycle", "electric_fan", "radio", "sewing_machine", "television", "refrigerator", "motorcycle", "electric_car",
+        "helper_robot"]),
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",
         "geothermal", "hydro_turbine", "solar", "battery", "pole", "steel_pole", "cable", "pump", "pipe",
         "minecraft:coal", "minecraft:lava_bucket"]),

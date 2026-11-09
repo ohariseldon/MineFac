@@ -1089,6 +1089,159 @@ BICYCLE = [
     "................",
 ]
 
+
+FAN = [
+    "................",
+    "......jjjj......",
+    "....jjebbejj....",
+    "...jbbjebjbbj...",
+    "..jbbbjebjbbbj..",
+    "..jebbbjjbbbej..",
+    "..jjjjjmmjjjjj..",
+    "..jbbbjmmjbbbj..",
+    "..jebbjebjbbej..",
+    "...jbbjebjbbj...",
+    "....jjebbejj....",
+    "......jjjj......",
+    ".......ee.......",
+    ".......ee.......",
+    ".....eeeeee.....",
+    "....eeeeeeee....",
+]
+
+RADIO = [
+    "................",
+    "..........c.....",
+    "...........c....",
+    "............c...",
+    "..nnnnnnnnnnnn..",
+    "..nlllllllllln..",
+    "..nlmmmmlYYYln..",
+    "..nlmlmmlYmYln..",
+    "..nlmmmmlYYYln..",
+    "..nlmlmmllllln..",
+    "..nlmmmmlmlmln..",
+    "..nlllllllllln..",
+    "..nnnnnnnnnnnn..",
+    "...nn......nn...",
+    "................",
+    "................",
+]
+
+SEWING = [
+    "................",
+    "................",
+    "...mmmmmmmmm....",
+    "..mmyymmmmmmm...",
+    "..mm...mmmmmm...",
+    "..mm......mmm...",
+    "..mm......mmm...",
+    "..mm......mbm...",
+    "..mm.......b....",
+    "..mm.......c....",
+    "..mmmmmmmmmmmmm.",
+    ".nnnnnnnnnnnnnnn",
+    ".nNNNNNNNNNNNNNn",
+    ".nnnnnnnnnnnnnnn",
+    "................",
+    "................",
+]
+
+TELEVISION = [
+    "....e......e....",
+    ".....e....e.....",
+    "......e..e......",
+    ".nnnnnnnnnnnnnn.",
+    ".nmmmmmmmmmmmNn.",
+    ".nmUuuuuuuuUmNn.",
+    ".nmuvvuuuuuumyn.",
+    ".nmuvuuuuuuumNn.",
+    ".nmuuuuuuuuumyn.",
+    ".nmuuuuuuuuumNn.",
+    ".nmUuuuuuuuUmNn.",
+    ".nmmmmmmmmmmmNn.",
+    ".nnnnnnnnnnnnnn.",
+    "...N........N...",
+    "...N........N...",
+    "................",
+]
+
+FRIDGE = [
+    "....TTTTTTTT....",
+    "....TAAAAAAT....",
+    "....TAuAAAAT....",
+    "....TAAAAAbT....",
+    "....TAAAAAbT....",
+    "....TTTTTTTT....",
+    "....TAAAAAAT....",
+    "....TAuAAAAT....",
+    "....TAAAAAbT....",
+    "....TAAAAAbT....",
+    "....TAAAAAbT....",
+    "....TAAAAAAT....",
+    "....TAAAAAAT....",
+    "....TTTTTTTT....",
+    ".....m....m.....",
+    "................",
+]
+
+MOTORCYCLE = [
+    "................",
+    "................",
+    "..........mm....",
+    "...........c....",
+    "....mmmm..FF....",
+    "....FFFFFFFFF...",
+    "...FFFccccFF....",
+    "...mmmmmm..mmm..",
+    "..m..ccmm.mF..m.",
+    ".m....ceemm....m",
+    ".m...mmemm.....m",
+    ".m....mmm......m",
+    "..m...........m.",
+    "...mmm......mm..",
+    "................",
+    "................",
+]
+
+CAR = [
+    "................",
+    "................",
+    "................",
+    ".....AAAAAA.....",
+    "....AuuAuuuA....",
+    "...AuuuAuuuuA...",
+    ".PAAAAAAAAAAAAA.",
+    "PAAAAAAAAAAAAAAy",
+    "PAAAAAAAAAAAAAAA",
+    "PPPmmmPPPPmmmPPP",
+    "..mmbmm..mmbmm..",
+    "...mmm....mmm...",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+ROBOT = [
+    ".......y........",
+    ".......c........",
+    "....jjjjjjj.....",
+    "....jAAjAAj.....",
+    "....jjjjjjj.....",
+    "....jjmmmjj.....",
+    "......jj........",
+    "..jjjjjjjjjj....",
+    ".jj.jjAAjj.jj...",
+    ".j..jjAAjj..j...",
+    ".c..jjjjjj..c...",
+    "....jj..jj......",
+    "....jj..jj......",
+    "....mm..mm......",
+    "...mmm..mmm.....",
+    "................",
+]
+
 def material():
     """Textura clara e uniforme que o bloco tinge nas luzes e peças animadas."""
     rows = []
@@ -1267,6 +1420,10 @@ def main():
     out["item/wall_clock"] = render(WALL_CLOCK, salt=25)
     out["item/road_sign"] = render(ROAD_SIGN, salt=26)
     out["item/bicycle"] = render(BICYCLE, salt=27)
+    for salt, (name, rows) in enumerate((("electric_fan", FAN), ("radio", RADIO), ("sewing_machine", SEWING),
+                                         ("television", TELEVISION), ("refrigerator", FRIDGE), ("motorcycle", MOTORCYCLE),
+                                         ("electric_car", CAR), ("helper_robot", ROBOT)), start=28):
+        out[f"item/{name}"] = render(rows, salt=salt)
     out["item/permit_steel"] = permit("ST")
     out["item/permit_electronics"] = permit("HG")
     for name, pixels in out.items():

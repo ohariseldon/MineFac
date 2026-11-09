@@ -111,7 +111,15 @@
     {"machine": "paint_booth", "in": [["minecraft:glass", 8], ["veio:orange_paint", 1]], "out": ["minecraft:orange_stained_glass", 8], "ticks": 60, "power": 10, "book": "industry"},
     {"machine": "integrator", "in": [["veio:black_gear", 2], ["veio:white_gear", 1]], "out": ["veio:wall_clock", 1], "ticks": 80, "power": 12, "book": "industry"},
     {"machine": "integrator", "in": [["veio:frame", 1], ["veio:yellow_plate", 1]], "out": ["veio:road_sign", 2], "ticks": 60, "power": 10, "book": "industry"},
-    {"machine": "fabricator", "in": [["veio:red_plate", 2], ["veio:frame", 2], ["veio:black_gear", 4]], "out": ["veio:bicycle", 1], "ticks": 200, "power": 24, "book": "industry"}
+    {"machine": "fabricator", "in": [["veio:red_plate", 2], ["veio:frame", 2], ["veio:black_gear", 4]], "out": ["veio:bicycle", 1], "ticks": 200, "power": 24, "book": "industry"},
+    {"machine": "fabricator", "in": [["veio:motor", 1], ["veio:frame", 1], ["veio:white_gear", 2]], "out": ["veio:electric_fan", 1], "ticks": 160, "power": 20, "book": "industry"},
+    {"machine": "fabricator", "in": [["veio:yellow_plate", 2], ["veio:circuit", 2], ["veio:black_gear", 1]], "out": ["veio:radio", 1], "ticks": 160, "power": 20, "book": "industry"},
+    {"machine": "fabricator", "in": [["veio:motor", 1], ["veio:circuit", 1], ["veio:black_gear", 2]], "out": ["veio:sewing_machine", 1], "ticks": 180, "power": 22, "book": "industry"},
+    {"machine": "integrator", "in": [["veio:frame", 2], ["veio:circuit", 4]], "out": ["veio:television", 1], "ticks": 200, "power": 20, "book": "industry"},
+    {"machine": "fabricator", "in": [["veio:motor", 1], ["veio:circuit", 2], ["veio:blue_steel_plate", 2]], "out": ["veio:refrigerator", 1], "ticks": 240, "power": 28, "book": "industry"},
+    {"machine": "fabricator", "in": [["veio:motor", 1], ["veio:frame", 2], ["veio:bicycle", 1]], "out": ["veio:motorcycle", 1], "ticks": 260, "power": 30, "book": "industry"},
+    {"machine": "fabricator", "in": [["veio:motor", 2], ["veio:frame", 4], ["veio:blue_steel_plate", 6]], "out": ["veio:electric_car", 1], "ticks": 400, "power": 40, "book": "industry"},
+    {"machine": "fabricator", "in": [["veio:motor", 2], ["veio:processor", 2], ["veio:white_gear", 4]], "out": ["veio:helper_robot", 1], "ticks": 400, "power": 40, "book": "industry"}
   ],
   "nodes": [
     {"blocks": ["minecraft:copper_ore", "minecraft:deepslate_copper_ore"], "out": ["minecraft:raw_copper", 1], "tier": 1, "slow": 1},
