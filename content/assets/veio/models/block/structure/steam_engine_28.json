@@ -1,0 +1,326 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "base": "minecraft:block/smooth_stone",
+    "base_side": "minecraft:block/smooth_stone_slab_side",
+    "metal": "minecraft:block/iron_block",
+    "pipe": "minecraft:block/cut_copper",
+    "joint": "minecraft:block/copper_block",
+    "brick": "minecraft:block/bricks",
+    "dark": "minecraft:block/black_concrete",
+    "glow": "minecraft:block/blast_furnace_front_on",
+    "wood": "minecraft:block/stripped_spruce_log",
+    "plank": "minecraft:block/spruce_planks",
+    "glass": "minecraft:block/tinted_glass",
+    "screen": "minecraft:block/blue_terracotta",
+    "warn": "minecraft:block/yellow_terracotta",
+    "light": "minecraft:block/redstone_lamp_on",
+    "port": "veio:block/port",
+    "rust": "minecraft:block/weathered_cut_copper",
+    "steelbar": "minecraft:block/polished_basalt_side",
+    "roof": "minecraft:block/deepslate_tiles",
+    "body": "minecraft:block/polished_deepslate",
+    "trim": "minecraft:block/iron_block",
+    "deck": "minecraft:block/deepslate_tiles",
+    "shell": "minecraft:block/gray_concrete",
+    "particle": "minecraft:block/polished_deepslate"
+  },
+  "elements": [
+    {
+      "from": [
+        6.75,
+        0,
+        0
+      ],
+      "to": [
+        9.25,
+        8,
+        9.56
+      ],
+      "faces": {
+        "up": {
+          "texture": "#trim"
+        },
+        "south": {
+          "texture": "#trim"
+        },
+        "west": {
+          "texture": "#trim"
+        },
+        "east": {
+          "texture": "#trim"
+        }
+      }
+    },
+    {
+      "from": [
+        6.75,
+        0,
+        0
+      ],
+      "to": [
+        9.25,
+        4.04,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#trim"
+        },
+        "west": {
+          "texture": "#trim"
+        },
+        "east": {
+          "texture": "#trim"
+        }
+      }
+    },
+    {
+      "from": [
+        6.95,
+        2.1522,
+        14.1522
+      ],
+      "to": [
+        9.05,
+        4.1522,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#trim"
+        },
+        "up": {
+          "texture": "#trim"
+        },
+        "north": {
+          "texture": "#trim"
+        },
+        "west": {
+          "texture": "#trim"
+        },
+        "east": {
+          "texture": "#trim"
+        }
+      }
+    },
+    {
+      "from": [
+        6.95,
+        7.6,
+        1.0
+      ],
+      "to": [
+        9.05,
+        9.6,
+        3.0
+      ],
+      "faces": {
+        "down": {
+          "texture": "#trim"
+        },
+        "up": {
+          "texture": "#trim"
+        },
+        "north": {
+          "texture": "#trim"
+        },
+        "south": {
+          "texture": "#trim"
+        },
+        "west": {
+          "texture": "#trim"
+        },
+        "east": {
+          "texture": "#trim"
+        }
+      }
+    },
+    {
+      "from": [
+        9.2,
+        0,
+        11.0995
+      ],
+      "to": [
+        9.8,
+        0.6995,
+        12.6995
+      ],
+      "faces": {
+        "up": {
+          "texture": "#metal"
+        },
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "from": [
+        9.2,
+        0.5137,
+        12.5137
+      ],
+      "to": [
+        9.8,
+        2.1137,
+        14.1137
+      ],
+      "faces": {
+        "down": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "from": [
+        9.2,
+        0,
+        1.2
+      ],
+      "to": [
+        9.8,
+        0.8,
+        2.8
+      ],
+      "faces": {
+        "up": {
+          "texture": "#metal"
+        },
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "from": [
+        9.2,
+        1.2,
+        1.2
+      ],
+      "to": [
+        9.8,
+        2.8,
+        2.8
+      ],
+      "faces": {
+        "down": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "from": [
+        9.2,
+        3.2,
+        1.2
+      ],
+      "to": [
+        9.8,
+        4.8,
+        2.8
+      ],
+      "faces": {
+        "down": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "from": [
+        9.2,
+        5.2,
+        1.2
+      ],
+      "to": [
+        9.8,
+        6.8,
+        2.8
+      ],
+      "faces": {
+        "down": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        }
+      }
+    }
+  ]
+}

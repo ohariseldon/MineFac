@@ -77,7 +77,7 @@ pub(super) fn cells<'a>(core: [i32; 3], facing: &'a str, layout: &'static Layout
 /// O estado de bloco de uma parte, como os comandos o escrevem.
 fn state(part: Part, facing: &str, tier: &str) -> String {
     match part {
-        Part::Piece(piece) => format!("{STRUCTURE}[facing={facing},piece={piece},tier={tier}]"),
+        Part::Piece(piece) => format!("{STRUCTURE}[facing={facing},piece={piece}]"),
         Part::HatchIn => format!("{HATCH_IN}[facing={facing},tier={tier}]"),
         Part::HatchOut => format!("{HATCH_OUT}[facing={facing},tier={tier}]"),
     }

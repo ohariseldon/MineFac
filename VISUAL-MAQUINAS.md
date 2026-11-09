@@ -102,5 +102,7 @@ em volta a planta própria da máquina, com peças de estrutura (`veio:structure
   posta e o que atrapalha fica contornado de vermelho.
 - O núcleo fica na frente: painel, luz e entrada continuam nele. A saída é a escotilha de trás.
 - Quebrar qualquer parte desmonta tudo e devolve o núcleo.
+- Cada máquina é desenhada como um modelo único (classe `Machine`) e cortada em blocos; as faces
+  do corte saem, então tanques, torres, passarelas e telhados ficam contínuos.
 
 Prévia: `python3 tools/preview_machine_frames.py` (grava `.build/visual/machine-frames.png`).

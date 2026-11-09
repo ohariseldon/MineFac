@@ -16,7 +16,9 @@ import machine_frames as frames
 ROOT = Path(__file__).resolve().parents[1]
 PALETTE.update({"copper_block": "#c07a56", "polished_andesite": "#868b89", "deepslate_tiles": "#37373a",
                 "black_concrete": "#141519", "blast_furnace_front_on": "#d9792c", "spruce_planks": "#73553a",
-                "yellow_terracotta": "#b98a24", "polished_deepslate": "#45494e"})
+                "yellow_terracotta": "#b98a24", "polished_deepslate": "#45494e",
+                "light_gray_concrete": "#8e8e86", "gray_concrete": "#3e4247", "weathered_cut_copper": "#6c9a7b",
+                "redstone_lamp_on": "#f2c27a", "polished_basalt_side": "#5a5a5e"})
 NAMES = {"drill": "Extratora", "drill_mk2": "Extratora Mk.II", "drill_mk3": "Extratora Mk.III",
          "press": "Prensa", "assembler": "Montadora", "cutter": "Cortadora", "integrator": "Integradora",
          "crusher": "Britador", "alloy_furnace": "Fundição de liga", "electric_furnace": "Forno elétrico",
@@ -35,7 +37,7 @@ def combined(name):
     elements = [dict(e, faces={k: {"texture": "@core" + v["texture"]} for k, v in e["faces"].items()})
                 for e in core["elements"]]
     for (dx, dy, dz), kind, piece in p["cells"]:
-        parts = (frames.piece_elements(piece, box) if kind == frames.STRUCTURE
+        parts = (p["pieces"][piece] if kind == frames.STRUCTURE
                  else frames.hatch_elements(kind, box))
         for e in parts:
             elements.append({"from": [e["from"][0] + dx*16, e["from"][1] + dy*16, e["from"][2] + dz*16],
@@ -59,10 +61,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", default=str(ROOT / ".build/visual/machine-frames.png"))
     parser.add_argument("--only", nargs="*")
+    parser.add_argument("--zoom", type=float, default=1.0)
     args = parser.parse_args()
+    frames.compile_all(box)
     names = args.only or list(frames.LAYOUTS)
     cols = 4
-    cell_w, cell_h = 420, 420
+    cell_w, cell_h = int(420 * args.zoom), int(420 * args.zoom)
     rows = (len(names) + cols - 1) // cols
     sheet = Image.new("RGBA", (cols*cell_w, rows*cell_h + 60), "#f2efe8")
     draw = ImageDraw.Draw(sheet)
@@ -72,6 +76,7 @@ def main():
         w, h, d = p["size"]
         span = max(w, d, h*0.9)
         scale = 3.4 if span <= 2 else 2.6 if span <= 3 else 2.1 if span <= 4 else 1.75
+        scale *= args.zoom
         tile = Image.new("RGBA", (cell_w, cell_h), "#f2efe8")
         render(tile, model, (cell_w*0.5, cell_h*0.62), scale)
         ox, oy = (index % cols)*cell_w, 60 + (index // cols)*cell_h

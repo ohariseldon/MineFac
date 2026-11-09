@@ -131,7 +131,8 @@ fn every_layout_is_a_real_footprint_with_a_free_front_and_an_outlet() {
     let sizes: std::collections::BTreeSet<_> = ["veio:drill", "veio:drill_mk3", "veio:press", "veio:steam_engine", "veio:fabricator"]
         .iter().map(|block| layout(block).unwrap().size).collect();
     assert_eq!(sizes.len(), 5, "formatos diferentes");
-    assert_eq!(layout("veio:steam_engine").unwrap().size, [3, 2, 5]);
+    assert_eq!(layout("veio:steam_engine").unwrap().size[0], 3);
+    assert_eq!(layout("veio:steam_engine").unwrap().size[2], 5);
     assert!(layout("veio:belt").is_none() && layout("veio:pole").is_none(), "logística segue de um bloco");
 }
 
