@@ -62,7 +62,7 @@ pub(super) fn heading(from: [f64; 3], to: [f64; 3]) -> (i32, &'static str) {
     (distance, ["n", "ne", "e", "se", "s", "sw", "w", "nw"][index])
 }
 
-fn direction(from: [f64; 3], to: [f64; 3]) -> (i32, String) {
+pub(super) fn direction(from: [f64; 3], to: [f64; 3]) -> (i32, String) {
     let (distance, key) = heading(from, to);
     (distance, Text::tr(&format!("veio.onboarding.dir.{key}"), &[]).plain())
 }
@@ -354,8 +354,11 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
                 host.tell(uuid, Text::tr(&format!("veio.onboarding.do.{}.{line}", p.step), &[]));
             }
         }
+        // Depois da fábrica, o prefeito conduz o capítulo da vila.
+        _ if p.outro => super::village::talk(host, player, p),
         _ => {
             for line in 1..=5 { say(host, uuid, &format!("veio.onboarding.mayor.next.{line}"), &[]); }
+            say(host, uuid, "veio.village.offer", &[]);
             if !p.outro {
                 p.outro = true; p.dirty = true;
                 title(host, player, "veio.onboarding.outro.title", "veio.onboarding.outro.sub");

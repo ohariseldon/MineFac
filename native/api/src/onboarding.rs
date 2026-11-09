@@ -72,6 +72,15 @@ struct Progress {
     intro_announced: Option<u8>,
     intro_since: Option<u64>,
     plot_level: Option<intro::Level>,
+    /// Capítulo da vila (`village`): etapa (0 não começou, 1..=8, 9 fim), os blocos do jogador
+    /// (posto, marco, carregador, capataz, casa, prefeitura), o que já fabricou e a base das
+    /// colheitas. Salvos; a contagem e o anúncio, não.
+    village: u8,
+    village_blocks: [Option<Pos>; 6],
+    village_crafted: u16,
+    village_base: i32,
+    village_count: i32,
+    village_announced: Option<u8>,
     // Unsaved transient evidence must not survive a reload or manual intervention.
     input_credit: u32,
     output_credit: u32,
@@ -231,11 +240,11 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-3\n{} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-4\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
             self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips,
-            self.intro, u8::from(self.outro), self.dimension);
-        for pos in self.blocks.iter().chain([&self.plot]) {
+            self.intro, u8::from(self.outro), self.village, self.village_crafted, self.village_base.max(0), self.dimension);
+        for pos in self.blocks.iter().chain([&self.plot]).chain(self.village_blocks.iter()) {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
         }
@@ -244,12 +253,14 @@ impl Progress {
 
     fn decode(text: &str) -> Option<Self> {
         let mut lines = text.lines();
-        let fields = match lines.next()? { "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, "veio-onboarding-3" => 14, _ => return None };
+        let fields = match lines.next()? {
+            "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, "veio-onboarding-3" => 14, "veio-onboarding-4" => 17, _ => return None,
+        };
         let values: Vec<u32> = lines.next()?.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
         if values.len() != fields || values[0] > u32::from(DONE) { return None; }
         let (crafted, tips) = if fields >= 12 { (values[10] as u16, values[11] as u16) } else { (0, 0) };
         // Saves de antes do prólogo: quem já começou a fábrica não volta para a casa e o prefeito.
-        let (intro, outro) = if fields == 14 { ((values[12] as u8).min(intro::INTRO_DONE), values[13] != 0) }
+        let (intro, outro) = if fields >= 14 { ((values[12] as u8).min(intro::INTRO_DONE), values[13] != 0) }
             else if values[0] > 0 || crafted != 0 { (intro::INTRO_DONE, values[0] == u32::from(DONE)) }
             else { (0, false) };
         let dimension = lines.next()?.to_owned();
@@ -261,13 +272,19 @@ impl Progress {
         };
         let mut blocks = [None; 5];
         for block in &mut blocks { *block = parse(lines.next()?)?; }
-        let plot = if fields == 14 { parse(lines.next()?)? } else { None };
+        let plot = if fields >= 14 { parse(lines.next()?)? } else { None };
+        let mut village_blocks = [None; 6];
+        let (village, village_crafted, village_base) = if fields == 17 {
+            for block in &mut village_blocks { *block = parse(lines.next()?)?; }
+            ((values[14] as u8).min(village::DONE_VILLAGE), values[15] as u16, values[16] as i32)
+        } else { (0, 0, 0) };
         // Sem o terreno salvo, o prefeito escolhe outro.
         let intro = if intro == intro::PLOT_STAGE && plot.is_none() { intro::MAYOR_STAGE } else { intro };
         Some(Self { step: values[0] as u8, hidden: values[1] != 0, powered: values[2] != 0,
             plates: values[3].min(4), gears: values[4].min(1), copper: values[5].min(1),
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
-            delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro, ..Self::default() })
+            delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro,
+            village, village_blocks, village_crafted, village_base, ..Self::default() })
     }
 }
 
@@ -291,7 +308,8 @@ pub(super) fn tracking() -> bool { ACTIVE.load(Ordering::Relaxed) }
 
 pub(super) fn visible_goal(uuid: u128) -> bool {
     SESSION.lock().ok().and_then(|slot| slot.as_ref().and_then(|session|
-        session.players.get(&uuid).map(|progress| (progress.step < DONE || progress.intro < intro::INTRO_DONE || !progress.outro)
+        session.players.get(&uuid).map(|progress| (progress.step < DONE || progress.intro < intro::INTRO_DONE || !progress.outro
+            || village::step(progress).is_some())
             && !progress.hidden)))
         .unwrap_or(false)
 }
@@ -343,13 +361,15 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     let tutorial = matches!(block, GENERATOR | PRESS | ASSEMBLER | DRILL | DRILL_MK2 | production::DRILL_MK3 | HUB);
     let tip = tip_for(block).filter(|_| !clicked);
     let part = !clicked && CRAFT.iter().any(|parts| parts.iter().any(|(target, _)| *target == block));
-    if !tutorial && tip.is_none() && !part { return; }
+    let village_block = !clicked && village::slot(block).is_some();
+    if !tutorial && tip.is_none() && !part && !village_block { return; }
     let Some(player) = host.acting_player() else { return; };
     let Ok(mut slot) = SESSION.lock() else { return; };
     if !session(host, &mut slot) { return; }
     let s = slot.as_mut().unwrap();
     let progress = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
     if let Some(bit) = tip && progress.tips & bit == 0 { progress.pending_tips |= bit; }
+    if village_block { village::placed(progress, &player.dimension, pos, block); }
     // Colocou o produto da etapa: já foi fabricado (a lista de materiais não volta).
     if part && let Some(parts) = CRAFT.get(usize::from(progress.step)) {
         for (index, (target, _)) in parts.iter().enumerate() {
@@ -522,6 +542,14 @@ fn tick(host: &mut dyn Host, now: u64) {
             }
             continue;
         }
+        // Capítulo da vila: enquanto está aberto, ele fala e ocupa a barra.
+        if village::step(p).is_some() {
+            village::tick(host, player, p, now);
+            if p.dirty && now % 100 == 0 && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
+                host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
+            }
+            continue;
+        }
         // Exactly one transition per update. Never skip an unperformed exercise.
         if player.dimension == p.dimension && p.ready() {
             p.step += 1; p.dirty = true; p.status = 0; p.last_status_notice = None;
@@ -583,14 +611,22 @@ pub(super) fn logout(_host: &dyn Host, uuid: u128) {
 
 pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command: &str) -> bool {
     let action = match command.trim() {
-        "veiotutorial ocultar" => 0, "veiotutorial mostrar" => 1, "veiotutorial reiniciar" => 2,
+        "veiotutorial ocultar" => 0, "veiotutorial mostrar" => 1, "veiotutorial reiniciar" => 2, "veiotutorial vila" => 3,
         _ => return false,
     };
     let Ok(mut slot) = SESSION.lock() else { return true; };
     if !session(host, &mut slot) { return true; }
     let s = slot.as_mut().unwrap();
     let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
-    match action { 0 => { p.hidden = true; }, 1 => { p.hidden = false; p.announced = None; },
+    if action == 3 {
+        // Capítulo da vila direto (quem já conhece a fábrica): pula o prólogo, se ainda estiver nele.
+        if p.intro < intro::INTRO_DONE { p.intro = intro::INTRO_DONE; }
+        village::start(host, player, p);
+        if save(&s.root, player.uuid, p).is_err() { host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); }
+        ACTIVE.store(true, Ordering::Relaxed);
+        return true;
+    }
+    match action { 0 => { p.hidden = true; }, 1 => { p.hidden = false; p.announced = None; p.village_announced = None; },
         // Refazer não repete as dicas já vistas.
         _ => { *p = Progress { tips: p.tips, ..Progress::default() }; } }
     if action == 1 { p.intro_announced = None; }
@@ -621,6 +657,7 @@ pub(super) fn talk(host: &mut dyn Host) -> bool {
 pub(super) fn world_changed() { intro::reset(); }
 
 mod intro;
+mod village;
 pub(super) use intro::MAYOR;
 #[cfg(test)]
 mod tests;

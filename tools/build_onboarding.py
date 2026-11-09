@@ -201,3 +201,134 @@ def add_labels(label):
     label('veio.onboarding.blocked.3','A saída está cheia. Leve a produção embora pela moldura VERMELHA (esteira, braço ou baú) ou esvazie a máquina.', 'The output is full. Carry products away from the RED frame (belt, arm or chest) or empty the machine.')
     label('veio.onboarding.blocked.5','A máquina está sem energia. Confira combustível no gerador e cabos encostando nas máquinas.', 'The machine has no power. Check generator fuel and cables touching the machines.')
     label('veio.onboarding.blocked.9','Redstone está pausando a máquina. Retire o sinal para retomar o exercício.', 'Redstone is pausing the machine. Remove the signal to resume the exercise.')
+    add_village_labels(label, names, recipe_line)
+
+
+def add_village_labels(label, names, recipe_line):
+    """Capítulo 2 do tutorial: a vila operária, contada pelo prefeito Otávio (onboarding/village.rs)."""
+    names.update({
+        'farm_post': ('Posto do lavrador', 'Farmer post'), 'field_marker': ('Marco de lavoura', 'Field marker'),
+        'hauler_post': ('Posto do carregador', 'Hauler post'), 'foreman_desk': ('Mesa do capataz', 'Foreman desk'),
+        'house': ('Casa', 'House'), 'town_hall': ('Prefeitura', 'Town hall'), 'composter': ('Composteira', 'Composter'),
+        'iron_hoe': ('Enxada de ferro', 'Iron hoe'), 'emerald': ('Esmeralda', 'Emerald'), 'barrel': ('Barril', 'Barrel'),
+        'oak_fence': ('Cerca de carvalho', 'Oak fence'), 'wheat_seeds': ('Sementes de trigo', 'Wheat seeds'),
+        'hopper': ('Funil', 'Hopper'), 'iron_plate': ('Chapa de ferro', 'Iron plate'), 'lectern': ('Atril', 'Lectern'),
+        'bell': ('Sino', 'Bell'), 'oak_door': ('Porta de carvalho', 'Oak door'), 'glass_pane': ('Painel de vidro', 'Glass pane'),
+        'stone_bricks': ('Tijolos de pedra', 'Stone bricks'), 'oak_planks': ('Tábuas de carvalho', 'Oak planks'),
+    })
+    for key, (pt, en) in names.items(): label(f'veio.onboarding.name.{key}', pt, en)
+    steps = [
+      # (título, fala do prefeito, passos, objetivo da barra, comentário ao concluir)
+      (('Vila 1 de 8 · Um posto de trabalho', 'Village 1 of 8 · A workplace'),
+       ('A fábrica já anda sozinha, mas uma vila precisa de mãos. Um aldeão contratado trabalha sem energia: ele come e anda. Comece pela comida: um posto do lavrador no meio de uma plantação.',
+        'The factory runs on its own, but a village needs hands. A hired villager works without power: they eat and walk. Start with food: a farmer post in the middle of a crop field.'),
+       [('1. Fabrique o posto do lavrador (ficha acima). A esmeralda vem de troca com aldeões.', '1. Craft the farmer post (card above). Emeralds come from trading with villagers.'),
+        ('2. Ache ou plante uma lavoura de trigo, cenoura ou batata (até 9x9) perto da vila.', '2. Find or plant a wheat, carrot or potato field (up to 9x9) near the village.'),
+        ('3. Coloque o posto no meio da lavoura: ele trabalha a camada dele, a de baixo e a de cima.', '3. Place the post in the middle of the field: it works its own layer, the one below and the one above.'),
+        ('4. Abra o posto com a mão vazia: comida à esquerda, colheita à direita.', '4. Open the post with an empty hand: food on the left, harvest on the right.')],
+       ('Coloque um posto do lavrador numa lavoura', 'Place a farmer post in a field'),
+       ('Bom lugar. Agora falta quem trabalhe nele.', 'Good spot. Now it needs someone to work it.')),
+      (('Vila 2 de 8 · Contratar', 'Village 2 of 8 · Hiring'),
+       ('Contratar custa uma esmeralda, e o trabalhador come: cada tarefa gasta 2 pontos de comida. Pão vale 6 e paga 3 colheitas; trigo cru vale 1 e não paga nenhuma.',
+        'Hiring costs one emerald, and the worker eats: each task costs 2 food points. Bread is worth 6 and pays for 3 harvests; raw wheat is worth 1 and pays for none.'),
+       [('1. Ponha comida no espaço da esquerda do posto (pão, cenoura, batata, carne assada).', '1. Put food in the post\'s left slot (bread, carrots, potatoes, cooked meat).'),
+        ('2. Traga um aldeão adulto para até 8 blocos do posto (os sem profissão são escolhidos primeiro).', '2. Bring an adult villager within 8 blocks of the post (jobless ones are chosen first).'),
+        ('3. Com uma esmeralda na mão, clique com o botão direito no posto. O mais próximo é contratado.', '3. With an emerald in hand, right-click the post. The nearest one is hired.'),
+        ('4. Sem ninguém livre, a esmeralda fica com você. Agachar + chave dispensa o trabalhador.', '4. If nobody is free, you keep the emerald. Sneak + wrench dismisses the worker.')],
+       ('Contrate um aldeão no posto (esmeralda + botão direito)', 'Hire a villager at the post (emerald + right-click)'),
+       ('Temos o primeiro trabalhador da vila! Agora vamos dizer onde ele trabalha.', 'Our first village worker! Now let us tell them where to work.')),
+      (('Vila 3 de 8 · Demarcar a lavoura', 'Village 3 of 8 · Mark the field'),
+       ('Sem marco, o lavrador cuida só de um quadrado em volta do posto. Com um marco de lavoura, a zona fica sua: começa em 9x9 e cresce até 21x21 conforme a vila trabalha nela.',
+        'Without a marker, the farmer only tends a square around the post. With a field marker the zone is yours: it starts at 9x9 and grows to 21x21 as the village works it.'),
+       [('1. Fabrique o marco de lavoura (ficha acima).', '1. Craft the field marker (card above).'),
+        ('2. Coloque o marco no centro da plantação, dentro das faíscas verdes em volta do posto.', '2. Place the marker at the centre of the crop field, inside the green sparks around the post.'),
+        ('3. Ponha no marco a semente que deve ser plantada: ele é o filtro dos lavradores.', '3. Put the seed to plant in the marker: it is the farmers\' filter.'),
+        ('4. Mais tarde, a chave no marco escolhe o tamanho entre os níveis liberados.', '4. Later, the wrench on the marker picks the size among the unlocked levels.')],
+       ('Coloque um marco de lavoura perto do posto', 'Place a field marker near the post'),
+       ('A zona está demarcada. Vamos ver o trabalho render.', 'The zone is marked. Let us see the work pay off.')),
+      (('Vila 4 de 8 · A primeira colheita', 'Village 4 of 8 · The first harvest'),
+       ('O trabalhador anda até a planta madura, colhe, replanta e traz a colheita ao posto. É mais lento que uma máquina, mas não gasta energia.',
+        'The worker walks to a ripe plant, harvests, replants and brings the crop to the post. Slower than a machine, but no power needed.'),
+       [('1. Garanta comida no posto e plantas crescendo na zona.', '1. Keep food in the post and plants growing in the zone.'),
+        ('2. Abra o posto: o painel mostra o estado do trabalhador e quantas colheitas a comida paga.', '2. Open the post: the panel shows the worker\'s state and how many harvests the food pays for.'),
+        ('3. Se ele parar, passe o mouse no estado: "sem comida", "nada maduro", "caminho obstruído"...', '3. If they stop, hover over the status: "no food", "nothing ripe", "path blocked"...')],
+       ('Colheitas entregues no posto: %s/4', 'Harvests delivered at the post: %s/4'),
+       ('A comida da vila está garantida. Agora vamos poupar suas viagens.', 'The village food is secured. Now let us save you some trips.')),
+      (('Vila 5 de 8 · O carregador', 'Village 5 of 8 · The hauler'),
+       ('Um carregador abastece as máquinas a até 6 blocos do posto dele com o que você deixar à esquerda, e traz os produtos para a direita. Ele é a esteira que anda.',
+        'A hauler feeds the machines within 6 blocks of their post with what you leave on the left, and brings products to the right. A belt that walks.'),
+       [('1. Fabrique o posto do carregador (ficha acima).', '1. Craft the hauler post (card above).'),
+        ('2. Coloque-o a até 6 blocos das máquinas que ele vai atender (a prensa, por exemplo).', '2. Place it within 6 blocks of the machines it will serve (the press, for example).'),
+        ('3. Comida e insumos à esquerda; contrate com uma esmeralda, como no lavrador.', '3. Food and inputs on the left; hire with an emerald, as with the farmer.'),
+        ('4. Ele não mexe em esteiras: use os dois juntos onde fizer sentido.', '4. They do not touch belts: use both where it makes sense.')],
+       ('Contrate um carregador perto das máquinas', 'Hire a hauler near the machines'),
+       ('Agora as máquinas têm quem as abasteça. Falta quem cuide dos trabalhadores.', 'Now the machines have someone to feed them. We still need someone to look after the workers.')),
+      (('Vila 6 de 8 · O capataz', 'Village 6 of 8 · The foreman'),
+       ('O capataz cuida de até 6 postos a até 12 blocos da mesa: leva comida a quem está ficando sem, recontrata quem perdeu o trabalhador e organiza o que os carregadores levam de um lugar a outro.',
+        'The foreman looks after up to 6 posts within 12 blocks of the desk: brings food to those running low, rehires empty posts and plans what haulers carry from place to place.'),
+       [('1. Fabrique a mesa do capataz (ficha acima).', '1. Craft the foreman desk (card above).'),
+        ('2. Coloque a mesa a até 12 blocos dos postos (lavrador e carregador).', '2. Place the desk within 12 blocks of the posts (farmer and hauler).'),
+        ('3. Deixe na mesa pão e algumas esmeraldas: são para os postos e para recontratar.', '3. Leave bread and a few emeralds on the desk: they are for the posts and for rehiring.'),
+        ('4. Contrate o capataz com uma esmeralda.', '4. Hire the foreman with an emerald.')],
+       ('Contrate um capataz perto dos postos', 'Hire a foreman near the posts'),
+       ('A vila operária anda sozinha. Agora, a vila das pessoas.', 'The worker village runs itself. Now, the village of people.')),
+      (('Vila 7 de 8 · Uma casa', 'Village 7 of 8 · A house'),
+       ('Aldeões que moram perto de uma casa viram uma família: quem trabalha recebe salário, a família come da despensa e compra nas lojas. Coloque casas onde quiser; bairros espalhados vivem melhor.',
+        'Villagers living near a house become a family: workers earn wages, the family eats from the pantry and shops. Place houses wherever you like; spread districts live better.'),
+       [('1. Fabrique uma casa (ficha acima).', '1. Craft a house (card above).'),
+        ('2. Coloque-a a até 10 blocos de onde os aldeões ficam: até 4 moram nela.', '2. Place it within 10 blocks of where villagers stay: up to 4 live in it.'),
+        ('3. Ponha comida na despensa (3 espaços). Abra a casa para ver moradores, renda e IDH.', '3. Put food in the pantry (3 slots). Open the house to see residents, income and HDI.'),
+        ('4. Evite mais de 6 casas vizinhas a 16 blocos e poluição perto: piora a moradia.', '4. Avoid more than 6 neighbour houses within 16 blocks and nearby pollution: it hurts housing.')],
+       ('Coloque uma casa com moradores: %s', 'Place a house with residents: %s'),
+       ('Nossa primeira família! Agora a vila precisa de governo.', 'Our first family! Now the village needs a government.')),
+      (('Vila 8 de 8 · A prefeitura', 'Village 8 of 8 · The town hall'),
+       ('Eu cuido da vila, mas preciso de um gabinete. A prefeitura mede população, emprego, PIB, IDH e Gini, cobra o imposto na fonte e libera as fases: Povoado, Vila, Cidade e Metrópole.',
+        'I look after the village, but I need an office. The town hall measures population, jobs, GDP, HDI and Gini, collects tax at source and unlocks the phases: Hamlet, Village, City and Metropolis.'),
+       [('1. Fabrique a prefeitura (ficha acima).', '1. Craft the town hall (card above).'),
+        ('2. Coloque-a no centro da vila: ela vê 128 blocos em volta.', '2. Place it at the village centre: it sees 128 blocks around.'),
+        ('3. Contrate um aldeão para o gabinete com uma esmeralda (no painel ele aparece como prefeito).', '3. Hire a villager for the office with an emerald (the panel calls them mayor).'),
+        ('4. Clique com um livro na prefeitura: o relatório mostra os problemas e a meta da próxima fase.', '4. Click the town hall with a book: the report shows the problems and the next phase goal.')],
+       ('Contrate o funcionário da prefeitura', 'Hire the town hall clerk'),
+       ('Agora sim, temos um governo.', 'Now we have a government.')),
+    ]
+    for i, (title, why, lines, goal, done) in enumerate(steps):
+        label(f'veio.village.title.{i}', *title)
+        label(f'veio.village.why.{i}', *why)
+        for n, line in enumerate(lines, 1): label(f'veio.village.do.{i}.{n}', *line)
+        label(f'veio.village.goal.{i}', *goal)
+        label(f'veio.village.done.{i}', *done)
+    blocks = {0: 'farm_post', 2: 'field_marker', 4: 'hauler_post', 5: 'foreman_desk', 6: 'house', 7: 'town_hall'}
+    for step, block in blocks.items(): label(f'veio.village.recipe.{step}', *recipe_line(block))
+    sources = {
+      0: ('De onde vem: esmeralda = troca com aldeões · enxada = 2 ferros + 2 gravetos · composteira = 7 lajes de madeira · barril = 6 tábuas + 2 lajes.',
+          'Where from: emerald = trade with villagers · hoe = 2 iron + 2 sticks · composter = 7 wooden slabs · barrel = 6 planks + 2 slabs.'),
+      2: ('De onde vem: cerca = tábuas e gravetos · sementes = quebrar grama.', 'Where from: fence = planks and sticks · seeds = break grass.'),
+      4: ('De onde vem: chapa de ferro = ferro bruto na prensa · funil = 5 ferros + baú.', 'Where from: iron plate = raw iron in the press · hopper = 5 iron + chest.'),
+      5: ('De onde vem: atril = 4 lajes + estante · sino = troca com aldeões ou vilas.', 'Where from: lectern = 4 slabs + bookshelf · bell = village trade or villages.'),
+      6: ('De onde vem: tábuas = troncos · porta = 6 tábuas · painel de vidro = 6 vidros.', 'Where from: planks = logs · door = 6 planks · glass pane = 6 glass.'),
+      7: ('De onde vem: tijolos de pedra = 4 pedras (pedregulho na fornalha) · atril e sino como na mesa do capataz.',
+          'Where from: stone bricks = 4 stone (smelted cobblestone) · lectern and bell as for the foreman desk.'),
+    }
+    for step, (pt, en) in sources.items(): label(f'veio.village.from.{step}', pt, en)
+    label('veio.village.intro.1', 'A fábrica está de pé. Agora vem a parte de que eu mais gosto: a vila. Gente trabalhando, famílias, um governo.',
+          'The factory is up. Now comes my favourite part: the village. People working, families, a government.')
+    label('veio.village.intro.2', 'São 8 passos. Eu explico cada um, e você vê no mundo. Clique em mim quando quiser que eu repita.',
+          'Eight steps. I explain each one and you see it in the world. Click me whenever you want me to repeat.')
+    label('veio.village.intro.3', 'Vamos começar pela comida.', 'Let us start with food.')
+    label('veio.village.offer', 'Quando quiser aprender a vila (contratar, zonas, casas e prefeitura), fale comigo de novo.',
+          'When you want to learn the village (hiring, zones, houses and the town hall), talk to me again.')
+    label('veio.village.again', 'Onde paramos:', 'Where we were:')
+    label('veio.village.bar', 'Vila %s/8 | %s', 'Village %s/8 | %s')
+    label('veio.village.far', '%s · %s blocos ao %s', '%s · %s blocks %s')
+    label('veio.village.start_title', 'Capítulo 2: a vila', 'Chapter 2: the village')
+    label('veio.village.start_sub', 'Contratar, demarcar, morar e governar', 'Hire, mark, live and govern')
+    label('veio.village.end_title', 'A vila é sua', 'The village is yours')
+    label('veio.village.end_sub', 'Tutorial da vila concluído', 'Village tutorial complete')
+    label('veio.village.end.1', 'Pronto: você contrata, demarca, organiza, abriga e governa. O resto é crescer.',
+          'Done: you hire, mark, organize, house and govern. The rest is growing.')
+    label('veio.village.end.2', 'Próximos passos: um poço para o saneamento, uma loja com comerciante e mais casas, para a vila subir de fase.',
+          'Next steps: a well for sanitation, a shop with a merchant and more houses, so the village moves up a phase.')
+    label('veio.village.end.3', 'Eu vou receber visitantes pedindo festas e obras. Fique de olho no chat e na prefeitura.',
+          'I will receive visitors asking for festivals and works. Keep an eye on the chat and the town hall.')
+    label('veio.village.end.4', 'Dúvidas? Aperte J: a wiki tem tudo. E o livro da prefeitura mostra o que falta para a próxima fase.',
+          'Questions? Press J: the wiki has everything. And the town hall book shows what the next phase needs.')
