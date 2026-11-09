@@ -19,3 +19,9 @@
 ## Toca no compilado
 - NBT novo: `Frame` (núcleo montado), `CoreSet`/`CoreX`/`CoreY`/`CoreZ` (escotilha).
 - O tutorial e a wiki (outras threads) precisam mencionar a área plana e a escotilha de saída; o rastreio do tutorial já conta a escotilha como o núcleo (`frames::owner`).
+
+## Polimento (mesmo dia, pedido do Luiz: "falta muito polimento")
+- Cada máquina passou a ser desenhada como **um modelo só** em pixels sobre a planta inteira (`Machine` em `tools/machine_frames.py`: laje contínua com faixa de aviso, tanques redondos com cintas e tampo, torres treliçadas com X, coroa e roldana, passarelas com guarda-corpo e escada, canos com flanges, engrenagens/volantes, gabinetes com tela, grelha e luz, telhado em dente de serra, funis, chaminés com cintas).
+- O gerador corta o modelo em blocos: cada célula vira um estado `veio:structure[piece=<máquina>_<n>]` (402 peças), sem as faces criadas pelo corte, então as peças se juntam sem costura. A propriedade `tier` saiu da peça (o material já vai no desenho); escotilhas mantêm `tier`.
+- Colisão de cada peça: a caixa que envolve o que há nela, girada com a máquina.
+- Alturas mudaram (ex.: extratora 2×2×4, Mk.III 4×4×6). E1: `check_rust.py` 383 ok; `check_project.py`, `check_machine_forms.py`, `check_performance.py` ok.
