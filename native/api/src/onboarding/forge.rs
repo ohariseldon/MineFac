@@ -29,6 +29,9 @@ pub(super) const SPEC: Spec = Spec {
     intro: 3,
     end: 4,
     xp: 40,
+    // Bento (o ferreiro, filho de mineiro), Mestre Lumen (o vidreiro), Dona Cida, Seu Anselmo.
+    voices: &["veio.favor.smith.name", "veio.agenda.lights.visitor", "veio.favor.smith.name", "veio.favor.farmer.name",
+        "veio.agenda.founding.visitor", "veio.favor.smith.name", "", "veio.favor.smith.name"],
 };
 
 /// Fases do Quadro da fábrica concluídas que as primeiras etapas pedem: Oficina e Aço (3),

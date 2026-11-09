@@ -647,6 +647,13 @@ fn tip_for(block: &str) -> Option<u16> {
 
 /// Anuncia a etapa: título, por quê, a ficha (receita e de onde vem cada material), o livro de
 /// receitas com a receita liberada, e os passos numerados.
+/// Quem da vila comenta cada etapa da fábrica (depois do favor), além do prefeito.
+const FACTORY_VOICES: [Option<favors::Who>; 16] = {
+    use favors::Who::{Farmer, Smith};
+    [None, None, Some(Smith), Some(Smith), None, None, None, Some(Farmer),
+     None, None, None, None, None, None, Some(Farmer), None]
+};
+
 fn announce(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) {
     let step = usize::from(p.step);
     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.title.{step}"), &[]));
@@ -655,7 +662,13 @@ fn announce(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) 
         host.tell(player.uuid, Text::tr(&format!("veio.onboarding.act.{}.line", p.step / ACT_STEPS), &[]));
     }
     intro::say(host, player.uuid, &format!("veio.onboarding.story.{step}"), &[]);
-    if let Some(parts) = CRAFT.get(step).filter(|parts| !parts.is_empty()) {
+    // Os vizinhos do favor voltam a falar nas etapas que tocam neles (a prensa do Bento, o pão da Cida).
+    if let Some(who) = FACTORY_VOICES.get(step).copied().flatten().filter(|_| p.favor >= favors::FAVOR_DONE) {
+        favors::voice(host, player.uuid, who, &format!("veio.onboarding.voice.{step}"));
+    }
+    // Na etapa 2, a prensa e os cabos vêm do Seu Bento: a receita só chega com o favor.
+    let favor_pending = step == 1 && p.favor < favors::FAVOR_DONE;
+    if let Some(parts) = CRAFT.get(step).filter(|parts| !parts.is_empty() && !favor_pending) {
         for (index, (target, _)) in parts.iter().enumerate() {
             if target.starts_with("veio:") || *target == "minecraft:chest" {
                 host.tell(player.uuid, Text::tr(&format!("veio.onboarding.recipe.{step}.{index}"), &[]));

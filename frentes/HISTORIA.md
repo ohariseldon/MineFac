@@ -45,6 +45,8 @@ muralhas, luz e cama no começo; quartel, torre Tesla e defesas automáticas dep
 | **Você, o fundador** | o forasteiro que sabe montar máquinas | sim |
 | **Prefeito Otávio** | o único prefeito: o guia da história, como um primeiro-ministro; propõe o trato, entrega o gerador, conduz os capítulos e diz o que a vila precisa | sim (`veio:mayor`, na praça) |
 | **O secretário (vice-prefeito)** | um aldeão contratado na prefeitura que faz o trabalho duro do gabinete: mede a vila, recolhe o imposto, paga os serviços e libera as fases | sim (o funcionário da prefeitura) |
+| **Seu Bento, o ferreiro** | filho de um mineiro da mina fechada; guarda a prensa velha do pai | sim (`veio:smith`, a leste da praça; o primeiro favor, e comenta etapas da fábrica e da grande indústria) |
+| **Dona Cida, a lavradora** | não dá conta da roça sozinha, e o pão da vila está caro | sim (`veio:farmer`, a oeste; o campo de trigo do primeiro favor baixa o pão para 6 por esmeralda; volta nos capítulos 5 e 6) |
 | **Os aldeões** | viram trabalhadores, famílias, comerciantes e o funcionário da prefeitura | sim |
 | **Os visitantes do calendário** | Seu Anselmo (o primeiro morador), Dona Margarida (floristas), Seu Benedito (sanfoneiro), Tia Ceres (lavradores), Mestre Lumen (vidreiro), a pequena Aurora, Dona Lia (feira), Juca (baile) e o pescador Tião | sim (pedem as festas, 2 dias antes) |
 | **Os Saqueadores e o Bruto** | atraídos pela poluição; vêm à noite | sim (sem fala) |
@@ -60,7 +62,7 @@ são marcos, não paredes: a noite e a cidade atravessam todos eles.
 | Parte | Capítulo | O que acontece na história | O que o jogador aprende | Situação |
 |---|---|---|---|---|
 | Prólogo | A chegada | Você nasce perto da vila, segue a seta, conhece Otávio na praça e faz o trato. Junta pedra, ferro e cobre; a oficina da vila monta o **gerador**. Otávio separa o terreno da oficina, que você planifica. | o começo, a casa e o painel, planificar | **no jogo** (0.31) |
-| Ato I | 1. A fábrica | A primeira linha: energia, prensa, engrenagem, extratora, esteiras e a **primeira encomenda**. | energia, máquinas, cadeias, transporte | **no jogo** (8 etapas); etapas 9 a 16 em produção (outro agente) |
+| Ato I | 1. A fábrica | Otávio monta o gerador; a prensa vem de um **favor**: o Seu Bento só larga dela se você plantar um campo de trigo para a Dona Cida, e o pão da vila barateia. Depois, em 4 atos (A primeira chama, A linha que anda sozinha, O plano da vila, A vila conta com você): energia, prensa, engrenagem, extratora, esteiras, a **primeira encomenda**, o Quadro, gargalos, postes, o pedido do dia, o Lar e o centro de controle. | energia, máquinas, cadeias, transporte, Quadro e gargalos | **no jogo** (16 etapas, o favor, o Diário de Otávio) |
 | Ato I | 2. A primeira noite | No primeiro anoitecer, Otávio avisa: a vila fecha as portas, os monstros caçam quem fica fora. Dormir em casa, iluminar a praça, erguer a **muralha** da vila. | o perigo da noite, luz, muralha, cama, poluição, gargalos da defesa | **no jogo** (0.36–0.37: primeira noite, sino e 6 etapas) |
 | Ato I | 3. A vila operária | "A vila precisa de mãos": o primeiro trabalhador, a lavoura demarcada, o carregador, o capataz, a primeira família e o gabinete com o **secretário**. | contratar, zonas, organizar, morar, governar | **no jogo** |
 | Ato II | 4. A vila cresce | Água, loja, salário, imposto, luz, lazer, a primeira festa e a fase **Vila**. É o primeiro passo da linha da cidade. | serviços, comércio, contas, agenda, IDH | **no jogo** (`/veiotutorial crescer`) |
@@ -78,6 +80,17 @@ continuam, cada vez mais fortes com a fábrica.
 |---|---|---|---|
 | **A noite** | medo, cama, luz e muralha (capítulo 2) | ondas de Saqueadores pela poluição; quartel e Tesla (capítulo 5) | defesas automáticas que seguram ondas grandes enquanto a fábrica atende o mundo (capítulos 7 e 8) |
 | **A cidade** | Povoado → Vila (capítulo 4) | Vila → Cidade (capítulo 6) | Cidade → Metrópole, depois do final |
+
+### Como a história aparece nas etapas
+
+Cada etapa dos capítulos tem uma frase de história do prefeito (`story`) antes do porquê técnico, e
+muitas têm o comentário de um morador (`voice`): o Seu Bento nas chapas, nas engrenagens, no aço, na
+Mk.II (o fundo onde a mina fechou), na Tesla e no reparo; a Dona Cida na encomenda, na refeição no
+Lar, na poluição e nas famílias que voltam; os visitantes do calendário no capítulo 5 e 6 (Mestre
+Lumen nos circuitos, Seu Anselmo no quartel e nos serviços, a pequena Aurora no emprego, Seu
+Benedito na obra cívica e Dona Lia no PIB). Os fios que amarram: a **mina fechada do avô de
+Otávio** (que a Mk.II reabre), as **casas vazias** do começo (que viram janelas acesas na Cidade) e
+o **trato** (cumprido no fim do capítulo 6). Fim de capítulo tem fogos na praça.
 
 ## O calendário como pano de fundo
 

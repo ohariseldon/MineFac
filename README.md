@@ -1,4 +1,6 @@
-# Veio 0.37.0
+# Veio 0.38.0
+
+A 0.38.0 dá mais história aos capítulos 1, 5 e 6. Em cada etapa da **grande indústria** e da **cidade**, o prefeito conta o que a etapa significa para a vila antes da explicação técnica, e um morador comenta. O Seu Bento fala do aço e da Mk.II, que desce até o fundo onde a mina do avô de Otávio fechou. Mestre Lumen fala dos circuitos e a Dona Cida, da fumaça e dos netos que voltaram. A pequena Aurora quer trabalhar na fábrica, Seu Benedito vai tocar sanfona na praça nova e Dona Lia nunca vendeu tanto na feira. A abertura e o fim dos dois capítulos amarram o trato, a mina fechada e as casas vazias do começo, que viram janelas acesas na Cidade. Cada etapa concluída faz o prefeito comemorar, e o fim de capítulo tem fogos. Na fábrica, o Bento e a Cida voltam a falar depois do favor, e a receita da prensa só chega com ele.
 
 A 0.37.0 começa o primeiro ato com **um favor aos vizinhos**, em vez de entregar tudo pronto. O prefeito monta o gerador, mas a prensa está com o **Seu Bento, o ferreiro**, que tem uma sobrando. Ele só larga dela se você ajudar a **Dona Cida, a lavradora**: ela não dá conta da roça e o pão da vila está caro. Você planta um campo de trigo ao lado da casa dela (ela dá sementes, farinha de osso e enxada), colhe e entrega. Com o campo, ela passa a vender pão mais barato (6 por esmeralda em vez de 2), e o Seu Bento entrega a prensa, 16 cabos e as receitas. A barra aponta para quem procurar e conta o campo.
 

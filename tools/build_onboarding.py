@@ -525,6 +525,7 @@ def add_labels(label):
     add_night_labels(label)
     add_forge_labels(label, names, recipe_line)
     add_metro_labels(label)
+    add_story_labels(label)
 
 
 def add_village_labels(label, names, recipe_line):
@@ -1080,12 +1081,12 @@ def add_forge_labels(label, names, recipe_line):
        ('Pronto para o que vier.', 'Ready for whatever comes.'), more('Poluição e defesa.', 'Pollution and defense.')),
     ]
     extra = {
-        'intro.1': ('A vila cresceu e pede mais: mais chapas, mais engrenagens, mais comida. A oficina de hoje não dá conta.', 'The village grew and asks for more: more plates, more gears, more food. Today\'s workshop cannot keep up.'),
-        'intro.2': ('Vamos levar a fábrica ao aço e à eletrônica, com a extratora Mk.II. Mas produzir mais é poluir mais.', 'Let us take the factory to steel and electronics, with the Mk.II extractor. But making more means polluting more.'),
-        'intro.3': ('E poluição traz Saqueadores. Desta vez a defesa vem junto: quartel, torre Tesla e energia para a noite.', 'And pollution brings Raiders. This time defense comes along: barracks, Tesla tower and power for the night.'),
-        'end.1': ('A fábrica virou indústria, e a vila tem defesa.', 'The factory became an industry, and the village has a defense.'),
-        'end.2': ('As ondas vão voltar, maiores com a poluição: até 12 Saqueadores, arqueiros e o Bruto. Mais Tesla, mais energia, mais soldados.', 'Waves will return, bigger with pollution: up to 12 Raiders, archers and the Brute. More Teslas, more power, more soldiers.'),
-        'end.3': ('Com a indústria de pé, a vila pode virar cidade. Fale comigo quando quiser.', 'With industry standing, the village can become a city. Talk to me whenever you like.'),
+        'intro.1': ('Lembra do trato? A vila cresceu e agora pede mais do que a oficina dá: mais chapas, mais engrenagens, mais comida na mesa.', 'Remember our deal? The village grew and now asks more than the workshop gives: more plates, more gears, more food on the table.'),
+        'intro.2': ('Meu avô fechou a mina porque não havia como ir mais fundo. Com aço, eletrônica e a extratora Mk.II, nós vamos.', 'My grandfather closed the mine because there was no way to dig deeper. With steel, electronics and the Mk.II extractor, we will.'),
+        'intro.3': ('Mas fábrica grande solta fumaça, e fumaça chama os Saqueadores. Desta vez a defesa cresce junto: quartel, torre Tesla e energia para a noite.', 'But a big factory gives off smoke, and smoke calls the Raiders. This time defense grows along: barracks, Tesla tower and power for the night.'),
+        'end.1': ('A fábrica virou indústria, e o veio do meu avô voltou a dar. Ele ia gostar de ver isto.', 'The factory became an industry, and my grandfather\'s vein gives again. He would have liked to see this.'),
+        'end.2': ('As ondas vão voltar, maiores com a poluição: até 12 Saqueadores, arqueiros e o Bruto. Mais Tesla, mais energia, mais soldados: crescer é saber que a noite vem.', 'Waves will return, bigger with pollution: up to 12 Raiders, archers and the Brute. More Teslas, more power, more soldiers: growing means knowing the night will come.'),
+        'end.3': ('Com trabalho e segurança, as famílias que foram embora estão voltando. A vila pode virar cidade. Fale comigo quando quiser.', 'With work and safety, the families who left are coming back. The village can become a city. Talk to me whenever you like.'),
         'end.4': ('E lembre: o Quadro da fábrica sempre diz o próximo gargalo.', 'And remember: the Factory board always tells you the next bottleneck.'),
         'start_title': ('Capítulo 5: a grande indústria', 'Chapter 5: heavy industry'),
         'start_sub': ('Aço, eletrônica, Mk.II e a defesa da fábrica', 'Steel, electronics, Mk.II and the factory defense'),
@@ -1170,13 +1171,13 @@ def add_metro_labels(label):
        ('Somos uma Cidade!', 'We are a City!'), more('Sociedade da vila (fases).', 'Village society (phases).')),
     ]
     extra = {
-        'intro.1': ('A indústria trouxe trabalho, e o trabalho trouxe gente. Chegou a hora de a Vila virar Cidade.', 'Industry brought work, and work brought people. It is time for the Village to become a City.'),
-        'intro.2': ('Para Cidade: 36 moradores, 9 famílias, IDH 0,55, PIB de 400 por dia e 60% de emprego.', 'For a City: 36 residents, 9 families, HDI 0.55, GDP of 400 a day and 60% employment.'),
-        'intro.3': ('Uma coisa de cada vez. Comecemos pelas famílias.', 'One thing at a time. Let us start with families.'),
-        'end.1': ('Uma Cidade! Do punhado de casas que eu governava para isto.', 'A City! From the handful of houses I governed to this.'),
-        'end.2': ('A Metrópole pede 80 moradores, 20 famílias, IDH 0,70, 3 bairros e Gini até 0,45: renda bem distribuída.', 'A Metropolis asks for 80 residents, 20 families, HDI 0.70, 3 districts and Gini up to 0.45: income well spread.'),
-        'end.3': ('A vila agora produz mais do que consome. Lá fora tem gente querendo comprar.', 'The village now makes more than it consumes. Out there, people want to buy.'),
-        'end.4': ('Quando quiser saber o próximo passo, fale comigo.', 'Whenever you want the next step, talk to me.'),
+        'intro.1': ('Lembra das casas vazias quando você chegou? A indústria trouxe trabalho, e o trabalho trouxe gente de volta.', 'Remember the empty houses when you arrived? Industry brought work, and work brought people back.'),
+        'intro.2': ('Chegou a hora de a Vila virar Cidade: 36 moradores, 9 famílias, IDH 0,55, PIB de 400 por dia e 60% de emprego.', 'It is time for the Village to become a City: 36 residents, 9 families, HDI 0.55, GDP of 400 a day and 60% employment.'),
+        'intro.3': ('Cidade não é só número: é cada família com casa, salário, água, luz e um lugar para a festa. Comecemos pelas famílias.', 'A city is not just numbers: it is every family with a home, wages, water, light and a place to celebrate. Let us start with families.'),
+        'end.1': ('Uma Cidade! Quando você chegou eu governava um punhado de casas vazias. Hoje as janelas estão acesas.', 'A City! When you arrived I governed a handful of empty houses. Today the windows are lit.'),
+        'end.2': ('O trato está cumprido: a vila deu o chão e as mãos, a sua fábrica deu o futuro. A Metrópole pede 80 moradores, 20 famílias, IDH 0,70, 3 bairros e Gini até 0,45.', 'The deal is done: the village gave the ground and the hands, your factory gave the future. A Metropolis asks for 80 residents, 20 families, HDI 0.70, 3 districts and Gini up to 0.45.'),
+        'end.3': ('E a cidade agora produz mais do que consome. Lá fora tem gente querendo comprar o que fazemos aqui.', 'And the city now makes more than it consumes. Out there, people want to buy what we make here.'),
+        'end.4': ('Quando quiser saber o próximo passo, fale comigo. Eu continuo na praça.', 'Whenever you want the next step, talk to me. I am still in the square.'),
         'start_title': ('Capítulo 6: a cidade', 'Chapter 6: the city'), 'start_sub': ('De Vila a Cidade', 'From Village to City'),
         'end_title': ('Uma Cidade de verdade', 'A real City'), 'end_sub': ('Capítulo da cidade concluído', 'City chapter complete'),
         'bar': ('Cidade %s/6 | %s', 'City %s/6 | %s'), 'bar_prefix': ('Cidade %s/6 |', 'City %s/6 |'),
@@ -1190,3 +1191,50 @@ def add_metro_labels(label):
         'check.idh': ('IDH %s/0,55', 'HDI %s/0.55'), 'check.gdp': ('PIB %s/400', 'GDP %s/400'), 'check.jobs': ('emprego %s%%/60%%', 'jobs %s%%/60%%'),
     }
     add_chapter(label, 'metro', steps, extra)
+
+
+def add_story_labels(label):
+    """A história em volta das etapas: o prefeito liga cada etapa ao que a vila vive e um morador
+    comenta (`veio.<capítulo>.story.<n>` e `veio.<capítulo>.voice.<n>`, onboarding/chapter.rs).
+    Na fábrica, o Seu Bento e a Dona Cida voltam depois do favor (`veio.onboarding.voice.<n>`)."""
+    factory = {
+      2: ('A prensa do meu pai batendo de novo! Esse barulho me lembra a mina aberta.', 'My father\'s press pounding again! That sound reminds me of the mine when it was open.'),
+      3: ('Engrenagem boa é a que ninguém escuta. Se rangir, a linha está pedindo graxa ou chapa.', 'A good gear is one nobody hears. If it squeaks, the line wants grease or plates.'),
+      7: ('A vila inteira está falando da sua encomenda. Até o meu forno ficou mais quente hoje.', 'The whole village is talking about your order. Even my oven feels warmer today.'),
+      14: ('Pão da minha roça na sua mesa. Come direito, que fábrica não anda de barriga vazia.', 'Bread from my field on your table. Eat properly, a factory doesn\'t run on an empty stomach.'),
+    }
+    for step, (pt, en) in factory.items(): label(f'veio.onboarding.voice.{step}', pt, en)
+    forge = [
+      (('A primeira fase grande: aço. É com ele que a gente vai mais fundo no veio.', 'The first big phase: steel. It is how we go deeper into the vein.'),
+       ('Aço! Meu pai dizia que o veio tinha ferro para cem anos de aço. Só faltava quem soubesse fazer.', 'Steel! My father said the vein had iron for a hundred years of steel. We only lacked someone who knew how.')),
+      (('A fábrica precisa pensar, não só bater. O Mestre Lumen, o vidreiro, veio ver de perto.', 'The factory needs to think, not just pound. Mestre Lumen, the glassmaker, came to see up close.'),
+       ('Silício sai da areia, como o meu vidro. Quem diria que o meu ofício ia virar circuito!', 'Silicon comes from sand, like my glass. Who would have thought my craft would become circuits!')),
+      (('A Mk.II desce até onde a mina do meu avô parou. Hoje o veio volta a dar.', 'The Mk.II goes down to where my grandfather\'s mine stopped. Today the vein gives again.'),
+       ('Foi nesse fundo que a mina fechou. Meu pai ia chorar de ver máquina tirando minério de lá.', 'That is the depth where the mine closed. My father would cry to see a machine pulling ore from there.')),
+      (('Repare no céu sobre a fábrica. Mais produção, mais fumaça: é o preço, e é bom saber o tamanho dele.', 'Look at the sky over the factory. More output, more smoke: that is the price, and it is good to know its size.'),
+       ('O ar está pesado e a roça sente. Cuide dessa fumaça, viu? E feche a porta de noite.', 'The air is heavy and the field feels it. Watch that smoke, will you? And close your door at night.')),
+      (('A muralha segura quem anda. Para quem luta, a vila precisa de um soldado de plantão.', 'The wall holds back those who walk. For those who fight, the village needs a soldier on duty.'),
+       ('No meu tempo a gente só trancava a porta e rezava. Soldado de plantão? É outra vila.', 'In my day we just locked the door and prayed. A soldier on duty? This is another village.')),
+      (('A torre Tesla defende sozinha, mas vive de energia. Sem carga, é só um enfeite.', 'The Tesla tower defends on its own, but lives on power. Without charge, it is just decoration.'),
+       ('Raio preso numa torre! Meu pai ia achar que é feitiço. Eu ajudo com o cobre.', 'Lightning caught in a tower! My father would think it was sorcery. I\'ll help with the copper.')),
+      (('A noite é quando os Saqueadores vêm, e é quando o sol não rende. Guarde energia de dia.', 'Night is when the Raiders come, and when the sun gives nothing. Store power by day.'), None),
+      (('Depois de cada onda, a vila acorda e conserta. Ninguém perde o que tinha: só o tempo parado.', 'After each wave, the village wakes up and mends. No one loses what they had: only the idle time.'),
+       ('Máquina amassada eu desamasso, mas o kit é mais rápido. Sempre leve um no bolso.', 'A dented machine I can straighten, but the kit is faster. Always keep one in your pocket.')),
+    ]
+    metro = [
+      (('As famílias que foram embora para a capital estão voltando. Cada casa nova é uma janela acesa.', 'The families who left for the capital are coming back. Each new house is a lit window.'),
+       ('Meus netos voltaram! Com pão barato e trabalho perto, ninguém precisa ir embora.', 'My grandchildren came back! With cheap bread and work nearby, no one needs to leave.')),
+      (('Gente sem trabalho é gente indo embora de novo. Os postos, as lojas e o quartel seguram a vila.', 'People without work are people leaving again. Posts, shops and the barracks hold the village together.'),
+       ('Eu cresci! Agora quero trabalhar na fábrica, igual a você. Tem vaga?', 'I grew up! Now I want to work at the factory, just like you. Is there a job?')),
+      (('Água e luz em cada casa: é a diferença entre um povoado e uma cidade.', 'Water and light in every house: that is the difference between a hamlet and a city.'),
+       ('Água na torneira e luz em casa. Morei aqui a vida toda e nunca pensei que ia ver.', 'Water from the tap and light at home. I have lived here all my life and never thought I would see it.')),
+      (('Cidade também precisa de lugar para a festa. O bairro mais carente vai ganhar a sua obra.', 'A city also needs a place to celebrate. The neediest district will get its work.'),
+       ('Uma praça nova! Vou tocar sanfona lá todo domingo, pode escrever.', 'A new square! I will play the accordion there every Sunday, mark my words.')),
+      (('O dinheiro agora gira dentro da vila: salário vira compra, compra vira imposto, imposto vira obra.', 'Money now circulates inside the village: wages become purchases, purchases become taxes, taxes become works.'),
+       ('A feira nunca vendeu tanto! Tem gente vindo de longe só para comprar aqui.', 'The fair has never sold so much! People come from far away just to buy here.')),
+      (('Falta a última conta, no fim do dia. Meu secretário confere tudo no gabinete e eu declaro a Cidade.', 'Only the last count is left, at the end of the day. My secretary checks everything at the office and I declare the City.'), None),
+    ]
+    for key, steps in (('forge', forge), ('metro', metro)):
+        for step, (story, voice) in enumerate(steps):
+            label(f'veio.{key}.story.{step}', *story)
+            if voice: label(f'veio.{key}.voice.{step}', *voice)

@@ -16,6 +16,9 @@ pub(super) const SPEC: Spec = Spec {
     intro: 3,
     end: 4,
     xp: 60,
+    // Dona Cida, a pequena Aurora, Seu Anselmo, Seu Benedito, Dona Lia; no fim, só o prefeito.
+    voices: &["veio.favor.farmer.name", "veio.agenda.new_year.visitor", "veio.agenda.founding.visitor",
+        "veio.agenda.saint_john.visitor", "veio.agenda.fair.visitor", ""],
 };
 
 /// Metas da fase Cidade: moradores, famílias, IDH (centésimos), PIB por dia e emprego (%).

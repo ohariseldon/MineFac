@@ -63,6 +63,9 @@ def main():
                "farmer.plant", "farmer.planted", "farmer.more", "farmer.after", "farmer.wait", "smith.after", "smith.wait")]
             + [f"veio.favor.{k}.{n}" for k, top in (("start", 2), ("mayor", 5), ("goal", 5), ("smith.ask", 4),
                ("farmer.ask", 3), ("farmer.thanks", 3), ("smith.thanks", 3)) for n in range(1, top + 1)]
+            + [f"veio.{c}.story.{i}" for c, n in (("forge", 8), ("metro", 6)) for i in range(n)]
+            + [f"veio.forge.voice.{i}" for i in (0, 1, 2, 3, 4, 5, 7)] + [f"veio.metro.voice.{i}" for i in range(5)]
+            + [f"veio.onboarding.voice.{i}" for i in (2, 3, 7, 14)]
             + ["veio.festival.countdown", "veio.festival.reminder", "veio.villager.who", "veio.villager.says"]
             + [f"veio.villager.{t}.{n}" for t in ("mayor", "gather", "plot", "festival", "favor", "factory", "village", "free")
                for n in range(1, 5)]

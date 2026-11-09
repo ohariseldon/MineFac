@@ -1204,3 +1204,48 @@ fn the_mayor_leads_from_the_town_to_industry_and_then_to_the_city() {
     assert_eq!(p.metro, 1, "depois, a cidade");
     assert!(town.commands.iter().any(|line| line.contains("veio.metro.start_title")));
 }
+
+#[test]
+fn chapters_tell_a_story_per_step_with_a_villager_and_end_with_fireworks() {
+    let mut town = Town::default();
+    let player = NativeServerPlayer { uuid: 14, name: "Bia".into(), dimension: workforce::spawn::OVERWORLD.into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    // Cada etapa: o título, a história (prefeito) e, quando há, o comentário de um morador.
+    assert_eq!((forge::SPEC.voices.len(), metro::SPEC.voices.len()), (usize::from(forge::SPEC.steps), usize::from(metro::SPEC.steps)));
+    chapter::announce(&mut town, &player, &forge::SPEC, 2);
+    let says = town.said.iter().filter(|line| *line == "veio.agenda.says").count();
+    assert!(says >= 3, "história, morador e o porquê: {:?}", town.said);
+    town.said.clear();
+    chapter::announce(&mut town, &player, &forge::SPEC, 6);
+    assert_eq!(town.said.iter().filter(|line| *line == "veio.agenda.says").count(), 2, "sem morador: história e porquê");
+    // Etapa concluída: o prefeito comemora; fim do capítulo: fogos.
+    chapter::celebrate(&mut town, &player, &metro::SPEC, 0);
+    assert!(town.commands.iter().any(|line| line.contains(MAYOR) && line.contains("minecraft:heart")));
+    chapter::finish(&mut town, &player, &metro::SPEC);
+    assert_eq!(town.commands.iter().filter(|line| line.contains("summon minecraft:firework_rocket")).count(), 3);
+}
+
+#[test]
+fn the_press_recipe_waits_for_the_favor_and_the_neighbours_come_back_in_the_factory() {
+    struct Log { lines: Vec<String> }
+    impl Host for Log {
+        fn run_command(&mut self, line: &str) -> bool { self.lines.push(line.to_owned()); true }
+        fn tell(&mut self, _: u128, text: Text) -> bool { self.lines.push(text.plain()); true }
+    }
+    let player = NativeServerPlayer { uuid: 15, name: "Teo".into(), dimension: "minecraft:overworld".into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut log = Log { lines: vec![] };
+    let mut p = Progress { intro: intro::INTRO_DONE, step: 1, ..Progress::default() };
+    announce(&mut log, &player, &mut p);
+    assert!(!log.lines.iter().any(|l| l == "recipe give Teo veio:press"), "a prensa vem do Seu Bento");
+    p.favor = favors::FAVOR_DONE; log.lines.clear();
+    announce(&mut log, &player, &mut p);
+    assert!(log.lines.iter().any(|l| l == "recipe give Teo veio:press"));
+    // Depois do favor, o Bento comenta a etapa das chapas (um "says" a mais que o do prefeito).
+    p.step = 2; log.lines.clear();
+    announce(&mut log, &player, &mut p);
+    assert_eq!(log.lines.iter().filter(|l| *l == "veio.agenda.says").count(), 2);
+    p.favor = favors::PLANT; log.lines.clear();
+    announce(&mut log, &player, &mut p);
+    assert_eq!(log.lines.iter().filter(|l| *l == "veio.agenda.says").count(), 1);
+}
