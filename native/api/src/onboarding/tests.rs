@@ -212,7 +212,7 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     p.crafted = 0b101; p.tips = TIP_BELT;
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.crafted, loaded.tips), (0b101, TIP_BELT));
-    let old = p.encode().replace("veio-onboarding-5", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0\n", "\n", 1);
+    let old = p.encode().replace("veio-onboarding-6", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0 0 0\n", "\n", 1);
     assert_eq!(Progress::decode(&old).map(|old| (old.step, old.crafted)), Some((6, 0)));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
@@ -682,4 +682,51 @@ fn the_arrow_turns_with_the_player() {
     assert_eq!(arrow(from, south, 90.0), "←");
     assert_eq!(arrow(from, south, -90.0), "→");
     assert_eq!(arrow(from, [30.0, 64.0, 30.0], 0.0), "↖", "sudeste, olhando para o sul: à frente e à esquerda");
+}
+
+#[test]
+fn the_city_chapter_closes_each_step_from_what_the_village_registers() {
+    use city::{done, Town};
+    let empty = Town::default();
+    for step in 0..8 { assert!(!done(step, &empty), "etapa {step} não fecha sem nada"); }
+    assert!(done(0, &Town { sanitation: true, ..empty }));
+    assert!(done(1, &Town { merchant: true, ..empty }));
+    assert!(done(2, &Town { sales: true, ..empty }));
+    assert!(done(3, &Town { company: true, ..empty }));
+    assert!(done(4, &Town { power: true, ..empty }));
+    assert!(done(5, &Town { leisure: true, ..empty }));
+    assert!(!done(6, &Town { families: 2, ..empty }) && done(6, &Town { families: 3, ..empty }));
+    assert!(!done(7, &Town { phase: 1, ..empty }) && done(7, &Town { phase: 2, ..empty }), "fase 2 é a Vila");
+    // Save: a v6 guarda a cidade; saves v5 (só a vila) abrem com a cidade por começar.
+    let p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE,
+        city: 5, city_crafted: 0b11, ..Progress::default() };
+    let loaded = Progress::decode(&p.encode()).unwrap();
+    assert_eq!((loaded.village, loaded.city, loaded.city_crafted), (village::DONE_VILLAGE, 5, 0b11));
+    let v5 = p.encode().replace("veio-onboarding-6", "veio-onboarding-5").replacen(" 5 3\n", "\n", 1);
+    let old = Progress::decode(&v5).unwrap();
+    assert_eq!((old.village, old.city), (village::DONE_VILLAGE, 0));
+}
+
+#[test]
+fn after_the_village_the_mayor_opens_the_city_chapter() {
+    let mut town = Town::default();
+    let player = NativeServerPlayer { uuid: 8, name: "Bia".into(), dimension: workforce::spawn::OVERWORLD.into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE, ..Progress::default() };
+    intro::talk(&mut town, &player, &mut p);
+    assert_eq!(p.city, 1, "o prefeito abre a cidade depois da vila");
+    assert!(town.commands.iter().any(|line| line.contains("veio.city.start_title")));
+    // Sem nada registrado na vila, a primeira etapa só anuncia: ficha, livro e passos.
+    city::tick(&mut town, &player, &mut p, 1000);
+    assert_eq!(p.city, 1);
+    assert!(town.said.iter().any(|line| line.contains("veio.city.title.0")));
+    assert!(town.said.iter().any(|line| line.contains("veio.city.recipe.0")));
+    assert!(town.said.iter().any(|line| line.contains("veio.city.do.0.4")));
+    assert!(town.commands.iter().any(|line| line == "recipe give Bia veio:well"));
+    assert!(town.commands.iter().any(|line| line.starts_with("title Bia actionbar") && line.contains("veio.onboarding.name.bucket")));
+    // Clicar de novo repete a etapa.
+    town.said.clear();
+    intro::talk(&mut town, &player, &mut p);
+    assert!(town.said.iter().any(|line| line.contains("veio.city.title.0")));
+    assert_eq!(p.city, 1);
 }

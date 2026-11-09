@@ -1,4 +1,6 @@
-# Veio 0.32.0
+# Veio 0.33.0
+
+A 0.33.0 traz o **capítulo 3 do tutorial: a cidade**, com o prefeito Otávio depois do capítulo da vila (ou direto com `/veiotutorial cidade`). Em 8 etapas: poço (saneamento), loja com comerciante, a primeira venda, esmeraldas na conta da companhia, energia nas casas, lazer com um parque, um bairro de três famílias e a subida para a fase Vila, com moradores, famílias e IDH ao vivo na barra. As etapas fecham pelo que a própria vila registra (casas, lojas, contas e prefeitura). A wiki ganhou a tabela das etapas e o comando novo.
 
 A 0.32.0 traz o **capítulo 2 do tutorial: a vila operária**, conduzido pelo prefeito Otávio depois da fábrica (ou direto com `/veiotutorial vila`). Em 8 etapas ele ensina a construir um posto do lavrador, contratar com uma esmeralda, demarcar a lavoura com um marco, ver a primeira colheita, contratar um carregador e um capataz, abrigar a primeira família numa casa e abrir a prefeitura. Cada etapa traz a fala do prefeito com o porquê, a ficha da receita (liberada no livro de receitas), a lista de materiais, passos numerados, a seta até o posto e faíscas onde agir; o jogo confere o resultado no mundo (posto colocado, trabalhador contratado, marco perto do posto, colheitas entregues, moradores, funcionário) e comemora cada etapa. A wiki ganhou a tabela das etapas e o comando novo.
 

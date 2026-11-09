@@ -519,6 +519,7 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
             }
         }
         // Capítulo da vila aberto (também pelo comando, antes de acabar a fábrica): ele vem primeiro.
+        _ if super::city::step(p).is_some() => super::city::talk(host, player, p),
         _ if super::village::step(p).is_some() => super::village::talk(host, player, p),
         _ if p.step < DONE => {
             say(host, uuid, "veio.onboarding.mayor.now", &[&Text::tr(&format!("veio.onboarding.title.{}", p.step), &[]).plain()]);
@@ -541,6 +542,8 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
         }
         // Depois da fábrica, o prefeito conduz o capítulo da vila até o fim.
         _ if p.village < super::village::DONE_VILLAGE => super::village::talk(host, player, p),
+        // Depois da vila, o capítulo da cidade.
+        _ if p.city < super::city::DONE_CITY => super::city::talk(host, player, p),
         // Depois do tutorial: a fase do Quadro da fábrica e o gargalo que ela vai revelar.
         _ => match milestones::census::board_phase(&player.dimension) {
             None => say(host, uuid, "veio.onboarding.mayor.board.none", &[]),
