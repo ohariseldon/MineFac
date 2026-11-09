@@ -28,3 +28,9 @@
 - A branch recebeu o #60 (`a3d5d0c`), em que cada máquina monta sua estrutura grande. Houve um conflito em `lib.rs` (`visuals`): ficaram as duas chamadas, `onboarding::visuals` (contornos do tutorial) e `frames::visuals` (contorno vermelho de estrutura recusada), porque as duas só acrescentam contornos. As línguas foram juntadas chave a chave, sem choque.
 - E1: `python3 tools/check_rust.py` → 384 passam. Os geradores rodaram sem diferença.
 - Testar em jogo: se a estrutura do gerador cabe no terreno 11x11 da etapa 1 do tutorial.
+
+## Adendo: 0.33.0 (#61) e polimento das máquinas (#62)
+- A branch recebeu o #61 (`4a20b21`, Veio 0.33.0): o tutorial da fábrica passa a ter 16 etapas e é seguido pelo capítulo 2 da vila (prefeito Otávio), com o save `veio-onboarding-6`, que lê os saves antigos. Houve conflito só nas línguas, juntadas chave a chave e depois regeneradas pelo `build_tutorial.py`, sem choque.
+- A branch recebeu também o #62 (`88f9aea`): cada máquina grande vira um modelo único cortado em blocos. Entrou sem conflito.
+- E1: `python3 tools/check_rust.py` → 387 passam. Os geradores rodaram sem diferença.
+- Ainda não testado em jogo. O teste no PC deve usar um mundo novo.
