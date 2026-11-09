@@ -233,6 +233,30 @@
                           },
                           {
                             "text": "\n"
+                          },
+                          {
+                            "translate": "veio.industry.contents.17",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 19
+                            }
+                          },
+                          {
+                            "text": "\n"
+                          },
+                          {
+                            "translate": "veio.industry.contents.18",
+                            "color": "dark_blue",
+                            "underlined": true,
+                            "click_event": {
+                              "action": "change_page",
+                              "page": 20
+                            }
+                          },
+                          {
+                            "text": "\n"
                           }
                         ]
                       }
@@ -319,6 +343,16 @@
                     },
                     {
                       "raw": {
+                        "translate": "veio.industry.page.18"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.industry.page.19"
+                      }
+                    },
+                    {
+                      "raw": {
                         "text": "",
                         "extra": [
                           {
@@ -334,7 +368,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 19
+                              "page": 21
                             }
                           },
                           {
@@ -346,7 +380,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 20
+                              "page": 22
                             }
                           },
                           {
@@ -358,7 +392,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 21
+                              "page": 23
                             }
                           },
                           {
@@ -370,7 +404,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 22
+                              "page": 24
                             }
                           },
                           {
@@ -382,7 +416,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 23
+                              "page": 25
                             }
                           },
                           {
@@ -394,7 +428,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 24
+                              "page": 26
                             }
                           },
                           {
@@ -406,7 +440,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 25
+                              "page": 27
                             }
                           },
                           {
@@ -418,7 +452,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 26
+                              "page": 28
                             }
                           },
                           {
@@ -430,7 +464,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 27
+                              "page": 29
                             }
                           },
                           {
@@ -442,7 +476,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 28
+                              "page": 30
                             }
                           },
                           {
@@ -454,7 +488,7 @@
                             "underlined": true,
                             "click_event": {
                               "action": "change_page",
-                              "page": 29
+                              "page": 31
                             }
                           },
                           {

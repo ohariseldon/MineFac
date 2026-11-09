@@ -125,7 +125,7 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     }
     let draw = rich_draw(draw, number(entity, "Info"));
     let ticks = duration(base, node.slow, number(entity, "Info"));
-    let (ticks, draw) = upgrades::apply(ticks, draw, upgrades::effect(entity));
+    let (ticks, draw) = upgrades::apply(ticks, draw, upgrades::effect_as(entity, true));
     set_number(entity, "Duration", ticks);
     let (item, amount) = node.output;
     let produced = upgrades::output_amount(entity, item, amount);

@@ -333,6 +333,7 @@ LABELS = {
     "veio.ui.anchor.off": ("Sem energia: solto", "Unpowered: released"),
     "veio.ui.anchor.cost": ("%s FE/t", "%s FE/t"),
     "veio.ui.lab.stage": ("Etapa %s/%s", "Stage %s/%s"),
+    "veio.ui.lab.level": ("Nível %s", "Level %s"),
     "veio.ui.hint.cycles": ("Ciclos completos desde que foi colocada.", "Cycles completed since it was placed."),
     "veio.ui.hint.fe_tick": ("Energia gerada agora, por tick.", "Power generated right now, per tick."),
     "veio.ui.hint.belt1": ("2,5 itens por segundo.", "2.5 items per second."),
