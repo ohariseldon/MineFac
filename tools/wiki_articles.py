@@ -46,6 +46,7 @@ ARTICLES = [
 <tr><td>14</td><td>O pedido do dia pago</td><td>Esmeraldas da vila</td></tr>
 <tr><td>15</td><td>Refeição no Lar</td><td>A casa e os efeitos</td></tr>
 <tr><td>16</td><td>Abrir o centro de controle</td><td>A vila inteira</td></tr></table>
+<p><b>O primeiro favor:</b> o prefeito monta o gerador, mas a prensa e os cabos estão com o Seu Bento, o ferreiro (a leste da praça). Ele pede que você ajude a Dona Cida, a lavradora (a oeste): plante 12 pés de trigo ao lado da casa dela (ela dá sementes, farinha de osso e enxada), colha e entregue 12 trigos. Com o campo novo ela vende pão mais barato (6 por esmeralda em vez de 2), e o Seu Bento entrega a prensa, 16 cabos e as receitas.</p>
 <p>Depois, o prefeito abre o capítulo 2, a vila operária (ver Trabalhadores).</p>
 <p>Comandos: <code>/veiotutorial ocultar</code>, <code>/veiotutorial mostrar</code>, <code>/veiotutorial reiniciar</code>. A wiki dentro do jogo abre com <kbd>J</kbd>.</p>
 """,
@@ -329,7 +330,7 @@ ARTICLES = [
 <tr><td>Centro de controle</td><td>sede da companhia: metas, holding por empresa, obras, decretos, comércio exterior</td></tr></table>
 <p><b>Comida:</b> cada tarefa custa 2 pontos. Trigo vale 1 (não paga uma colheita), cenoura e batata 1, pão 6 (paga 3), carne assada 8 (paga 4).</p>
 <p><b>Zonas:</b> marcos de lavoura e de cercado demarcam onde trabalhar; celeiro e silo guardam as sobras. A vila cresce até 150 aldeões, sempre com cama livre.</p>
-<h3>Tutorial da vila (capítulo 2)</h3>
+<h3>Tutorial da vila operária (capítulo 3)</h3>
 <p>Depois do tutorial da fábrica, o prefeito <b>Otávio</b> conduz o capítulo da vila (ou use <code>/veiotutorial vila</code> a qualquer momento). Cada etapa traz a fala dele, a ficha da receita, a receita liberada no livro, a lista de materiais e passos numerados; a barra mostra a distância até o posto e faíscas marcam onde agir.</p>
 <table><tr><th>Etapa</th><th>O que fazer</th><th>Como o jogo confere</th></tr>
 <tr><td>1. Um posto de trabalho</td><td>posto do lavrador no meio de uma lavoura</td><td>o posto colocado</td></tr>
@@ -350,7 +351,7 @@ ARTICLES = [
         "game": ([
             "Casa: até 4 aldeões a até 10 blocos viram uma família. Quem trabalha ganha salário; a família come da despensa e compra na loja mais próxima.",
             "Loja: contrate um comerciante e abasteça o estoque. Os preços sobem com a procura e caem com estoque parado; cada vila tem o seu mercado.",
-            "Prefeitura: contrate o prefeito. Ele mede população, emprego, PIB, IDH e Gini num raio de 128 blocos e libera as fases da vila.",
+            "Prefeitura: contrate um aldeão como secretário do prefeito Otávio. Ele mede população, emprego, PIB, IDH e Gini num raio de 128 blocos e libera as fases da vila.",
             "• Povoado → Vila (12 moradores, IDH 0,40) → Cidade (36, IDH 0,55, PIB 400/dia) → Metrópole (80, IDH 0,70, 3 bairros)",
             "Da fase 2, casa nova pede poço a até 24 blocos; da 3, também poste; da 4, também loja. IDH baixo demais suspende novos níveis de zona.",
             "Casas muito juntas (mais de 6 vizinhas a 16 blocos) ficam apertadas, e poluição perto piora a moradia: bairros espalhados vivem melhor.",
@@ -359,7 +360,7 @@ ARTICLES = [
         ], [
             "House: up to 4 villagers within 10 blocks become a family. Workers earn wages; the family eats from the pantry and buys at the nearest shop.",
             "Shop: hire a merchant and stock it. Prices rise with demand and fall with idle stock; each village has its own market.",
-            "Town hall: hire the mayor. They measure population, jobs, GDP, HDI and Gini within 128 blocks and unlock the village phases.",
+            "Town hall: hire a villager as mayor Otávio's clerk. They measure population, jobs, GDP, HDI and Gini within 128 blocks and unlock the village phases.",
             "• Hamlet → Village (12 residents, HDI 0.40) → City (36, HDI 0.55, GDP 400/day) → Metropolis (80, HDI 0.70, 3 districts)",
             "From phase 2 a new house needs a well within 24 blocks; from 3 also a pole; from 4 also a shop. Too low an HDI suspends new zone levels.",
             "Houses packed together (more than 6 neighbours within 16 blocks) are crowded, and nearby pollution hurts housing: spread districts live better.",
@@ -379,7 +380,7 @@ ARTICLES = [
 <tr><td>Cidade</td><td>36, 9 famílias, IDH 0,55, PIB 400/dia, emprego 60%</td><td>nível 4, 100 aldeões, 24 casas</td><td>+ poste a 12</td></tr>
 <tr><td>Metrópole</td><td>80, 20 famílias, IDH 0,70, Gini ≤ 0,45, 3 bairros</td><td>150 aldeões, 48 casas</td><td>+ loja a 40</td></tr></table>
 <p><b>IDH</b> de cada família: comida, moradia, serviços (saneamento, energia, comércio e lazer) e renda, multiplicados pelo ânimo da vila. Se o IDH cai muito, o prefeito suspende novos níveis de zona e nascimentos.</p>
-<h3>Tutorial da cidade (capítulo 3)</h3>
+<h3>Tutorial "a vila cresce" (capítulo 4)</h3>
 <p>Depois do capítulo da vila, o prefeito <b>Otávio</b> ensina a transformar a vila em cidade (ou use <code>/veiotutorial cidade</code>). As etapas fecham pelo que a própria vila registra: casas, lojas, contas, a prefeitura e a agenda. A barra mostra os números da vila (casas atendidas, famílias, o pedido aberto e a parte mais fraca do IDH) e aponta para a loja ou a prefeitura; nas etapas com várias condições (a primeira venda e a fase), uma lista ✔/✘ mostra o que já está certo. Cada etapa indica o artigo da wiki que explica o sistema. Depois de bastante tempo numa etapa, a barra avisa que o prefeito tem uma dica: ele só fala quando você clica nele.</p>
 <table><tr><th>Etapa</th><th>O que fazer</th><th>Como o jogo confere</th></tr>
 <tr><td>1. Saneamento</td><td>poço a até 24 blocos das casas</td><td>uma casa com saneamento</td></tr>
@@ -400,14 +401,14 @@ ARTICLES = [
         "game": ([
             "A esmeralda é a moeda: 1 esmeralda = 60 moedas. O dinheiro só circula; nada aparece ou some sozinho.",
             "Companhia (você, no cofre do centro de controle) → salários → famílias → lojas (varejo) → atacado → companhia.",
-            "Em cada venda, o imposto é retido na fonte e vai para a prefeitura (4%, 8%, 12% e 16% pelas fases). A prefeitura paga o prefeito, os poços e a assistência aos pobres.",
+            "Em cada venda, o imposto é retido na fonte e vai para a prefeitura (4%, 8%, 12% e 16% pelas fases). A prefeitura paga o secretário, os poços e a assistência aos pobres.",
             "Dinheiro só entra ou sai em esmeraldas de verdade: depósito no cofre, saque pelo painel, suas compras e o comércio exterior.",
             "O centro de controle mostra cada empresa da holding (mineração, manufatura, energia, logística, agro...) com receita, gastos e lucro.",
             "O preço de referência é um só dentro e fora da vila (o pão vale 9). O preço local nunca passa do custo de importar.",
         ], [
             "The emerald is the currency: 1 emerald = 60 coins. Money only circulates; nothing appears or vanishes on its own.",
             "Company (you, in the control center vault) → wages → families → shops (retail) → wholesale → company.",
-            "Each sale withholds tax at source for the town hall (4%, 8%, 12% and 16% by phase). The town hall pays the mayor, wells and aid to the poor.",
+            "Each sale withholds tax at source for the town hall (4%, 8%, 12% and 16% by phase). The town hall pays the clerk, wells and aid to the poor.",
             "Money only enters or leaves as real emeralds: vault deposits, withdrawals from the panel, your purchases and foreign trade.",
             "The control center shows each holding company (mining, manufacturing, power, logistics, agro...) with revenue, costs and profit.",
             "There is one reference price inside and outside the village (bread is 9). The local price never exceeds the import cost.",
@@ -502,6 +503,7 @@ ARTICLES = [
         "id": "defense", "icon": "veio:tesla", "diagram": "pollution",
         "title": ("Poluição e defesa", "Pollution and defense"),
         "game": ([
+            "À noite, monstros caçam quem está fora: a vila se recolhe ao sino. Luz (tochas) impede monstros de nascer; muralha com portão os mantém fora; dormir faz a noite passar. Capítulo 2 do tutorial: /veiotutorial noite.",
             "Máquinas poluem o chunk: gerador 6/s, forno de ligas e Mk.II 4, extratora, triturador e geotérmico 2, demais 1. A poluição se espalha e 2% some a cada passo.",
             "Acima de 400, o chat avisa. Um dia depois, à noite, com o chunk mais poluído acima de 1.200, vêm Saqueadores (4 na primeira noite, até 12).",
             "Eles atacam quem está na fábrica, depois os defensores do quartel, os aldeões e por fim as máquinas.",
@@ -510,6 +512,7 @@ ARTICLES = [
             "• Lavouras e módulos de eficiência reduzem a poluição  • Kit de reparo recupera 50% de uma máquina",
             "No modo pacífico não há ataques.",
         ], [
+            "At night monsters hunt whoever is outside: the village shuts in at the bell. Light (torches) stops monsters spawning; a wall with a gate keeps them out; sleeping skips the night. Tutorial chapter 2: /veiotutorial noite.",
             "Machines pollute their chunk: generator 6/s, alloy furnace and Mk.II 4, extractor, crusher and geothermal 2, others 1. Pollution spreads and 2% fades each step.",
             "Above 400, chat warns you. A day later, at night, with the most polluted chunk above 1,200, Raiders come (4 the first night, up to 12).",
             "They attack whoever is at the factory, then the barracks defenders, the villagers and finally the machines.",
@@ -519,6 +522,8 @@ ARTICLES = [
             "There are no attacks in peaceful mode.",
         ]),
         "web": """
+<p><b>A noite é o medo da vila desde o primeiro dia.</b> Ao anoitecer, o sino toca e os moradores se recolhem: monstros caçam quem fica fora. Na primeira noite, o tutorial pausa e leva você para casa; depois, o capítulo 2 ("A noite", com o prefeito Otávio ou <code>/veiotutorial noite</code>) pede luz na vila (8 tochas ou lanternas a até 40 blocos do centro), uma muralha com portão (64 blocos de muro, cerca ou pedra entre 12 e 64 blocos do centro) e uma noite dormida na cama.</p>
+<p><b>Os Saqueadores fazem parte do ciclo.</b> Para atender a vila e o mundo, a fábrica precisa crescer, e crescer polui. A defesa cresce junto: luz, muralha e cama no começo; quartel e torre Tesla depois.</p>
 <p>Máquinas trabalhando poluem o chunk onde estão; a poluição se espalha aos vizinhos a cada 3,2 s e 2% se dissipa.</p>
 <table><tr><th>Máquina</th><th>Poluição por segundo</th></tr><tr><td>Gerador</td><td>6</td></tr><tr><td>Forno de ligas, extratora Mk.II</td><td>4</td></tr>
 <tr><td>Extratora, triturador, geotérmico</td><td>2</td></tr><tr><td>Demais máquinas</td><td>1</td></tr><tr><td>Colheita da colheitadeira</td><td>−3 por colheita</td></tr></table>
@@ -593,7 +598,7 @@ ARTICLES = [
             "• Pausada: um sinal de redstone está chegando nela",
             "• Esteira laranja: parada de verdade (o destino não aceita). Esteira que entra na face vermelha não é aceita.",
             "• Trabalhador ausente: o aldeão está longe, num chunk descarregado ou morreu; contrate de novo",
-            "Comandos: /veiotutorial ocultar · mostrar · reiniciar · vila · cidade. Wiki: tecla J.",
+            "Comandos: /veiotutorial ocultar · mostrar · reiniciar · noite · vila · cidade. Wiki: tecla J.",
         ], [
             "Hover over the machine panel status: it tells you why it stopped.",
             "• No power: generator fuel, touching cables, pole reach",
@@ -602,7 +607,7 @@ ARTICLES = [
             "• Paused: a redstone signal is reaching it",
             "• Orange belt: truly stuck (the target refuses). A belt entering the red face is not accepted.",
             "• Worker missing: the villager is far, in an unloaded chunk or dead; hire again",
-            "Commands: /veiotutorial ocultar · mostrar · reiniciar · vila · cidade. Wiki: J key.",
+            "Commands: /veiotutorial ocultar · mostrar · reiniciar · noite · vila · cidade. Wiki: J key.",
         ]),
         "web": """
 <p>Primeiro passo, sempre: <b>passe o mouse no estado do painel</b> da máquina. Ele diz o motivo.</p>
@@ -621,7 +626,8 @@ ARTICLES = [
 <tr><td><code>/veiotutorial ocultar</code></td><td>esconde o objetivo (a fábrica continua)</td></tr>
 <tr><td><code>/veiotutorial mostrar</code></td><td>mostra de novo</td></tr>
 <tr><td><code>/veiotutorial reiniciar</code></td><td>refaz os exercícios</td></tr>
-<tr><td><code>/veiotutorial vila</code></td><td>começa o capítulo da vila com o prefeito</td></tr>
+<tr><td><code>/veiotutorial noite</code></td><td>começa o capítulo da noite (luz, muralha e cama)</td></tr>
+<tr><td><code>/veiotutorial vila</code></td><td>começa o capítulo da vila operária com o prefeito</td></tr>
 <tr><td><code>/veiotutorial cidade</code></td><td>começa o capítulo da cidade com o prefeito</td></tr>
 <tr><td>Chave + botão direito</td><td>gira a máquina; agachado, devolve módulo ou dispensa trabalhador</td></tr></table>
 """,

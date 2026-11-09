@@ -298,6 +298,9 @@ impl Hooks for Factory {
         if event.kind == onboarding::MAYOR && (now + u64::from(event.entity)) % 41 == 0 {
             onboarding::mayor_seen(host, event.dimension, event.entity);
         }
+        if matches!(event.kind, onboarding::SMITH | onboarding::FARMER) && (now + u64::from(event.entity)) % 41 == 0 {
+            onboarding::neighbor_seen(host, event.dimension, event.kind, event.entity);
+        }
         if event.kind == workforce::society::agenda::VISITOR && (now + u64::from(event.entity)) % 41 == 0 {
             workforce::society::agenda::visitor_seen(host, event.dimension, event.entity);
         }
@@ -332,6 +335,9 @@ impl Hooks for Factory {
             onboarding::talk(host);
             return Flow::Cancel;
         }
+        if matches!(event.kind, onboarding::SMITH | onboarding::FARMER) {
+            return if onboarding::neighbor_talk(host, event.kind) { Flow::Cancel } else { Flow::Continue };
+        }
         if event.kind == workforce::society::agenda::VISITOR
             && let Ok(id) = u32::try_from(event.entity)
             && workforce::society::agenda::talk(host, id)
@@ -361,7 +367,9 @@ impl Hooks for Factory {
     }
 
     fn player_bed_enter(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerBedEnterEvent<'_>) -> Flow {
-        home::bed_enter(host, event.player, event.pos)
+        let flow = home::bed_enter(host, event.player, event.pos);
+        if matches!(flow, Flow::Continue) && workforce::night(host) { onboarding::slept(host, event.player); }
+        flow
     }
 
     /// Comida do jogador: refeições e banquetes aceleram as máquinas (`home::food`).
@@ -468,7 +476,7 @@ impl Hooks for Factory {
     }
 
     fn register_commands(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::RegisterCommandsEvent<'_>) {
-        for action in ["ocultar", "mostrar", "reiniciar", "vila", "cidade"] {
+        for action in ["ocultar", "mostrar", "reiniciar", "noite", "vila", "cidade"] {
             event.commands.push(horizon_client::mod_api::NativeCommand::new(&format!("veiotutorial {action}")));
         }
     }

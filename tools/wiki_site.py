@@ -361,7 +361,7 @@ class Site:
                 self.arrow(285, 310, 100, 202, "edge tax", label="imposto na fonte", curve=30),
                 self.arrow(95, 150, 283, 50, "edge tax", label="obras e festas", curve=-30),
                 self.arrow(180, 182, 558, 182, "edge tax", curve=-150),
-                '<text class="elbl" x="252" y="118" text-anchor="middle">assistência, salário do prefeito</text>']
+                '<text class="elbl" x="252" y="118" text-anchor="middle">assistência, salário do secretário</text>']
         return self.svg(740, 345, "".join(body), "O dinheiro só circula: nada aparece, nada some. Esmeraldas entram e saem só pelo cofre, pelas suas compras e pelo comércio exterior.")
 
     def svg_trade(self):

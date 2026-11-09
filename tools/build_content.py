@@ -543,6 +543,9 @@ def main():
     # Prefeito do tutorial: aldeão parado na varanda da casa do fundador; fala a missão do momento.
     # Tipo próprio para não entrar no censo nem na contratação dos aldeões.
     write(D / "horizon/entity_type/mayor.json", {"template": "minecraft:villager"})
+    # Vizinhos do primeiro favor (onboarding/favors.rs): o ferreiro com a prensa e a lavradora.
+    write(D / "horizon/entity_type/smith.json", {"template": "minecraft:villager"})
+    write(D / "horizon/entity_type/farmer.json", {"template": "minecraft:villager"})
     write(D / "horizon/entity_type/raider.json", {"template": "minecraft:zombie",
         "attributes": {"minecraft:max_health": 24.0, "minecraft:movement_speed": 0.25,
             "minecraft:follow_range": 40.0}})

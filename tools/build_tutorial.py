@@ -291,8 +291,8 @@ help["shop"] = (
  "Esmeralda: contrata o\ncomerciante (independente).\nO que você entrega ele compra\nno atacado (75%) e paga com\nas vendas. Imposto na fonte.",
  "Emerald: hires the merchant\n(independent). What you\ndeliver they buy wholesale\n(75%) and pay from sales.\nTax withheld at source.")
 help["town_hall"] = (
- "Esmeralda: contrata o\nprefeito. Vive do imposto na\nfonte (4% a 16%); paga o\nprefeito e a assistência.\nMede IDH e libera as fases.",
- "Emerald: hires the mayor.\nLives on tax at source (4% to\n16%); pays the mayor and\nassistance. Measures HDI and\nunlocks phases.")
+ "Esmeralda: contrata o\nsecretário de Otávio. Vive do\nimposto (4% a 16%); paga o\nsecretário e a assistência.\nMede IDH e libera as fases.",
+ "Emerald: hires Otávio's\nclerk. Lives on tax (4% to\n16%); pays the clerk and\nassistance. Measures HDI and\nunlocks phases.")
 help["well"] = (
  "Saneamento das casas a até\n24 blocos. Balde vazio no\nslot vira balde d'água.",
  "Sanitation for homes within\n24 blocks. An empty bucket\nin the slot fills with water.")
@@ -513,7 +513,7 @@ for key, pt, en in [
  ('veio.mayor.request8', '%s casas com ar poluído', '%s homes with polluted air'),
  ('veio.mayor.request9', '%s casas apertadas: crie bairros', '%s crowded homes: build districts'),
  ('veio.mayor.request10', 'Meta: chegar à fase %s (livro: relatório)', 'Goal: reach phase %s (book: report)'),
- ('veio.mayor.need_mayor', 'Contrate um prefeito na prefeitura para ver o relatório.', 'Hire a mayor at the town hall to see the report.'),
+ ('veio.mayor.need_mayor', 'Contrate o secretário de Otávio na prefeitura para ver o relatório.', 'Hire Otávio\'s clerk at the town hall to see the report.'),
  ('veio.mayor.report.people', 'População %s: %s adultos, %s crianças, %s famílias, %s sem casa.', 'Population %s: %s adults, %s kids, %s families, %s homeless.'),
  ('veio.mayor.report.economy', 'PIB %s/dia (produção %s, comércio %s) · emprego %s%% · custo de vida %s%%.', 'GDP %s/day (production %s, commerce %s) · employment %s%% · cost of living %s%%.'),
  ('veio.mayor.report.idh', 'IDH %s · Gini %s', 'HDI %s · Gini %s'),
@@ -523,7 +523,7 @@ for key, pt, en in [
  ('veio.center.zones', 'Lavouras: %s · cercados: %s · companhia: %s', 'Fields: %s · pens: %s · company: %s'),
  ('veio.company.report', 'Companhia: %s moedas no cofre · folha %s/dia · impostos %s/dia.', 'Company: %s coins in the vault · payroll %s/day · taxes %s/day.'),
  ('veio.mayor.public', 'Cofre público %s · dívida %s', 'Public funds %s · debt %s'),
- ('veio.mayor.request11', 'Cofre público vazio: prefeito e poços sem pagamento', 'Public funds empty: mayor and wells unpaid'),
+ ('veio.mayor.request11', 'Cofre público vazio: secretário e poços sem pagamento', 'Public funds empty: clerk and wells unpaid'),
  ('veio.mayor.request12', 'Dívida de impostos da companhia: %s moedas', 'Company tax debt: %s coins'),
  ('veio.mayor.report.public', 'Contas públicas: saldo %s · imposto %s%% (%s/dia) · salários %s/dia · poços %s/dia · assistência %s/dia · dívida da companhia %s.', 'Public accounts: balance %s · tax %s%% (%s/day) · wages %s/day · wells %s/day · assistance %s/day · company debt %s.'),
  ('veio.house.need10', 'Salário atrasado: abasteça o cofre da companhia', 'Wages overdue: fill the company vault'),
@@ -1015,7 +1015,7 @@ slothelp={
  "silo":["Grãos, sementes, ração ou comida."]*18,
  "house":["Despensa: comida que a família comprou (ou que você doa).","Despensa.","Despensa."],
  "shop":["Comida do comerciante.","Entrega da indústria: o comerciante paga 75% no atacado.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Entrega da indústria.","Antigo caixa (até a 0.20): retire as esmeraldas."],
- "town_hall":["Comida do prefeito.","Aporte voluntário à conta pública (60 moedas por esmeralda).","Agenda: materiais dos eventos pedidos pelos visitantes."],
+ "town_hall":["Comida do secretário.","Aporte voluntário à conta pública (60 moedas por esmeralda).","Agenda: materiais dos eventos pedidos pelos visitantes."],
  "park":["Enfeite: mudas, flores ou lanterna."],
  "plaza":["Enfeite: mudas, flores ou lanterna."],
  "monument":["Enfeite: mudas, flores ou lanterna."],
@@ -1067,7 +1067,7 @@ slot_en={
  "silo":["Grain, seeds, feed or food."]*18,
  "house":["Pantry: food the family bought (or you donate).","Pantry.","Pantry."],
  "shop":["Merchant food.","Industry delivery: the merchant pays 75% wholesale.","Industry delivery.","Industry delivery.","Industry delivery.","Industry delivery.","Industry delivery.","Old till (up to 0.20): take the emeralds out."],
- "town_hall":["Mayor food.","Voluntary contribution to public funds (60 coins per emerald).","Agenda: materials for events visitors ask for."],
+ "town_hall":["Clerk food.","Voluntary contribution to public funds (60 coins per emerald).","Agenda: materials for events visitors ask for."],
  "park":["Decoration: saplings, flowers or a lantern."],
  "plaza":["Decoration: saplings, flowers or a lantern."],
  "monument":["Decoration: saplings, flowers or a lantern."],
@@ -1468,7 +1468,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.36.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.37.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -1603,8 +1603,8 @@ v_expand=vpage(
  "Expandir as zonas\n\nEsmeralda no marco libera o próximo nível:\n13x13: 8 esm., 32 tarefas, 6 aldeões\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nA chave escolhe o tamanho entre os liberados.",
  "Grow the zones\n\nEmerald on the marker unlocks the next level:\n13x13: 8 emer., 32 tasks, 6 villagers\n17x17: 16, 128, 12\n21x21: 32, 384, 20\n\nThe wrench picks the size among unlocked ones.")
 v_grow=vpage(
- "A vila cresce\n\nFilhos até o teto: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle.\n\nO prefeito limita: 30 sem prefeitura, depois 60, 100 e 150. Sem cama livre ninguém nasce; com prefeito, também é preciso vaga em casa.",
- "The village grows\n\nChildren up to the cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center.\n\nThe mayor limits it: 30 without a town hall, then 60, 100 and 150. No free bed, no birth; with a mayor, a free home too.")
+ "A vila cresce\n\nFilhos até o teto: 30, mais 3 por posto com trabalhador, 5 por nível de zona, 2 por armazém e 20 pelo centro de controle.\n\nO prefeito limita: 30 sem prefeitura, depois 60, 100 e 150. Sem cama livre ninguém nasce; com o secretário, também é preciso vaga em casa.",
+ "The village grows\n\nChildren up to the cap: 30, plus 3 per staffed post, 5 per zone level, 2 per storage and 20 for the control center.\n\nThe mayor limits it: 30 without a town hall, then 60, 100 and 150. No free bed, no birth; with a clerk, a free home too.")
 v_lan=vpage(
  "Na mesma rede\n\nAnfitrião: Esc, Abrir para a LAN, Iniciar mundo LAN.\n\nQuem entra: mesmo Wi-Fi, Multijogador; o mundo aparece na lista. Mesma versão do Veio.\n\nAs máquinas são as do anfitrião.",
  "On your network\n\nHost: Esc, Open to LAN, Start LAN World.\n\nJoin: same Wi-Fi, Multiplayer; the world shows in the list. Same Veio version.\n\nThe machines are the host's.")
@@ -1624,8 +1624,8 @@ v_shop=vpage(
  "9. Loja\n\nO comerciante é independente. O que você entrega no estoque ele compra no atacado (75% do preço) e paga com as vendas; sem caixa, fica fiado.\n\nAs casas compram de dia; você compra trocando com ele.",
  "9. Shop\n\nThe merchant is independent. What you deliver to the stock they buy wholesale (75% of price) and pay from sales; without cash, on credit.\n\nHomes buy during the day; you buy by trading with them.")
 v_mayor=vpage(
- "10. Prefeito e contas\n\nCompanhia (sua): cofre do centro. Paga seus trabalhadores; recebe o atacado.\nPrefeitura: imposto retido na fonte em cada venda (4%, 8%, 12%, 16%). Paga o prefeito e a assistência aos pobres.",
- "10. Mayor and accounts\n\nCompany (yours): center vault. Pays your workers; receives wholesale.\nTown hall: tax withheld at source on every sale (4%, 8%, 12%, 16%). Pays the mayor and assistance.")
+ "10. Prefeito e contas\n\nCompanhia (sua): cofre do centro. Paga seus trabalhadores; recebe o atacado.\nPrefeitura: imposto retido na fonte em cada venda (4%, 8%, 12%, 16%). Paga o secretário e a assistência aos pobres.",
+ "10. Mayor and accounts\n\nCompany (yours): center vault. Pays your workers; receives wholesale.\nTown hall: tax withheld at source on every sale (4%, 8%, 12%, 16%). Pays the clerk and assistance.")
 v_agenda=vpage(
  "Agenda e feriados\n\nEstações de 6 dias; o 6º é domingo. Em 6 feriados por ano a vila para e se reúne na praça.\n\nDois dias antes, um visitante vem à prefeitura: clique nele e entregue o pedido no espaço Agenda.",
  "Calendar and holidays\n\n6-day seasons; the 6th is Sunday. On 6 holidays a year the village stops and gathers at the plaza.\n\nTwo days before, a visitor comes to the town hall: click them and deliver in the Agenda slot.")
@@ -1797,7 +1797,7 @@ vstages=[
  ("center","veio:control_center","7. Centro de controle","7. Control center","Painel, metas e relatório. O spawn vai para o centro.","Panel, goals and report. Spawn moves to the center."),
  ("home","veio:house","8. Casa","8. House","Uma família mora, ganha salário e compra comida.","A family lives, earns wages and buys food."),
  ("market","veio:shop","9. Loja","9. Shop","Um comerciante vende comida e bens às casas e a você.","A merchant sells food and goods to homes and to you."),
- ("mayor","veio:town_hall","10. Prefeitura","10. Town hall","O prefeito paga salários, mede o IDH e libera as fases.","The mayor pays wages, measures HDI and unlocks phases."),
+ ("mayor","veio:town_hall","10. Prefeitura","10. Town hall","O secretário de Otávio mede o IDH, paga os serviços e libera as fases.","Otávio's clerk measures HDI, pays services and unlocks phases."),
  ("hearth","veio:home","11. Seu lar","11. Your home","Lareira, despensa e uma casa de verdade. Você renasce ali.","Hearth, pantry and a real house. You respawn there."),
 ]
 vparent="veio:village/root"

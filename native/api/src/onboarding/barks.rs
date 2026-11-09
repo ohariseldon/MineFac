@@ -19,6 +19,7 @@ pub(super) fn topic(host: &dyn Host, p: &Progress) -> &'static str {
     else if p.intro < intro::PLOT_STAGE { "gather" }
     else if p.intro < intro::INTRO_DONE { "plot" }
     else if festival::soon(host, p) { "festival" }
+    else if p.step == 1 && p.favor < favors::FAVOR_DONE { "favor" }
     else if p.step < DONE { "factory" }
     else if village::step(p).is_some() { "village" }
     else { "free" }
