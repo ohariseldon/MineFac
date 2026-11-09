@@ -1346,7 +1346,7 @@ fn player(uuid: u128, name: &str, at: [f64; 3]) -> horizon_client::mod_api::Nati
 }
 
 #[test]
-fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() {
+fn new_players_arrive_near_the_village_and_the_control_center_takes_over() {
     spawn::reset();
     let mut village = Village::new(spawn::OVERWORLD);
     village.crops.clear();
@@ -1363,7 +1363,9 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     spawn::tick(&mut village, 40);
     let joined = village.commands.join("\n");
     assert!(joined.contains("setworldspawn 100 70 100"), "centro da vila: média do grupo, altura do terreno\n{joined}");
-    assert!(joined.contains("unless entity @s[tag=veio_village] run tp @s 100 70 100"), "só quem chega pela primeira vez");
+    // Perto demais (14 blocos): vai para fora, a 44 blocos, do lado de onde estava; a seta leva à vila.
+    assert!(joined.contains("unless entity @s[tag=veio_village] run tp @s 69 70 69"), "só quem chega pela primeira vez\n{joined}");
+    assert!(joined.contains("spawnpoint @s 100 70 100"), "renasce na vila");
     assert!(joined.contains("tag Steve add veio_village"));
     assert!(!joined.contains("bad name"), "nome inseguro não entra em comando");
 
@@ -1372,7 +1374,7 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     spawn::logged_in(9, "Alex", 40);
     spawn::tick(&mut village, 60);
     let joined = village.commands.join("\n");
-    assert!(joined.contains("tp @s 100 70 100"), "convidado da LAN vai ao centro já conhecido\n{joined}");
+    assert!(joined.contains("tp @s 131 70 131"), "convidado da LAN vai para perto do centro já conhecido\n{joined}");
     assert!(!joined.contains("place structure"), "não gera uma segunda vila");
 
     // Sozinho e longe de tudo: espera os chunks, gera uma vila e só depois desiste.
@@ -1386,7 +1388,7 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     // Terreno todo plano no teste: a vila nasce onde o jogador está, e ele já vai para o centro.
     let joined = village.commands.join("\n");
     assert!(joined.contains("place structure minecraft:village_plains 5000 70 5000"), "{joined}");
-    assert!(joined.contains("tp @s 5000 70 5000") && joined.contains("tag Alex add veio_village"));
+    assert!(joined.contains("tp @s 5000 70 5044") && joined.contains("tag Alex add veio_village"), "nasce ao sul da vila nova\n{joined}");
     assert!(!joined.contains("fill"), "sem árvores, nada a limpar");
     assert_eq!(spawn::center(), Some(([5000, 70, 5000], false)));
 
