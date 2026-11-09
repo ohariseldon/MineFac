@@ -1,0 +1,15 @@
+   Compiling veio-launcher v0.16.1 (/tmp/claude-0/-home-user-MineFac/2438a94b-e52e-53f5-9ff0-c6cae7a87c22/scratchpad/pr47/launcher)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.77s
+     Running unittests src/main.rs (target/debug/deps/launcher-5e9bf8d3a838fe38)
+
+running 6 tests
+test visuals::tests::explicit_launch_choice_wins_over_saved_choice_and_invalid_choice_fails_early ... ok
+test tests::reads_version_and_config ... ok
+test visuals::tests::light_does_not_need_install_or_select_a_shader_even_on_the_first_start ... ok
+test tests::install_refuses_to_replace_a_foreign_folder ... ok
+test visuals::tests::switching_both_directions_replaces_the_shader_selection_and_keeps_saves ... ok
+test visuals::tests::realism_is_installed_before_launch_and_preserves_personal_options_and_originals ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+exit=0

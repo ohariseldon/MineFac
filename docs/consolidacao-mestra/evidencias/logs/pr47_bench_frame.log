@@ -1,0 +1,31 @@
+warning: function `distance` is never used
+   --> veio-check/src/../../../api/src/workforce/foreman.rs:149:4
+    |
+149 | fn distance(a: [i32; 3], b: [i32; 3]) -> f64 {
+    |    ^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `sites_near` is never used
+   --> veio-check/src/../../../api/src/workforce/site.rs:142:15
+    |
+142 | pub(crate) fn sites_near(dimension: &str, at: [i32; 3], radius: i32, now: u64) -> Vec<Building> {
+    |               ^^^^^^^^^^
+
+warning: function `research_percent` is never used
+   --> veio-check/src/../../../api/src/workforce/staff.rs:124:15
+    |
+124 | pub(crate) fn research_percent(entity: &ModBlockEntity) -> i32 {
+    |               ^^^^^^^^^^^^^^^^
+
+warning: `veio-check` (lib test) generated 3 warnings
+    Finished `release` profile [optimized] target(s) in 0.01s
+     Running unittests src/lib.rs (target/release/deps/veio_check-e8a7211881567067)
+
+running 1 test
+test veio::perf::factory::bench_frame ... quadro: 480 blocos: 63.4 µs por quadro (Veio), 267 desenhados de novo, 329 alocações, 1304 cubos, 60.5 itens, 4 quads
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 333 filtered out; finished in 0.77s
+
+exit=0

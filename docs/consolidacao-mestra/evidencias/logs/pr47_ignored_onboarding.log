@@ -1,0 +1,32 @@
+warning: function `distance` is never used
+   --> veio-check/src/../../../api/src/workforce/foreman.rs:149:4
+    |
+149 | fn distance(a: [i32; 3], b: [i32; 3]) -> f64 {
+    |    ^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `sites_near` is never used
+   --> veio-check/src/../../../api/src/workforce/site.rs:142:15
+    |
+142 | pub(crate) fn sites_near(dimension: &str, at: [i32; 3], radius: i32, now: u64) -> Vec<Building> {
+    |               ^^^^^^^^^^
+
+warning: function `research_percent` is never used
+   --> veio-check/src/../../../api/src/workforce/staff.rs:124:15
+    |
+124 | pub(crate) fn research_percent(entity: &ModBlockEntity) -> i32 {
+    |               ^^^^^^^^^^^^^^^^
+
+warning: `veio-check` (lib test) generated 3 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.01s
+     Running unittests src/lib.rs (target/debug/deps/veio_check-f2210584b4a3636d)
+
+running 3 tests
+test veio::onboarding::tests::board_alerts_yield_to_the_visible_tutorial_goal ... ok
+test veio::onboarding::tests::server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds ... ok
+test veio::onboarding::transport::integration::mixed_transport_harness_confirms_arms_hoppers_workers_and_blocked_retries_without_belts ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 331 filtered out; finished in 0.18s
+
+exit=0
