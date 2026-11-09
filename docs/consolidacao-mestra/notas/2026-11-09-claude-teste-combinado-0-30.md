@@ -18,3 +18,8 @@
 ## Toca no compilado
 - Pendente: teste em jogo do prefeito (`veio:mayor`), do terreno 11x11, dos aldeões (#56) e das telas (#57). Se a janela voltar a sumir no carregamento, suspeitar da VRAM com `textureBudgetMiB` 1024.
 - O `launcher.exe` do repositório é anterior ao código do launcher atual. O exe recompilado existe só no PC do dono.
+
+## Adendo: 0.31.0
+- A branch recebeu o #59 na 0.31.0 (`2c9c9a2`). O jogador nasce a uns 44 blocos da vila, uma seta na barra de ação aponta "Vá para a vila" e depois "Fale com o prefeito", e o prefeito fica na praça e pede recursos antes de entregar o gerador.
+- Houve um conflito em `workforce/spawn.rs`: ficou a nova assinatura de `settle` (com a posição do jogador), e as ruínas do #53 continuam aparecendo na primeira chegada. As línguas foram juntadas chave a chave, sem choque.
+- E1: `python3 tools/check_rust.py` → 375 passam. Os geradores rodaram sem diferença.
