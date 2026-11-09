@@ -200,6 +200,7 @@ pub(crate) fn pump(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
 
 /// Cano: só conduz. "Trabalhando" enquanto leva água.
 pub(crate) fn pipe(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
+    super::super::joints::refresh(host, pos, entity, &super::super::joints::PIPE_FACES, super::super::joints::pipe_connects);
     let before = water(entity);
     push(host, pos, entity);
     set_number(entity, "Status", if before == 0 { 0 } else { 1 });

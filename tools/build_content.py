@@ -347,13 +347,9 @@ def model(kind, name, tier):
             box([4, 12, 4], [12, 15, 12], {"up": "#top", "down": "#glow", "*": "#glow"}),
         ]
     if kind == "cable":
-        textures = {"wire": "minecraft:block/black_wool", "joint": "minecraft:block/copper_block",
-                    "particle": "minecraft:block/black_wool"}
-        return textures, [
-            box([6, 0, 0], [10, 3, 16], "#wire"),
-            box([0, 0, 6], [16, 3, 10], "#wire"),
-            box([5, 0, 5], [11, 4, 11], "#joint"),
-        ]
+        # Peça de inventário: o cabo reto. No mundo, `connected` monta núcleo + braços.
+        textures, parts = connected_parts("cable")
+        return textures, parts["mid_z"] + parts["north"] + parts["south"]
     if kind == "tunnel":
         # Boca de túnel: esteira entrando sob uma cobertura de aço com a borda em vermelho.
         textures = {"base": "minecraft:block/smooth_stone", "base_side": "minecraft:block/smooth_stone_slab_side",
@@ -367,15 +363,8 @@ def model(kind, name, tier):
             box([0, 8, 6], [16, 10, 16], {"north": "#rail", "*": "#hood"}),
         ]
     if kind == "pipe":
-        # Cano de cobre com uma janela de vidro no meio: liga nas seis faces.
-        textures = {"pipe": "minecraft:block/cut_copper", "joint": "minecraft:block/copper_block",
-                    "glass": "minecraft:block/light_blue_stained_glass", "particle": "minecraft:block/cut_copper"}
-        return textures, [
-            box([6, 6, 0], [10, 10, 16], "#pipe"),
-            box([0, 6, 6], [16, 10, 10], "#pipe"),
-            box([6, 0, 6], [10, 16, 10], "#pipe"),
-            box([5, 5, 5], [11, 11, 11], {"up": "#glass", "*": "#joint"}),
-        ]
+        textures, parts = connected_parts("pipe")
+        return textures, parts["mid_z"] + parts["north"] + parts["south"]
     if kind == "sprinkler":
         textures = {"post": "minecraft:block/cut_copper", "head": "minecraft:block/iron_block",
                     "nozzle": "minecraft:block/light_blue_stained_glass", "base": "minecraft:block/smooth_stone",
@@ -414,7 +403,6 @@ SHAPES = {
     "belt": [[0, 0, 0, 1, 0.25, 1]],
     "splitter": [[0, 0, 0, 1, 0.375, 1]],
     "merger": [[0, 0, 0, 1, 0.3125, 1]],
-    "cable": [[0, 0, 0.375, 1, 0.25, 0.625], [0.375, 0, 0, 0.625, 0.25, 1]],
     "solar": [[0, 0, 0, 1, 0.34375, 1]],
     "battery": [[0.0625, 0, 0.0625, 0.9375, 1.025, 0.9375]],
     "pole": [[0.375, 0, 0.375, 0.625, 1.5, 0.625]],
@@ -423,12 +411,84 @@ SHAPES = {
     "wind_turbine": [[0.4375, 0, 0.4375, 0.5625, 1.5, 0.5625]],
     "grow_lamp": [[0.25, 0, 0.25, 0.75, 0.9375, 0.75]],
     "marker": [[0.375, 0, 0.375, 0.625, 0.9375, 0.625]],
-    "pipe": [[0.375, 0.375, 0, 0.625, 0.625, 1], [0, 0.375, 0.375, 1, 0.625, 0.625],
-             [0.375, 0, 0.375, 0.625, 1, 0.625]],
     "sprinkler": [[0.3125, 0, 0.3125, 0.6875, 0.625, 0.6875]],
     "tunnel": [[0, 0, 0, 1, 0.625, 1]],
     "lift": [[0, 0, 0, 1, 1, 1]],
 }
+
+# Canos e cabos ligam nos vizinhos como cerca e redstone: um núcleo e um braço por face
+# ligada (`multipart`). O módulo nativo `joints.rs` grava as faces como propriedades.
+CONNECTED_FACES = {"pipe": ("down", "up", "north", "south", "west", "east"),
+                   "cable": ("up", "north", "south", "west", "east")}
+# Trechos retos: o tubo passa direto, sem a junta no meio (só curvas, tês e pontas têm junta).
+CONNECTED_AXES = {"pipe": {"z": ("north", "south"), "x": ("west", "east"), "y": ("down", "up")},
+                  "cable": {"z": ("north", "south"), "x": ("west", "east")}}
+
+def connected_parts(kind):
+    """Texturas e caixas (pixels) do núcleo e de cada braço, já na direção de cada face."""
+    if kind == "pipe":
+        textures = {"pipe": "minecraft:block/cut_copper", "joint": "minecraft:block/copper_block",
+                    "glass": "minecraft:block/light_blue_stained_glass", "particle": "minecraft:block/cut_copper"}
+        # Tubo de 4 px com um anel de 5 px na borda do bloco: dois canos se encontram flange
+        # com flange. O núcleo tem a janela de vidro em cima, para ver o fluido.
+        arm = {"north": ([6, 6, 0], [10, 10, 5]), "south": ([6, 6, 11], [10, 10, 16]),
+               "west": ([0, 6, 6], [5, 10, 10]), "east": ([11, 6, 6], [16, 10, 10]),
+               "down": ([6, 0, 6], [10, 5, 10]), "up": ([6, 11, 6], [10, 16, 10])}
+        ring = {"north": ([5.5, 5.5, 0], [10.5, 10.5, 1]), "south": ([5.5, 5.5, 15], [10.5, 10.5, 16]),
+                "west": ([0, 5.5, 5.5], [1, 10.5, 10.5]), "east": ([15, 5.5, 5.5], [16, 10.5, 10.5]),
+                "down": ([5.5, 0, 5.5], [10.5, 1, 10.5]), "up": ([5.5, 15, 5.5], [10.5, 16, 10.5])}
+        parts = {"core": [box([5, 5, 5], [11, 11, 11], {"up": "#glass", "*": "#joint"})],
+                 "mid_z": [box([6, 6, 5], [10, 10, 11], {"up": "#glass", "*": "#pipe"})],
+                 "mid_x": [box([5, 6, 6], [11, 10, 10], {"up": "#glass", "*": "#pipe"})],
+                 "mid_y": [box([6, 5, 6], [10, 11, 10], "#pipe")]}
+        for face in CONNECTED_FACES["pipe"]:
+            parts[face] = [box(*arm[face], "#pipe"), box(*ring[face], "#joint")]
+        return textures, parts
+    textures = {"wire": "minecraft:block/black_wool", "joint": "minecraft:block/copper_block",
+                "particle": "minecraft:block/black_wool"}
+    # Fio rente ao chão, com um conector de cobre no meio; para cima vira uma descida.
+    arm = {"north": ([6.5, 0, 0], [9.5, 2.5, 5]), "south": ([6.5, 0, 11], [9.5, 2.5, 16]),
+           "west": ([0, 0, 6.5], [5, 2.5, 9.5]), "east": ([11, 0, 6.5], [16, 2.5, 9.5]),
+           "up": ([7, 3.5, 7], [9, 16, 9])}
+    parts = {"core": [box([5, 0, 5], [11, 3.5, 11], "#joint")],
+             "mid_z": [box([6.5, 0, 5], [9.5, 2.5, 11], "#wire")],
+             "mid_x": [box([5, 0, 6.5], [11, 2.5, 9.5], "#wire")]}
+    for face in CONNECTED_FACES["cable"]:
+        parts[face] = [box(*arm[face], "#wire")]
+    return textures, parts
+
+def connected(name, kind, hardness):
+    """Modelos por parte, blockstate `multipart` e registro com uma propriedade por face."""
+    textures, parts = connected_parts(kind)
+    faces = CONNECTED_FACES[kind]
+    for part, elements in parts.items():
+        write(A / f"models/block/{name}_{part}.json", {"parent": "minecraft:block/block",
+            "textures": textures, "elements": elements})
+    axes = CONNECTED_AXES[kind]
+    def only(pair):
+        return {face: "true" if face in pair else "false" for face in faces}
+    bent = {"AND": [{"OR": [{face: "false"} for face in pair] + [{face: "true"} for face in faces if face not in pair]}
+                    for pair in axes.values()]}
+    write(A / f"blockstates/{name}.json", {"multipart":
+        [{"when": bent, "apply": {"model": f"veio:block/{name}_core"}}]
+        + [{"when": only(pair), "apply": {"model": f"veio:block/{name}_mid_{axis}"}} for axis, pair in axes.items()]
+        + [{"when": {face: "true"}, "apply": {"model": f"veio:block/{name}_{face}"}} for face in faces]})
+    def cuboids(elements):
+        return [[round(v / 16, 5) for v in (*e["from"], *e["to"])] for e in elements]
+    values = {}
+    for mask in range(1 << len(faces)):
+        on = [face for bit, face in enumerate(faces) if mask >> bit & 1]
+        key = ",".join("true" if face in on else "false" for face in faces)
+        straight = [axis for axis, pair in axes.items() if set(on) == set(pair)]
+        middle = parts[f"mid_{straight[0]}"] if straight else parts["core"]
+        # Os anéis não entram na caixa de seleção: só o tubo e a junta.
+        values[key] = cuboids(middle + [parts[face][0] for face in on])
+    shape = {"properties": list(faces), "values": values, "default": cuboids(parts["core"])}
+    write(D / f"horizon/block/{name}.json", {"template": "minecraft:black_glazed_terracotta", "item": True,
+        "properties": {"hardness": hardness, "occludes": False},
+        "state_properties": {face: {"type": "boolean"} for face in faces},
+        "default_state": {face: "false" for face in faces},
+        "shapes": shape, "collision_shapes": shape})
 
 def write(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -438,23 +498,26 @@ def main():
     for name, (kind, tier, slots, results, hardness) in BLOCKS.items():
         textures, elements = model(kind, name, tier)
         write(A / f"models/block/{name}.json", {"parent": "minecraft:block/block", "textures": textures, "elements": elements})
-        write(A / f"blockstates/{name}.json", {"variants": {
-            "facing=south": {"model": f"veio:block/{name}"},
-            "facing=west": {"model": f"veio:block/{name}", "y": 90},
-            "facing=north": {"model": f"veio:block/{name}", "y": 180},
-            "facing=east": {"model": f"veio:block/{name}", "y": 270},
-        }})
         write(A / f"items/{name}.json", {"model": {"type": "minecraft:model", "model": f"veio:block/{name}"}})
-        # Sem menu, um template sem tela própria: a terracota esmaltada só gira com o jogador.
-        template = "minecraft:black_glazed_terracotta" if kind in ("cable", "pipe", "pole", "steel_pole") else "minecraft:stonecutter"
-        profile = machine_form(name, tier, box)
-        shape = machine_shapes(profile) if profile else {"default": SHAPES[kind]}
-        properties = {"hardness": hardness, "occludes": False}
-        if kind == "grow_lamp":
-            properties["light"] = 15  # A lâmpada ilumina a lavoura à noite.
-        write(D / f"horizon/block/{name}.json", {"template": template, "item": True,
-            "properties": properties,
-            "shapes": shape, "collision_shapes": shape})
+        if kind in CONNECTED_FACES:
+            connected(name, kind, hardness)
+        else:
+            write(A / f"blockstates/{name}.json", {"variants": {
+                "facing=south": {"model": f"veio:block/{name}"},
+                "facing=west": {"model": f"veio:block/{name}", "y": 90},
+                "facing=north": {"model": f"veio:block/{name}", "y": 180},
+                "facing=east": {"model": f"veio:block/{name}", "y": 270},
+            }})
+            # Sem menu, um template sem tela própria: a terracota esmaltada só gira com o jogador.
+            template = "minecraft:black_glazed_terracotta" if kind in ("pole", "steel_pole") else "minecraft:stonecutter"
+            profile = machine_form(name, tier, box)
+            shape = machine_shapes(profile) if profile else {"default": SHAPES[kind]}
+            properties = {"hardness": hardness, "occludes": False}
+            if kind == "grow_lamp":
+                properties["light"] = 15  # A lâmpada ilumina a lavoura à noite.
+            write(D / f"horizon/block/{name}.json", {"template": template, "item": True,
+                "properties": properties,
+                "shapes": shape, "collision_shapes": shape})
         if slots:
             write(D / f"horizon/menu/{name}.json", {"slots": slots, "data_slots": 14, "results": results})
         write(D / f"loot_table/blocks/{name}.json", {"type": "minecraft:block", "pools": [{"rolls": 1,

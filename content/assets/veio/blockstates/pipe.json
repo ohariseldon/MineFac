@@ -1,19 +1,166 @@
 {
-  "variants": {
-    "facing=south": {
-      "model": "veio:block/pipe"
+  "multipart": [
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false"
+              },
+              {
+                "south": "false"
+              },
+              {
+                "down": "true"
+              },
+              {
+                "up": "true"
+              },
+              {
+                "west": "true"
+              },
+              {
+                "east": "true"
+              }
+            ]
+          },
+          {
+            "OR": [
+              {
+                "west": "false"
+              },
+              {
+                "east": "false"
+              },
+              {
+                "down": "true"
+              },
+              {
+                "up": "true"
+              },
+              {
+                "north": "true"
+              },
+              {
+                "south": "true"
+              }
+            ]
+          },
+          {
+            "OR": [
+              {
+                "down": "false"
+              },
+              {
+                "up": "false"
+              },
+              {
+                "north": "true"
+              },
+              {
+                "south": "true"
+              },
+              {
+                "west": "true"
+              },
+              {
+                "east": "true"
+              }
+            ]
+          }
+        ]
+      },
+      "apply": {
+        "model": "veio:block/pipe_core"
+      }
     },
-    "facing=west": {
-      "model": "veio:block/pipe",
-      "y": 90
+    {
+      "when": {
+        "down": "false",
+        "up": "false",
+        "north": "true",
+        "south": "true",
+        "west": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "veio:block/pipe_mid_z"
+      }
     },
-    "facing=north": {
-      "model": "veio:block/pipe",
-      "y": 180
+    {
+      "when": {
+        "down": "false",
+        "up": "false",
+        "north": "false",
+        "south": "false",
+        "west": "true",
+        "east": "true"
+      },
+      "apply": {
+        "model": "veio:block/pipe_mid_x"
+      }
     },
-    "facing=east": {
-      "model": "veio:block/pipe",
-      "y": 270
+    {
+      "when": {
+        "down": "true",
+        "up": "true",
+        "north": "false",
+        "south": "false",
+        "west": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "veio:block/pipe_mid_y"
+      }
+    },
+    {
+      "when": {
+        "down": "true"
+      },
+      "apply": {
+        "model": "veio:block/pipe_down"
+      }
+    },
+    {
+      "when": {
+        "up": "true"
+      },
+      "apply": {
+        "model": "veio:block/pipe_up"
+      }
+    },
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "veio:block/pipe_north"
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "veio:block/pipe_south"
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "veio:block/pipe_west"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "veio:block/pipe_east"
+      }
     }
-  }
+  ]
 }

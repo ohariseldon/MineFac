@@ -1,19 +1,115 @@
 {
-  "variants": {
-    "facing=south": {
-      "model": "veio:block/cable"
+  "multipart": [
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false"
+              },
+              {
+                "south": "false"
+              },
+              {
+                "up": "true"
+              },
+              {
+                "west": "true"
+              },
+              {
+                "east": "true"
+              }
+            ]
+          },
+          {
+            "OR": [
+              {
+                "west": "false"
+              },
+              {
+                "east": "false"
+              },
+              {
+                "up": "true"
+              },
+              {
+                "north": "true"
+              },
+              {
+                "south": "true"
+              }
+            ]
+          }
+        ]
+      },
+      "apply": {
+        "model": "veio:block/cable_core"
+      }
     },
-    "facing=west": {
-      "model": "veio:block/cable",
-      "y": 90
+    {
+      "when": {
+        "up": "false",
+        "north": "true",
+        "south": "true",
+        "west": "false",
+        "east": "false"
+      },
+      "apply": {
+        "model": "veio:block/cable_mid_z"
+      }
     },
-    "facing=north": {
-      "model": "veio:block/cable",
-      "y": 180
+    {
+      "when": {
+        "up": "false",
+        "north": "false",
+        "south": "false",
+        "west": "true",
+        "east": "true"
+      },
+      "apply": {
+        "model": "veio:block/cable_mid_x"
+      }
     },
-    "facing=east": {
-      "model": "veio:block/cable",
-      "y": 270
+    {
+      "when": {
+        "up": "true"
+      },
+      "apply": {
+        "model": "veio:block/cable_up"
+      }
+    },
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "veio:block/cable_north"
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "veio:block/cable_south"
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "veio:block/cable_west"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "veio:block/cable_east"
+      }
     }
-  }
+  ]
 }
