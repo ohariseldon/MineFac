@@ -588,10 +588,10 @@ def add_night_labels(label):
     label('veio.night.start_sub', 'Luz, muralha e uma noite em paz', 'Light, walls and a peaceful night')
     label('veio.night.intro.1', 'A vila tem medo da noite, e com razão: monstros caçam quem está fora, e com a fábrica crescendo vão aparecer coisas piores.',
           'The village fears the night, and rightly so: monsters hunt whoever is outside, and as the factory grows worse things will come.')
-    label('veio.night.intro.2', 'Antes de crescer, vamos fazer a vila dormir em paz: luz, muralha e cada um na sua cama.',
-          'Before growing, let us make the village sleep in peace: light, walls and everyone in their bed.')
+    label('veio.night.intro.2', 'Antes de crescer, vamos fazer a vila dormir em paz: luz, muralha e cama. Depois, a fábrica: o que ela polui, o muro dela e o nosso plano de defesa.',
+          'Before growing, let us make the village sleep in peace: light, walls and beds. Then the factory: what it pollutes, its wall and our defense plan.')
     steps = [
-      (('Noite 1 de 3 · Luz na vila', 'Night 1 of 3 · Light in the village'),
+      (('Noite 1 de 6 · Luz na vila', 'Night 1 of 6 · Light in the village'),
        ('Monstro nasce no escuro. Uma vila iluminada é uma vila onde eles não aparecem: cada tocha é um pedaço de chão seguro.',
         'Monsters spawn in the dark. A lit village is a village where they do not appear: every torch is a patch of safe ground.'),
        [('1. Faça tochas (carvão ou carvão vegetal + graveto) ou lanternas.', '1. Make torches (coal or charcoal + stick) or lanterns.'),
@@ -600,7 +600,7 @@ def add_night_labels(label):
         ('4. A fábrica também: monstro perto de máquina é problema.', '4. The factory too: a monster near machines is trouble.')],
        ('Luzes na vila: %s/8', 'Lights in the village: %s/8'),
        ('Que vila bonita de noite! E bem mais segura.', 'What a lovely village at night! And much safer.')),
-      (('Noite 2 de 3 · A muralha', 'Night 2 of 3 · The wall'),
+      (('Noite 2 de 6 · A muralha', 'Night 2 of 6 · The wall'),
        ('Luz afasta, muralha segura. Monstros andam, não escalam: um muro em volta da vila e da fábrica para quase tudo, inclusive os Saqueadores que um dia vão vir.',
         'Light keeps them away, a wall keeps them out. Monsters walk, they do not climb: a wall around the village and the factory stops almost everything, including the Raiders that will come one day.'),
        [('1. Construa um muro em volta da vila: muros de pedra, cercas ou blocos de pedra (entre 12 e 64 blocos do centro).', '1. Build a wall around the village: stone walls, fences or stone blocks (between 12 and 64 blocks from the centre).'),
@@ -609,7 +609,7 @@ def add_night_labels(label):
         ('4. Inclua a fábrica: é ela que vai atrair os Saqueadores quando poluir.', '4. Include the factory: it is what will attract Raiders once it pollutes.')],
        ('Muralha: %s/64 blocos · portão: %s', 'Wall: %s/64 blocks · gate: %s'),
        ('Uma muralha! Agora sim a vila respira à noite.', 'A wall! Now the village can breathe at night.')),
-      (('Noite 3 de 3 · Uma noite em paz', 'Night 3 of 3 · A peaceful night'),
+      (('Noite 3 de 6 · Uma noite em paz', 'Night 3 of 6 · A peaceful night'),
        ('A noite não é para trabalhar na rua. A fábrica segue sozinha; você descansa e acorda com o turno pronto. Dormir também faz a noite passar.',
         'Night is not for working outside. The factory runs on its own; you rest and wake up to the work done. Sleeping also makes the night pass.'),
        [('1. Ao escurecer, volte para dentro da muralha.', '1. At dusk, get back inside the wall.'),
@@ -617,6 +617,32 @@ def add_night_labels(label):
         ('3. Os trabalhadores civis também dormem; o quartel, quando houver, fica de plantão.', '3. Civilian workers sleep too; the barracks, once built, stays on watch.')],
        ('Uma noite em paz', 'A peaceful night'),
        ('Bom dia! Assim que se faz: a vila dormiu em paz.', 'Good morning! That is how it is done: the village slept in peace.')),
+      (('Noite 4 de 6 · O preço da fábrica', 'Night 4 of 6 · The price of the factory'),
+       ('Toda máquina que trabalha polui o chunk em que está, e o gerador mais que todas. A poluição se espalha e só uma parte some. É ela que um dia vai chamar os Saqueadores.',
+        'Every working machine pollutes its chunk, and the generator most of all. Pollution spreads and only part of it fades. It is what will one day call the Raiders.'),
+       [('1. Abra uma máquina que trabalha (o gerador, por exemplo) com a mão vazia: o painel mostra a poluição por minuto.', '1. Open a working machine (the generator, for example) with an empty hand: the panel shows pollution per minute.'),
+        ('2. A barra mostra a poluição do chunk da oficina: o aviso chega em 400; as ondas, acima de 1.200.', '2. The bar shows the workshop chunk pollution: the warning comes at 400; waves above 1,200.'),
+        ('3. Lavouras absorvem poluição a cada colheita; o módulo de eficiência corta pela metade.', '3. Crops absorb pollution with every harvest; the efficiency module cuts it in half.'),
+        ('4. Não dá para não poluir: dá para planejar.', '4. You cannot avoid polluting: you can plan for it.')],
+       ('Poluição da oficina: %s · aviso em %s · ondas acima de %s · abra uma máquina que polui', 'Workshop pollution: %s · warning at %s · waves above %s · open a polluting machine'),
+       ('Agora você lê o perigo antes de ele chegar.', 'Now you read the danger before it arrives.')),
+      (('Noite 5 de 6 · A muralha da fábrica', 'Night 5 of 6 · The factory wall'),
+       ('Os Saqueadores vêm atrás de quem está na fábrica e, sem ninguém por perto, golpeiam a máquina que polui. Quatro golpes param uma máquina. A oficina também precisa de muro.',
+        'Raiders go after whoever is at the factory and, with nobody around, strike the polluting machine. Four blows stop a machine. The workshop needs a wall too.'),
+       [('1. Cerque a oficina: muros, cercas ou pedra entre 4 e 24 blocos do gerador.', '1. Fence the workshop: walls, fences or stone between 4 and 24 blocks from the generator.'),
+        ('2. Deixe um portão para você e os carregadores passarem.', '2. Leave a gate for you and the haulers.'),
+        ('3. Esteiras que saem da oficina passam pelo portão ou, mais tarde, por baixo do muro com o túnel de esteira.', '3. Belts leaving the workshop go through the gate or, later, under the wall with the belt tunnel.'),
+        ('4. Ilumine dentro do muro: monstro não nasce em chão claro.', '4. Light up inside the wall: monsters do not spawn on lit ground.')],
+       ('Muralha da fábrica: %s/32 blocos · portão: %s', 'Factory wall: %s/32 blocks · gate: %s'),
+       ('A oficina está cercada. Venha conversar comigo: tenho um plano.', 'The workshop is walled. Come talk to me: I have a plan.')),
+      (('Noite 6 de 6 · O conselho de defesa', 'Night 6 of 6 · The defense council'),
+       ('Muralha e luz seguram o começo. Quando a fábrica crescer, vamos precisar de mais. Venha à praça: quero te mostrar o plano, e onde cada defesa falha.',
+        'Walls and light hold the beginning. When the factory grows, we will need more. Come to the plaza: I want to show you the plan, and where each defense fails.'),
+       [('1. Fale com o prefeito Otávio na praça.', '1. Talk to mayor Otávio in the plaza.'),
+        ('2. Ele explica as ondas, o quartel e a torre Tesla: o que cada um custa e onde falha.', '2. He explains the waves, the barracks and the Tesla tower: what each costs and where it fails.'),
+        ('3. Ainda não dá para construir: o quartel chega com os circuitos, e a Tesla com a pesquisa de eletrônica.', '3. You cannot build them yet: the barracks comes with circuits, and the Tesla with the electronics research.')],
+       ('Fale com o prefeito na praça: o conselho de defesa', 'Talk to the mayor in the plaza: the defense council'),
+       ('Conselho dado. Que a vila durma em paz.', 'Advice given. May the village sleep in peace.')),
     ]
     for i, (title, why, lines, goal, done) in enumerate(steps):
         label(f'veio.night.title.{i}', *title)
@@ -628,12 +654,34 @@ def add_night_labels(label):
     label('veio.night.goal.2_night', 'Noite! Volte para dentro da muralha e durma na cama', 'Night! Get inside the wall and sleep in the bed')
     label('veio.night.gate_yes', 'sim', 'yes')
     label('veio.night.gate_no', 'falta', 'missing')
-    label('veio.night.bar', 'Noite %s/3 | %s', 'Night %s/3 | %s')
+    label('veio.night.bar', 'Noite %s/6 | %s', 'Night %s/6 | %s')
     more = [
       ('Saiba mais: J → Sistemas → Poluição e defesa.', 'Learn more: J → Systems → Pollution and defense.'),
       ('Saiba mais: J → Sistemas → Poluição e defesa (as ondas e os muros).', 'Learn more: J → Systems → Pollution and defense (waves and walls).'),
       ('Saiba mais: J → Sistemas → Vila operária (descanso dos trabalhadores).', 'Learn more: J → Systems → Worker village (workers resting).'),
+      ('Saiba mais: J → Sistemas → Poluição e defesa (o medidor e as ondas).', 'Learn more: J → Systems → Pollution and defense (the meter and the waves).'),
+      ('Saiba mais: J → Sistemas → Poluição e defesa (o que os Saqueadores atacam).', 'Learn more: J → Systems → Pollution and defense (what Raiders attack).'),
+      ('Saiba mais: J → Sistemas → Poluição e defesa (quartel, Tesla e seus gargalos).', 'Learn more: J → Systems → Pollution and defense (barracks, Tesla and their bottlenecks).'),
     ]
+    council = [
+      ('Sente aqui. Para atender a vila e, um dia, o mundo, a fábrica vai poluir; não tem outro jeito. E poluição traz Saqueadores.',
+       'Sit down. To supply the village and, one day, the world, the factory will pollute; there is no other way. And pollution brings Raiders.'),
+      ('O sinal: acima de 400 eu aviso no chat. Um dia depois, nas noites em que a poluição passa de 1.200, vêm as ondas: 4 Saqueadores na primeira, até 12.',
+       'The signal: above 400 I warn you in chat. A day later, on nights when pollution passes 1,200, the waves come: 4 Raiders the first time, up to 12.'),
+      ('Da 3ª noite de ataque vêm arqueiros; da 5ª, o Bruto: lento, duro, vai direto às máquinas e bate o dobro. Quatro golpes param uma máquina, até um kit de reparo.',
+       'From the 3rd attack night come archers; from the 5th, the Brute: slow, tough, goes straight for the machines and hits twice as hard. Four blows stop a machine, until a repair kit.'),
+      ('Com os circuitos, você ergue o quartel: um soldado por prédio. Milícia chega rápido, guarda aguenta e se cura, arqueiro atira de longe, mago acerta dois.',
+       'With circuits you raise the barracks: one soldier per building. Militia arrives fast, the guard holds and heals, the archer shoots from afar, the mage hits two.'),
+      ('Fraqueza do quartel: o soldado come a cada golpe. Sem comida no quartel, ninguém sai do posto. E trocar de classe custa esmeralda.',
+       'The barracks weakness: the soldier eats with every blow. With no food in the barracks, nobody leaves their post. And changing class costs an emerald.'),
+      ('Mais adiante, com a pesquisa de eletrônica, vem a torre Tesla: abate sozinha o monstro mais perto, a até 10 blocos. Mas cada tiro gasta 2.400 FE, e ela guarda 20.000: são 8 tiros, um a cada 2 segundos.',
+       'Later, with the electronics research, comes the Tesla tower: it kills the nearest monster on its own, within 10 blocks. But each shot costs 2,400 FE and it stores 20,000: that is 8 shots, one every 2 seconds.'),
+      ('Fraqueza da Tesla: de noite o solar não rende. Sem acumuladores ou gerador, ela apaga no meio da onda. E gerador a carvão polui... e chama mais Saqueadores.',
+       'The Tesla weakness: at night solar gives nothing. Without batteries or a generator it goes dark mid-wave. And a coal generator pollutes... and calls more Raiders.'),
+      ('É esse o jogo da defesa: muralha, comida no quartel e energia guardada para a noite. Eu vou te lembrando. Por hoje, a vila está pronta.',
+       'That is the defense game: walls, food in the barracks and energy saved for the night. I will keep reminding you. For today, the village is ready.'),
+    ]
+    for i, (pt, en) in enumerate(council, 1): label(f'veio.night.council.{i}', pt, en)
     for i, (pt, en) in enumerate(more): label(f'veio.night.more.{i}', pt, en)
     label('veio.night.end_title', 'A vila perdeu o medo', 'The village lost its fear')
     label('veio.night.end_sub', 'Capítulo da noite concluído', 'Night chapter complete')
@@ -641,5 +689,5 @@ def add_night_labels(label):
           'Light, walls and beds: the village sleeps soundly. But remember: the more the factory makes, the more it pollutes.')
     label('veio.night.end.2', 'Com poluição alta, vêm os Saqueadores, de noite e em ondas. Não tem jeito: para atender a vila e o mundo, a fábrica vai poluir.',
           'With high pollution come the Raiders, at night and in waves. There is no way around it: to supply the village and the world, the factory will pollute.')
-    label('veio.night.end.3', 'Por isso a defesa cresce com a fábrica: depois vêm o quartel e a torre Tesla. Agora, fale comigo: a vila precisa de mãos.',
-          'That is why defense grows with the factory: the barracks and the Tesla tower come later. Now talk to me: the village needs hands.')
+    label('veio.night.end.3', 'Por isso a defesa cresce com a fábrica. Agora, fale comigo quando quiser: a vila precisa de mãos.',
+          'That is why defense grows with the factory. Now talk to me whenever you like: the village needs hands.')

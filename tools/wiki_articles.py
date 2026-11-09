@@ -508,6 +508,14 @@ ARTICLES = [
         "web": """
 <p><b>A noite é o medo da vila desde o primeiro dia.</b> Ao anoitecer, o sino toca e os moradores se recolhem: monstros caçam quem fica fora. Na primeira noite, o tutorial pausa e leva você para casa; depois, o capítulo 2 ("A noite", com o prefeito Otávio ou <code>/veiotutorial noite</code>) pede luz na vila (8 tochas ou lanternas a até 40 blocos do centro), uma muralha com portão (64 blocos de muro, cerca ou pedra entre 12 e 64 blocos do centro) e uma noite dormida na cama.</p>
 <p><b>Os Saqueadores fazem parte do ciclo.</b> Para atender a vila e o mundo, a fábrica precisa crescer, e crescer polui. A defesa cresce junto: luz, muralha e cama no começo; quartel e torre Tesla depois.</p>
+<h3>Defesa: o que custa e onde falha</h3>
+<p>Como no Factorio, cada defesa tem um gargalo. O capítulo da noite termina com o prefeito explicando este quadro.</p>
+<table><tr><th>Defesa</th><th>Quando</th><th>O que faz</th><th>O que custa</th><th>Onde falha</th></tr>
+<tr><td>Luz</td><td>desde o início</td><td>monstro não nasce em chão claro</td><td>tochas (carvão)</td><td>não segura quem vem de fora</td></tr>
+<tr><td>Muralha com portão</td><td>desde o início</td><td>barra quem anda (monstros e Saqueadores)</td><td>pedra, cercas, muros</td><td>arqueiros atiram por cima; precisa cercar a fábrica também</td></tr>
+<tr><td>Quartel</td><td>com os circuitos</td><td>um soldado por prédio: milícia, guarda (se cura), arqueiro (16 blocos), mago (acerta dois)</td><td>comida a cada golpe; esmeralda para trocar de classe</td><td>sem comida, ninguém sai do posto</td></tr>
+<tr><td>Torre Tesla</td><td>pesquisa de eletrônica</td><td>abate o hostil mais perto a 10 blocos, a cada 2 s</td><td>2.400 FE por tiro; guarda 20.000 (8 tiros)</td><td>de noite o solar não rende; sem acumulador ou gerador, apaga no meio da onda; o gerador a carvão polui e chama mais ondas</td></tr>
+<tr><td>Kit de reparo</td><td>fase da oficina</td><td>recupera 50% de uma máquina</td><td>materiais do kit</td><td>o Bruto (5ª noite) bate o dobro e vai direto às máquinas</td></tr></table>
 <p>Máquinas trabalhando poluem o chunk onde estão; a poluição se espalha aos vizinhos a cada 3,2 s e 2% se dissipa.</p>
 <table><tr><th>Máquina</th><th>Poluição por segundo</th></tr><tr><td>Gerador</td><td>6</td></tr><tr><td>Forno de ligas, extratora Mk.II</td><td>4</td></tr>
 <tr><td>Extratora, triturador, geotérmico</td><td>2</td></tr><tr><td>Demais máquinas</td><td>1</td></tr><tr><td>Colheita da colheitadeira</td><td>−3 por colheita</td></tr></table>
@@ -521,6 +529,15 @@ ARTICLES = [
 <li><b>Quartel</b>: milícia, guarda (se cura), arqueiro e mago; troca de classe agachando com uma esmeralda.</li>
 <li>Muros vanilla, lavouras (absorvem poluição) e módulos de eficiência.</li>
 <li><b>Kit de reparo</b>: recupera 50% da integridade de uma máquina; máquina zerada para sem perder estoque.</li></ul>
+<h3>Gargalos da defesa</h3>
+<p>Como no Factorio, defender também custa, e cada defesa tem um ponto fraco:</p>
+<table><tr><th>Defesa</th><th>Quando chega</th><th>Custa</th><th>Onde falha</th></tr>
+<tr><td>Luz</td><td>desde o começo</td><td>tochas</td><td>só impede monstro de nascer; não para uma onda</td></tr>
+<tr><td>Muralha com portão</td><td>desde o começo</td><td>pedra, muros, cercas</td><td>segura quem anda; arqueiros atiram por cima; precisa cercar a fábrica, não só as casas</td></tr>
+<tr><td>Quartel</td><td>com os circuitos</td><td>esmeralda para contratar e trocar de classe; comida a cada golpe</td><td>sem comida no quartel, o soldado não sai do posto; um soldado por prédio</td></tr>
+<tr><td>Torre Tesla</td><td>pesquisa de eletrônica</td><td>2.400 FE por tiro; guarda 20.000 (8 tiros)</td><td>de noite o solar não rende; sem acumulador ou gerador, apaga no meio da onda; o gerador a carvão polui e chama mais ondas</td></tr>
+<tr><td>Kit de reparo</td><td>oficina</td><td>materiais</td><td>conserta depois: não evita os 4 golpes que param a máquina</td></tr></table>
+<p>O capítulo 2 do tutorial (a noite) ensina luz, muralha, cama, o medidor de poluição, a muralha da fábrica e termina no <b>conselho de defesa</b> com o prefeito Otávio, que apresenta esse plano.</p>
 """,
     },
     {

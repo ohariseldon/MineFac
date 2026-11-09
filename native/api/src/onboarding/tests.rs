@@ -212,7 +212,7 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     p.crafted = 0b101; p.tips = TIP_BELT;
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.crafted, loaded.tips), (0b101, TIP_BELT));
-    let old = p.encode().replace("veio-onboarding-7", "veio-onboarding-1").replacen(&format!(" 5 2{}\n", " 0".repeat(13)), "\n", 1);
+    let old = p.encode().replace("veio-onboarding-8", "veio-onboarding-1").replacen(&format!(" 5 2{}\n", " 0".repeat(13)), "\n", 1);
     assert_eq!(Progress::decode(&old).map(|old| (old.step, old.crafted)), Some((6, 0)));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
@@ -716,7 +716,7 @@ fn the_city_chapter_closes_each_step_from_what_the_village_registers() {
     assert_eq!(city::DONE_CITY, 11);
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.village, loaded.city, loaded.city_crafted), (village::DONE_VILLAGE, 5, 0b11));
-    let v5 = p.encode().replace("veio-onboarding-7", "veio-onboarding-5").replacen(&format!(" 5 3{}\n", " 0".repeat(6)), "\n", 1);
+    let v5 = p.encode().replace("veio-onboarding-8", "veio-onboarding-5").replacen(&format!(" 5 3{}\n", " 0".repeat(6)), "\n", 1);
     let old = Progress::decode(&v5).unwrap();
     assert_eq!((old.village, old.city), (village::DONE_VILLAGE, 0));
 }
@@ -820,7 +820,6 @@ fn the_first_night_sends_the_player_home_and_pauses_the_tutorial_until_dawn() {
 
 #[test]
 fn the_night_chapter_counts_light_wall_and_gate_around_the_village() {
-    let center = home::dashboard().or_else(|| workforce::spawn::center().map(|(at, _)| at));
     let mut p = Progress { night: 1, ..Progress::default() };
     assert!(night::is_light("minecraft:torch") && night::is_light("minecraft:lantern"));
     assert!(night::is_wall("minecraft:cobblestone_wall") && night::is_wall("minecraft:oak_fence") && night::is_wall("minecraft:stone_bricks"));
@@ -830,23 +829,53 @@ fn the_night_chapter_counts_light_wall_and_gate_around_the_village() {
     assert!(night::ready(0, &p));
     p.night_wall = night::WALL;
     assert!(!night::ready(1, &p), "sem portão");
-    p.night_gate = true;
+    p.night_flags |= night::GATE;
     assert!(night::ready(1, &p));
-    assert!(!night::ready(2, &p));
+    // Cama só conta na etapa da noite segura.
     night::slept(&mut p);
-    assert!(!p.night_slept, "só conta na etapa da noite segura");
+    assert!(!night::ready(2, &p));
     p.night = 3;
     night::slept(&mut p);
     assert!(night::ready(2, &p));
-    // Sem centro de vila conhecido, nada é contado (e nada quebra).
-    if center.is_none() {
-        let mut fresh = Progress { night: 1, ..Progress::default() };
-        night::placed(&mut fresh, workforce::spawn::OVERWORLD, [0, 64, 0], "minecraft:torch");
-        assert_eq!(fresh.night_lights, 0);
+    // O preço da fábrica: abrir uma máquina que polui.
+    p.night = 4;
+    night::opened(&mut p, "minecraft:chest");
+    assert!(!night::ready(3, &p), "baú não polui");
+    night::opened(&mut p, GENERATOR);
+    assert!(night::ready(3, &p));
+    // A muralha da fábrica: perto do gerador, com portão.
+    p.night = 5;
+    p.blocks[GENERATOR_SLOT] = Some([100, 64, 100]);
+    for x in 0..night::FACTORY_WALL as i32 {
+        night::placed(&mut p, workforce::spawn::OVERWORLD, [90 + x % 20, 64, 92], "minecraft:cobblestone_wall");
     }
-    // O save guarda a noite; saves antigos de quem já passou do prólogo não revivem a primeira noite.
-    let saved = Progress { step: 3, night_first: night::FIRST_DONE, night: 2, night_lights: 5, night_wall: 30, night_gate: true, ..Progress::default() };
-    let loaded = Progress::decode(&saved.encode()).unwrap();
-    assert_eq!((loaded.night_first, loaded.night, loaded.night_lights, loaded.night_wall, loaded.night_gate),
-        (night::FIRST_DONE, 2, 5, 30, true));
+    night::placed(&mut p, workforce::spawn::OVERWORLD, [300, 64, 300], "minecraft:cobblestone_wall");
+    assert_eq!(p.night_factory_wall, night::FACTORY_WALL, "só os blocos perto da fábrica");
+    assert!(!night::ready(4, &p));
+    night::placed(&mut p, workforce::spawn::OVERWORLD, [100, 64, 92], "minecraft:oak_fence_gate");
+    assert!(night::ready(4, &p));
+    // O save guarda tudo da noite; a v7 (portão e cama separados) ainda abre.
+    let loaded = Progress::decode(&p.encode()).unwrap();
+    assert_eq!((loaded.night, loaded.night_factory_wall, loaded.night_flags), (5, night::FACTORY_WALL, p.night_flags));
+    let v7 = p.encode().replace("veio-onboarding-8", "veio-onboarding-7")
+        .replacen(&format!(" {} {}\n", night::FACTORY_WALL, p.night_flags), " 1 1\n", 1);
+    let old = Progress::decode(&v7).unwrap();
+    assert_eq!(old.night_flags, night::GATE | night::SLEPT);
+}
+
+#[test]
+fn the_defense_council_closes_the_night_chapter_in_a_talk_with_the_mayor() {
+    let mut town = Town::default();
+    let player = NativeServerPlayer { uuid: 12, name: "Lia".into(), dimension: workforce::spawn::OVERWORLD.into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, night_first: night::FIRST_DONE, night: 6, ..Progress::default() };
+    // A etapa espera a conversa; clicar no prefeito dá o conselho (8 falas) e a etapa fecha.
+    night::tick(&mut town, &player, &mut p);
+    assert_eq!(p.night, 6);
+    let before = town.said.iter().filter(|line| *line == "veio.agenda.says").count();
+    intro::talk(&mut town, &player, &mut p);
+    assert_eq!(town.said.iter().filter(|line| *line == "veio.agenda.says").count(), before + 8);
+    night::tick(&mut town, &player, &mut p);
+    assert_eq!(p.night, night::DONE_NIGHT);
+    assert!(town.commands.iter().any(|line| line.contains("veio.night.end_title")));
 }

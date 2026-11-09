@@ -99,8 +99,9 @@ struct Progress {
     night: u8,
     night_lights: u16,
     night_wall: u16,
-    night_gate: bool,
-    night_slept: bool,
+    night_factory_wall: u16,
+    /// Bits de `night::GATE`, `SLEPT`, `SEEN`, `FACTORY_GATE` e `COUNCIL`.
+    night_flags: u8,
     night_announced: Option<u8>,
     was_night: bool,
     // Unsaved transient evidence must not survive a reload or manual intervention.
@@ -262,11 +263,11 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-7\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-8\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
             self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips,
             self.intro, u8::from(self.outro), self.village, self.village_crafted, self.village_base.max(0), self.city, self.city_crafted,
-            self.night_first, self.night, self.night_lights, self.night_wall, u8::from(self.night_gate), u8::from(self.night_slept),
+            self.night_first, self.night, self.night_lights, self.night_wall, self.night_factory_wall, self.night_flags,
             self.dimension);
         for pos in self.blocks.iter().chain([&self.plot]).chain(self.village_blocks.iter()) {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
@@ -285,9 +286,12 @@ impl Progress {
         let fields = match lines.next()? {
             "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, "veio-onboarding-3" => 14, "veio-onboarding-4" => 15,
             "veio-onboarding-5" => 17, "veio-onboarding-6" => 19,
-            "veio-onboarding-7" => 25, _ => return None,
+            "veio-onboarding-7" => 25, "veio-onboarding-8" => 26, _ => return None,
         };
-        let version7 = fields == 25;
+        // A v8 tem os mesmos 25 números da v7; muda o sentido dos dois últimos (marca 26).
+        let version8 = fields == 26;
+        let version7 = fields >= 25;
+        let fields = if version8 { 25 } else { fields };
         let version6 = fields >= 19;
         let version5 = fields >= 17;
         let version4 = fields >= 15;
@@ -319,10 +323,12 @@ impl Progress {
         } else { (0, 0, 0) };
         let (city, city_crafted) = if version6 { ((values[17] as u8).min(city::DONE_CITY), values[18] as u16) } else { (0, 0) };
         // Saves de antes da noite: quem já passou do prólogo não revive a primeira noite.
-        let (night_first, night, night_lights, night_wall, night_gate, night_slept) = if version7 {
+        let (night_first, night, night_lights, night_wall, night_factory_wall, night_flags) = if version7 {
+            let (factory_wall, flags) = if version8 { ((values[23] as u16).min(night::FACTORY_WALL), values[24] as u8) }
+                else { (0, u8::from(values[23] != 0) * night::GATE | u8::from(values[24] != 0) * night::SLEPT) };
             ((values[19] as u8).min(night::FIRST_DONE), (values[20] as u8).min(night::DONE_NIGHT),
-             (values[21] as u16).min(night::LIGHTS), (values[22] as u16).min(night::WALL), values[23] != 0, values[24] != 0)
-        } else if values[0] > 0 { (night::FIRST_DONE, 0, 0, 0, false, false) } else { (0, 0, 0, 0, false, false) };
+             (values[21] as u16).min(night::LIGHTS), (values[22] as u16).min(night::WALL), factory_wall, flags)
+        } else if values[0] > 0 { (night::FIRST_DONE, 0, 0, 0, 0, 0) } else { (0, 0, 0, 0, 0, 0) };
         let mayor = if version4 { lines.next().and_then(|line| {
             let coords: Vec<f64> = line.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
             coords.try_into().ok()
@@ -334,7 +340,7 @@ impl Progress {
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
             delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro, mayor,
             village, village_blocks, village_crafted, village_base, city, city_crafted,
-            night_first, night, night_lights, night_wall, night_gate, night_slept, ..Self::default() })
+            night_first, night, night_lights, night_wall, night_factory_wall, night_flags, ..Self::default() })
     }
 }
 
@@ -413,7 +419,8 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     let part = !clicked && CRAFT.iter().any(|parts| parts.iter().any(|(target, _)| *target == block));
     let village_block = !clicked && village::slot(block).is_some();
     let night_block = !clicked && (night::is_light(block) || night::is_wall(block) || night::is_gate(block));
-    if !tutorial && tip.is_none() && !part && !village_block && !night_block { return; }
+    let opened = clicked && pollution::emission(block) > 0.0;
+    if !tutorial && tip.is_none() && !part && !village_block && !night_block && !opened { return; }
     let Some(player) = host.acting_player() else { return; };
     let Ok(mut slot) = SESSION.lock() else { return; };
     if !session(host, &mut slot) { return; }
@@ -422,7 +429,8 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     if let Some(bit) = tip && progress.tips & bit == 0 { progress.pending_tips |= bit; }
     if village_block { village::placed(progress, &player.dimension, pos, block); }
     if night_block { night::placed(progress, &player.dimension, pos, block); }
-    if night_block && !tutorial && tip.is_none() && !part && !village_block { return; }
+    if clicked { night::opened(progress, block); }
+    if (night_block || opened) && !tutorial && tip.is_none() && !part && !village_block { return; }
     // Colocou o produto da etapa: já foi fabricado (a lista de materiais não volta).
     if part && let Some(parts) = CRAFT.get(usize::from(progress.step)) {
         for (index, (target, _)) in parts.iter().enumerate() {
