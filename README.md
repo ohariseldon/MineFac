@@ -1,4 +1,6 @@
-# Veio 0.34.0
+# Veio 0.35.0
+
+A 0.35.0 deixa o começo mais fácil de seguir e com mais história. As 16 etapas da fábrica viram **4 atos** com nome (A primeira chama, A linha que anda sozinha, O plano da vila, A vila conta com você), e cada fim de ato tem **fogos** e o título do próximo. Se você ficar 3 minutos na mesma etapa, o **prefeito dá uma dica** do erro mais comum, na fábrica e no capítulo da vila, e clicar nele repete a dica. A barra mostra para onde ir quando você está longe do terreno ou da casa. Junto com o gerador, o prefeito entrega o **Diário de Otávio**, com a história do veio que não acaba, o trato com a vila e o caminho dos capítulos.
 
 A 0.34.0 junta as frentes do tutorial num caminho só. A **fábrica** passa a ter **16 etapas**: as 8 primeiras (energia, prensa, cadeia, extratora, esteiras, estoque e a central) ganham uma fala do **Prefeito Otávio** em cada etapa, e as 8 novas ensinam o **Quadro da fábrica**, a **primeira fase** do Quadro (16 chapas), uma **segunda extratora** (o gargalo é o minério), o **divisor**, **postes** para levar energia longe, o **pedido do dia** (que paga em esmeraldas), **comer em casa** no Lar e o **centro de controle**. Com as esmeraldas do pedido, o prefeito abre o **capítulo 2, a vila operária** (contratar, postos, zonas, carregador, capataz, casa e prefeitura) e depois o **capítulo 3, a cidade**, sem repetir nenhuma etapa.
 

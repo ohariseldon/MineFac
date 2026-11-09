@@ -42,6 +42,10 @@ def main():
             + [f"veio.village.recipe.{i}" for i in (0, 2, 4, 5, 6, 7)] + [f"veio.village.end.{i}" for i in range(1, 5)]
             + [f"veio.city.{part}.{i}" for part in ("title", "why", "goal", "done") for i in range(8)]
             + [f"veio.city.recipe.{i}" for i in (0, 1, 4, 5, 6)] + [f"veio.city.end.{i}" for i in range(1, 5)]
+            + [f"veio.onboarding.hint.{i}" for i in range(16)] + [f"veio.village.hint.{i}" for i in range(8)]
+            + [f"veio.onboarding.act.{i}{part}" for i in range(4) for part in ("", ".sub", ".line")]
+            + [f"veio.onboarding.diary.{i}" for i in range(5)] + ["veio.onboarding.hint.head", "veio.onboarding.far",
+               "veio.onboarding.act.end", "veio.onboarding.act.end.sub", "veio.onboarding.diary.title"]
             + [f"veio.onboarding.blocked.{i}" for i in (3, 5, 9)]
             + ["veio.onboarding.hidden", "veio.onboarding.shown", "veio.onboarding.save_failed"])
     for language in languages:

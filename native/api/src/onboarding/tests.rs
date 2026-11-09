@@ -808,3 +808,40 @@ fn after_the_village_the_mayor_opens_the_city_chapter() {
     assert!(town.said.iter().any(|line| line.contains("veio.city.title.0")));
     assert_eq!(p.city, 1);
 }
+
+#[test]
+fn acts_end_with_fireworks_and_a_stuck_player_gets_one_hint_from_the_mayor() {
+    struct Log { lines: Vec<String> }
+    impl Host for Log {
+        fn run_command(&mut self, line: &str) -> bool { self.lines.push(line.to_owned()); true }
+        fn tell(&mut self, _: u128, text: Text) -> bool { self.lines.push(text.plain()); true }
+    }
+    let player = NativeServerPlayer { uuid: 3, name: "Ana".into(), dimension: "minecraft:overworld".into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut log = Log { lines: vec![] };
+    // Etapa comum: "Etapa concluída!"; fim de ato: o nome do ato seguinte e fogos.
+    celebrate(&mut log, &player, 3);
+    assert!(log.lines.iter().any(|l| l.contains("veio.onboarding.done")) && !log.lines.iter().any(|l| l.contains("firework")));
+    log.lines.clear();
+    celebrate(&mut log, &player, 4);
+    assert!(log.lines.iter().any(|l| l.contains("veio.onboarding.act.1")), "{:?}", log.lines);
+    assert_eq!(log.lines.iter().filter(|l| l.contains("summon minecraft:firework_rocket")).count(), 3);
+    log.lines.clear();
+    celebrate(&mut log, &player, DONE);
+    assert!(log.lines.iter().any(|l| l.contains("veio.onboarding.act.end")));
+    // Dica: só depois de HINT_AFTER na mesma etapa, e uma vez.
+    let mut p = Progress { step: 5, ..Progress::default() };
+    log.lines.clear();
+    hint(&mut log, &player, &mut p, 100, 5, "veio.onboarding.hint.5");
+    hint(&mut log, &player, &mut p, 100 + HINT_AFTER - 20, 5, "veio.onboarding.hint.5");
+    assert!(log.lines.is_empty());
+    hint(&mut log, &player, &mut p, 100 + HINT_AFTER, 5, "veio.onboarding.hint.5");
+    hint(&mut log, &player, &mut p, 100 + 3 * HINT_AFTER, 5, "veio.onboarding.hint.5");
+    assert_eq!(log.lines.len(), 2, "cabeçalho e a dica, uma vez: {:?}", log.lines);
+    // Etapa nova recomeça a contagem.
+    hint(&mut log, &player, &mut p, 200 + 3 * HINT_AFTER, 6, "veio.onboarding.hint.6");
+    assert!(!p.hinted);
+    // Para onde ir: o terreno da oficina.
+    p.plot = Some([40, 64, 0]);
+    assert_eq!(target(&p), Some(intro::plot_center([40, 64, 0])));
+}

@@ -188,7 +188,7 @@ fn summon_mayor(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progre
 
 // ---------- Terreno ----------
 
-fn plot_center(plot: Pos) -> [f64; 3] {
+pub(super) fn plot_center(plot: Pos) -> [f64; 3] {
     [f64::from(plot[0]) + 0.5, f64::from(plot[1]), f64::from(plot[2]) + 0.5]
 }
 
@@ -498,6 +498,8 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
                 return;
             }
             host.give_items(GENERATOR, 1);
+            // O diário do prefeito: a história da vila e o caminho das 16 etapas.
+            if spawn_safe(&player.name) { host.run_command(&format!("loot give {} loot veio:tutorial/diary", player.name)); }
             if spawn_safe(&player.name) {
                 for recipe in UNLOCKS { host.run_command(&format!("recipe give {} {recipe}", player.name)); }
             }
@@ -520,10 +522,14 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
         }
         // Capítulo da vila aberto (também pelo comando, antes de acabar a fábrica): ele vem primeiro.
         _ if super::city::step(p).is_some() => super::city::talk(host, player, p),
-        _ if super::village::step(p).is_some() => super::village::talk(host, player, p),
+        _ if let Some(step) = super::village::step(p) => {
+            super::village::talk(host, player, p);
+            say(host, uuid, &format!("veio.village.hint.{step}"), &[]);
+        }
         _ if p.step < DONE => {
             say(host, uuid, "veio.onboarding.mayor.now", &[&Text::tr(&format!("veio.onboarding.title.{}", p.step), &[]).plain()]);
             say(host, uuid, &format!("veio.onboarding.story.{}", p.step), &[]);
+            say(host, uuid, &format!("veio.onboarding.hint.{}", p.step), &[]);
             host.tell(uuid, Text::tr(&format!("veio.onboarding.why.{}", p.step), &[]));
             for line in 1..=DO_LINES.get(usize::from(p.step)).copied().unwrap_or(0) {
                 host.tell(uuid, Text::tr(&format!("veio.onboarding.do.{}.{line}", p.step), &[]));
