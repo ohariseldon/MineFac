@@ -212,7 +212,7 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     p.crafted = 0b101; p.tips = TIP_BELT;
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.crafted, loaded.tips), (0b101, TIP_BELT));
-    let old = p.encode().replace("veio-onboarding-6", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0 0 0\n", "\n", 1);
+    let old = p.encode().replace("veio-onboarding-7", "veio-onboarding-1").replacen(&format!(" 5 2{}\n", " 0".repeat(13)), "\n", 1);
     assert_eq!(Progress::decode(&old).map(|old| (old.step, old.crafted)), Some((6, 0)));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
@@ -314,6 +314,7 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
         fn tell(&mut self, uuid: u128, text: Text) -> bool {
             assert_eq!(uuid, self.player.uuid); self.messages.push(text.plain()); true
         }
+        fn day_time(&self) -> i64 { 1000 }
         fn run_command(&mut self, line: &str) -> bool {
             self.messages.push(line.to_owned());
             match (&self.inventory, line.strip_prefix("execute if items entity Tutorial container.* ")) {
@@ -536,13 +537,13 @@ fn the_mayor_asks_for_resources_gives_the_generator_and_a_level_plot_starts_the_
 
 /// Mundo de mentira para o capítulo da vila: blocos do Veio por posição.
 #[derive(Default)]
-struct Town { entities: HashMap<Pos, ModBlockEntity>, said: Vec<String>, commands: Vec<String>, bars: Vec<String> }
+struct Town { entities: HashMap<Pos, ModBlockEntity>, said: Vec<String>, commands: Vec<String>, bars: Vec<String>, time: i64 }
 
 impl Host for Town {
     fn change_mod_block_entity(&mut self, pos: [i32; 3], change: &mut dyn FnMut(&mut ModBlockEntity)) -> bool {
         match self.entities.get_mut(&pos) { Some(entity) => { change(entity); true } None => false }
     }
-    fn day_time(&self) -> i64 { 1000 }
+    fn day_time(&self) -> i64 { self.time }
     fn tell(&mut self, _: u128, text: Text) -> bool { self.said.push(text.plain()); true }
     fn action_bar(&mut self, _: u128, text: Text) -> bool { self.bars.push(text.plain()); true }
     fn run_command(&mut self, line: &str) -> bool {
@@ -629,8 +630,9 @@ fn the_mayor_opens_the_village_chapter_and_celebrates_each_step() {
     let mut town = Town::default();
     let player = NativeServerPlayer { uuid: 7, name: "Ana".into(), dimension: workforce::spawn::OVERWORLD.into(),
         position: [0.0, 64.0, 0.0], ..Default::default() };
-    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, ..Progress::default() };
-    // Depois da fábrica, falar com o prefeito abre o capítulo.
+    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, night_first: night::FIRST_DONE,
+        night: night::DONE_NIGHT, ..Progress::default() };
+    // Depois da fábrica e da noite, falar com o prefeito abre o capítulo da vila.
     intro::talk(&mut town, &player, &mut p);
     assert_eq!(p.village, 1);
     // As falas do prefeito vão pelo formato "Nome: fala" (o substituto mostra só a chave dele).
@@ -714,7 +716,7 @@ fn the_city_chapter_closes_each_step_from_what_the_village_registers() {
     assert_eq!(city::DONE_CITY, 11);
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.village, loaded.city, loaded.city_crafted), (village::DONE_VILLAGE, 5, 0b11));
-    let v5 = p.encode().replace("veio-onboarding-6", "veio-onboarding-5").replacen(" 5 3\n", "\n", 1);
+    let v5 = p.encode().replace("veio-onboarding-7", "veio-onboarding-5").replacen(&format!(" 5 3{}\n", " 0".repeat(6)), "\n", 1);
     let old = Progress::decode(&v5).unwrap();
     assert_eq!((old.village, old.city), (village::DONE_VILLAGE, 0));
 }
@@ -724,7 +726,7 @@ fn after_the_village_the_mayor_opens_the_city_chapter() {
     let mut town = Town::default();
     let player = NativeServerPlayer { uuid: 8, name: "Bia".into(), dimension: workforce::spawn::OVERWORLD.into(),
         position: [0.0, 64.0, 0.0], ..Default::default() };
-    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE, ..Progress::default() };
+    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, night: night::DONE_NIGHT, village: village::DONE_VILLAGE, ..Progress::default() };
     intro::talk(&mut town, &player, &mut p);
     assert_eq!(p.city, 1, "o prefeito abre a cidade depois da vila");
     assert!(town.commands.iter().any(|line| line.contains("veio.city.start_title")));
@@ -781,4 +783,70 @@ fn the_town_bar_lists_what_each_hard_step_needs_and_chimes_on_progress() {
     assert!(checks(0, &town).is_empty());
     assert_eq!(metric(6, &town), Some(2));
     assert_eq!(metric(2, &town), None);
+}
+
+#[test]
+fn the_first_night_sends_the_player_home_and_pauses_the_tutorial_until_dawn() {
+    let mut town = Town::default();
+    let player = NativeServerPlayer { uuid: 11, name: "Rui".into(), dimension: workforce::spawn::OVERWORLD.into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut p = Progress::default();
+    // De dia, nada muda.
+    assert!(!night::overlay(&mut town, &player, &mut p));
+    assert_eq!(p.night_first, 0);
+    // Anoitece: título, sino, aviso (de um morador: ainda não conhece Otávio) e a barra para casa.
+    town.time = 13_000;
+    assert!(night::overlay(&mut town, &player, &mut p), "o resto do tutorial espera");
+    assert_eq!(p.night_first, 1);
+    assert!(town.commands.iter().any(|line| line.contains("veio.night.first_title")));
+    assert!(town.commands.iter().any(|line| line.contains("block.bell.use") && line.starts_with("execute as Rui at @s")));
+    assert!(!town.bars.is_empty());
+    // Amanhece: sobreviveu.
+    town.time = 24_000 + 1000;
+    assert!(!night::overlay(&mut town, &player, &mut p));
+    assert_eq!(p.night_first, night::FIRST_DONE);
+    assert!(town.commands.iter().any(|line| line.contains("veio.night.dawn_title")));
+    // Os anoiteceres seguintes: só o sino e uma frase, sem parar o tutorial.
+    town.commands.clear();
+    town.time = 2 * 24_000 + 13_000;
+    assert!(!night::overlay(&mut town, &player, &mut p));
+    assert!(town.commands.iter().any(|line| line.contains("block.bell.use")));
+    assert!(town.said.iter().any(|line| line.starts_with("veio.night.dusk.")));
+    // A mesma noite não repete o aviso.
+    let said = town.said.len();
+    assert!(!night::overlay(&mut town, &player, &mut p));
+    assert_eq!(town.said.len(), said);
+}
+
+#[test]
+fn the_night_chapter_counts_light_wall_and_gate_around_the_village() {
+    let center = home::dashboard().or_else(|| workforce::spawn::center().map(|(at, _)| at));
+    let mut p = Progress { night: 1, ..Progress::default() };
+    assert!(night::is_light("minecraft:torch") && night::is_light("minecraft:lantern"));
+    assert!(night::is_wall("minecraft:cobblestone_wall") && night::is_wall("minecraft:oak_fence") && night::is_wall("minecraft:stone_bricks"));
+    assert!(!night::is_wall("minecraft:dirt") && night::is_gate("minecraft:oak_fence_gate") && night::is_gate("minecraft:spruce_door"));
+    assert!(!night::ready(0, &p));
+    p.night_lights = night::LIGHTS;
+    assert!(night::ready(0, &p));
+    p.night_wall = night::WALL;
+    assert!(!night::ready(1, &p), "sem portão");
+    p.night_gate = true;
+    assert!(night::ready(1, &p));
+    assert!(!night::ready(2, &p));
+    night::slept(&mut p);
+    assert!(!p.night_slept, "só conta na etapa da noite segura");
+    p.night = 3;
+    night::slept(&mut p);
+    assert!(night::ready(2, &p));
+    // Sem centro de vila conhecido, nada é contado (e nada quebra).
+    if center.is_none() {
+        let mut fresh = Progress { night: 1, ..Progress::default() };
+        night::placed(&mut fresh, workforce::spawn::OVERWORLD, [0, 64, 0], "minecraft:torch");
+        assert_eq!(fresh.night_lights, 0);
+    }
+    // O save guarda a noite; saves antigos de quem já passou do prólogo não revivem a primeira noite.
+    let saved = Progress { step: 3, night_first: night::FIRST_DONE, night: 2, night_lights: 5, night_wall: 30, night_gate: true, ..Progress::default() };
+    let loaded = Progress::decode(&saved.encode()).unwrap();
+    assert_eq!((loaded.night_first, loaded.night, loaded.night_lights, loaded.night_wall, loaded.night_gate),
+        (night::FIRST_DONE, 2, 5, 30, true));
 }

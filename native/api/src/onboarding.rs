@@ -92,6 +92,17 @@ struct Progress {
     city_hinted: bool,
     /// O número que a etapa da cidade acompanha, para o "plim" quando ele sobe.
     city_metric: Option<i32>,
+    /// A noite (`night`): a primeira noite (0, 1 em curso, 2 passou), o capítulo (0, 1..=3, 4 fim),
+    /// as luzes e os blocos de muralha contados, o portão e a noite dormida. Salvos, menos o anúncio
+    /// e se o último segundo era noite.
+    night_first: u8,
+    night: u8,
+    night_lights: u16,
+    night_wall: u16,
+    night_gate: bool,
+    night_slept: bool,
+    night_announced: Option<u8>,
+    was_night: bool,
     // Unsaved transient evidence must not survive a reload or manual intervention.
     input_credit: u32,
     output_credit: u32,
@@ -251,10 +262,12 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-6\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-7\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
             self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips,
-            self.intro, u8::from(self.outro), self.village, self.village_crafted, self.village_base.max(0), self.city, self.city_crafted, self.dimension);
+            self.intro, u8::from(self.outro), self.village, self.village_crafted, self.village_base.max(0), self.city, self.city_crafted,
+            self.night_first, self.night, self.night_lights, self.night_wall, u8::from(self.night_gate), u8::from(self.night_slept),
+            self.dimension);
         for pos in self.blocks.iter().chain([&self.plot]).chain(self.village_blocks.iter()) {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
@@ -271,9 +284,11 @@ impl Progress {
         // v4: o começo novo (prefeito salvo); v5: mais o capítulo da vila (3 números e 6 blocos).
         let fields = match lines.next()? {
             "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, "veio-onboarding-3" => 14, "veio-onboarding-4" => 15,
-            "veio-onboarding-5" => 17, "veio-onboarding-6" => 19, _ => return None,
+            "veio-onboarding-5" => 17, "veio-onboarding-6" => 19,
+            "veio-onboarding-7" => 25, _ => return None,
         };
-        let version6 = fields == 19;
+        let version7 = fields == 25;
+        let version6 = fields >= 19;
         let version5 = fields >= 17;
         let version4 = fields >= 15;
         let fields = if version5 { fields } else { fields.min(14) };
@@ -303,6 +318,11 @@ impl Progress {
             ((values[14] as u8).min(village::DONE_VILLAGE), values[15] as u16, values[16] as i32)
         } else { (0, 0, 0) };
         let (city, city_crafted) = if version6 { ((values[17] as u8).min(city::DONE_CITY), values[18] as u16) } else { (0, 0) };
+        // Saves de antes da noite: quem já passou do prólogo não revive a primeira noite.
+        let (night_first, night, night_lights, night_wall, night_gate, night_slept) = if version7 {
+            ((values[19] as u8).min(night::FIRST_DONE), (values[20] as u8).min(night::DONE_NIGHT),
+             (values[21] as u16).min(night::LIGHTS), (values[22] as u16).min(night::WALL), values[23] != 0, values[24] != 0)
+        } else if values[0] > 0 { (night::FIRST_DONE, 0, 0, 0, false, false) } else { (0, 0, 0, 0, false, false) };
         let mayor = if version4 { lines.next().and_then(|line| {
             let coords: Vec<f64> = line.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
             coords.try_into().ok()
@@ -313,7 +333,8 @@ impl Progress {
             plates: values[3].min(4), gears: values[4].min(1), copper: values[5].min(1),
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
             delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro, mayor,
-            village, village_blocks, village_crafted, village_base, city, city_crafted, ..Self::default() })
+            village, village_blocks, village_crafted, village_base, city, city_crafted,
+            night_first, night, night_lights, night_wall, night_gate, night_slept, ..Self::default() })
     }
 }
 
@@ -338,7 +359,7 @@ pub(super) fn tracking() -> bool { ACTIVE.load(Ordering::Relaxed) }
 pub(super) fn visible_goal(uuid: u128) -> bool {
     SESSION.lock().ok().and_then(|slot| slot.as_ref().and_then(|session|
         session.players.get(&uuid).map(|progress| (progress.step < DONE || progress.intro < intro::INTRO_DONE || !progress.outro
-            || village::step(progress).is_some() || city::step(progress).is_some())
+            || village::step(progress).is_some() || city::step(progress).is_some() || night::step(progress).is_some())
             && !progress.hidden)))
         .unwrap_or(false)
 }
@@ -391,7 +412,8 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     let tip = tip_for(block).filter(|_| !clicked);
     let part = !clicked && CRAFT.iter().any(|parts| parts.iter().any(|(target, _)| *target == block));
     let village_block = !clicked && village::slot(block).is_some();
-    if !tutorial && tip.is_none() && !part && !village_block { return; }
+    let night_block = !clicked && (night::is_light(block) || night::is_wall(block) || night::is_gate(block));
+    if !tutorial && tip.is_none() && !part && !village_block && !night_block { return; }
     let Some(player) = host.acting_player() else { return; };
     let Ok(mut slot) = SESSION.lock() else { return; };
     if !session(host, &mut slot) { return; }
@@ -399,6 +421,8 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     let progress = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
     if let Some(bit) = tip && progress.tips & bit == 0 { progress.pending_tips |= bit; }
     if village_block { village::placed(progress, &player.dimension, pos, block); }
+    if night_block { night::placed(progress, &player.dimension, pos, block); }
+    if night_block && !tutorial && tip.is_none() && !part && !village_block { return; }
     // Colocou o produto da etapa: já foi fabricado (a lista de materiais não volta).
     if part && let Some(parts) = CRAFT.get(usize::from(progress.step)) {
         for (index, (target, _)) in parts.iter().enumerate() {
@@ -563,6 +587,13 @@ fn tick(host: &mut dyn Host, now: u64) {
     let s = slot.as_mut().unwrap();
     for player in &online {
         let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
+        // A primeira noite passa na frente de tudo: o resto do tutorial espera o amanhecer.
+        if night::overlay(host, player, p) {
+            if p.dirty && now % 100 == 0 && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
+                host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
+            }
+            continue;
+        }
         // Prólogo primeiro: casa, prefeito e terreno. A fábrica só começa depois dele.
         if p.intro < intro::INTRO_DONE {
             intro::tick(host, player, p, now);
@@ -572,6 +603,13 @@ fn tick(host: &mut dyn Host, now: u64) {
             continue;
         }
         // Capítulo da vila: enquanto está aberto, ele fala e ocupa a barra.
+        if night::step(p).is_some() {
+            night::tick(host, player, p);
+            if p.dirty && now % 100 == 0 && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
+                host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
+            }
+            continue;
+        }
         if city::step(p).is_some() {
             city::tick(host, player, p, defense::clock());
             if p.dirty && now % 100 == 0 && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
@@ -647,7 +685,7 @@ pub(super) fn logout(_host: &dyn Host, uuid: u128) {
 
 pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command: &str) -> bool {
     let action = match command.trim() {
-        "veiotutorial ocultar" => 0, "veiotutorial mostrar" => 1, "veiotutorial reiniciar" => 2, "veiotutorial vila" => 3, "veiotutorial cidade" => 4,
+        "veiotutorial ocultar" => 0, "veiotutorial mostrar" => 1, "veiotutorial reiniciar" => 2, "veiotutorial vila" => 3, "veiotutorial cidade" => 4, "veiotutorial noite" => 5,
         _ => return false,
     };
     let Ok(mut slot) = SESSION.lock() else { return true; };
@@ -657,7 +695,13 @@ pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command:
     if action >= 3 {
         // Capítulo da vila ou da cidade direto (quem já conhece o anterior): pula o prólogo.
         if p.intro < intro::INTRO_DONE { p.intro = intro::INTRO_DONE; }
-        if action == 3 { village::start(host, player, p); }
+        // Um capítulo por vez: começar um fecha o que estava aberto.
+        if action != 5 && night::step(p).is_some() { p.night = night::DONE_NIGHT; }
+        if action == 5 {
+            if village::step(p).is_some() { p.village = village::DONE_VILLAGE; }
+            if city::step(p).is_some() { p.city = city::DONE_CITY; }
+            night::start(host, player, p);
+        } else if action == 3 { village::start(host, player, p); }
         else {
             // A cidade fecha o capítulo da vila, se estava aberto, para os dois não disputarem a barra.
             if village::step(p).is_some() { p.village = village::DONE_VILLAGE; }
@@ -667,7 +711,7 @@ pub(super) fn command(host: &mut dyn Host, player: &NativeServerPlayer, command:
         ACTIVE.store(true, Ordering::Relaxed);
         return true;
     }
-    match action { 0 => { p.hidden = true; }, 1 => { p.hidden = false; p.announced = None; p.village_announced = None; p.city_announced = None; },
+    match action { 0 => { p.hidden = true; }, 1 => { p.hidden = false; p.announced = None; p.village_announced = None; p.city_announced = None; p.night_announced = None; },
         // Refazer não repete as dicas já vistas.
         _ => { *p = Progress { tips: p.tips, ..Progress::default() }; } }
     if action == 1 { p.intro_announced = None; }
@@ -700,6 +744,15 @@ pub(super) fn world_changed() { intro::reset(); }
 mod intro;
 mod village;
 mod city;
+mod night;
+
+/// Deitou na cama: a etapa da noite segura (capítulo da noite) conta.
+pub(super) fn slept(host: &dyn Host, uuid: u128) {
+    let Ok(mut slot) = SESSION.lock() else { return };
+    if !session(host, &mut slot) { return; }
+    let s = slot.as_mut().unwrap();
+    if let Some(p) = s.players.get_mut(&uuid) { night::slept(p); }
+}
 pub(super) use intro::{mayor_seen, visuals, MAYOR};
 #[cfg(test)]
 mod tests;

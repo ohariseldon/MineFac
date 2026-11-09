@@ -227,6 +227,7 @@ def add_labels(label):
     label('veio.onboarding.blocked.9','Redstone está pausando a máquina. Retire o sinal para retomar o exercício.', 'Redstone is pausing the machine. Remove the signal to resume the exercise.')
     add_village_labels(label, names, recipe_line)
     add_city_labels(label, names, recipe_line)
+    add_night_labels(label)
 
 
 def add_village_labels(label, names, recipe_line):
@@ -311,7 +312,7 @@ def add_village_labels(label, names, recipe_line):
         'I look after the village, but I need an office. The town hall measures population, jobs, GDP, HDI and Gini, collects tax at source and unlocks the phases: Hamlet, Village, City and Metropolis.'),
        [('1. Fabrique a prefeitura (ficha acima).', '1. Craft the town hall (card above).'),
         ('2. Coloque-a no centro da vila: ela vê 128 blocos em volta.', '2. Place it at the village centre: it sees 128 blocks around.'),
-        ('3. Contrate um aldeão para o gabinete com uma esmeralda (no painel ele aparece como prefeito).', '3. Hire a villager for the office with an emerald (the panel calls them mayor).'),
+        ('3. Contrate um aldeão como meu secretário com uma esmeralda: ele faz o trabalho duro do gabinete.', '3. Hire a villager as my clerk with an emerald: they do the office\'s hard work.'),
         ('4. Clique com um livro na prefeitura: o relatório mostra os problemas e a meta da próxima fase.', '4. Click the town hall with a book: the report shows the problems and the next phase goal.')],
        ('Contrate o funcionário da prefeitura', 'Hire the town hall clerk'),
        ('Agora sim, temos um governo.', 'Now we have a government.')),
@@ -345,7 +346,7 @@ def add_village_labels(label, names, recipe_line):
     label('veio.village.again', 'Onde paramos:', 'Where we were:')
     label('veio.village.bar', 'Vila %s/8 | %s', 'Village %s/8 | %s')
     label('veio.village.far', '%s · %s blocos ao %s', '%s · %s blocks %s')
-    label('veio.village.start_title', 'Capítulo 2: a vila', 'Chapter 2: the village')
+    label('veio.village.start_title', 'Capítulo 3: a vila operária', 'Chapter 3: the worker village')
     label('veio.village.start_sub', 'Contratar, demarcar, morar e governar', 'Hire, mark, live and govern')
     label('veio.village.end_title', 'A vila é sua', 'The village is yours')
     label('veio.village.end_sub', 'Tutorial da vila concluído', 'Village tutorial complete')
@@ -540,7 +541,7 @@ def add_city_labels(label, names, recipe_line):
           'Ten steps. At the end the village moves up a phase, and the master plan unlocks more villagers, bigger zones and more houses.')
     label('veio.city.intro.3', 'Começamos pela água.', 'We start with water.')
     label('veio.city.bar', 'Cidade %s/10 | %s', 'Town %s/10 | %s')
-    label('veio.city.start_title', 'Capítulo 3: a cidade', 'Chapter 3: the town')
+    label('veio.city.start_title', 'Capítulo 4: a vila cresce', 'Chapter 4: the village grows')
     label('veio.city.start_sub', 'Serviços, comércio, dinheiro, festas e a primeira fase', 'Services, trade, money, festivals and the first phase')
     label('veio.city.end_title', 'Uma cidade de verdade', 'A real town')
     label('veio.city.end_sub', 'Tutorial da cidade concluído', 'Town tutorial complete')
@@ -554,3 +555,91 @@ def add_city_labels(label, names, recipe_line):
           'With the cargo port or station, the village sells to the world: contracts pay more and open new markets. See the Foreign trade tab at the control center.')
     label('veio.city.end.5', 'Eu sigo na prefeitura. Clique em mim quando quiser saber o próximo passo da fábrica.',
           'I will be at the town hall. Click me whenever you want the factory\'s next step.')
+
+
+def add_night_labels(label):
+    """A noite (onboarding/night.rs): a primeira noite, o anoitecer de todo dia e o capítulo 2."""
+    label('veio.night.villager', 'Um morador', 'A villager')
+    label('veio.night.first_title', 'A primeira noite', 'The first night')
+    label('veio.night.first_sub', 'A vila fecha as portas', 'The village shuts its doors')
+    label('veio.night.first.1', 'Escureceu! Aqui ninguém fica na rua de noite: os monstros saem e caçam quem estiver fora.',
+          'It is dark! Nobody stays outside here at night: monsters come out and hunt whoever is outdoors.')
+    label('veio.night.first.2', 'Vá para a sua casa, ao norte da praça. Durma na cama ao lado do painel e a noite passa num instante.',
+          'Go to your house, north of the plaza. Sleep in the bed next to the panel and the night passes in a moment.')
+    label('veio.night.first.3', 'O trabalho espera o amanhecer. Amanhã a gente conversa sobre deixar a vila mais segura.',
+          'Work can wait for dawn. Tomorrow we will talk about making the village safer.')
+    label('veio.night.goal.home', 'Noite! Volte para casa %s  %s blocos', 'Night! Go home %s  %s blocks')
+    label('veio.night.goal.inside', 'Em casa e a salvo. Durma na cama para a noite passar', 'Home and safe. Sleep in the bed to skip the night')
+    label('veio.night.goal.shelter', 'Noite! Abrigue-se: feche-se num lugar com porta e luz até o amanhecer', 'Night! Take shelter: stay somewhere with a door and light until dawn')
+    label('veio.night.dawn_title', 'Amanheceu', 'Morning')
+    label('veio.night.dawn_sub', 'Você passou a primeira noite', 'You made it through the first night')
+    label('veio.night.dawn', 'Bom dia! Viu como a vila se recolhe? Cada noite é assim. Um dia vamos ter muralha e guardas; até lá, ao escurecer, para casa.',
+          'Good morning! See how the village shuts in? Every night is like that. One day we will have walls and guards; until then, home at dusk.')
+    dusk = [
+        ('O sino da vila tocou: está escurecendo. Os moradores fecham as portas.', 'The village bell rang: it is getting dark. Villagers shut their doors.'),
+        ('Anoitece. Lá fora, os monstros já se mexem. Hora de voltar.', 'Night is falling. Out there, monsters are stirring. Time to head back.'),
+        ('O sol se pôs. Quem trabalha na rua volta para casa; a fábrica segue sozinha.', 'The sun has set. Those working outside go home; the factory runs on its own.'),
+        ('Escureceu. Luz e muralha são a melhor companhia de uma vila à noite.', 'It is dark. Light and walls are a village\'s best company at night.'),
+    ]
+    for i, (pt, en) in enumerate(dusk, 1): label(f'veio.night.dusk.{i}', pt, en)
+    label('veio.night.offer', 'Quando quiser, fale comigo de novo: antes de crescer, a vila precisa perder o medo da noite.',
+          'Whenever you like, talk to me again: before growing, the village needs to lose its fear of the night.')
+    label('veio.night.start_title', 'Capítulo 2: a noite', 'Chapter 2: the night')
+    label('veio.night.start_sub', 'Luz, muralha e uma noite em paz', 'Light, walls and a peaceful night')
+    label('veio.night.intro.1', 'A vila tem medo da noite, e com razão: monstros caçam quem está fora, e com a fábrica crescendo vão aparecer coisas piores.',
+          'The village fears the night, and rightly so: monsters hunt whoever is outside, and as the factory grows worse things will come.')
+    label('veio.night.intro.2', 'Antes de crescer, vamos fazer a vila dormir em paz: luz, muralha e cada um na sua cama.',
+          'Before growing, let us make the village sleep in peace: light, walls and everyone in their bed.')
+    steps = [
+      (('Noite 1 de 3 · Luz na vila', 'Night 1 of 3 · Light in the village'),
+       ('Monstro nasce no escuro. Uma vila iluminada é uma vila onde eles não aparecem: cada tocha é um pedaço de chão seguro.',
+        'Monsters spawn in the dark. A lit village is a village where they do not appear: every torch is a patch of safe ground.'),
+       [('1. Faça tochas (carvão ou carvão vegetal + graveto) ou lanternas.', '1. Make torches (coal or charcoal + stick) or lanterns.'),
+        ('2. Coloque-as na praça, nas ruas e em volta das casas (até 40 blocos do centro da vila).', '2. Place them in the plaza, the streets and around the houses (within 40 blocks of the village centre).'),
+        ('3. Espalhe: uma tocha a cada 6 ou 7 blocos não deixa canto escuro.', '3. Spread them out: a torch every 6 or 7 blocks leaves no dark corner.'),
+        ('4. A fábrica também: monstro perto de máquina é problema.', '4. The factory too: a monster near machines is trouble.')],
+       ('Luzes na vila: %s/8', 'Lights in the village: %s/8'),
+       ('Que vila bonita de noite! E bem mais segura.', 'What a lovely village at night! And much safer.')),
+      (('Noite 2 de 3 · A muralha', 'Night 2 of 3 · The wall'),
+       ('Luz afasta, muralha segura. Monstros andam, não escalam: um muro em volta da vila e da fábrica para quase tudo, inclusive os Saqueadores que um dia vão vir.',
+        'Light keeps them away, a wall keeps them out. Monsters walk, they do not climb: a wall around the village and the factory stops almost everything, including the Raiders that will come one day.'),
+       [('1. Construa um muro em volta da vila: muros de pedra, cercas ou blocos de pedra (entre 12 e 64 blocos do centro).', '1. Build a wall around the village: stone walls, fences or stone blocks (between 12 and 64 blocks from the centre).'),
+        ('2. Dois blocos de altura bastam para o que anda; muros e cercas contam como altos.', '2. Two blocks high is enough for walkers; walls and fences count as tall.'),
+        ('3. Deixe um portão (de cerca) ou uma porta para você e os aldeões passarem.', '3. Leave a gate (fence gate) or a door for you and the villagers.'),
+        ('4. Inclua a fábrica: é ela que vai atrair os Saqueadores quando poluir.', '4. Include the factory: it is what will attract Raiders once it pollutes.')],
+       ('Muralha: %s/64 blocos · portão: %s', 'Wall: %s/64 blocks · gate: %s'),
+       ('Uma muralha! Agora sim a vila respira à noite.', 'A wall! Now the village can breathe at night.')),
+      (('Noite 3 de 3 · Uma noite em paz', 'Night 3 of 3 · A peaceful night'),
+       ('A noite não é para trabalhar na rua. A fábrica segue sozinha; você descansa e acorda com o turno pronto. Dormir também faz a noite passar.',
+        'Night is not for working outside. The factory runs on its own; you rest and wake up to the work done. Sleeping also makes the night pass.'),
+       [('1. Ao escurecer, volte para dentro da muralha.', '1. At dusk, get back inside the wall.'),
+        ('2. Durma na cama da sua casa (ou em qualquer cama, à noite).', '2. Sleep in your house bed (or any bed, at night).'),
+        ('3. Os trabalhadores civis também dormem; o quartel, quando houver, fica de plantão.', '3. Civilian workers sleep too; the barracks, once built, stays on watch.')],
+       ('Uma noite em paz', 'A peaceful night'),
+       ('Bom dia! Assim que se faz: a vila dormiu em paz.', 'Good morning! That is how it is done: the village slept in peace.')),
+    ]
+    for i, (title, why, lines, goal, done) in enumerate(steps):
+        label(f'veio.night.title.{i}', *title)
+        label(f'veio.night.why.{i}', *why)
+        for n, line in enumerate(lines, 1): label(f'veio.night.do.{i}.{n}', *line)
+        label(f'veio.night.goal.{i}', *goal)
+        label(f'veio.night.done.{i}', *done)
+    label('veio.night.goal.2_day', 'Uma noite em paz: quando escurecer, durma na cama', 'A peaceful night: when it gets dark, sleep in the bed')
+    label('veio.night.goal.2_night', 'Noite! Volte para dentro da muralha e durma na cama', 'Night! Get inside the wall and sleep in the bed')
+    label('veio.night.gate_yes', 'sim', 'yes')
+    label('veio.night.gate_no', 'falta', 'missing')
+    label('veio.night.bar', 'Noite %s/3 | %s', 'Night %s/3 | %s')
+    more = [
+      ('Saiba mais: J → Sistemas → Poluição e defesa.', 'Learn more: J → Systems → Pollution and defense.'),
+      ('Saiba mais: J → Sistemas → Poluição e defesa (as ondas e os muros).', 'Learn more: J → Systems → Pollution and defense (waves and walls).'),
+      ('Saiba mais: J → Sistemas → Vila operária (descanso dos trabalhadores).', 'Learn more: J → Systems → Worker village (workers resting).'),
+    ]
+    for i, (pt, en) in enumerate(more): label(f'veio.night.more.{i}', pt, en)
+    label('veio.night.end_title', 'A vila perdeu o medo', 'The village lost its fear')
+    label('veio.night.end_sub', 'Capítulo da noite concluído', 'Night chapter complete')
+    label('veio.night.end.1', 'Luz, muralha e cama: a vila dorme tranquila. Mas lembre: quanto mais a fábrica produz, mais ela polui.',
+          'Light, walls and beds: the village sleeps soundly. But remember: the more the factory makes, the more it pollutes.')
+    label('veio.night.end.2', 'Com poluição alta, vêm os Saqueadores, de noite e em ondas. Não tem jeito: para atender a vila e o mundo, a fábrica vai poluir.',
+          'With high pollution come the Raiders, at night and in waves. There is no way around it: to supply the village and the world, the factory will pollute.')
+    label('veio.night.end.3', 'Por isso a defesa cresce com a fábrica: depois vêm o quartel e a torre Tesla. Agora, fale comigo: a vila precisa de mãos.',
+          'That is why defense grows with the factory: the barracks and the Tesla tower come later. Now talk to me: the village needs hands.')
