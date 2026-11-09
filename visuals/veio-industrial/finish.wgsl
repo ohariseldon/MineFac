@@ -152,10 +152,15 @@ fn post(input: PostInput) -> vec4<f32> {
     color = min(color, vec3<f32>(0.8)) + 0.2 * (vec3<f32>(1.0) - exp(-over / 0.2));
     // Fixed exposure and luminance-based contrast keep hues and dark interiors stable.
     // Gamma-space API: an HDR tone map here would double-correct the image.
-    let bounded = clamp(color, vec3<f32>(0.0), vec3<f32>(1.0));
+    // Levels as a photographer sets them (measured on Luiz's captures: blacks lifted to 25/255
+    // by the haze, middle grey at 74/255, flat): a black point that lifts the veil, a midtone lift,
+    // then an S curve on luminance. Hues stay; dark nights keep a softer black point.
+    let black = 0.035 * mix(0.4, 1.0, veio_daylight()) * color_strength;
+    let bounded = clamp((color - vec3<f32>(black)) / (1.0 - black), vec3<f32>(0.0), vec3<f32>(1.0));
     let luma = veio_luma(bounded);
-    let curve = luma * luma * (3.0 - 2.0 * luma);
-    let target_luma = mix(luma, curve, 0.10 * color_strength);
+    let lifted = pow(luma, mix(1.0, 0.80, color_strength));
+    let curve = lifted * lifted * (3.0 - 2.0 * lifted);
+    let target_luma = mix(lifted, curve, 0.35 * color_strength);
     var graded = bounded * select(1.0, target_luma / max(luma, 0.00001), luma > 0.00001);
     // Time of day: warm golden hours, cool blue nights; the seasons tint the light a little.
     if frame.dimension == 0 {
@@ -167,7 +172,7 @@ fn post(input: PostInput) -> vec4<f32> {
         tint += vec3<f32>(0.010, 0.006, -0.012) * w.y + vec3<f32>(0.018, 0.004, -0.018) * w.z + vec3<f32>(-0.006, -0.001, 0.008) * w.w;
         graded *= mix(vec3<f32>(1.0), tint, color_strength);
     }
-    graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + 0.10 * color_strength);
+    graded = mix(vec3<f32>(veio_luma(graded)), graded, 1.0 + 0.20 * color_strength);
     if vignette > 0.0 {
         let centred = input.uv - 0.5;
         let fall = dot(centred, centred) * 1.6;
