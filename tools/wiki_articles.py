@@ -211,6 +211,7 @@ ARTICLES = [
             "• 4 Eletrônica: 16 circuitos → solar, extratora Mk.II, torre Tesla, módulos, lâmpada de cultivo.",
             "• 5 Profundidade: um módulo instalado → Mk.III.",
             "O Quadro da fábrica mostra a fase, o que falta e os pedidos do dia. O laboratório de pesquisa abre Metalurgia, Eletrônica, Automação e Escala com pacotes grandes de peças.",
+            "Depois de Escala, a pesquisa contínua não acaba: engrenagem + aço aceleram as máquinas, moldura + motor as extratoras, circuito + fio poupam energia e processador + módulo dão produto extra. Cada nível pede mais peças.",
             "Os avanços (tecla L) liberam as receitas: veja a aba do Veio para o caminho completo.",
         ], [
             "The factory advances in phases, as in Satisfactory: within a phase each unlock asks for one part; moving on asks for a stack that only a working line delivers.",
@@ -220,6 +221,7 @@ ARTICLES = [
             "• 4 Electronics: 16 circuits → solar, Mk.II extractor, Tesla tower, modules, grow lamp.",
             "• 5 Depth: one installed module → Mk.III.",
             "The Factory board shows the phase, what is missing and the daily orders. The research lab opens Metallurgy, Electronics, Automation and Scale with large part packages.",
+            "After Scale, ongoing research never ends: gear + steel speed up machines, frame + motor the extractors, circuit + wire save power and processor + module give extra output. Each level asks for more parts.",
             "Advancements (L key) unlock recipes: see the Veio tab for the whole path.",
         ]),
         "web": """
@@ -236,6 +238,14 @@ ARTICLES = [
 <tr><td>Eletrônica</td><td>128 circuitos + 128 molduras</td><td>solar, Tesla, módulos, âncora de chunk</td></tr>
 <tr><td>Automação</td><td>64 motores + 64 processadores</td><td>fabricadora, extratora Mk.III</td></tr>
 <tr><td>Escala</td><td>32 núcleos + 256 aço</td><td>esteira expressa</td></tr></table>
+<h3>Pesquisa contínua</h3>
+<p>Depois de Escala o laboratório segue sem fim, como a pesquisa infinita do Factorio. A peça posta na primeira entrada escolhe a linha. O nível <i>n</i> pede <i>n</i> vezes o pacote, e o bônus vale para a fábrica inteira, com retorno decrescente (fator 100 / (100 + 5 × nível)).</p>
+<table><tr><th>Linha</th><th>Pacote do nível 1</th><th>Bônus por nível</th></tr>
+<tr><td>Usinagem</td><td>256 engrenagens + 64 aço</td><td>+5% de ritmo nas máquinas de receita</td></tr>
+<tr><td>Perfuração</td><td>128 molduras + 16 motores</td><td>+5% de ritmo nas extratoras</td></tr>
+<tr><td>Rede elétrica</td><td>128 circuitos + 256 fios</td><td>+5% de rendimento da energia</td></tr>
+<tr><td>Precisão</td><td>32 processadores + 64 módulos</td><td>+2% de produto (até +50%)</td></tr></table>
+<p>Um laboratório gasta 2 de cada peça por segundo (120 por minuto): só ele pede quatro montadoras de engrenagem. Vários laboratórios somam.</p>
 <p>O <b>Quadro da fábrica</b> mostra a fase, licenças, entregas automatizáveis, pedidos diários e o gargalo atual. Os <b>avanços</b> (tecla L) entregam as receitas.</p>
 """,
     },

@@ -65,7 +65,8 @@ impl<'a> View<'a> {
 
     fn effect(&self) -> upgrades::Effect {
         let module = self.read(11) & !upgrades::MK2_FLAG;
-        upgrades::with_tier(upgrades::effect_of(module), if self.read(11) & upgrades::MK2_FLAG != 0 { 2 } else { 0 })
+        let effect = upgrades::with_tier(upgrades::effect_of(module), if self.read(11) & upgrades::MK2_FLAG != 0 { 2 } else { 0 });
+        research::boost(effect, production::recipes(self.block).next().is_none())
     }
 
     /// Algo trava (falta insumo, energia, trabalhador...): o rodapé troca a explicação pelo
@@ -1380,11 +1381,26 @@ fn anchor(pen: &mut Pen<'_>, view: &View<'_>) {
 
 fn lab(pen: &mut Pen<'_>, view: &View<'_>, slots: &[Option<[f32; 2]>]) {
     let stage = view.read(8).max(0) as usize;
+    let delivered = [view.read(9).max(0), view.read(12).max(0)];
     let Some(research) = research::RESEARCH.get(stage) else {
-        pen.text(&tr("veio.research.complete", &[]), 20.0, 70.0, GOOD);
+        // Pesquisa contínua: o mesmo desenho, com a linha e o nível no lugar da etapa.
+        let (line, level) = research::unpack_stage(view.read(8)).unwrap_or((research::MACHINING, 0));
+        let pack = research::line_pack(line, level);
+        for (index, &(item, need)) in pack.iter().enumerate() {
+            let Some(Some([x, y])) = slots.get(index) else { continue; };
+            if view.empty(index) { pen.ghost(item, *x, *y); }
+            caption(pen, &format!("{}/{need}", delivered[index]), x + 8.0, ROW + 19.0);
+        }
+        pen.arrow(80.0, ROW + 1.0, if view.working() { (pen.tick % 40) as f32 / 40.0 } else { 0.0 });
+        verb(pen, view, 91.0, ROW - 7.0);
+        let name = tr(&format!("veio.research.line.{}", research::LINES[line].id), &[]);
+        pen.text(&pen.fit(&name, 64.0), 106.0, 52.0, INK);
+        let total: u32 = pack.iter().map(|(_, need)| need).sum();
+        let got: u32 = pack.iter().zip(delivered).map(|((_, need), got)| (got as u32).min(*need)).sum();
+        pen.bar(106.0, 64.0, 64.0, 7.0, got as f32 / total.max(1) as f32, view.accent());
+        pen.text(&pen.fit(&tr("veio.ui.lab.level", &[&(level + 1)]), 64.0), 106.0, 75.0, SOFT);
         return;
     };
-    let delivered = [view.read(9).max(0), view.read(12).max(0)];
     for (index, &(item, need)) in research.inputs.iter().enumerate() {
         let Some(Some([x, y])) = slots.get(index) else { continue; };
         if view.empty(index) { pen.ghost(item, *x, *y); }

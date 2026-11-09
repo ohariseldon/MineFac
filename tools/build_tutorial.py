@@ -1843,8 +1843,20 @@ for key, pt, en in [
  ("veio.research.electronics.unlocks", "Libera solar, Tesla e âncora", "Unlocks solar, Tesla, anchor"),
  ("veio.research.automation.unlocks", "Libera fabricadora e broca III", "Unlocks fabricator, drill III"),
  ("veio.research.scale.unlocks", "Libera a esteira expressa", "Unlocks the express belt"),
- ("veio.research.complete", "Todas as pesquisas concluídas.", "All research complete."),
+ ("veio.research.complete", "Árvore concluída. Agora a pesquisa contínua.", "Tree complete. Now ongoing research."),
  ("veio.research.done", "Pesquisa concluída: %s. Novas receitas no livro.", "Research complete: %s. New recipes in the book."),
+ ("veio.research.line.machining", "Usinagem", "Machining"),
+ ("veio.research.line.drilling", "Perfuração", "Drilling"),
+ ("veio.research.line.grid", "Rede elétrica", "Power grid"),
+ ("veio.research.line.precision", "Precisão", "Precision"),
+ ("veio.research.line.machining.effect", "+%s%% de ritmo nas máquinas de receita", "+%s%% speed on recipe machines"),
+ ("veio.research.line.drilling.effect", "+%s%% de ritmo nas extratoras", "+%s%% speed on extractors"),
+ ("veio.research.line.grid.effect", "+%s%% de rendimento da energia em todas as máquinas", "+%s%% power efficiency on all machines"),
+ ("veio.research.line.precision.effect", "+%s%% de produto em todas as máquinas", "+%s%% output on all machines"),
+ ("veio.research.line.title", "Pesquisa contínua: %s, nível %s", "Ongoing research: %s, level %s"),
+ ("veio.research.line.now", "Agora %s. No próximo nível: %s.", "Now %s. Next level: %s."),
+ ("veio.research.line.switch", "Troque a peça para mudar de linha: engrenagem, moldura, circuito ou processador.", "Swap the part to change line: gear, frame, circuit or processor."),
+ ("veio.research.level_up", "Pesquisa contínua: %s chegou ao nível %s. A fábrica inteira ganha %s.", "Ongoing research: %s reached level %s. The whole factory gets %s."),
  ("veio.monitor.counts", "%s ativas · %s esperando · %s paradas", "%s active · %s waiting · %s stuck"),
  ("veio.monitor.header", "Item          produz  gasta /min", "Item           made   used /min"),
  ("veio.monitor.empty", "Nenhuma máquina medida ainda.", "No machine measured yet."),
@@ -1897,6 +1909,12 @@ i_research=ipage(
 i_tree=ipage(
  "Pesquisas\n\n1 Metalurgia: 128 aço, 128 engr.\nbateria, vapor, túnel, monitor\n2 Eletrônica: 128 circ., 128 mold.\nsolar, Tesla, módulos, âncora\n3 Automação: 64 motores, 64 proc.\nfabricadora, broca III\n4 Escala: 32 núcleos, 256 aço\nesteira expressa",
  "Research\n\n1 Metallurgy: 128 steel, 128 gears\nbattery, steam, tunnel, monitor\n2 Electronics: 128 circ., 128 frames\nsolar, Tesla, modules, anchor\n3 Automation: 64 motors, 64 proc.\nfabricator, drill III\n4 Scale: 32 cores, 256 steel\nexpress belt")
+i_ongoing=ipage(
+ "Pesquisa contínua\n\nDepois de Escala, o laboratório não para. A peça da 1ª entrada escolhe a linha:\n\nEngr. + aço: máquinas +5%\nMold. + motor: extratoras +5%\nCirc. + fio: energia -5%\nProc. + mód.: +2% produto\n\nPor nível, sem fim. Cada nível pede o pacote vezes o nível.",
+ "Ongoing research\n\nAfter Scale the lab keeps going. The part in input 1 picks the line:\n\nGear + steel: machines +5%\nFrame + motor: extractors +5%\nCirc. + wire: power -5%\nProc. + mod.: +2% output\n\nPer level, endless. Each level asks the pack times the level.")
+i_flow=ipage(
+ "Por que fluxo\n\nNível 1 de Usinagem: 256 engr. e 64 aços. O nível 10: 2.560 e 640.\n\nUm laboratório come 120 de cada por minuto: 4 montadoras de engrenagem só para ele.\n\nMais laboratórios somam. A fábrica que mais produz é a que mais melhora.",
+ "Why flow\n\nMachining level 1: 256 gears and 64 steel. Level 10: 2,560 and 640.\n\nOne lab eats 120 of each per minute: 4 gear assemblers just for it.\n\nMore labs add up. The factory that makes the most improves the most.")
 i_ratio=ipage(
  "Razões\n\nAs receitas mostram itens por minuto de uma máquina sem módulo, e o ciclo.\n\nPrensa: 40 cobre > 40 chapas\nMontador: 60 chapas > 30 engr.\n\nTrês prensas alimentam duas montadoras (120 = 2 x 60).",
  "Ratios\n\nRecipes show items per minute of one machine without modules, and the cycle.\n\nPress: 40 copper > 40 plates\nAssembler: 60 plates > 30 gears\n\nThree presses feed two assemblers (120 = 2 x 60).")
@@ -1951,7 +1969,7 @@ for name in industry_order:
   "click_event":{"action":"change_page","page":irefs[name]}},{"text":"\n"}])
 extra.append({"translate":"veio.guide.back","color":"dark_blue","click_event":{"action":"change_page","page":1}})
 ipages[i_blocks-1]={"text":"","extra":extra}
-ilinks=[("Começar","Start here",i_intro),("Laboratório","Research lab",i_research),("Pesquisas","Research tree",i_tree),
+ilinks=[("Começar","Start here",i_intro),("Laboratório","Research lab",i_research),("Pesquisas","Research tree",i_tree),("Pesquisa contínua","Ongoing research",i_ongoing),("Por que fluxo","Why flow",i_flow),
  ("Razões","Ratios",i_ratio),("Razões no painel","Ratios on the panel",i_panel),("Cadeia funda","Deep chain",i_chain),
  ("Kit Mk.II","Mk.II kit",i_mk2),("Monitor","Monitor",i_monitor),("Postos distantes","Distant outposts",i_stations),("Longe de você","While away",i_away),("Âncora de chunk","Chunk anchor",i_anchor),
  ("Logística nova","New logistics",i_logistics),("Lava encanada","Piped lava",i_lava),("Grande projeto","Grand project",i_project),("Clima","Weather",i_climate),("Visual","Visuals",i_visual),("Blocos","Blocks",i_blocks)]

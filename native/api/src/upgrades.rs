@@ -40,7 +40,13 @@ pub(super) fn effect_of(module: i32) -> Effect {
 /// O módulo da máquina e, por cima, a casa e a comida do jogador (`home::time_factor`), que só
 /// encurtam o ciclo: a energia por tick fica igual, então cada produto sai mais barato.
 pub(super) fn effect(entity: &ModBlockEntity) -> Effect {
-    let mut effect = with_tier(effect_of(number(entity, "Module")), number(entity, "Tier"));
+    effect_as(entity, false)
+}
+
+/// O mesmo, com a pesquisa contínua (`research::boost`): `extractor` troca a Usinagem pela
+/// Perfuração no ritmo.
+pub(super) fn effect_as(entity: &ModBlockEntity, extractor: bool) -> Effect {
+    let mut effect = research::boost(with_tier(effect_of(number(entity, "Module")), number(entity, "Tier")), extractor);
     effect.time *= home::time_factor(defense::clock());
     effect
 }
