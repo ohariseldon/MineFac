@@ -54,3 +54,8 @@
 - Houve conflito só nas línguas, juntadas chave a chave, sem choque. Os geradores rodaram sem diferença.
 - E1: `python3 tools/check_rust.py` → 394 passam.
 - Testar em jogo: a festa (dormir avança os dias), o casaco e o nome dourado do prefeito, as partículas e os sons dele, e os comentários dos aldeões.
+
+## Adendo: 0.37.0 (#61)
+- O #61 subiu para a 0.37.0 (`b46b13b`), com o save `veio-onboarding-10`. O primeiro ato agora começa com um favor: o prefeito manda ao Seu Bento (ferreiro), que manda à Dona Cida (lavradora). É preciso plantar e entregar 12 trigos, e o Bento dá a prensa e 16 cabos. Entra também o capítulo "A noite".
+- Houve conflito nas línguas, juntadas chave a chave, e na wiki, regenerada. A Combinadora continua.
+- E1: `python3 tools/check_rust.py` → 401 passam. `check_project.py` → 100 páginas conferidas.
