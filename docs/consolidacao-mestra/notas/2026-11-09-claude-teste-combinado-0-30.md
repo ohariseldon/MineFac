@@ -8,6 +8,7 @@
 ## O que mudou
 - `claude/teste-combinado` junta #47, #51 (Realismo 3.2.3), #52, #53, #55 (docs), #56, #57, #58 (cano/cabo) e #59 (prólogo do tutorial, Veio 0.30.0). Os merges de #51, #55 e #58 entraram sem conflito, e os geradores rodaram sem diferença.
 - No PC do dono, a 0.30.0 compilou sem erro (11 min) em `E:\Veio-combinado-030`, com o Realismo 3.2.3 e as texturas PBR JG 128x só de cenário (minérios, plantações e folhas ficam vanilla). Esse pacote ainda não tem o #58, que entrou na branch depois.
+- A Wiki do Veio (#54, 0.29.0: tecla J no jogo e `docs/wiki/index.html`) já estava na branch por baixo do #59. Ela é gerada dos mesmos dados do jogo (`tools/build_wiki.py`). Rodada de novo depois dos merges, não mudou nada, então a wiki já cobre as telas do #57, os aldeões do #56 e o cano/cabo do #58 conforme os dados.
 - Antes da 0.30.0, os mundos foram copiados para `E:\Veio-backup-mundos-20261108-211330`.
 
 ## Evidência
