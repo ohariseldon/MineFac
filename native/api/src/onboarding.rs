@@ -56,6 +56,13 @@ const PHASE_COUNT: u32 = 16;
 const EVENT_MEAL: u32 = 1;
 const EVENT_CENTER: u32 = 2;
 const EVENT_SPLIT: u32 = 4;
+/// As 16 etapas em 4 atos de 4: cada ato tem nome, título na tela e fala do prefeito.
+const ACT_STEPS: u8 = 4;
+/// Empacou: depois deste tempo na mesma etapa (relógio do tutorial, 3 min), o prefeito dá uma
+/// dica do erro mais comum. Uma vez por etapa.
+const HINT_AFTER: u64 = 3600;
+/// Longe disto (blocos) do lugar da etapa, a barra diz para onde ir.
+const FAR: i32 = 24;
 
 fn craft_bit(step: usize, part: usize) -> u32 { 1 << (step * 2 + part) }
 
@@ -103,6 +110,11 @@ struct Progress {
     drills: u32,
     events: u32,
     poles: u32,
+    /// Dica do prefeito: a etapa que está contando (fábrica, ou 100 + etapa da vila), desde
+    /// quando, e se a dica já saiu. Não salvo.
+    hint_for: Option<u16>,
+    hint_since: u64,
+    hinted: bool,
     /// Lido do mundo a cada segundo, não salvo: chapas entregues, fase e pedido do dia do
     /// Quadro, e o poste com energia.
     board_delivered: u32,
@@ -126,6 +138,9 @@ struct Progress {
     city: u8,
     city_crafted: u16,
     city_announced: Option<u8>,
+    /// Quando a etapa da cidade começou (relógio da sociedade) e se o prefeito já deu a dica.
+    city_since: Option<u64>,
+    city_hinted: bool,
     // Unsaved transient evidence must not survive a reload or manual intervention.
     input_credit: u32,
     output_credit: u32,
@@ -553,6 +568,9 @@ fn announce(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) 
     let step = usize::from(p.step);
     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.title.{step}"), &[]));
     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.why.{step}"), &[]));
+    if p.step % ACT_STEPS == 0 && p.step < DONE {
+        host.tell(player.uuid, Text::tr(&format!("veio.onboarding.act.{}.line", p.step / ACT_STEPS), &[]));
+    }
     intro::say(host, player.uuid, &format!("veio.onboarding.story.{step}"), &[]);
     if let Some(parts) = CRAFT.get(step).filter(|parts| !parts.is_empty()) {
         for (index, (target, _)) in parts.iter().enumerate() {
@@ -615,10 +633,48 @@ fn checklist(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress)
 fn celebrate(host: &mut dyn Host, player: &NativeServerPlayer, step: u8) {
     if !spawn_safe(&player.name) { return; }
     let name = &player.name;
-    host.run_command(&format!(r#"title {name} subtitle {{"translate":"veio.onboarding.title.{step}"}}"#));
-    host.run_command(&format!(r#"title {name} title {{"translate":"veio.onboarding.done","color":"gold"}}"#));
+    if step % ACT_STEPS == 0 {
+        // Fim de um ato: fogos e o nome do próximo ato (ou o fim da fábrica).
+        let act = step / ACT_STEPS;
+        let (title, subtitle) = if step < DONE { (format!("veio.onboarding.act.{act}"), format!("veio.onboarding.act.{act}.sub")) }
+            else { ("veio.onboarding.act.end".to_owned(), "veio.onboarding.act.end.sub".to_owned()) };
+        host.run_command(&format!(r#"title {name} subtitle {{"translate":"{subtitle}"}}"#));
+        host.run_command(&format!(r#"title {name} title {{"translate":"{title}","color":"gold"}}"#));
+        fireworks(host, name);
+    } else {
+        host.run_command(&format!(r#"title {name} subtitle {{"translate":"veio.onboarding.title.{step}"}}"#));
+        host.run_command(&format!(r#"title {name} title {{"translate":"veio.onboarding.done","color":"gold"}}"#));
+    }
     host.run_command(&format!("playsound minecraft:ui.toast.challenge_complete master {name}"));
     host.run_command(&format!("xp add {name} {} points", 10 + 5 * u32::from(step)));
+}
+
+/// Fogos de artifício em volta do jogador: o fim de um ato ou de um capítulo.
+pub(super) fn fireworks(host: &mut dyn Host, name: &str) {
+    if !spawn_safe(name) { return; }
+    for (dx, dz, color) in [(2, 0, 16766720), (-2, 1, 3066993), (0, -2, 15158332)] {
+        host.run_command(&format!(concat!("execute at {} run summon minecraft:firework_rocket ~{} ~1 ~{} ",
+            r#"{{LifeTime:22,FireworksItem:{{id:"minecraft:firework_rocket",count:1,components:{{"minecraft:fireworks":"#,
+            r#"{{flight_duration:1,explosions:[{{shape:"star",colors:[I;{}],has_twinkle:true}}]}}}}}}}}"#), name, dx, dz, color));
+    }
+}
+
+/// Dica do prefeito quando o jogador fica muito tempo na mesma etapa (`key`): uma vez.
+fn hint(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress, now: u64, key: u16, text: &str) {
+    if p.hint_for != Some(key) { p.hint_for = Some(key); p.hint_since = now; p.hinted = false; return; }
+    if p.hinted || p.hidden || now.saturating_sub(p.hint_since) < HINT_AFTER { return; }
+    p.hinted = true;
+    intro::say(host, player.uuid, "veio.onboarding.hint.head", &[]);
+    intro::say(host, player.uuid, text, &[]);
+}
+
+/// Para onde ir na etapa: a casa (Lar e centro de controle) nas duas últimas, o terreno da
+/// oficina nas outras.
+fn target(p: &Progress) -> Option<[f64; 3]> {
+    if matches!(p.step, MEAL_STEP | CENTER_STEP) {
+        return home::dashboard().map(|[x, y, z]| [f64::from(x) + 0.5, f64::from(y), f64::from(z) + 0.5]);
+    }
+    p.plot.map(intro::plot_center)
 }
 
 fn spawn_safe(name: &str) -> bool { workforce::spawn::safe_name(name) }
@@ -709,8 +765,10 @@ fn tick(host: &mut dyn Host, now: u64) {
             }
             continue;
         }
-        if village::step(p).is_some() {
+        if let Some(step) = village::step(p) {
             village::tick(host, player, p, now);
+            if village::step(p) == Some(step) { hint(host, player, p, now, 100 + step as u16, &format!("veio.village.hint.{step}")); }
+            else if p.village == village::DONE_VILLAGE { fireworks(host, &player.name); }
             if p.dirty && now % 100 == 0 && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
                 host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
             }
@@ -740,8 +798,14 @@ fn tick(host: &mut dyn Host, now: u64) {
         if !p.hidden && p.step < DONE {
             let count = goal_count(p);
             if !checklist(host, player, p) {
-                host.action_bar(player.uuid, Text::tr(&format!("veio.onboarding.goal.{}", p.step), &[&count]));
+                let goal = Text::tr(&format!("veio.onboarding.goal.{}", p.step), &[&count]);
+                let far = target(p).map(|at| intro::pointer(player, at)).filter(|(distance, _)| *distance > FAR);
+                host.action_bar(player.uuid, match far {
+                    Some((distance, way)) => Text::tr("veio.onboarding.far", &[&goal.plain(), &way, &distance]),
+                    None => goal,
+                });
             }
+            hint(host, player, p, now, u16::from(p.step), &format!("veio.onboarding.hint.{}", p.step));
             if matches!(p.status, 3 | 5 | 9) {
                 if p.last_status_notice != Some(p.status) && now >= p.next_status_notice {
                     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.blocked.{}", p.status), &[]));

@@ -1427,7 +1427,7 @@ for n,(pt,en,target) in enumerate(links):
  key=f"veio.guide.contents.{n}";label(key,pt,en)
  extra.extend([{"translate":key,"color":"dark_blue","underlined":True,"click_event":{"action":"change_page","page":target}},{"text":"\n"}])
 pages[0]={"text":"","extra":extra}
-book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.34.0"},"author":"Veio",
+book={"minecraft:written_book_content":{"title":{"raw":"Veio 0.35.0"},"author":"Veio",
  "generation":0,"resolved":True,"pages":[{"raw":p} for p in pages]},
  "minecraft:custom_name":{"translate":"veio.guide.title","italic":False}}
 write(f"{D}/loot_table/tutorial/guide.json",{"type":"minecraft:generic",
@@ -1945,6 +1945,13 @@ from build_onboarding import add_labels as add_onboarding_labels
 add_onboarding_labels(label)
 from build_ui_text import add_labels as add_ui_labels
 add_ui_labels(langs)
+# Diário do Prefeito Otávio: o prefeito dá junto com o gerador (onboarding/intro.rs).
+diary={"minecraft:written_book_content":{"title":{"raw":"Diário de Otávio"},"author":"Otávio",
+ "generation":0,"resolved":True,"pages":[{"raw":{"translate":f"veio.onboarding.diary.{n}"}} for n in range(5)]},
+ "minecraft:custom_name":{"translate":"veio.onboarding.diary.title","italic":False}}
+write(f"{D}/loot_table/tutorial/diary.json",{"type":"minecraft:generic",
+ "pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:written_book",
+ "functions":[{"function":"minecraft:set_components","components":diary}]}]}]})
 from build_wiki import build as build_wiki
 build_wiki(label, langs, vanilla)
 for code,data in langs.items():write(f"{A}/lang/{code}.json",data)

@@ -353,7 +353,7 @@ ARTICLES = [
             "Da fase 2, casa nova pede poço a até 24 blocos; da 3, também poste; da 4, também loja. IDH baixo demais suspende novos níveis de zona.",
             "Casas muito juntas (mais de 6 vizinhas a 16 blocos) ficam apertadas, e poluição perto piora a moradia: bairros espalhados vivem melhor.",
             "Livro na prefeitura: relatório com bairros, problemas e a meta da próxima fase.",
-            "Tutorial da cidade: depois da vila, fale com o prefeito Otávio (ou /veiotutorial cidade). 8 etapas: poço, loja, primeira venda, conta da companhia, energia, lazer, três famílias e a fase Vila.",
+            "Tutorial da cidade: depois da vila, fale com o prefeito Otávio (ou /veiotutorial cidade). 10 etapas: poço, loja, primeira venda, conta da companhia, energia, lazer, três famílias, impostos, uma festa e a fase Vila.",
         ], [
             "House: up to 4 villagers within 10 blocks become a family. Workers earn wages; the family eats from the pantry and buys at the nearest shop.",
             "Shop: hire a merchant and stock it. Prices rise with demand and fall with idle stock; each village has its own market.",
@@ -362,7 +362,7 @@ ARTICLES = [
             "From phase 2 a new house needs a well within 24 blocks; from 3 also a pole; from 4 also a shop. Too low an HDI suspends new zone levels.",
             "Houses packed together (more than 6 neighbours within 16 blocks) are crowded, and nearby pollution hurts housing: spread districts live better.",
             "Book at the town hall: report with districts, problems and the next phase goal.",
-            "Town tutorial: after the village, talk to mayor Otávio (or /veiotutorial cidade). Eight steps: well, shop, first sale, company account, power, leisure, three families and the Village phase.",
+            "Town tutorial: after the village, talk to mayor Otávio (or /veiotutorial cidade). Ten steps: well, shop, first sale, company account, power, leisure, three families, taxes, a festival and the Village phase.",
         ]),
         "web": """
 <p>A vila deixa de ser só mão de obra: ela tem <b>famílias</b>, <b>comércio</b> e um <b>Estado</b> (a prefeitura) com indicadores e barreiras de progressão.</p>
@@ -378,7 +378,7 @@ ARTICLES = [
 <tr><td>Metrópole</td><td>80, 20 famílias, IDH 0,70, Gini ≤ 0,45, 3 bairros</td><td>150 aldeões, 48 casas</td><td>+ loja a 40</td></tr></table>
 <p><b>IDH</b> de cada família: comida, moradia, serviços (saneamento, energia, comércio e lazer) e renda, multiplicados pelo ânimo da vila. Se o IDH cai muito, o prefeito suspende novos níveis de zona e nascimentos.</p>
 <h3>Tutorial da cidade (capítulo 3)</h3>
-<p>Depois do capítulo da vila, o prefeito <b>Otávio</b> ensina a transformar a vila em cidade (ou use <code>/veiotutorial cidade</code>). As etapas fecham pelo que a própria vila registra: casas, lojas, contas e a prefeitura.</p>
+<p>Depois do capítulo da vila, o prefeito <b>Otávio</b> ensina a transformar a vila em cidade (ou use <code>/veiotutorial cidade</code>). As etapas fecham pelo que a própria vila registra: casas, lojas, contas, a prefeitura e a agenda. A barra mostra os números da vila (casas atendidas, famílias, o pedido aberto e a parte mais fraca do IDH) e aponta para a loja ou a prefeitura; se você fica 3 minutos parado numa etapa, o prefeito dá uma dica.</p>
 <table><tr><th>Etapa</th><th>O que fazer</th><th>Como o jogo confere</th></tr>
 <tr><td>1. Saneamento</td><td>poço a até 24 blocos das casas</td><td>uma casa com saneamento</td></tr>
 <tr><td>2. Comércio</td><td>loja perto das casas, comerciante contratado</td><td>loja com comerciante</td></tr>
@@ -387,7 +387,9 @@ ARTICLES = [
 <tr><td>5. Energia nas casas</td><td>poste a até 12 blocos de uma casa</td><td>uma casa com energia</td></tr>
 <tr><td>6. Lazer</td><td>parque, praça ou monumento a até 32 blocos</td><td>uma casa com lazer</td></tr>
 <tr><td>7. Bairro</td><td>mais casas, camas livres, comida na despensa</td><td>3 famílias</td></tr>
-<tr><td>8. Subir de fase</td><td>12 moradores, 3 famílias, IDH 0,40</td><td>a prefeitura na fase Vila</td></tr></table>
+<tr><td>8. Impostos e conta pública</td><td>ver a conta pública e o relatório da prefeitura</td><td>imposto recolhido</td></tr>
+<tr><td>9. Uma festa</td><td>atender um visitante: itens no espaço Agenda da prefeitura</td><td>um pedido preparado</td></tr>
+<tr><td>10. Subir de fase</td><td>12 moradores, 3 famílias, IDH 0,40</td><td>a prefeitura na fase Vila</td></tr></table>
 """,
     },
     {

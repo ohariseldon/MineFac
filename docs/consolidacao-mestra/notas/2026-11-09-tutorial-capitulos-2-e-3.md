@@ -31,3 +31,9 @@ Branch `claude/trusting-ritchie-sc9ty8`, versões 0.32.0 e 0.33.0. Feita sobre a
 
 - `the_village_chapter_checks_each_step_in_the_world`, `the_mayor_opens_the_village_chapter_and_celebrates_each_step`,
   `the_city_chapter_closes_each_step_from_what_the_village_registers`, `after_the_village_the_mayor_opens_the_city_chapter`.
+
+## 0.34.0
+
+O capítulo 3 passou a ter 10 etapas (impostos e conta pública; uma festa da Agenda) e `DONE_CITY` = 11.
+`Progress` ganhou dois campos que não vão para o save (`city_since`, `city_hinted`: a dica do prefeito
+quando o jogador fica 3 min parado). O formato do save continua a v6.
