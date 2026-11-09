@@ -169,5 +169,5 @@ médio em 74/255 e saturação mediana 0,25: imagem lavada e escura ao mesmo tem
 
 - Níveis como um fotógrafo faria: ponto de preto 0,035 (0,014 à noite), meios-tons levantados
   (expoente 0,80 na luminância), curva S 0,10 → 0,35, saturação +0,10 → +0,20. Tudo escala com
-  a opção "Força da cor". Simulado nos dois prints: preto 25 → 22 e 1 → 10, cinza médio 74 → 88
+  a opção "Cor e clima da imagem" (valor padrão 0,65 = ajuste completo). Simulado nos dois prints: cinza médio 74 → 88, preto mais limpo
   (comparação em /mnt/project-files/visual/comparacao-contraste-3.2.5.png).
