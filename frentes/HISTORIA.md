@@ -61,11 +61,11 @@ são marcos, não paredes: a noite e a cidade atravessam todos eles.
 |---|---|---|---|---|
 | Prólogo | A chegada | Você nasce perto da vila, segue a seta, conhece Otávio na praça e faz o trato. Junta pedra, ferro e cobre; a oficina da vila monta o **gerador**. Otávio separa o terreno da oficina, que você planifica. | o começo, a casa e o painel, planificar | **no jogo** (0.31) |
 | Ato I | 1. A fábrica | A primeira linha: energia, prensa, engrenagem, extratora, esteiras e a **primeira encomenda**. | energia, máquinas, cadeias, transporte | **no jogo** (8 etapas); etapas 9 a 16 em produção (outro agente) |
-| Ato I | 2. A primeira noite | No primeiro anoitecer, Otávio avisa: a vila fecha as portas, os monstros caçam quem fica fora. Dormir em casa, iluminar a praça, erguer a **muralha** da vila. | o perigo da noite, luz, muralha, cama | **proposta** (próximo a fazer) |
-| Ato I | 3. A vila operária | "A vila precisa de mãos": o primeiro trabalhador, a lavoura demarcada, o carregador, o capataz, a primeira família e o gabinete com o **secretário**. | contratar, zonas, organizar, morar, governar | **no jogo** (hoje numerado capítulo 2) |
-| Ato II | 4. A vila cresce | Água, loja, salário, imposto, luz, lazer, a primeira festa e a fase **Vila**. É o primeiro passo da linha da cidade. | serviços, comércio, contas, agenda, IDH | **no jogo** (hoje numerado capítulo 3) |
-| Ato II | 5. A grande indústria | Para atender a vila, a fábrica precisa de aço, eletrônica e da **extratora Mk.II**. A produção dobra, a poluição também: chegam as **ondas de Saqueadores**, agora parte da vida. O quartel e a torre Tesla protegem a fábrica sem parar a produção. | fases do Quadro, Mk.II, pesquisa, módulos, ondas, quartel, Tesla, reparo | **proposta** (combinar com as etapas 9 a 16 do capítulo 1) |
-| Ato II | 6. A cidade | Com a indústria de pé, a vila vira **Cidade**: bairros, PIB, emprego, obras cívicas, mais festas. | fases Cidade e Metrópole, bairros, Gini | **proposta** |
+| Ato I | 2. A primeira noite | No primeiro anoitecer, Otávio avisa: a vila fecha as portas, os monstros caçam quem fica fora. Dormir em casa, iluminar a praça, erguer a **muralha** da vila. | o perigo da noite, luz, muralha, cama, poluição, gargalos da defesa | **no jogo** (0.36–0.37: primeira noite, sino e 6 etapas) |
+| Ato I | 3. A vila operária | "A vila precisa de mãos": o primeiro trabalhador, a lavoura demarcada, o carregador, o capataz, a primeira família e o gabinete com o **secretário**. | contratar, zonas, organizar, morar, governar | **no jogo** |
+| Ato II | 4. A vila cresce | Água, loja, salário, imposto, luz, lazer, a primeira festa e a fase **Vila**. É o primeiro passo da linha da cidade. | serviços, comércio, contas, agenda, IDH | **no jogo** (`/veiotutorial crescer`) |
+| Ato II | 5. A grande indústria | Para atender a vila, a fábrica precisa de aço, eletrônica e da **extratora Mk.II**. A produção dobra, a poluição também: chegam as **ondas de Saqueadores**, agora parte da vida. O quartel e a torre Tesla protegem a fábrica sem parar a produção. | fases do Quadro, Mk.II, pesquisa, ondas, quartel, Tesla, acumulador, reparo | **no jogo** (0.37, 8 etapas, `/veiotutorial industria`) |
+| Ato II | 6. A cidade | Com a indústria de pé, a vila vira **Cidade**: bairros, PIB, emprego, obras cívicas, mais festas. | famílias, emprego, serviços, obra cívica, PIB, fase Cidade | **no jogo** (0.37, 6 etapas, `/veiotutorial cidade`); Metrópole fica para depois do final |
 | Ato III | 7. O mundo lá fora | A vila produz mais do que consome. O porto ou a estação ligam a vila ao mundo: a primeira exportação, contratos, reputação, a holding mostrando o lucro. A demanda externa exige ainda mais fábrica, e mais defesa. | comércio exterior, bolsa, contratos, holding | **proposta** |
 | Final | 8. A torre de transmissão | O grande projeto: as quatro fases da torre (fundação de aço, fiação e motores, central de controle, transmissor), entregues na central de contratos. A torre liga a vila ao mundo de vez. | a fábrica inteira por um objetivo | **conteúdo no jogo**; **falta a história** em volta |
 
@@ -105,8 +105,11 @@ pessoal, ligada ao crescimento da vila. Exemplos:
 
 - Prólogo e capítulo 1: `native/api/src/onboarding/intro.rs`, `onboarding.rs`; textos em
   `tools/build_onboarding.py`.
-- Vila operária e "a vila cresce" (no código, capítulos 2 e 3): `onboarding/village.rs`, `onboarding/city.rs`;
-  textos em `add_village_labels` e `add_city_labels`. A renumeração para 3 e 4 entra com o capítulo da noite.
+- A noite (capítulo 2): `onboarding/night.rs`; textos em `add_night_labels`.
+- Vila operária e "a vila cresce" (capítulos 3 e 4): `onboarding/village.rs`, `onboarding/city.rs`;
+  textos em `add_village_labels` e `add_city_labels`.
+- Grande indústria e cidade (capítulos 5 e 6): `onboarding/forge.rs`, `onboarding/metro.rs`, sobre o motor
+  comum `onboarding/chapter.rs`; textos em `add_forge_labels` e `add_metro_labels`.
 - Calendário e visitantes: `workforce/society/agenda.rs` e [AGENDA.md](AGENDA.md).
 - Torre de transmissão: `contracts.rs` (fases `veio.project.phase1..4`).
 - Notas de coordenação: `docs/consolidacao-mestra/notas/`.

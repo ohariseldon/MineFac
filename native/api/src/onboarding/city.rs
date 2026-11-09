@@ -91,11 +91,18 @@ pub(super) struct Town {
     pub staffed: bool,
     /// A próxima festa do calendário (evento) e em quantos dias o visitante dela chega.
     pub next_visitor: Option<(usize, i64)>,
+    /// Para a cidade (capítulo 6): adultos e empregados, casas com os quatro serviços, PIB do dia
+    /// (varejo mais exportação, da prefeitura) e uma obra cívica pedida e já feita.
+    pub adults: i32,
+    pub employed: i32,
+    pub serviced: i32,
+    pub gdp: i32,
+    pub civic: bool,
 }
 
 /// O centro da vila para o capítulo: a prefeitura que governa o jogador, a do capítulo 2, a casa
 /// do capítulo 2 ou onde o jogador está.
-fn anchor(p: &Progress, player: &NativeServerPlayer, now: u64) -> [i32; 3] {
+pub(super) fn anchor(p: &Progress, player: &NativeServerPlayer, now: u64) -> [i32; 3] {
     let at = player.position.map(|v| v.floor() as i32);
     society::governing(&player.dimension, at, now).map(|hall| hall.pos)
         .or(p.village_blocks[5]).or(p.village_blocks[4]).unwrap_or(at)
@@ -118,12 +125,14 @@ pub(super) fn survey(host: &mut dyn Host, dimension: &str, at: [i32; 3], now: u6
     let today = agenda::day_of(day_time);
     let next_visitor = (0..=12).find_map(|ahead| agenda::scheduled(today + ahead).map(|event| (event, (ahead - agenda::LEAD).max(0))));
     // A agenda fica no bloco da prefeitura: o pedido preparado e o aberto mais próximo.
-    let (mut prepared, mut request) = (false, None);
+    let (mut prepared, mut request, mut gdp, mut civic) = (false, None, 0, false);
     if let Some(hall) = &hall {
         host.change_mod_block_entity(hall.pos, &mut |entity| {
             if entity.id != society::TOWN_HALL { return; }
             let open = agenda::proposals(entity);
             prepared = open.iter().any(|proposal| proposal.prepared);
+            civic = open.iter().any(|proposal| proposal.prepared && agenda::EVENTS[proposal.event].kind == agenda::Kind::Civic);
+            gdp = number(entity, "DSold") + number(entity, "DExport");
             request = open.iter().filter(|proposal| !proposal.prepared).min_by_key(|proposal| proposal.due)
                 .map(|proposal| agenda::need_text(proposal, today).plain());
         });
@@ -139,6 +148,11 @@ pub(super) fn survey(host: &mut dyn Host, dimension: &str, at: [i32; 3], now: u6
         public_coins,
         staffed: hall.as_ref().is_some_and(|hall| hall.staffed),
         next_visitor,
+        adults: families.iter().map(|home| home.adults).sum(),
+        employed: families.iter().map(|home| home.employed).sum(),
+        serviced: count(&|home| home.sanitation && home.power && home.commerce && home.leisure),
+        gdp,
+        civic,
         homes: families.len() as i32,
         sanitized: count(&|home| home.sanitation),
         powered: count(&|home| home.power),

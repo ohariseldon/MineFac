@@ -228,6 +228,8 @@ def add_labels(label):
     add_village_labels(label, names, recipe_line)
     add_city_labels(label, names, recipe_line)
     add_night_labels(label)
+    add_forge_labels(label, names, recipe_line)
+    add_metro_labels(label)
 
 
 def add_village_labels(label, names, recipe_line):
@@ -371,7 +373,7 @@ def add_city_labels(label, names, recipe_line):
     for key, (pt, en) in names.items(): label(f'veio.onboarding.name.{key}', pt, en)
     steps = [
       # (título, fala do prefeito, passos, objetivo da barra, comentário ao concluir, dica quando trava)
-      (('Cidade 1 de 10 · Saneamento', 'Town 1 of 10 · Sanitation'),
+      (('Crescer 1 de 10 · Saneamento', 'Growth 1 of 10 · Sanitation'),
        ('Uma cidade começa pela água limpa. Sem saneamento as famílias adoecem e o IDH não sobe; da fase Vila em diante, casa nova só ganha alvará com um poço a até 24 blocos.',
         'A town starts with clean water. Without sanitation families fall ill and HDI stays low; from the Village phase on, a new house only gets a permit with a well within 24 blocks.'),
        [('1. Fabrique um poço (ficha acima).', '1. Craft a well (card above).'),
@@ -382,7 +384,7 @@ def add_city_labels(label, names, recipe_line):
        ('Água limpa. Agora as famílias precisam onde comprar.', 'Clean water. Now families need somewhere to shop.'),
        ('O poço só conta para casas com moradores a até 24 blocos dele. Leve o poço para o meio do bairro, ou espere a família se formar na casa.',
         'The well only counts for houses with residents within 24 blocks. Move the well to the middle of the district, or wait for the family to form.')),
-      (('Cidade 2 de 10 · Comércio', 'Town 2 of 10 · Trade'),
+      (('Crescer 2 de 10 · Comércio', 'Growth 2 of 10 · Trade'),
        ('As famílias ganham salário e gastam na loja mais próxima. O comerciante é independente: compra de você no atacado (75% do preço) e vende no varejo.',
         'Families earn wages and spend at the nearest shop. The merchant is independent: buys from you wholesale (75% of the price) and sells retail.'),
        [('1. Fabrique uma loja (ficha acima).', '1. Craft a shop (card above).'),
@@ -393,7 +395,7 @@ def add_city_labels(label, names, recipe_line):
        ('A loja abriu as portas. Falta mercadoria.', 'The shop is open. It needs goods.'),
        ('Para contratar, precisa de um aldeão adulto livre a até 8 blocos da loja e uma esmeralda na mão. Traga um aldeão para perto, ou libere um trabalhador.',
         'To hire you need a free adult villager within 8 blocks of the shop and an emerald in hand. Bring a villager closer, or free up a worker.')),
-      (('Cidade 3 de 10 · A primeira venda', 'Town 3 of 10 · The first sale'),
+      (('Crescer 3 de 10 · A primeira venda', 'Growth 3 of 10 · The first sale'),
        ('O que você entrega no estoque o comerciante compra fiado e paga com as vendas. Os preços são da vila: sobem quando falta e caem quando sobra.',
         'What you put in the stock the merchant buys on credit and pays from sales. Prices are local: they rise when goods are short and fall when they pile up.'),
        [('1. Abasteça o estoque da loja com comida (pão, batata assada) e bens (lã, couro, velas).', '1. Stock the shop with food (bread, baked potatoes) and goods (wool, leather, candles).'),
@@ -404,7 +406,7 @@ def add_city_labels(label, names, recipe_line):
        ('O dinheiro começou a girar. Vamos ver de onde ele vem.', 'Money has started to move. Let us see where it comes from.'),
        ('Famílias só compram de dia e com dinheiro na carteira. Sem salário (conta da companhia vazia) ninguém compra: ponha esmeraldas no cofre do centro de controle.',
         'Families only buy during the day and with money in their wallet. Without wages (empty company account) nobody buys: put emeralds in the control center vault.')),
-      (('Cidade 4 de 10 · A conta da companhia', 'Town 4 of 10 · The company account'),
+      (('Crescer 4 de 10 · A conta da companhia', 'Growth 4 of 10 · The company account'),
        ('A companhia é você: paga os salários dos seus trabalhadores e recebe o atacado das lojas. O dinheiro só entra na vila em esmeraldas de verdade, pelo cofre do centro de controle.',
         'The company is you: it pays your workers\' wages and receives wholesale from the shops. Money only enters the village as real emeralds, through the control center vault.'),
        [('1. Vá ao centro de controle (o painel da sua casa).', '1. Go to the control center (the panel in your house).'),
@@ -415,7 +417,7 @@ def add_city_labels(label, names, recipe_line):
        ('Salários garantidos. Agora, conforto nas casas.', 'Wages secured. Now, comfort at home.'),
        ('O cofre é o espaço de esmeralda do centro de controle. Esmeraldas vêm de troca com aldeões, da central de contratos e da exportação.',
         'The vault is the emerald slot of the control center. Emeralds come from villager trades, the contract hub and exports.')),
-      (('Cidade 5 de 10 · Energia nas casas', 'Town 5 of 10 · Power at home'),
+      (('Crescer 5 de 10 · Energia nas casas', 'Growth 5 of 10 · Power at home'),
        ('Energia é serviço público: entra no IDH junto com saneamento, comércio e lazer. Da fase Cidade em diante, casa nova pede um poste a até 12 blocos.',
         'Power is a public service: it counts in HDI with sanitation, trade and leisure. From the City phase on, a new house needs a pole within 12 blocks.'),
        [('1. Fabrique postes (ficha acima; a receita rende 2).', '1. Craft poles (card above; the recipe makes 2).'),
@@ -425,7 +427,7 @@ def add_city_labels(label, names, recipe_line):
        ('Luz nas casas. Falta um lugar para descansar.', 'Lights at home. We still need a place to relax.'),
        ('O poste precisa estar a até 12 blocos de uma casa com moradores. Não precisa estar ligado a um gerador para contar, mas a fábrica agradece.',
         'The pole must be within 12 blocks of a house with residents. It does not need a generator to count, but the factory will thank you.')),
-      (('Cidade 6 de 10 · Lazer', 'Town 6 of 10 · Leisure'),
+      (('Crescer 6 de 10 · Lazer', 'Growth 6 of 10 · Leisure'),
        ('Gente que só trabalha não é feliz. Parque, praça e monumento dão lazer a 32 blocos: é o quarto serviço do IDH, e o ânimo da vila sobe nas festas.',
         'People who only work are not happy. Parks, plazas and monuments give leisure within 32 blocks: the fourth HDI service, and village morale rises at festivals.'),
        [('1. Fabrique um parque (ficha acima).', '1. Craft a park (card above).'),
@@ -436,7 +438,7 @@ def add_city_labels(label, names, recipe_line):
        ('Um parque! Agora precisamos de mais gente.', 'A park! Now we need more people.'),
        ('O parque leva alguns segundos para se registrar e só atende casas a até 32 blocos. Coloque-o no meio do bairro.',
         'The park takes a few seconds to register and only serves houses within 32 blocks. Place it in the middle of the district.')),
-      (('Cidade 7 de 10 · Bairro', 'Town 7 of 10 · A district'),
+      (('Crescer 7 de 10 · Bairro', 'Growth 7 of 10 · A district'),
        ('Uma vila de verdade tem várias famílias. Cada casa abriga até 4 aldeões; bebês nascem onde há vaga. Casas muito juntas ficam apertadas: espalhe o bairro.',
         'A real village has several families. Each house holds up to 4 villagers; babies are born where there is room. Houses packed too tight are crowded: spread the district.'),
        [('1. Fabrique mais casas (ficha acima).', '1. Craft more houses (card above).'),
@@ -447,7 +449,7 @@ def add_city_labels(label, names, recipe_line):
        ('Três famílias! A vila já tem bairro.', 'Three families! The village has a district.'),
        ('Família se forma com aldeões a até 10 blocos da casa. Sem aldeões sobrando, a vila cresce com camas livres: ponha camas perto das casas.',
         'A family forms with villagers within 10 blocks of the house. With no spare villagers, the village grows with free beds: put beds near the houses.')),
-      (('Cidade 8 de 10 · Impostos e a conta pública', 'Town 8 of 10 · Taxes and the public account'),
+      (('Crescer 8 de 10 · Impostos e a conta pública', 'Growth 8 of 10 · Taxes and the public account'),
        ('Eu não fabrico nada: a prefeitura vive do imposto retido em cada venda (4% agora, até 16% na Metrópole). Com ele pago os funcionários, os poços, a assistência aos pobres e as obras.',
         'I make nothing: the town hall lives on the tax withheld from each sale (4% now, up to 16% in a Metropolis). With it I pay clerks, wells, aid to the poor and public works.'),
        [('1. Vá à prefeitura e abra o painel: ele mostra a conta pública.', '1. Go to the town hall and open the panel: it shows the public account.'),
@@ -458,7 +460,7 @@ def add_city_labels(label, names, recipe_line):
        ('A conta pública tem dinheiro. É assim que a vila se mantém.', 'The public account has money. That is how the village keeps going.'),
        ('A conta pública só recebe quando a loja vende. Confira se a loja tem estoque e se as famílias têm salário.',
         'The public account only receives when the shop sells. Check that the shop has stock and families have wages.')),
-      (('Cidade 9 de 10 · Uma festa', 'Town 9 of 10 · A festival'),
+      (('Crescer 9 de 10 · Uma festa', 'Growth 9 of 10 · A festival'),
        ('O ano tem estações, domingos e feriados. Dois dias antes de cada um, um visitante vem à prefeitura pedir o que a festa precisa. Festa preparada sobe o ânimo, e o ânimo pesa no IDH.',
         'The year has seasons, Sundays and holidays. Two days before each one, a visitor comes to the town hall asking for what the festival needs. A prepared festival raises morale, and morale weighs on HDI.'),
        [('1. Quando o chat avisar que um visitante chegou, vá à prefeitura e clique nele.', '1. When chat says a visitor arrived, go to the town hall and click them.'),
@@ -469,7 +471,7 @@ def add_city_labels(label, names, recipe_line):
        ('Festa preparada! A vila vai comemorar no dia.', 'Festival ready! The village will celebrate on the day.'),
        ('Os visitantes chegam 2 dias antes de cada domingo ou feriado. Enquanto isso, junte comida pronta: quase toda festa pede pão, bolo ou biscoito.',
         'Visitors arrive 2 days before each Sunday or holiday. Meanwhile, gather cooked food: almost every festival asks for bread, cake or cookies.')),
-      (('Cidade 10 de 10 · Subir de fase', 'Town 10 of 10 · Move up a phase'),
+      (('Crescer 10 de 10 · Subir de fase', 'Growth 10 of 10 · Move up a phase'),
        ('O plano diretor tem quatro fases: Povoado, Vila, Cidade e Metrópole. Para virar Vila: 12 moradores, 3 famílias e IDH 0,40. Eu confiro no fim de cada dia.',
         'The master plan has four phases: Hamlet, Village, City and Metropolis. To become a Village: 12 residents, 3 families and HDI 0.40. I check at the end of each day.'),
        [('1. Abra a prefeitura ou clique com um livro: o relatório diz o que falta.', '1. Open the town hall or click it with a book: the report says what is missing.'),
@@ -490,7 +492,7 @@ def add_city_labels(label, names, recipe_line):
         label(f'veio.city.hint.{i}', *hint)
     label('veio.city.goal.8_wait', 'Festa: o próximo visitante chega em %s dia(s) (%s). Enquanto isso, junte comida pronta', 'Festival: the next visitor arrives in %s day(s) (%s). Meanwhile, gather cooked food')
     label('veio.city.goal.8_soon', 'Festa: um visitante chega em breve à prefeitura', 'Festival: a visitor will soon arrive at the town hall')
-    label('veio.city.bar_prefix', 'Cidade %s/10 |', 'Town %s/10 |')
+    label('veio.city.bar_prefix', 'Crescer %s/10 |', 'Growth %s/10 |')
     for key, pt, en in [
         ('open', 'comerciante no balcão', 'merchant at the counter'), ('day', 'é dia', 'daytime'),
         ('wages', 'salários pagos', 'wages paid'), ('wallets', 'famílias com dinheiro', 'families with money'),
@@ -540,7 +542,7 @@ def add_city_labels(label, names, recipe_line):
     label('veio.city.intro.2', 'São 10 passos. No fim, a vila sobe de fase, e o plano diretor libera mais aldeões, zonas maiores e mais casas.',
           'Ten steps. At the end the village moves up a phase, and the master plan unlocks more villagers, bigger zones and more houses.')
     label('veio.city.intro.3', 'Começamos pela água.', 'We start with water.')
-    label('veio.city.bar', 'Cidade %s/10 | %s', 'Town %s/10 | %s')
+    label('veio.city.bar', 'Crescer %s/10 | %s', 'Growth %s/10 | %s')
     label('veio.city.start_title', 'Capítulo 4: a vila cresce', 'Chapter 4: the village grows')
     label('veio.city.start_sub', 'Serviços, comércio, dinheiro, festas e a primeira fase', 'Services, trade, money, festivals and the first phase')
     label('veio.city.end_title', 'Uma cidade de verdade', 'A real town')
@@ -691,3 +693,205 @@ def add_night_labels(label):
           'With high pollution come the Raiders, at night and in waves. There is no way around it: to supply the village and the world, the factory will pollute.')
     label('veio.night.end.3', 'Por isso a defesa cresce com a fábrica. Agora, fale comigo quando quiser: a vila precisa de mãos.',
           'That is why defense grows with the factory. Now talk to me whenever you like: the village needs hands.')
+
+
+def add_chapter(label, key, steps, extra):
+    """Textos de um capítulo do motor comum (onboarding/chapter.rs)."""
+    for i, step in enumerate(steps):
+        title, why, lines, done, more = step[:5]
+        label(f'veio.{key}.title.{i}', *title)
+        label(f'veio.{key}.why.{i}', *why)
+        for n, line in enumerate(lines, 1): label(f'veio.{key}.do.{i}.{n}', *line)
+        label(f'veio.{key}.done.{i}', *done)
+        label(f'veio.{key}.more.{i}', *more)
+    for name, pair in extra.items(): label(f'veio.{key}.{name}', *pair)
+
+
+def add_forge_labels(label, names, recipe_line):
+    """Capítulo 5: a grande indústria (onboarding/forge.rs)."""
+    names.update({
+        'drill_mk2': ('Extratora Mk.II', 'Extractor Mk.II'), 'barracks': ('Quartel', 'Barracks'), 'tesla': ('Torre Tesla', 'Tesla tower'),
+        'battery': ('Acumulador', 'Battery'), 'repair_kit': ('Kit de reparo', 'Repair kit'), 'drill': ('Extratora', 'Extractor'),
+        'steel_plate': ('Chapa de aço', 'Steel plate'), 'circuit': ('Placa de circuito', 'Circuit board'), 'module': ('Módulo mecânico', 'Mechanical module'),
+        'iron_ingot': ('Lingote de ferro', 'Iron ingot'), 'smooth_stone': ('Pedra lisa', 'Smooth stone'), 'lightning_rod': ('Para-raios', 'Lightning rod'),
+        'copper_block': ('Bloco de cobre', 'Block of copper'), 'redstone': ('Redstone', 'Redstone'), 'wire': ('Fiação de cobre', 'Copper wire'),
+        'gear': ('Engrenagem', 'Gear'), 'iron_plate': ('Chapa de ferro', 'Iron plate'),
+    })
+    for key, (pt, en) in names.items(): label(f'veio.onboarding.name.{key}', pt, en)
+    more = lambda pt, en: ('Saiba mais: J → Sistemas → ' + pt, 'Learn more: J → Systems → ' + en)
+    steps = [
+      (('Indústria 1 de 8 · Oficina e aço', 'Industry 1 of 8 · Workshop and steel'),
+       ('O Quadro da fábrica é o plano da indústria: cada fase pede uma pilha que só uma linha funcionando entrega. A Oficina pede 32 engrenagens; o Aço, 16 chapas de aço.',
+        'The Factory board is the industry plan: each phase asks for a stack only a working line delivers. The Workshop asks for 32 gears; Steel, 16 steel plates.'),
+       [('1. Faça o Quadro da fábrica (baú, 2 lingotes de cobre e graveto) e ponha perto das máquinas.', '1. Make the Factory board (chest, 2 copper ingots and a stick) and place it near the machines.'),
+        ('2. Entregue 32 engrenagens: libera chave, triturador, forno de ligas e kit de reparo.', '2. Deliver 32 gears: unlocks the wrench, crusher, alloy furnace and repair kit.'),
+        ('3. Forno de ligas: 2 chapas de ferro + carvão = 1 chapa de aço. Entregue 16.', '3. Alloy furnace: 2 iron plates + coal = 1 steel plate. Deliver 16.'),
+        ('4. Gargalo: a linha de engrenagens puxa 40 FE/t, mais que uma roda d\'água. Planeje a energia.', '4. Bottleneck: the gear line draws 40 FE/t, more than one water wheel. Plan the power.')],
+       ('Aço! A fábrica virou indústria.', 'Steel! The factory became an industry.'), more('Fases e pesquisa.', 'Phases and research.')),
+      (('Indústria 2 de 8 · Eletrônica', 'Industry 2 of 8 · Electronics'),
+       ('Circuito é cobre virando inteligência: fiação na cortadora, silício no triturador ou no forno de ligas, e o montador de circuitos.',
+        'A circuit is copper turned smart: wire in the cutter, silicon in the crusher or alloy furnace, and the circuit assembler.'),
+       [('1. Cortadora: chapa de cobre vira fiação. Triturador: quartzo vira silício (ou 4 areias + carvão no forno de ligas).', '1. Cutter: copper plate becomes wire. Crusher: quartz becomes silicon (or 4 sand + coal in the alloy furnace).'),
+        ('2. Montador de circuitos: 2 fiações + silício = 1 circuito.', '2. Circuit assembler: 2 wires + silicon = 1 circuit.'),
+        ('3. Entregue 16 circuitos no Quadro: libera solar, Mk.II, módulos e o quartel.', '3. Deliver 16 circuits at the board: unlocks solar, Mk.II, modules and the barracks.'),
+        ('4. Gargalo: silício. Sem ir ao Nether, a rota da areia é mais longa, mas não para.', '4. Bottleneck: silicon. Without the Nether, the sand route is longer, but it works.')],
+       ('Circuitos! Agora a fábrica pensa.', 'Circuits! Now the factory thinks.'), more('Fases e pesquisa.', 'Phases and research.')),
+      (('Indústria 3 de 8 · Extratora Mk.II', 'Industry 3 of 8 · Extractor Mk.II'),
+       ('A Mk.II extrai uma unidade por segundo, o dobro da comum, e chega a diamante e esmeralda. Com ela a linha dobra, e a poluição também: 4 por segundo.',
+        'The Mk.II mines one unit per second, twice the basic one, and reaches diamond and emerald. With it the line doubles, and so does pollution: 4 per second.'),
+       [('1. Fabrique a Mk.II (ficha acima): ela usa uma extratora comum.', '1. Craft the Mk.II (card above): it uses a basic extractor.'),
+        ('2. Troque a extratora de um veio bom pela Mk.II.', '2. Swap the extractor on a good vein for the Mk.II.'),
+        ('3. Dobre o que vem depois: duas prensas por Mk.II, esteira rápida se precisar.', '3. Double what comes after: two presses per Mk.II, a fast belt if needed.'),
+        ('4. Veja no painel quanto ela polui por minuto.', '4. See on the panel how much it pollutes per minute.')],
+       ('O dobro de minério. A vila agradece, e o ar sente.', 'Twice the ore. The village is grateful, and the air feels it.'), more('Jazidas e extração.', 'Deposits and extraction.')),
+      (('Indústria 4 de 8 · O primeiro aviso', 'Industry 4 of 8 · The first warning'),
+       ('Com a fábrica maior, a poluição passa de 400 e eu aviso no chat. Um dia depois, nas noites em que passar de 1.200, as ondas começam. É o preço de crescer.',
+        'With a bigger factory, pollution passes 400 and I warn you in chat. A day later, on nights it passes 1,200, the waves begin. It is the price of growing.'),
+       [('1. Deixe a fábrica trabalhar: a barra mostra o chunk mais poluído.', '1. Let the factory work: the bar shows the most polluted chunk.'),
+        ('2. Quando o aviso vier, confira a muralha, a luz e o portão da fábrica.', '2. When the warning comes, check the wall, the light and the factory gate.'),
+        ('3. Lavouras perto absorvem; o módulo de eficiência corta metade. Mas para atender a vila, vai poluir.', '3. Nearby crops absorb; the efficiency module halves it. But to supply the village, it will pollute.'),
+        ('4. Prepare-se: as próximas etapas são a defesa.', '4. Get ready: the next steps are defense.')],
+       ('Aí está o aviso. Agora, defesa.', 'There is the warning. Now, defense.'), more('Poluição e defesa.', 'Pollution and defense.')),
+      (('Indústria 5 de 8 · O quartel', 'Industry 5 of 8 · The barracks'),
+       ('Muralha segura quem anda; o quartel luta. Um soldado por prédio, de plantão também à noite. Ele come a cada golpe: sem comida, ninguém sai do posto.',
+        'Walls stop walkers; the barracks fights. One soldier per building, on watch at night too. They eat with every blow: with no food, nobody leaves their post.'),
+       [('1. Fabrique o quartel (ficha acima) e coloque dentro da muralha, perto da fábrica.', '1. Craft the barracks (card above) and place it inside the wall, near the factory.'),
+        ('2. Comida no espaço da esquerda; uma esmeralda no da direita, para o salário.', '2. Food in the left slot; an emerald in the right one, for wages.'),
+        ('3. Contrate com uma esmeralda; agache com uma esmeralda para trocar a classe.', '3. Hire with an emerald; sneak with an emerald to change class.'),
+        ('4. Milícia chega rápido, guarda aguenta e se cura, arqueiro atira de longe, mago acerta dois.', '4. Militia is fast, the guard holds and heals, the archer shoots from afar, the mage hits two.')],
+       ('Temos um soldado. A vila dorme mais tranquila.', 'We have a soldier. The village sleeps easier.'), more('Vila operária (quartel).', 'Worker village (barracks).')),
+      (('Indústria 6 de 8 · A torre Tesla', 'Industry 6 of 8 · The Tesla tower'),
+       ('A Tesla defende sozinha: abate o monstro mais perto a 10 blocos. Mas cada tiro gasta 2.400 FE e ela guarda 20.000, só 8 tiros. Energia é o gargalo dela.',
+        'The Tesla defends on its own: it kills the nearest monster within 10 blocks. But each shot costs 2,400 FE and it stores 20,000, just 8 shots. Power is its bottleneck.'),
+       [('1. A receita vem da pesquisa de eletrônica: 128 circuitos e 128 molduras no laboratório.', '1. The recipe comes from the electronics research: 128 circuits and 128 frames in the lab.'),
+        ('2. Coloque a torre perto das máquinas que poluem: é para lá que os Saqueadores vão.', '2. Place the tower near the polluting machines: that is where Raiders go.'),
+        ('3. Ligue-a na rede (cabo ou poste): ela só atira com energia guardada.', '3. Connect it to the grid (cable or pole): it only fires with stored energy.'),
+        ('4. Ela não acerta aldeões, animais nem chefes.', '4. It does not hit villagers, animals or bosses.')],
+       ('A Tesla está carregada. Agora, a noite.', 'The Tesla is charged. Now, the night.'), more('Poluição e defesa (gargalos).', 'Pollution and defense (bottlenecks).')),
+      (('Indústria 7 de 8 · Energia para a noite', 'Industry 7 of 8 · Power for the night'),
+       ('De noite o solar não rende. Sem reserva, a Tesla apaga no meio da onda. Cada acumulador guarda 30.000 FE; o gerador a carvão segura, mas polui e chama mais ondas.',
+        'At night solar gives nothing. Without a reserve, the Tesla goes dark mid-wave. Each battery stores 30,000 FE; a coal generator holds, but it pollutes and calls more waves.'),
+       [('1. Fabrique acumuladores (a receita rende 4).', '1. Craft batteries (the recipe makes 4).'),
+        ('2. Ligue na mesma rede da Tesla, com cabo ou poste.', '2. Connect them to the Tesla grid, with cable or pole.'),
+        ('3. Carregue de dia, com sobra de energia.', '3. Charge them by day, with spare power.'),
+        ('4. Conta rápida: uma onda de 12 pede 12 tiros, 28.800 FE. Uma Tesla sozinha não dá conta.', '4. Quick math: a wave of 12 needs 12 shots, 28,800 FE. One Tesla alone is not enough.')],
+       ('Energia guardada para a noite.', 'Power saved for the night.'), more('Energia.', 'Power.')),
+      (('Indústria 8 de 8 · Reparos', 'Industry 8 of 8 · Repairs'),
+       ('Quatro golpes param uma máquina, e o Bruto bate o dobro. Máquina parada não perde estoque: um kit de reparo, com o botão direito, devolve 50%.',
+        'Four blows stop a machine, and the Brute hits twice as hard. A stopped machine keeps its stock: a repair kit, right-clicked, restores 50%.'),
+       [('1. Fabrique kits de reparo (a receita rende 4).', '1. Craft repair kits (the recipe makes 4).'),
+        ('2. Guarde alguns perto da fábrica.', '2. Keep some near the factory.'),
+        ('3. Depois de uma onda, ande pela fábrica: o painel mostra a integridade de cada máquina.', '3. After a wave, walk the factory: the panel shows each machine\'s integrity.')],
+       ('Pronto para o que vier.', 'Ready for whatever comes.'), more('Poluição e defesa.', 'Pollution and defense.')),
+    ]
+    extra = {
+        'intro.1': ('A vila cresceu e pede mais: mais chapas, mais engrenagens, mais comida. A oficina de hoje não dá conta.', 'The village grew and asks for more: more plates, more gears, more food. Today\'s workshop cannot keep up.'),
+        'intro.2': ('Vamos levar a fábrica ao aço e à eletrônica, com a extratora Mk.II. Mas produzir mais é poluir mais.', 'Let us take the factory to steel and electronics, with the Mk.II extractor. But making more means polluting more.'),
+        'intro.3': ('E poluição traz Saqueadores. Desta vez a defesa vem junto: quartel, torre Tesla e energia para a noite.', 'And pollution brings Raiders. This time defense comes along: barracks, Tesla tower and power for the night.'),
+        'end.1': ('A fábrica virou indústria, e a vila tem defesa.', 'The factory became an industry, and the village has a defense.'),
+        'end.2': ('As ondas vão voltar, maiores com a poluição: até 12 Saqueadores, arqueiros e o Bruto. Mais Tesla, mais energia, mais soldados.', 'Waves will return, bigger with pollution: up to 12 Raiders, archers and the Brute. More Teslas, more power, more soldiers.'),
+        'end.3': ('Com a indústria de pé, a vila pode virar cidade. Fale comigo quando quiser.', 'With industry standing, the village can become a city. Talk to me whenever you like.'),
+        'end.4': ('E lembre: o Quadro da fábrica sempre diz o próximo gargalo.', 'And remember: the Factory board always tells you the next bottleneck.'),
+        'start_title': ('Capítulo 5: a grande indústria', 'Chapter 5: heavy industry'),
+        'start_sub': ('Aço, eletrônica, Mk.II e a defesa da fábrica', 'Steel, electronics, Mk.II and the factory defense'),
+        'end_title': ('A vila tem uma indústria', 'The village has an industry'),
+        'end_sub': ('Capítulo da grande indústria concluído', 'Heavy industry chapter complete'),
+        'bar': ('Indústria %s/8 | %s', 'Industry %s/8 | %s'), 'bar_prefix': ('Indústria %s/8 |', 'Industry %s/8 |'),
+        'goal.1': ('Entregue 16 circuitos no Quadro da fábrica (fase Eletrônica)', 'Deliver 16 circuits at the Factory board (Electronics phase)'),
+        'goal.2': ('Coloque uma extratora Mk.II num veio', 'Place an Mk.II extractor on a vein'),
+        'goal.3': ('Poluição mais alta: %s · o aviso vem em %s', 'Highest pollution: %s · the warning comes at %s'),
+        'goal.7': ('Tenha um kit de reparo no inventário', 'Have a repair kit in your inventory'),
+        'check.board': ('Quadro da fábrica', 'Factory board'), 'check.workshop': ('fase Oficina', 'Workshop phase'),
+        'check.steel': ('fase Aço', 'Steel phase'), 'check.barracks': ('quartel colocado', 'barracks placed'),
+        'check.soldier': ('soldado contratado', 'soldier hired'), 'check.rations': ('comida no quartel', 'food in the barracks'),
+        'check.tesla': ('torre colocada', 'tower placed'), 'check.charge': ('tiros guardados: %s/%s', 'shots stored: %s/%s'),
+        'check.battery': ('acumulador colocado', 'battery placed'), 'check.stored': ('energia guardada: %s FE', 'energy stored: %s FE'),
+        'wave': ('Os Saqueadores vieram! É o preço da fábrica. Muralha, quartel e Tesla seguram; no dia seguinte, reparos.', 'The Raiders came! That is the price of the factory. Walls, barracks and Tesla hold; the next day, repairs.'),
+    }
+    add_chapter(label, 'forge', steps, extra)
+    for step, block in {2: 'drill_mk2', 4: 'barracks', 5: 'tesla', 6: 'battery', 7: 'repair_kit'}.items():
+        label(f'veio.forge.recipe.{step}', *recipe_line(block))
+    sources = {
+      2: ('De onde vem: chapa de aço = forno de ligas · circuito = montador de circuitos · módulo = moldura + engrenagem no integrador.', 'Where from: steel plate = alloy furnace · circuit = circuit assembler · module = frame + gear in the integrator.'),
+      4: ('De onde vem: lingotes de ferro na fornalha · pedra lisa = pedregulho na fornalha 2 vezes · esmeralda = troca com aldeões.', 'Where from: iron ingots from the furnace · smooth stone = cobblestone smelted twice · emerald = villager trades.'),
+      5: ('De onde vem: para-raios = 3 lingotes de cobre · bloco de cobre = 9 lingotes · circuitos e aço da fábrica.', 'Where from: lightning rod = 3 copper ingots · copper block = 9 ingots · circuits and steel from the factory.'),
+      6: ('De onde vem: redstone das minas · fiação na cortadora · aço no forno de ligas.', 'Where from: redstone from mines · wire in the cutter · steel in the alloy furnace.'),
+      7: ('De onde vem: chapas de ferro na prensa · engrenagem no montador.', 'Where from: iron plates in the press · gear in the assembler.'),
+    }
+    for step, (pt, en) in sources.items(): label(f'veio.forge.from.{step}', pt, en)
+
+
+def add_metro_labels(label):
+    """Capítulo 6: a cidade (onboarding/metro.rs)."""
+    more = lambda pt, en: ('Saiba mais: J → Sistemas → ' + pt, 'Learn more: J → Systems → ' + en)
+    steps = [
+      (('Cidade 1 de 6 · Nove famílias', 'City 1 of 6 · Nine families'),
+       ('Uma cidade precisa de gente. Cada casa abriga até 4; bebê nasce onde há cama livre e vaga em casa. Na fase Vila, a vila pode ter até 60 aldeões e 10 casas.',
+        'A city needs people. Each house holds up to 4; babies are born where there is a free bed and room at home. In the Village phase, the village can have up to 60 villagers and 10 houses.'),
+       [('1. Faça mais casas, em bairros espalhados (até 6 vizinhas a 16 blocos).', '1. Build more houses, in spread districts (at most 6 neighbours within 16 blocks).'),
+        ('2. Camas livres perto das casas fazem a vila crescer.', '2. Free beds near houses make the village grow.'),
+        ('3. Casa nova pede poço a 24 blocos (o alvará da fase Vila).', '3. A new house needs a well within 24 blocks (the Village phase permit).'),
+        ('4. Comida nas despensas mantém as famílias.', '4. Food in the pantries keeps families going.')],
+       ('Nove famílias! A vila já parece cidade.', 'Nine families! The village already looks like a city.'), more('Sociedade da vila (casas e famílias).', 'Village society (houses and families).')),
+      (('Cidade 2 de 6 · Emprego', 'City 2 of 6 · Jobs'),
+       ('Família sem salário empobrece, e o IDH cai. A Cidade pede 60% dos adultos empregados: postos, lojas, quartel e a prefeitura contam.',
+        'A family without wages gets poorer, and HDI falls. The City asks for 60% of adults employed: posts, shops, barracks and the town hall count.'),
+       [('1. Contrate em postos de trabalho: lavrador, pastor, carregador, capataz.', '1. Hire at work posts: farmer, shepherd, hauler, foreman.'),
+        ('2. Lojas e o quartel também empregam.', '2. Shops and the barracks employ too.'),
+        ('3. A conta da companhia precisa pagar: esmeraldas no cofre.', '3. The company account must pay: emeralds in the vault.'),
+        ('4. Abra a prefeitura: ela mostra o emprego da vila.', '4. Open the town hall: it shows village employment.')],
+       ('Gente trabalhando, dinheiro girando.', 'People working, money moving.'), more('Economia e moeda (salários).', 'Economy and money (wages).')),
+      (('Cidade 3 de 6 · Serviços para todos', 'City 3 of 6 · Services for all'),
+       ('Na Cidade, toda casa conta. Saneamento, energia, comércio e lazer para cada família: é o que mais pesa no IDH. Da fase Cidade, casa nova pede também poste a 12 blocos.',
+        'In a City, every house counts. Sanitation, power, trade and leisure for every family: it weighs most on HDI. From the City phase, a new house also needs a pole within 12 blocks.'),
+       [('1. Abra cada casa: a linha de serviços diz o que falta.', '1. Open each house: the services line says what is missing.'),
+        ('2. Poço a 24, poste a 12, loja a 40 e lazer a 32 blocos.', '2. Well within 24, pole within 12, shop within 40 and leisure within 32 blocks.'),
+        ('3. Bairros afastados precisam dos próprios serviços.', '3. Far districts need their own services.'),
+        ('4. A barra mostra quantas casas já têm tudo.', '4. The bar shows how many houses have everything.')],
+       ('Toda família bem servida.', 'Every family well served.'), more('Sociedade da vila (serviços e IDH).', 'Village society (services and HDI).')),
+      (('Cidade 4 de 6 · Uma obra cívica', 'City 4 of 6 · A civic work'),
+       ('Bairro sem lazer pede obra. A cada 4 dias eu peço um parque, uma praça ou um monumento para o bairro mais carente, e a prefeitura paga a obra à companhia.',
+        'A district without leisure asks for a work. Every 4 days I ask for a park, a plaza or a monument for the neediest district, and the town hall pays the company for it.'),
+       [('1. Quando o pedido chegar, a barra mostra o que e onde.', '1. When the request arrives, the bar shows what and where.'),
+        ('2. Construa o bloco cívico a até 32 blocos do bairro, em 6 dias.', '2. Build the civic block within 32 blocks of the district, within 6 days.'),
+        ('3. Parque 240, praça 420, monumento 720 moedas, pagos à companhia.', '3. Park 240, plaza 420, monument 720 coins, paid to the company.'),
+        ('4. Obra pronta: ânimo +10 e lazer permanente no bairro.', '4. Work done: morale +10 and permanent leisure in the district.')],
+       ('Obra entregue. A cidade tem a sua cara.', 'Work delivered. The city has its own face.'), more('Agenda, feriados e obras.', 'Calendar, holidays and civic works.')),
+      (('Cidade 5 de 6 · O PIB', 'City 5 of 6 · GDP'),
+       ('O PIB da vila é o que as famílias compram por dia, mais o que a vila exporta. Para Cidade: 400 por dia. Mais gente com salário, mais loja abastecida, mais PIB.',
+        'The village GDP is what families buy per day, plus what the village exports. For a City: 400 a day. More people with wages, more stocked shops, more GDP.'),
+       [('1. Lojas sempre abastecidas: estoque vazio não vende.', '1. Shops always stocked: an empty stock sells nothing.'),
+        ('2. Salários em dia: família sem dinheiro não compra.', '2. Wages paid: a family without money does not buy.'),
+        ('3. Bens além de comida (lã, couro, velas, livros) aumentam o que cada casa gasta.', '3. Goods beyond food (wool, leather, candles, books) raise what each house spends.'),
+        ('4. Mais tarde, o porto ou a estação de carga somam a exportação.', '4. Later, the cargo port or station adds exports.')],
+       ('A economia da vila tem tamanho de cidade.', 'The village economy is city-sized.'), more('Economia e moeda.', 'Economy and money.')),
+      (('Cidade 6 de 6 · A fase Cidade', 'City 6 of 6 · The City phase'),
+       ('Tudo junto, no fim do dia: 36 moradores, 9 famílias, IDH 0,55, PIB 400 e 60% de emprego, com o meu secretário no gabinete. Aí eu declaro a Cidade.',
+        'Everything together, at the end of the day: 36 residents, 9 families, HDI 0.55, GDP 400 and 60% employment, with my clerk in the office. Then I declare the City.'),
+       [('1. A barra lista cada meta com ✔ ou ✘.', '1. The bar lists each goal with ✔ or ✘.'),
+        ('2. O livro da prefeitura mostra os bairros e os problemas.', '2. The town hall book shows districts and problems.'),
+        ('3. Na fase Cidade: zonas nível 4, 100 aldeões, 24 casas e imposto de 12%.', '3. In the City phase: zone level 4, 100 villagers, 24 houses and 12% tax.'),
+        ('4. Se tudo estiver verde, durma uma noite: a fase muda no fim do dia.', '4. If everything is green, sleep a night: the phase changes at the end of the day.')],
+       ('Somos uma Cidade!', 'We are a City!'), more('Sociedade da vila (fases).', 'Village society (phases).')),
+    ]
+    extra = {
+        'intro.1': ('A indústria trouxe trabalho, e o trabalho trouxe gente. Chegou a hora de a Vila virar Cidade.', 'Industry brought work, and work brought people. It is time for the Village to become a City.'),
+        'intro.2': ('Para Cidade: 36 moradores, 9 famílias, IDH 0,55, PIB de 400 por dia e 60% de emprego.', 'For a City: 36 residents, 9 families, HDI 0.55, GDP of 400 a day and 60% employment.'),
+        'intro.3': ('Uma coisa de cada vez. Comecemos pelas famílias.', 'One thing at a time. Let us start with families.'),
+        'end.1': ('Uma Cidade! Do punhado de casas que eu governava para isto.', 'A City! From the handful of houses I governed to this.'),
+        'end.2': ('A Metrópole pede 80 moradores, 20 famílias, IDH 0,70, 3 bairros e Gini até 0,45: renda bem distribuída.', 'A Metropolis asks for 80 residents, 20 families, HDI 0.70, 3 districts and Gini up to 0.45: income well spread.'),
+        'end.3': ('A vila agora produz mais do que consome. Lá fora tem gente querendo comprar.', 'The village now makes more than it consumes. Out there, people want to buy.'),
+        'end.4': ('Quando quiser saber o próximo passo, fale comigo.', 'Whenever you want the next step, talk to me.'),
+        'start_title': ('Capítulo 6: a cidade', 'Chapter 6: the city'), 'start_sub': ('De Vila a Cidade', 'From Village to City'),
+        'end_title': ('Uma Cidade de verdade', 'A real City'), 'end_sub': ('Capítulo da cidade concluído', 'City chapter complete'),
+        'bar': ('Cidade %s/6 | %s', 'City %s/6 | %s'), 'bar_prefix': ('Cidade %s/6 |', 'City %s/6 |'),
+        'goal.0': ('Famílias: %s/9 · moradores: %s', 'Families: %s/9 · residents: %s'),
+        'goal.1': ('Emprego: %s%% (%s de %s adultos) · meta 60%%', 'Jobs: %s%% (%s of %s adults) · goal 60%%'),
+        'goal.3': ('Obra: %s', 'Work: %s'),
+        'goal.3_wait': ('Obra cívica: o próximo pedido chega em até 4 dias (casas com lazer: %s de %s)', 'Civic work: the next request comes within 4 days (houses with leisure: %s of %s)'),
+        'goal.4': ('PIB do dia: %s/400 moedas', 'GDP of the day: %s/400 coins'),
+        'check.water': ('água %s/%s', 'water %s/%s'), 'check.power': ('energia %s/%s', 'power %s/%s'), 'check.all': ('tudo %s/%s', 'everything %s/%s'),
+        'check.residents': ('moradores %s/36', 'residents %s/36'), 'check.families': ('famílias %s/9', 'families %s/9'),
+        'check.idh': ('IDH %s/0,55', 'HDI %s/0.55'), 'check.gdp': ('PIB %s/400', 'GDP %s/400'), 'check.jobs': ('emprego %s%%/60%%', 'jobs %s%%/60%%'),
+    }
+    add_chapter(label, 'metro', steps, extra)
