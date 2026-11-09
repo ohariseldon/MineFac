@@ -284,6 +284,9 @@ impl Hooks for Factory {
         if event.kind == onboarding::MAYOR && (now + u64::from(event.entity)) % 41 == 0 {
             onboarding::mayor_seen(host, event.dimension, event.entity);
         }
+        if matches!(event.kind, onboarding::SMITH | onboarding::FARMER) && (now + u64::from(event.entity)) % 41 == 0 {
+            onboarding::neighbor_seen(host, event.dimension, event.kind, event.entity);
+        }
         if event.kind == workforce::society::agenda::VISITOR && (now + u64::from(event.entity)) % 41 == 0 {
             workforce::society::agenda::visitor_seen(host, event.dimension, event.entity);
         }
@@ -295,6 +298,8 @@ impl Hooks for Factory {
             let now = defense::clock();
             workforce::village::observe(host, event.dimension, event.entity, now);
             workforce::village::scan_homes(host, event.dimension, event.entity, now);
+            // Os aldeões comuns comentam o momento do tutorial quando o jogador passa perto.
+            if (now + u64::from(event.entity)) % 97 == 0 { onboarding::villager_seen(host, event.dimension, event.entity, now); }
         }
         Flow::Continue
     }
@@ -315,6 +320,9 @@ impl Hooks for Factory {
         if event.kind == onboarding::MAYOR {
             onboarding::talk(host);
             return Flow::Cancel;
+        }
+        if matches!(event.kind, onboarding::SMITH | onboarding::FARMER) {
+            return if onboarding::neighbor_talk(host, event.kind) { Flow::Cancel } else { Flow::Continue };
         }
         if event.kind == workforce::society::agenda::VISITOR
             && let Ok(id) = u32::try_from(event.entity)

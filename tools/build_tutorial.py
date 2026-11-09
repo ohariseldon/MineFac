@@ -1896,6 +1896,13 @@ from build_machine_audio import add_labels as add_sound_labels
 add_sound_labels(langs)
 from build_onboarding import add_labels as add_onboarding_labels
 add_onboarding_labels(label)
+# Diário do Prefeito Otávio: o prefeito dá junto com o gerador (onboarding/intro.rs).
+diary={"minecraft:written_book_content":{"title":{"raw":"Diário de Otávio"},"author":"Otávio",
+ "generation":0,"resolved":True,"pages":[{"raw":{"translate":f"veio.onboarding.diary.{n}"}} for n in range(5)]},
+ "minecraft:custom_name":{"translate":"veio.onboarding.diary.title","italic":False}}
+write(f"{D}/loot_table/tutorial/diary.json",{"type":"minecraft:generic",
+ "pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:written_book",
+ "functions":[{"function":"minecraft:set_components","components":diary}]}]}]})
 from build_wiki import build as build_wiki
 build_wiki(label, langs, vanilla)
 for code,data in langs.items():write(f"{A}/lang/{code}.json",data)

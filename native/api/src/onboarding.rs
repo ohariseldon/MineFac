@@ -6,7 +6,7 @@ use horizon_client::mod_api::{NativeServerPlayer, Text};
 use std::{collections::HashMap, path::{Path, PathBuf}, sync::{Mutex, atomic::{AtomicBool, AtomicU64, Ordering}}};
 
 type Pos = [i32; 3];
-const DONE: u8 = 8;
+const DONE: u8 = 16;
 const GENERATOR_SLOT: usize = 0;
 const PRESS_SLOT: usize = 1;
 const ASSEMBLER_SLOT: usize = 2;
@@ -16,11 +16,11 @@ const MAX_TRACE: usize = 128;
 // Workers may walk and wait with a load. No short conveyor-speed deadline.
 const TRACE_TTL: u64 = 6000;
 /// Linhas "faça" de cada etapa (`veio.onboarding.do.<etapa>.<n>`), na ordem.
-const DO_LINES: [u8; 9] = [3, 4, 4, 3, 3, 4, 3, 4, 3];
+const DO_LINES: [u8; 17] = [3, 4, 4, 3, 3, 4, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3];
 /// O que fabricar em cada etapa: o produto e os ingredientes da receita (sem repetir). A ficha
 /// da etapa (texto gerado das receitas em `build_onboarding.py`) explica a receita; a lista de
 /// materiais acima da barra de itens marca o que o jogador já tem. Nada é dado de graça.
-const CRAFT: [&[(&str, &[&str])]; 8] = [
+const CRAFT: [&[(&str, &[&str])]; 16] = [
     &[(GENERATOR, &["minecraft:furnace", "minecraft:iron_ingot", "minecraft:copper_ingot"])],
     &[(PRESS, &["minecraft:copper_ingot", "minecraft:iron_ingot", "minecraft:piston", "minecraft:smooth_stone"]),
       (CABLE, &["minecraft:copper_ingot", "minecraft:stick"])],
@@ -30,9 +30,41 @@ const CRAFT: [&[(&str, &[&str])]; 8] = [
     &[(BELT, &["minecraft:copper_ingot", "minecraft:stick"])],
     &[("minecraft:chest", &["#minecraft:planks"])],
     &[(HUB, &["minecraft:chest", GEAR, "minecraft:iron_ingot", "minecraft:copper_ingot"])],
+    // Os sistemas: Quadro, fase, outra extratora, divisor, postes, pedido do dia, Lar, centro.
+    // Contratar e os postos de trabalho ficam com o capítulo da vila (`village.rs`).
+    &[(milestones::BOARD, &["minecraft:chest", "minecraft:copper_ingot", "minecraft:stick"])],
+    &[],
+    &[(DRILL, &["minecraft:copper_ingot", "minecraft:iron_ingot", "minecraft:piston"])],
+    &[(SPLITTER, &[GEAR, BELT, "minecraft:redstone"])],
+    &[(POLE, &["minecraft:stick", "minecraft:copper_ingot"])],
+    &[],
+    &[],
+    &[],
 ];
+/// Etapas dos sistemas (8 a 15), na ordem.
+const BOARD_STEP: u8 = 8;
+const PHASE_STEP: u8 = 9;
+const DRILL_STEP: u8 = 10;
+const SPLIT_STEP: u8 = 11;
+const POLE_STEP: u8 = 12;
+const ORDER_STEP: u8 = 13;
+const MEAL_STEP: u8 = 14;
+const CENTER_STEP: u8 = 15;
+/// Chapas da primeira fase do Quadro (`milestones::PHASES[0]`).
+const PHASE_COUNT: u32 = 16;
+/// Coisas que só acontecem uma vez, guardadas em `Progress::events`.
+const EVENT_MEAL: u32 = 1;
+const EVENT_CENTER: u32 = 2;
+const EVENT_SPLIT: u32 = 4;
+/// As 16 etapas em 4 atos de 4: cada ato tem nome, título na tela e fala do prefeito.
+const ACT_STEPS: u8 = 4;
+/// Empacou: depois deste tempo na mesma etapa (relógio do tutorial, 3 min), o prefeito dá uma
+/// dica do erro mais comum. Uma vez por etapa.
+const HINT_AFTER: u64 = 3600;
+/// Longe disto (blocos) do lugar da etapa, a barra diz para onde ir.
+const FAR: i32 = 24;
 
-fn craft_bit(step: usize, part: usize) -> u16 { 1 << (step * 2 + part) }
+fn craft_bit(step: usize, part: usize) -> u32 { 1 << (step * 2 + part) }
 
 /// Dicas de uma vez só, na hora em que fazem sentido (como as do Factorio).
 const TIP_FACES: u16 = 1;
@@ -61,7 +93,7 @@ struct Progress {
     stored: u32,
     delivered: bool,
     /// Produtos da etapa já fabricados (`craft_bit`) e dicas já vistas (bits), salvos.
-    crafted: u16,
+    crafted: u32,
     tips: u16,
     pending_tips: u16,
     /// Prólogo (`intro`): casa, prefeito e terreno; `plot` é o centro do terreno e o nível dele;
@@ -71,6 +103,32 @@ struct Progress {
     outro: bool,
     /// Onde o prefeito ficou (para a seta quando ele está longe, em chunk descarregado). Salvo.
     mayor: Option<[f64; 3]>,
+    /// Sistemas (etapas 8 a 15): o Quadro e o último poste colocados, as extratoras novas e o
+    /// que aconteceu uma vez (`EVENT_*`). Salvos. `poles` (não salvo) conta os postes da etapa.
+    board: Option<Pos>,
+    pole: Option<Pos>,
+    drills: u32,
+    events: u32,
+    poles: u32,
+    /// Festas do capítulo da vila (`festival`): qual está marcada (0 nenhuma) e o dia dela. Salvos.
+    festival: u8,
+    festival_day: u32,
+    /// O favor do primeiro ato (`favors.rs`): a prensa vem do Seu Bento depois do campo da Dona
+    /// Cida. Salvo; os pés de trigo contados são só da sessão.
+    favor: u8,
+    favor_crops: u32,
+    /// Dica do prefeito: a etapa que está contando (fábrica, ou 100 + etapa da vila), desde
+    /// quando, e se a dica já saiu. Não salvo.
+    hint_for: Option<u16>,
+    hint_since: u64,
+    hinted: bool,
+    /// Lido do mundo a cada segundo, não salvo: chapas entregues, fase e pedido do dia do
+    /// Quadro, e o poste com energia.
+    board_delivered: u32,
+    board_phase: usize,
+    order_done: u32,
+    order_paid: bool,
+    pole_powered: bool,
     intro_announced: Option<u8>,
     intro_since: Option<u64>,
     plot_level: Option<intro::Level>,
@@ -161,6 +219,28 @@ impl Progress {
         }
     }
 
+    /// Blocos dos sistemas (etapas 8 a 15): colocar o Quadro, um posto ou um poste, ou abrir um
+    /// Quadro ou posto que já existe, ou o centro de controle na etapa dele.
+    fn systems(&mut self, pos: Pos, block: &str, clicked: bool) {
+        let systems = self.step >= BOARD_STEP;
+        match block {
+            milestones::BOARD if !clicked || (systems && self.board.is_none()) => {
+                if self.board != Some(pos) { self.board = Some(pos); self.board_delivered = 0; self.dirty = true; }
+            }
+            DRILL | DRILL_MK2 | production::DRILL_MK3 if !clicked && self.step == DRILL_STEP => {
+                self.drills = (self.drills + 1).min(64); self.dirty = true;
+            }
+            SPLITTER if !clicked && self.step == SPLIT_STEP => { self.events |= EVENT_SPLIT; self.dirty = true; }
+            POLE | STEEL_POLE if !clicked => {
+                self.poles = (self.poles + 1).min(64); self.pole = Some(pos); self.pole_powered = false; self.dirty = true;
+            }
+            workforce::CONTROL_CENTER if clicked && self.step == CENTER_STEP => {
+                self.events |= EVENT_CENTER; self.dirty = true;
+            }
+            _ => {}
+        }
+    }
+
     fn clear_flow(&mut self) {
         self.input_credit = 0; self.output_credit = 0;
         self.fed = 0; self.made = 0; self.stored = 0;
@@ -177,6 +257,14 @@ impl Progress {
             5 => self.fed >= 2 && self.made >= 1,
             6 => self.stored >= 4,
             7 => self.delivered,
+            BOARD_STEP => self.board.is_some(),
+            PHASE_STEP => self.board_phase >= 1,
+            DRILL_STEP => self.drills >= 1,
+            SPLIT_STEP => self.events & EVENT_SPLIT != 0,
+            POLE_STEP => self.poles >= 2 && self.pole_powered,
+            ORDER_STEP => self.order_paid,
+            MEAL_STEP => self.events & EVENT_MEAL != 0,
+            CENTER_STEP => self.events & EVENT_CENTER != 0,
             _ => false,
         }
     }
@@ -272,13 +360,14 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-9\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-11\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
             self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips,
-            self.intro, u8::from(self.outro), self.village, self.village_crafted, self.village_base.max(0), self.city, self.city_crafted,
+            self.intro, u8::from(self.outro), self.village, self.village_crafted, self.village_base.max(0),
+            self.city, self.city_crafted, self.drills, self.events, self.festival, self.festival_day, self.favor,
             self.night_first, self.night, self.night_lights, self.night_wall, self.night_factory_wall, self.night_flags,
             self.forge, self.forge_crafted, self.forge_flags, self.metro, self.dimension);
-        for pos in self.blocks.iter().chain([&self.plot]).chain(self.village_blocks.iter()).chain(self.forge_blocks.iter()) {
+        for pos in self.blocks.iter().chain([&self.plot]).chain(self.village_blocks.iter()) {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
         }
@@ -286,30 +375,45 @@ impl Progress {
             Some([x, y, z]) => text.push_str(&format!("{x} {y} {z}\n")),
             None => text.push_str("-\n"),
         }
+        for pos in [&self.board, &self.pole].into_iter().chain(self.forge_blocks.iter()) {
+            if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
+            else { text.push_str("-\n"); }
+        }
         text
     }
 
     fn decode(text: &str) -> Option<Self> {
         let mut lines = text.lines();
-        // v4: o começo novo (prefeito salvo); v5: mais o capítulo da vila (3 números e 6 blocos).
-        let fields = match lines.next()? {
-            "veio-onboarding-1" => 10, "veio-onboarding-2" => 12, "veio-onboarding-3" => 14, "veio-onboarding-4" => 15,
-            "veio-onboarding-5" => 17, "veio-onboarding-6" => 19,
-            "veio-onboarding-7" => 25, "veio-onboarding-8" => 26,
-            "veio-onboarding-9" => 29, _ => return None,
-        };
-        // A v8 tem os mesmos 25 números da v7; muda o sentido dos dois últimos (marca 26).
-        let version9 = fields == 29;
-        let version8 = fields == 26 || version9;
-        let version7 = fields >= 25;
-        let fields = if fields == 26 { 25 } else { fields };
-        let version6 = fields >= 19;
-        let version5 = fields >= 17;
-        let version4 = fields >= 15;
-        let fields = if version5 { fields } else { fields.min(14) };
+        // Duas linhas do tutorial gravaram versões com o mesmo número; a contagem de números separa.
+        // Linha da fábrica (16 etapas): v7 sistemas, v8 festas, v9 favor, v10 a noite antiga.
+        // Linha dos capítulos: v7 a noite (25), v8 a noite com 6 etapas (25), v9 mais indústria e
+        // cidade (29, com os blocos da indústria depois dos da vila). v11 junta as duas.
+        let header = lines.next()?;
         let values: Vec<u32> = lines.next()?.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
+        // (números, versão da linha da fábrica, onde está a noite e se é a nova, onde estão indústria e
+        // cidade, se os blocos da indústria vêm logo depois dos da vila). A linha dos capítulos conta
+        // como v6 para a fábrica: ela tinha 8 etapas, sem Quadro, festas nem favor.
+        let count = values.len();
+        let (fields, version, night_at, forge_at, forge_early) = match (header, count) {
+            ("veio-onboarding-1", _) => (10, 1, None, None, false), ("veio-onboarding-2", _) => (12, 2, None, None, false),
+            ("veio-onboarding-3", _) => (14, 3, None, None, false), ("veio-onboarding-4", _) => (14, 4, None, None, false),
+            ("veio-onboarding-5", _) => (17, 5, None, None, false), ("veio-onboarding-6", _) => (19, 6, None, None, false),
+            ("veio-onboarding-7", 25) => (25, 6, Some((19, false)), None, false),
+            ("veio-onboarding-7", _) => (21, 7, None, None, false),
+            ("veio-onboarding-8", 25) => (25, 6, Some((19, true)), None, false),
+            ("veio-onboarding-8", _) => (23, 8, None, None, false),
+            ("veio-onboarding-9", 29) => (29, 6, Some((19, true)), Some(25), true),
+            ("veio-onboarding-9", _) => (24, 9, None, None, false),
+            ("veio-onboarding-10", _) => (30, 10, Some((24, false)), None, false),
+            ("veio-onboarding-11", _) => (34, 11, Some((24, true)), Some(30), false),
+            _ => return None,
+        };
+        let version4 = version >= 4;
         if values.len() != fields || values[0] > u32::from(DONE) { return None; }
-        let (crafted, tips) = if fields >= 12 { (values[10] as u16, values[11] as u16) } else { (0, 0) };
+        let (crafted, tips) = if fields >= 12 { (values[10], values[11] as u16) } else { (0, 0) };
+        let (drills, events) = if version >= 7 { (values[19].min(64), values[20]) } else { (0, 0) };
+        // v8: as festas do capítulo da vila (qual está marcada e o dia).
+        let (festival, festival_day) = if version >= 8 { ((values[21] as u8).min(festival::DONE), values[22]) } else { (0, 0) };
         // Saves de antes do prólogo: quem já começou a fábrica não volta para a casa e o prefeito.
         // A v3 não tinha a vila nem os recursos: 0 casa, 1 prefeito, 2 terreno, 3 pronto.
         let (intro, outro) = if version4 { ((values[12] as u8).min(intro::INTRO_DONE), values[13] != 0) }
@@ -317,6 +421,10 @@ impl Progress {
                 [usize::from((values[12] as u8).min(3))], values[13] != 0) }
             else if values[0] > 0 || crafted != 0 { (intro::INTRO_DONE, values[0] == u32::from(DONE)) }
             else { (0, false) };
+        // v9: o favor do primeiro ato. Antes dele o prefeito já dava as receitas da prensa e dos
+        // cabos: quem passou do pedido de recursos não faz o favor.
+        let favor = if version >= 9 { (values[23] as u8).min(favors::FAVOR_DONE) }
+            else if intro >= intro::PLOT_STAGE { favors::FAVOR_DONE } else { 0 };
         let dimension = lines.next()?.to_owned();
         if dimension.len() > 128 { return None; }
         let parse = |line: &str| -> Option<Option<Pos>> {
@@ -329,33 +437,47 @@ impl Progress {
         let plot = if fields >= 14 { parse(lines.next()?)? } else { None };
         let mut village_blocks = [None; 6];
         let mut forge_blocks = [None; 4];
-        let (village, village_crafted, village_base) = if version5 {
+        let (village, village_crafted, village_base) = if version >= 5 {
             for block in &mut village_blocks { *block = parse(lines.next()?)?; }
-            if version9 { for block in &mut forge_blocks { *block = parse(lines.next()?)?; } }
+            if forge_early { for block in &mut forge_blocks { *block = parse(lines.next()?)?; } }
             ((values[14] as u8).min(village::DONE_VILLAGE), values[15] as u16, values[16] as i32)
         } else { (0, 0, 0) };
-        let (city, city_crafted) = if version6 { ((values[17] as u8).min(city::DONE_CITY), values[18] as u16) } else { (0, 0) };
-        // Saves de antes da noite: quem já passou do prólogo não revive a primeira noite.
-        let (night_first, night, night_lights, night_wall, night_factory_wall, night_flags) = if version7 {
-            let (factory_wall, flags) = if version8 { ((values[23] as u16).min(night::FACTORY_WALL), values[24] as u8) }
-                else { (0, u8::from(values[23] != 0) * night::GATE | u8::from(values[24] != 0) * night::SLEPT) };
-            ((values[19] as u8).min(night::FIRST_DONE), (values[20] as u8).min(night::DONE_NIGHT),
-             (values[21] as u16).min(night::LIGHTS), (values[22] as u16).min(night::WALL), factory_wall, flags)
+        let (city, city_crafted) = if version >= 6 { ((values[17] as u8).min(city::DONE_CITY), values[18] as u16) } else { (0, 0) };
+        // Saves de antes da noite: quem já passou do prólogo não revive a primeira noite. A noite
+        // antiga gravava portão e cama como dois números; a nova, muralha da fábrica e marcas.
+        let (night_first, night, night_lights, night_wall, night_factory_wall, night_flags) = if let Some((at, new)) = night_at {
+            let (factory_wall, flags) = if new { ((values[at + 4] as u16).min(night::FACTORY_WALL), values[at + 5] as u8) }
+                else { (0, u8::from(values[at + 4] != 0) * night::GATE | u8::from(values[at + 5] != 0) * night::SLEPT) };
+            ((values[at] as u8).min(night::FIRST_DONE), (values[at + 1] as u8).min(night::DONE_NIGHT),
+             (values[at + 2] as u16).min(night::LIGHTS), (values[at + 3] as u16).min(night::WALL), factory_wall, flags)
         } else if values[0] > 0 { (night::FIRST_DONE, 0, 0, 0, 0, 0) } else { (0, 0, 0, 0, 0, 0) };
-        let (forge, forge_crafted, forge_flags, metro) = if version9 {
-            ((values[25] as u8).min(forge::SPEC.done()), values[26] as u16, values[27] as u8, (values[28] as u8).min(metro::SPEC.done()))
+        let (forge, forge_crafted, forge_flags, metro) = if let Some(at) = forge_at {
+            ((values[at] as u8).min(forge::SPEC.done()), values[at + 1] as u16, values[at + 2] as u8, (values[at + 3] as u8).min(metro::SPEC.done()))
         } else { (0, 0, 0, 0) };
         let mayor = if version4 { lines.next().and_then(|line| {
             let coords: Vec<f64> = line.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
             coords.try_into().ok()
         }) } else { None };
+        let mut more = [None; 2];
+        if version >= 7 { for pos in &mut more { *pos = parse(lines.next()?)?; } }
+        let [board, pole] = more;
+        if version >= 11 { for block in &mut forge_blocks { *block = parse(lines.next()?)?; } }
+        // Até a v6 a fábrica acabava na etapa 8. Quem já abriu o capítulo da vila (ou da cidade)
+        // fica nele (a fábrica conta como pronta); os outros seguem para as etapas dos sistemas e
+        // voltam ao prefeito no fim das 16.
+        let mut step = values[0] as u8;
+        let mut outro = outro;
+        if version <= 6 && step == 8 {
+            if village > 0 || city > 0 || night > 0 || forge > 0 || metro > 0 { step = DONE; outro = true; } else { outro = false; }
+        }
         // Sem o terreno salvo, o prefeito escolhe outro.
         let intro = if intro == intro::PLOT_STAGE && plot.is_none() { intro::MAYOR_STAGE } else { intro };
-        Some(Self { step: values[0] as u8, hidden: values[1] != 0, powered: values[2] != 0,
+        Some(Self { step, hidden: values[1] != 0, powered: values[2] != 0,
             plates: values[3].min(4), gears: values[4].min(1), copper: values[5].min(1),
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
             delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro, mayor,
-            village, village_blocks, village_crafted, village_base, city, city_crafted,
+            village, village_blocks, village_crafted, village_base, city, city_crafted, board, pole, drills, events,
+            festival, festival_day, favor, poles: u32::from(pole.is_some()),
             night_first, night, night_lights, night_wall, night_factory_wall, night_flags,
             forge, forge_crafted, forge_blocks, forge_flags, metro, ..Self::default() })
     }
@@ -437,9 +559,10 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     let part = !clicked && CRAFT.iter().any(|parts| parts.iter().any(|(target, _)| *target == block));
     let village_block = !clicked && village::slot(block).is_some();
     let forge_block = !clicked && forge::slot(block).is_some();
+    let system = system_block(block);
     let night_block = !clicked && (night::is_light(block) || night::is_wall(block) || night::is_gate(block));
     let opened = clicked && pollution::emission(block) > 0.0;
-    if !tutorial && tip.is_none() && !part && !village_block && !night_block && !opened && !forge_block { return; }
+    if !tutorial && tip.is_none() && !part && !village_block && !system && !night_block && !opened && !forge_block { return; }
     let Some(player) = host.acting_player() else { return; };
     let Ok(mut slot) = SESSION.lock() else { return; };
     if !session(host, &mut slot) { return; }
@@ -450,13 +573,14 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
     if night_block { night::placed(progress, &player.dimension, pos, block); }
     if forge_block { forge::placed(progress, &player.dimension, pos, block); }
     if clicked { night::opened(progress, block); }
-    if (night_block || opened || forge_block) && !tutorial && tip.is_none() && !part && !village_block { return; }
+    if (night_block || opened || forge_block) && !tutorial && tip.is_none() && !part && !village_block && !system { return; }
     // Colocou o produto da etapa: já foi fabricado (a lista de materiais não volta).
     if part && let Some(parts) = CRAFT.get(usize::from(progress.step)) {
         for (index, (target, _)) in parts.iter().enumerate() {
             if *target == block { progress.crafted |= craft_bit(usize::from(progress.step), index); progress.dirty = true; }
         }
     }
+    if system && progress.step < DONE { progress.systems(pos, block, clicked); }
     if !tutorial || progress.step == DONE { return; }
     if clicked { progress.bind(&player.dimension, pos, block); }
     else { progress.placed(&player.dimension, pos, block); }
@@ -466,6 +590,46 @@ pub(super) fn select(host: &dyn Host, pos: Pos, block: &str, clicked: bool) {
         progress.input_credit = 0; progress.output_credit = 0;
     }
     ACTIVE.store(true, Ordering::Relaxed);
+}
+
+/// Blocos das etapas dos sistemas (8 a 15).
+fn system_block(block: &str) -> bool {
+    matches!(block, milestones::BOARD | POLE | STEEL_POLE | DRILL | DRILL_MK2 | production::DRILL_MK3 | SPLITTER
+        | workforce::CONTROL_CENTER)
+}
+
+/// Refeição no Lar (`workforce::home`): conta para a etapa da casa.
+pub(super) fn ate_at_home(uuid: u128) {
+    if let Ok(mut slot) = SESSION.lock() && let Some(s) = slot.as_mut()
+        && let Some(p) = s.players.get_mut(&uuid) && p.step == MEAL_STEP && p.events & EVENT_MEAL == 0 {
+        p.events |= EVENT_MEAL; p.dirty = true;
+    }
+}
+
+/// O que as etapas dos sistemas leem do mundo, uma vez por segundo: o Quadro (fase e pedido do
+/// dia) e o último poste. Só lê o bloco da etapa atual.
+fn look(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) {
+    if player.dimension != p.dimension && !p.dimension.is_empty() { return; }
+    match p.step {
+        PHASE_STEP => {
+            if let Some(board) = p.board && let Some(e) = host.mod_block_entity(board) && e.id == milestones::BOARD {
+                p.board_phase = number(&e, "Phase").max(0) as usize;
+                p.board_delivered = (number(&e, "Delivered").max(0) as u32).min(PHASE_COUNT);
+            } else if let Some(phase) = milestones::census::board_phase(&player.dimension) {
+                // Quadro longe (chunk descarregado) ou outro Quadro da vila: vale a fase dele.
+                p.board_phase = p.board_phase.max(phase);
+            }
+        }
+        ORDER_STEP => if let Some(board) = p.board && let Some(e) = host.mod_block_entity(board) && e.id == milestones::BOARD {
+            // Pago a este Quadro (1) ou a outro Quadro da vila no mesmo dia (2).
+            p.order_done = number(&e, "OrderDone").max(0) as u32;
+            p.order_paid = number(&e, "OrderPaid") >= 1;
+        },
+        POLE_STEP => if let Some(pole) = p.pole && let Some(e) = host.mod_block_entity(pole) {
+            p.pole_powered = matches!(e.id.as_str(), POLE | STEEL_POLE) && number(&e, "energy") > 0;
+        },
+        _ => {}
+    }
 }
 
 /// A dica que colocar este bloco desperta: esteira (direção e carga) ou máquina (entrada e saída).
@@ -481,7 +645,11 @@ fn announce(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) 
     let step = usize::from(p.step);
     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.title.{step}"), &[]));
     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.why.{step}"), &[]));
-    if let Some(parts) = CRAFT.get(step) {
+    if p.step % ACT_STEPS == 0 && p.step < DONE {
+        host.tell(player.uuid, Text::tr(&format!("veio.onboarding.act.{}.line", p.step / ACT_STEPS), &[]));
+    }
+    intro::say(host, player.uuid, &format!("veio.onboarding.story.{step}"), &[]);
+    if let Some(parts) = CRAFT.get(step).filter(|parts| !parts.is_empty()) {
         for (index, (target, _)) in parts.iter().enumerate() {
             if target.starts_with("veio:") || *target == "minecraft:chest" {
                 host.tell(player.uuid, Text::tr(&format!("veio.onboarding.recipe.{step}.{index}"), &[]));
@@ -511,7 +679,9 @@ fn has_item(host: &mut dyn Host, name: &str, item: &str) -> bool {
 
 /// Contagem do objetivo da etapa (o que aparece como x/N na barra).
 fn goal_count(p: &Progress) -> u32 {
-    match p.step { 2 => p.plates, 3 => p.gears, 4 => p.copper, 5 => p.fed.min(2), 6 => p.stored, _ => 0 }
+    match p.step { 2 => p.plates, 3 => p.gears, 4 => p.copper, 5 => p.fed.min(2), 6 => p.stored,
+        PHASE_STEP => p.board_delivered, DRILL_STEP => p.drills.min(1), POLE_STEP => p.poles.min(2),
+        ORDER_STEP => p.order_done, _ => 0 }
 }
 
 /// Lista de materiais acima da barra de itens, enquanto o produto da etapa não foi fabricado:
@@ -540,10 +710,48 @@ fn checklist(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress)
 fn celebrate(host: &mut dyn Host, player: &NativeServerPlayer, step: u8) {
     if !spawn_safe(&player.name) { return; }
     let name = &player.name;
-    host.run_command(&format!(r#"title {name} subtitle {{"translate":"veio.onboarding.title.{step}"}}"#));
-    host.run_command(&format!(r#"title {name} title {{"translate":"veio.onboarding.done","color":"gold"}}"#));
+    if step % ACT_STEPS == 0 {
+        // Fim de um ato: fogos e o nome do próximo ato (ou o fim da fábrica).
+        let act = step / ACT_STEPS;
+        let (title, subtitle) = if step < DONE { (format!("veio.onboarding.act.{act}"), format!("veio.onboarding.act.{act}.sub")) }
+            else { ("veio.onboarding.act.end".to_owned(), "veio.onboarding.act.end.sub".to_owned()) };
+        host.run_command(&format!(r#"title {name} subtitle {{"translate":"{subtitle}"}}"#));
+        host.run_command(&format!(r#"title {name} title {{"translate":"{title}","color":"gold"}}"#));
+        fireworks(host, name);
+    } else {
+        host.run_command(&format!(r#"title {name} subtitle {{"translate":"veio.onboarding.title.{step}"}}"#));
+        host.run_command(&format!(r#"title {name} title {{"translate":"veio.onboarding.done","color":"gold"}}"#));
+    }
     host.run_command(&format!("execute as {name} at @s run playsound minecraft:ui.toast.challenge_complete master @s"));
     host.run_command(&format!("xp add {name} {} points", 10 + 5 * u32::from(step)));
+}
+
+/// Fogos de artifício em volta do jogador: o fim de um ato ou de um capítulo.
+pub(super) fn fireworks(host: &mut dyn Host, name: &str) {
+    if !spawn_safe(name) { return; }
+    for (dx, dz, color) in [(2, 0, 16766720), (-2, 1, 3066993), (0, -2, 15158332)] {
+        host.run_command(&format!(concat!("execute at {} run summon minecraft:firework_rocket ~{} ~1 ~{} ",
+            r#"{{LifeTime:22,FireworksItem:{{id:"minecraft:firework_rocket",count:1,components:{{"minecraft:fireworks":"#,
+            r#"{{flight_duration:1,explosions:[{{shape:"star",colors:[I;{}],has_twinkle:true}}]}}}}}}}}"#), name, dx, dz, color));
+    }
+}
+
+/// Dica do prefeito quando o jogador fica muito tempo na mesma etapa (`key`): uma vez.
+fn hint(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress, now: u64, key: u16, text: &str) {
+    if p.hint_for != Some(key) { p.hint_for = Some(key); p.hint_since = now; p.hinted = false; return; }
+    if p.hinted || p.hidden || now.saturating_sub(p.hint_since) < HINT_AFTER { return; }
+    p.hinted = true;
+    intro::say(host, player.uuid, "veio.onboarding.hint.head", &[]);
+    intro::say(host, player.uuid, text, &[]);
+}
+
+/// Para onde ir na etapa: a casa (Lar e centro de controle) nas duas últimas, o terreno da
+/// oficina nas outras.
+fn target(p: &Progress) -> Option<[f64; 3]> {
+    if matches!(p.step, MEAL_STEP | CENTER_STEP) {
+        return home::dashboard().map(|[x, y, z]| [f64::from(x) + 0.5, f64::from(y), f64::from(z) + 0.5]);
+    }
+    p.plot.map(intro::plot_center)
 }
 
 fn spawn_safe(name: &str) -> bool { workforce::spawn::safe_name(name) }
@@ -652,15 +860,19 @@ fn tick(host: &mut dyn Host, now: u64) {
             }
             continue;
         }
-        if village::step(p).is_some() {
+        if p.village > 0 && p.festival < festival::DONE { festival::tick(host, player, p); }
+        if let Some(step) = village::step(p) {
             village::tick(host, player, p, now);
+            if village::step(p) == Some(step) { hint(host, player, p, now, 100 + step as u16, &format!("veio.village.hint.{step}")); }
+            else if p.village == village::DONE_VILLAGE { fireworks(host, &player.name); }
             if p.dirty && now % 100 == 0 && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
                 host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
             }
             continue;
         }
+        if !p.hidden && (BOARD_STEP..DONE).contains(&p.step) { look(host, player, p); }
         // Exactly one transition per update. Never skip an unperformed exercise.
-        if player.dimension == p.dimension && p.ready() {
+        if (player.dimension == p.dimension || p.step >= BOARD_STEP) && p.ready() {
             p.step += 1; p.dirty = true; p.status = 0; p.last_status_notice = None;
             celebrate(host, player, p.step);
             if p.step == DONE { host.action_bar(player.uuid, Text::literal("")); }
@@ -679,11 +891,19 @@ fn tick(host: &mut dyn Host, now: u64) {
             }
             p.pending_tips = 0;
         }
-        if !p.hidden && p.step < DONE {
+        if !p.hidden && p.step == 1 && p.favor < favors::FAVOR_DONE {
+            favors::tick(host, player, p, now);
+        } else if !p.hidden && p.step < DONE {
             let count = goal_count(p);
             if !checklist(host, player, p) {
-                host.action_bar(player.uuid, Text::tr(&format!("veio.onboarding.goal.{}", p.step), &[&count]));
+                let goal = Text::tr(&format!("veio.onboarding.goal.{}", p.step), &[&count]);
+                let far = target(p).map(|at| intro::pointer(player, at)).filter(|(distance, _)| *distance > FAR);
+                host.action_bar(player.uuid, match far {
+                    Some((distance, way)) => Text::tr("veio.onboarding.far", &[&goal.plain(), &way, &distance]),
+                    None => goal,
+                });
             }
+            hint(host, player, p, now, u16::from(p.step), &format!("veio.onboarding.hint.{}", p.step));
             if matches!(p.status, 3 | 5 | 9) {
                 if p.last_status_notice != Some(p.status) && now >= p.next_status_notice {
                     host.tell(player.uuid, Text::tr(&format!("veio.onboarding.blocked.{}", p.status), &[]));
@@ -776,10 +996,31 @@ pub(super) fn talk(host: &mut dyn Host) -> bool {
     true
 }
 
-/// Outro mundo vai abrir: esquece o prefeito do mundo anterior.
-pub(super) fn world_changed() { intro::reset(); }
+/// Clique no ferreiro ou na lavradora do favor. `true` se o Veio tomou o clique (senão a troca
+/// vanilla segue).
+pub(super) fn neighbor_talk(host: &mut dyn Host, kind: &str) -> bool {
+    let Some(who) = favors::who(kind) else { return false };
+    let Some(player) = host.acting_player() else { return true };
+    let Ok(mut slot) = SESSION.lock() else { return true };
+    if !session(host, &mut slot) { return true; }
+    let s = slot.as_mut().unwrap();
+    let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
+    let took = favors::talk(host, &player, p, who);
+    if p.dirty && save(&s.root, player.uuid, p).is_err() {
+        host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[]));
+    }
+    took
+}
+
+/// Outro mundo vai abrir: esquece o prefeito e os vizinhos do mundo anterior.
+pub(super) fn world_changed() { intro::reset(); favors::reset(); }
 
 mod intro;
+mod festival;
+mod favors;
+pub(super) use favors::{seen as neighbor_seen, FARMER, SMITH};
+mod barks;
+pub(super) use barks::villager_seen;
 mod village;
 mod city;
 mod night;

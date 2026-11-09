@@ -157,7 +157,10 @@ pub(super) fn bar(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Prog
         }
         None => Text::literal(goal),
     };
-    host.action_bar(player.uuid, Text::tr("veio.village.bar", &[&(step + 1), &text.plain()]));
+    let mut bar = Text::tr("veio.village.bar", &[&(step + 1), &text.plain()]).plain();
+    // A festa marcada soma a contagem: "Festa da Colheita em 2 dias".
+    if let Some(when) = super::festival::countdown(host, p) { bar = format!("{bar} · {}", when.plain()); }
+    host.action_bar(player.uuid, Text::literal(&bar));
 }
 
 /// Faíscas no lugar da etapa: em volta do posto, a área onde o marco pode ficar (etapa da zona),
