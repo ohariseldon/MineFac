@@ -4,6 +4,10 @@ O Horizon roda shader packs no formato Iris/OptiFine. Estes arquivos são **só 
 os mesmos que você faria no menu do shader. Não contêm código dos shaders, e os shaders em si são
 baixados do Modrinth no PC de quem joga.
 
+O launcher já faz isso para o BSL no perfil **Realismo máximo** (`--visual maximo`): baixa o
+`BSL_v10.1.8.zip` do Modrinth, confere o SHA-512, copia o ajuste abaixo e escolhe o pack. Para os
+outros, à mão:
+
 Ponha o `.txt` em `shaderpacks/`, ao lado do `.zip` de mesmo nome (convenção do Iris:
 `<arquivo do pack>.txt`, uma `OPÇÃO=valor` por linha).
 

@@ -24,7 +24,8 @@ README = """Veio {version}
 
 1. Instale o Horizon Launcher, entre com a conta e faça o Prepare na página Play (uma vez).
 2. Feche o jogo e abra launcher.exe nesta pasta.
-3. Antes de abrir o jogo, escolha Realismo leve (padrão pensado para 8 GB) ou Leve (sem shaders).
+3. Antes de abrir o jogo, escolha Realismo leve (padrão pensado para 8 GB), Leve (sem shaders) ou
+   Realismo máximo (o shader BSL, baixado do Modrinth na primeira vez, ajustado para o Veio).
    Jogar-Leve.cmd inicia sem shaders desde a primeira partida; Escolher-Visual.cmd muda a escolha.
 4. O launcher cria a instância Veio se ela não existir, compila o código nativo otimizado (só quando a
    versão muda; a primeira vez leva de 20 a 30 minutos), instala o conteúdo e abre o jogo.
@@ -33,13 +34,15 @@ README = """Veio {version}
 Realismo: sol e luar, sombras próximas, metais e pintura distintos, chuva e água com profundidade.
 Atmosfera, chuva, água e brilho podem ser ajustados nas opções do shader.
 Em placas limitadas, reduza as sombras para 512 e alcance de 32 blocos, ou escolha Leve.
+Realismo máximo: brilho, contraste, cor, sombras e o resto se ajustam na tela do jogo, em
+Opções > Shaders > Opções do Shader; o que você mudar lá fica. Sem internet, abre com o Realismo leve.
 Leve: sem pacote de shaders e com distância de visão reduzida.
 Os 8 GB são uma meta para a memória total do PC; o desempenho também depende da placa gráfica.
 As configurações originais ficam em options.txt.antes-do-veio e horizon-graphics.txt.antes-do-veio.
 Depois de escolher, ajustes feitos dentro do jogo são preservados nas próximas aberturas.
 
 Opções: launcher.exe --rebuild (compila de novo), --skip-build (só instala),
---graphics (escolhe o visual), --visual leve ou --visual realismo (escolhe sem perguntar).
+--graphics (escolhe o visual), --visual leve, --visual realismo ou --visual maximo (escolhe sem perguntar).
 Mantenha launcher.exe, content, native e visuals juntos nesta pasta.
 """
 

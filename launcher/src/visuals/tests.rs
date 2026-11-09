@@ -129,3 +129,70 @@ fn realism_installs_and_enables_the_texture_pack_and_light_removes_it() {
     assert!(game.contains("incompatibleResourcePacks:[]\n"), "{game}");
     assert!(!dir.join("resourcepacks/Veio-Texturas-JG-128x.zip").exists());
 }
+
+#[test]
+fn sha512_matches_the_standard_vectors() {
+    assert_eq!(sha512::hex(b"abc"), "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f");
+    assert_eq!(&sha512::hex(b"")[..16], "cf83e1357eefb8bd");
+    let long = vec![b'a'; 1000];
+    assert_eq!(sha512::hex(&long).len(), 128);
+}
+
+#[test]
+fn maximum_downloads_bsl_with_the_veio_preset_and_falls_back_when_it_cannot() {
+    let fixture = Fixture::new();
+    let dir = fixture.instance();
+    let presets = fixture.0.join("visuals").join("iris-presets");
+    fs::create_dir_all(&presets).unwrap();
+    fs::write(presets.join("BSL_v10.1.8.zip.txt"), "TAA=false\n").unwrap();
+    // A download that does not match the published hash is thrown away: Realismo leve instead.
+    install_with(&fixture.0, &dir, selection(Profile::Maximum), |_, path| {
+        fs::write(path, b"not bsl").map_err(|e| e.to_string())
+    }).unwrap();
+    assert!(!dir.join("shaderpacks/BSL_v10.1.8.zip").exists());
+    assert!(!dir.join("shaderpacks/BSL_v10.1.8.zip.baixando").exists());
+    let extra = fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap();
+    assert!(extra.contains("pickedShaderPack:veio-industrial\n"));
+    // No network: same fallback.
+    install_with(&fixture.0, &dir, Selection { profile: Profile::Maximum, reset: true }, |url, _| {
+        Err(format!("sem rede para {url}"))
+    }).unwrap();
+    assert!(fs::read_to_string(dir.join("horizon-graphics.txt")).unwrap().contains("pickedShaderPack:veio-industrial\n"));
+}
+
+#[test]
+fn maximum_keeps_an_installed_bsl_and_the_players_own_options() {
+    let fixture = Fixture::new();
+    let dir = fixture.instance();
+    let presets = fixture.0.join("visuals").join("iris-presets");
+    fs::create_dir_all(&presets).unwrap();
+    fs::write(presets.join("BSL_v10.1.8.zip.txt"), "TAA=false\n").unwrap();
+    let pack = iris::IrisPack { file: "BSL_v10.1.8.zip", url: "x", sha512: "" };
+    let bytes = b"fake bsl".to_vec();
+    let fake = iris::IrisPack { sha512: Box::leak(sha512::hex(&bytes).into_boxed_str()), ..pack };
+    fs::create_dir_all(dir.join("shaderpacks")).unwrap();
+    iris::install(&fixture.0, &dir, &fake, false, |_, path| fs::write(path, &bytes).map_err(|e| e.to_string())).unwrap();
+    assert_eq!(fs::read(dir.join("shaderpacks/BSL_v10.1.8.zip")).unwrap(), bytes);
+    assert_eq!(fs::read_to_string(dir.join("shaderpacks/BSL_v10.1.8.zip.txt")).unwrap(), "TAA=false\n");
+    // The player changed an option on the game's screen: kept, and no new download.
+    fs::write(dir.join("shaderpacks/BSL_v10.1.8.zip.txt"), "EXPOSURE=0.50\n").unwrap();
+    iris::install(&fixture.0, &dir, &fake, false, |_, _| Err("não devia baixar".into())).unwrap();
+    assert_eq!(fs::read_to_string(dir.join("shaderpacks/BSL_v10.1.8.zip.txt")).unwrap(), "EXPOSURE=0.50\n");
+    // Choosing the profile again on purpose restores the Veio preset.
+    iris::install(&fixture.0, &dir, &fake, true, |_, _| Err("não devia baixar".into())).unwrap();
+    assert_eq!(fs::read_to_string(dir.join("shaderpacks/BSL_v10.1.8.zip.txt")).unwrap(), "TAA=false\n");
+}
+
+#[test]
+fn the_real_bsl_hash_check_accepts_the_published_file() {
+    // The published hash is 128 hex digits (catches a truncated paste).
+    assert_eq!(iris::BSL.sha512.len(), 128);
+    assert!(iris::BSL.sha512.chars().all(|c| c.is_ascii_hexdigit()));
+}
+
+#[test]
+fn sha512_of_a_downloaded_bsl_matches_modrinth() {
+    // Set VEIO_BSL_ZIP to a downloaded BSL_v10.1.8.zip to check the hash end to end.
+    let Ok(path) = std::env::var("VEIO_BSL_ZIP") else { return };
+    assert_eq!(sha512::hex(&fs::read(path).unwrap()), iris::BSL.sha512);
+}
