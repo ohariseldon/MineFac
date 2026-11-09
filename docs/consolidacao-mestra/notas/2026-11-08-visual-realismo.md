@@ -145,3 +145,17 @@ pesadas, lado de terra dos blocos quase preto.
 - Névoa de distância começa mais longe (48 blocos ou 35% da distância de visão), no máximo 22%
   (antes 30%) e menos azul.
 - Faces de costas para o sol: luz do céu 0,66 → 0,74 (de dia); a terra do lado mostra a textura.
+
+## 3.2.4 (commit desta seção): fim da linha branca em volta das coisas
+
+Luiz (02:31): "tudo meio brilhante", branco no canto esquerdo, "uma linha brilhante, praticamente
+neon branca, ao redor de todos os objetos".
+
+- Causa da linha (vista ampliando o print da 3.2.2): as nuvens são calculadas em meia tela, e um
+  texel cujo centro caía num bloco ou numa folha de grama calculava reflexo em vez de nuvem. O
+  céu ao lado (1 a 2 pixels na borda de cada silhueta e entre as folhas da grama) ficava sem
+  nuvem e mostrava o céu limpo, claro, por baixo de nuvens escuras. Agora o texel calcula nuvem
+  se qualquer pixel ao redor for céu; o reflexo só perde a borda do céu.
+- Nitidez 0,9 → 0,5 (a mais forte deixava um contorno claro em blocos e folhas).
+- Canto branco perto do sol: lóbulo de frente da nuvem menos pontudo (g 0,65 → 0,55) e luz das
+  nuvens acima de 0,8 comprimida, em vez de estourar em branco.
