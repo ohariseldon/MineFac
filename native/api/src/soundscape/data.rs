@@ -3,14 +3,14 @@ use super::Profile;
 pub(super) fn profile(block: &str) -> Option<Profile> {
     Some(match block {
         "veio:press" => Profile { family: 0, work: Some("veio:machine.press"), finish: Some("veio:machine.finish"), interval: 32, volume: 0.42, ambient: false },
-        "veio:assembler" | "veio:integrator" => Profile { family: 1, work: Some("veio:machine.assembly"), finish: Some("veio:machine.finish"), interval: 36, volume: 0.315, ambient: false },
+        "veio:assembler" | "veio:integrator" | "veio:paint_booth" => Profile { family: 1, work: Some("veio:machine.assembly"), finish: Some("veio:machine.finish"), interval: 36, volume: 0.315, ambient: false },
         "veio:cutter" => Profile { family: 2, work: Some("veio:machine.cut"), finish: None, interval: 28, volume: 0.315, ambient: false },
         "veio:crusher" => Profile { family: 3, work: Some("veio:machine.crush"), finish: None, interval: 30, volume: 0.385, ambient: false },
         "veio:drill" | "veio:drill_mk2" | "veio:drill_mk3" => Profile { family: 4, work: Some("veio:machine.motor"), finish: None, interval: 48, volume: 0.225, ambient: true },
         "veio:alloy_furnace" | "veio:electric_furnace" => Profile { family: 5, work: Some("veio:machine.motor"), finish: Some("veio:machine.finish"), interval: 48, volume: 0.225, ambient: true },
         "veio:electronics" => Profile { family: 6, work: Some("veio:machine.electronics"), finish: Some("veio:machine.assembly"), interval: 40, volume: 0.175, ambient: false },
         "veio:mill" => Profile { family: 7, work: Some("veio:machine.grind"), finish: None, interval: 48, volume: 0.275, ambient: true },
-        "veio:kitchen" => Profile { family: 8, work: Some("veio:machine.rustle"), finish: Some("veio:machine.finish"), interval: 42, volume: 0.21, ambient: false },
+        "veio:kitchen" | "veio:paint_mixer" => Profile { family: 8, work: Some("veio:machine.rustle"), finish: Some("veio:machine.finish"), interval: 42, volume: 0.21, ambient: false },
         "veio:harvester" => Profile { family: 9, work: Some("veio:machine.harvest"), finish: None, interval: 36, volume: 0.315, ambient: false },
         "veio:planter" => Profile { family: 10, work: Some("veio:machine.rustle"), finish: None, interval: 40, volume: 0.21, ambient: false },
         "veio:tree_farm" => Profile { family: 11, work: Some("veio:machine.saw"), finish: None, interval: 36, volume: 0.315, ambient: false },

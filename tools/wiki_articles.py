@@ -200,6 +200,36 @@ ARTICLES = [
 """,
     },
     {
+        "id": "colors", "icon": "veio:red_paint", "diagram": None,
+        "title": ("Cores e tintas", "Colors and paint"),
+        "game": ([
+            "Algumas peças pedem cor. A linha de tinta tem três etapas:",
+            "• Pigmento: flores e beterraba no moinho; lápis-lazúli e carvão no triturador; cacto na fornalha elétrica",
+            "• Tinta: 2 corantes + 1 argila no misturador de tintas → 2 latas. Azul + amarelo dá verde; vermelho + amarelo, laranja",
+            "• Pintura: 4 engrenagens ou chapas + 1 lata na cabine de pintura. Ela também tinge 8 lãs, terracotas ou vidros",
+            "Peças pintadas: engrenagem preta e branca, chapa vermelha e amarela, aço azul.",
+            "Bens: relógio de parede (integrador), placa de sinalização (integrador) e bicicleta (fabricadora). O kit Mk.II pede engrenagens pretas e o núcleo de automação, aço azul.",
+            "As famílias compram relógios e bicicletas nas lojas, e o mercado mundial paga bem pelas cores.",
+        ], [
+            "Some parts need color. The paint line has three steps:",
+            "• Pigment: flowers and beetroot in the mill; lapis and coal in the crusher; cactus in the electric furnace",
+            "• Paint: 2 dyes + 1 clay in the paint mixer → 2 cans. Blue + yellow make green; red + yellow, orange",
+            "• Painting: 4 gears or plates + 1 can in the paint booth. It also dyes 8 wool, terracotta or glass",
+            "Painted parts: black and white gears, red and yellow plates, blue steel.",
+            "Goods: wall clock (integrator), road sign (integrator) and bicycle (fabricator). The Mk.II kit needs black gears and the automation core, blue steel.",
+            "Families buy clocks and bicycles in shops, and the world market pays well for colors.",
+        ]),
+        "web": """
+<p>Algumas peças pedem <b>cor</b>, e a cor vem de uma fábrica própria, em três etapas:</p>
+<table><tr><th>Etapa</th><th>Máquina</th><th>Receita</th></tr>
+<tr><td>Pigmento</td><td>Moinho, triturador</td><td>flores e beterraba → corante; lápis-lazúli → 2 azuis; carvão → preto</td></tr>
+<tr><td>Tinta</td><td>Misturador de tintas</td><td>2 corantes + 1 argila → 2 latas; azul + amarelo → verde; vermelho + amarelo → laranja</td></tr>
+<tr><td>Pintura</td><td>Cabine de pintura</td><td>4 engrenagens ou chapas + 1 lata → 4 peças pintadas; 8 lãs, terracotas ou vidros + 1 lata → 8 tingidos</td></tr></table>
+<p>As peças pintadas entram na produção final: o <b>relógio de parede</b> (2 engrenagens pretas + 1 branca) e a <b>placa de sinalização</b> (moldura + chapa amarela) no integrador, a <b>bicicleta</b> (chapas vermelhas, molduras e engrenagens pretas) na fabricadora. O <b>kit Mk.II</b> pede engrenagens pretas e o <b>núcleo de automação</b>, aço azul: a cadeia funda passa pela tinta.</p>
+<p>Uma lata pinta 4 peças, então <b>um misturador abastece três cabines</b>. Relógios e bicicletas são bens de conforto que as famílias compram nas lojas; tintas, peças e bens entram no mercado mundial e nos contratos.</p>
+""",
+    },
+    {
         "id": "progression", "icon": "veio:factory_board", "diagram": "phases",
         "title": ("Fases e pesquisa", "Phases and research"),
         "game": ([

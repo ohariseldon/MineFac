@@ -490,3 +490,74 @@ fn a_ranch_never_treats_saddled_transport_pigs_as_surplus_meat() {
     assert_eq!(number(&pen, "Info"), 0, "mounts do not enter the farm's breeding/culling pool");
     assert_eq!(number(&pen, "Status"), NO_ANIMALS);
 }
+
+// ---------- Cores: pigmento, tinta, peça pintada e bens finais ----------
+
+fn stocked(id: &str, items: &[(usize, &str, u32)]) -> ModBlockEntity {
+    let mut entity = machine(id);
+    for &(slot, item, count) in items {
+        entity.items[slot] = Some(ItemStack::new(item, count));
+    }
+    entity
+}
+
+#[test]
+fn a_red_plate_goes_from_flower_to_dye_to_paint_to_part() {
+    // Moinho: papoula vira corante.
+    let mut mill = stocked(MILL, &[(0, "minecraft:poppy", 1)]);
+    run(&mut mill, 30);
+    assert_eq!(mill.items[1], Some(ItemStack::new("minecraft:red_dye", 2)));
+    // Misturador: 2 corantes + 1 argila = 2 latas.
+    let mut mixer = stocked(PAINT_MIXER, &[(0, "minecraft:red_dye", 2), (1, "minecraft:clay_ball", 1)]);
+    run(&mut mixer, 70);
+    assert_eq!(mixer.items[2], Some(ItemStack::new("veio:red_paint", 2)));
+    // Cabine: 4 chapas + 1 lata = 4 chapas vermelhas.
+    let mut booth = stocked(PAINT_BOOTH, &[(0, "veio:iron_plate", 4), (1, "veio:red_paint", 1)]);
+    run(&mut booth, 50);
+    assert_eq!(booth.items[2], Some(ItemStack::new("veio:red_plate", 4)));
+    assert!(booth.items[0].is_none() && booth.items[1].is_none());
+}
+
+#[test]
+fn paints_mix_into_secondary_colors_and_paint_vanilla_blocks() {
+    let mut mixer = stocked(PAINT_MIXER, &[(0, "veio:blue_paint", 1), (1, "veio:yellow_paint", 1)]);
+    run(&mut mixer, 50);
+    assert_eq!(mixer.items[2], Some(ItemStack::new("veio:green_paint", 2)), "azul + amarelo = verde");
+    let mut booth = stocked(PAINT_BOOTH, &[(0, "minecraft:white_wool", 8), (1, "veio:green_paint", 1)]);
+    run(&mut booth, 70);
+    assert_eq!(booth.items[2], Some(ItemStack::new("minecraft:green_wool", 8)));
+}
+
+#[test]
+fn the_deep_chain_and_end_goods_need_painted_parts() {
+    let needs = |output: &str, part: &str| data::RECIPES.iter().filter(|recipe| recipe.output.0 == output)
+        .all(|recipe| recipe.inputs.iter().any(|input| input.items.contains(&part)));
+    assert!(needs("veio:mk2_kit", "veio:black_gear"), "kit Mk.II com engrenagens pretas");
+    assert!(needs("veio:automation_core", "veio:blue_steel_plate"), "núcleo com aço azul");
+    assert!(needs("veio:wall_clock", "veio:white_gear") && needs("veio:wall_clock", "veio:black_gear"));
+    assert!(needs("veio:road_sign", "veio:yellow_plate"));
+    assert!(needs("veio:bicycle", "veio:red_plate") && needs("veio:bicycle", "veio:black_gear"));
+    // Tudo isso tem preço no mercado e o relógio e a bicicleta são bens de conforto das famílias.
+    for item in ["veio:black_paint", "veio:black_gear", "veio:wall_clock", "veio:road_sign", "veio:bicycle"] {
+        assert!(crate::veio::workforce::society::trade::product(item).is_some(), "{item}");
+    }
+    assert!(crate::veio::workforce::society::goods("veio:wall_clock").is_some());
+}
+
+#[test]
+fn every_ingredient_has_one_slot_in_the_machines_that_share_them() {
+    // A esteira entrega no primeiro slot que aceita: o mesmo item em dois slots travaria a receita.
+    for machine in [PAINT_MIXER, PAINT_BOOTH, KITCHEN, FABRICATOR, "veio:integrator"] {
+        let mut slot_of: Vec<(&str, usize)> = Vec::new();
+        for recipe in recipes(machine) {
+            for (slot, input) in recipe.inputs.iter().enumerate() {
+                for item in input.items {
+                    match slot_of.iter().find(|(known, _)| known == item) {
+                        Some((_, known)) => assert_eq!(*known, slot, "{machine}: {item} em dois slots"),
+                        None => slot_of.push((item, slot)),
+                    }
+                }
+            }
+        }
+    }
+}

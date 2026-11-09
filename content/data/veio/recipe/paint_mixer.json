@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:cauldron",
+    "veio:gear",
+    "veio:copper_plate",
+    "veio:copper_plate"
+  ],
+  "result": {
+    "id": "veio:paint_mixer",
+    "count": 1
+  }
+}

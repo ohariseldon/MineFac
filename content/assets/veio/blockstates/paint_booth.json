@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "veio:block/paint_booth"
+    },
+    "facing=west": {
+      "model": "veio:block/paint_booth",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "veio:block/paint_booth",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "veio:block/paint_booth",
+      "y": 270
+    }
+  }
+}

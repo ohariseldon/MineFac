@@ -1,0 +1,32 @@
+{
+  "parent": "veio:steel",
+  "display": {
+    "icon": {
+      "id": "veio:red_paint"
+    },
+    "title": {
+      "translate": "advancement.veio.colors.title"
+    },
+    "description": {
+      "translate": "advancement.veio.colors.description"
+    }
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:steel_plate"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "veio:paint_mixer",
+      "veio:paint_booth"
+    ]
+  }
+}

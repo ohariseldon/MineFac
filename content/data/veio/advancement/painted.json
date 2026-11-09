@@ -1,0 +1,32 @@
+{
+  "parent": "veio:colors",
+  "display": {
+    "icon": {
+      "id": "veio:black_gear"
+    },
+    "title": {
+      "translate": "advancement.veio.painted.title"
+    },
+    "description": {
+      "translate": "advancement.veio.painted.description"
+    }
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "veio:black_gear",
+              "veio:white_gear",
+              "veio:red_plate",
+              "veio:yellow_plate",
+              "veio:blue_steel_plate"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

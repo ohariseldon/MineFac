@@ -298,8 +298,3 @@ pub(crate) fn reset() {
     founders().clear();
     scan_until().store(0, Ordering::Relaxed);
 }
-
-#[cfg(test)]
-pub(crate) fn known() -> Vec<Founder> {
-    founders().clone()
-}

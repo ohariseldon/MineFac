@@ -37,6 +37,7 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
     let sector = match block {
         DRILL | DRILL_MK2 | DRILL_MK3 => Sector::Extraction,
         PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE | FABRICATOR
+            | production::PAINT_MIXER | production::PAINT_BOOTH
             | workforce::HAULER_POST => Sector::Industry,
         workforce::FOREMAN_DESK | workforce::CONTROL_CENTER | workforce::SHOP | workforce::TOWN_HALL | workforce::SITE => Sector::Workforce,
         _ if workforce::society::is_society_block(block) => Sector::Workforce,

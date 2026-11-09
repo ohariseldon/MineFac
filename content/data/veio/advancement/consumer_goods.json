@@ -1,0 +1,30 @@
+{
+  "parent": "veio:painted",
+  "display": {
+    "icon": {
+      "id": "veio:wall_clock"
+    },
+    "title": {
+      "translate": "advancement.veio.consumer_goods.title"
+    },
+    "description": {
+      "translate": "advancement.veio.consumer_goods.description"
+    }
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "veio:wall_clock",
+              "veio:road_sign",
+              "veio:bicycle"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

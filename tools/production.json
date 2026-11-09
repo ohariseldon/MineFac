@@ -1,9 +1,13 @@
 {
-  "_doc": "Fonte única da produção do Veio. tools/build_production.py gera native/api/src/production/data.rs e as páginas de receitas do guia. '@nome' expande um grupo. 'alt': receita alternativa, mostrada como tal no guia.",
+  "_doc": "Fonte única da produção do Veio. tools/build_production.py gera native/api/src/production/data.rs e as páginas de receitas do guia. '@nome' expande um grupo. 'alt': receita alternativa, mostrada como tal no guia. 'book': 'industry' lista a receita no Guia da Grande Indústria em vez do guia principal (cheio).",
   "groups": {
     "logs": ["minecraft:oak_log", "minecraft:spruce_log", "minecraft:birch_log", "minecraft:jungle_log", "minecraft:acacia_log", "minecraft:dark_oak_log", "minecraft:mangrove_log", "minecraft:cherry_log", "minecraft:pale_oak_log", "minecraft:stripped_oak_log", "minecraft:stripped_spruce_log", "minecraft:stripped_birch_log", "minecraft:stripped_jungle_log", "minecraft:stripped_acacia_log", "minecraft:stripped_dark_oak_log", "minecraft:stripped_mangrove_log", "minecraft:stripped_cherry_log", "minecraft:stripped_pale_oak_log"],
     "plants": ["minecraft:wheat_seeds", "minecraft:beetroot_seeds", "minecraft:melon_seeds", "minecraft:pumpkin_seeds", "minecraft:short_grass", "minecraft:tall_grass", "minecraft:fern", "minecraft:large_fern", "minecraft:vine", "minecraft:kelp", "minecraft:seagrass", "minecraft:cactus", "minecraft:bamboo", "minecraft:dead_bush", "minecraft:lily_pad", "minecraft:moss_carpet", "minecraft:oak_leaves", "minecraft:spruce_leaves", "minecraft:birch_leaves", "minecraft:jungle_leaves", "minecraft:acacia_leaves", "minecraft:dark_oak_leaves", "minecraft:mangrove_leaves", "minecraft:cherry_leaves", "minecraft:oak_sapling", "minecraft:spruce_sapling", "minecraft:birch_sapling", "minecraft:jungle_sapling", "minecraft:acacia_sapling", "minecraft:dark_oak_sapling", "minecraft:cherry_sapling"],
-    "coal": ["minecraft:coal", "minecraft:charcoal"]
+    "coal": ["minecraft:coal", "minecraft:charcoal"],
+    "red_pigment": ["minecraft:poppy", "minecraft:red_tulip", "minecraft:rose_bush", "minecraft:beetroot"],
+    "yellow_pigment": ["minecraft:dandelion", "minecraft:sunflower"],
+    "white_pigment": ["minecraft:bone_meal", "minecraft:lily_of_the_valley"],
+    "black_pigment": ["minecraft:ink_sac", "minecraft:wither_rose"]
   },
   "recipes": [
     {"machine": "press", "in": [["minecraft:raw_copper", 1]], "out": ["veio:copper_plate", 1], "ticks": 30, "power": 8},
@@ -26,9 +30,8 @@
     {"machine": "electronics", "in": [["veio:wire", 2], ["veio:silicon", 1]], "out": ["veio:circuit", 1], "ticks": 60, "power": 12},
     {"machine": "electronics", "in": [["veio:wire", 4], ["minecraft:redstone", 2]], "out": ["veio:circuit", 1], "ticks": 120, "power": 14, "alt": true},
     {"machine": "electronics", "in": [["veio:circuit", 2], ["veio:silicon", 2]], "out": ["veio:processor", 1], "ticks": 160, "power": 24},
-    {"machine": "fabricator", "in": [["veio:motor", 2], ["veio:processor", 2], ["veio:steel_plate", 4]], "out": ["veio:automation_core", 1], "ticks": 300, "power": 40},
-    {"machine": "fabricator", "in": [["veio:motor", 2], ["veio:processor", 1], ["veio:gear", 8]], "out": ["veio:mk2_kit", 1], "ticks": 240, "power": 32},
-
+    {"machine": "fabricator", "in": [["veio:motor", 2], ["veio:processor", 2], ["veio:blue_steel_plate", 4]], "out": ["veio:automation_core", 1], "ticks": 300, "power": 40},
+    {"machine": "fabricator", "in": [["veio:motor", 2], ["veio:processor", 1], ["veio:black_gear", 8]], "out": ["veio:mk2_kit", 1], "ticks": 240, "power": 32},
     {"machine": "electric_furnace", "in": [["minecraft:raw_iron", 1]], "out": ["minecraft:iron_ingot", 1], "ticks": 80, "power": 10},
     {"machine": "electric_furnace", "in": [["minecraft:raw_copper", 1]], "out": ["minecraft:copper_ingot", 1], "ticks": 80, "power": 10},
     {"machine": "electric_furnace", "in": [["minecraft:raw_gold", 1]], "out": ["minecraft:gold_ingot", 1], "ticks": 80, "power": 10},
@@ -52,12 +55,10 @@
     {"machine": "electric_furnace", "in": [["minecraft:rabbit", 1]], "out": ["minecraft:cooked_rabbit", 1], "ticks": 80, "power": 10},
     {"machine": "electric_furnace", "in": [["minecraft:cod", 1]], "out": ["minecraft:cooked_cod", 1], "ticks": 80, "power": 10},
     {"machine": "electric_furnace", "in": [["minecraft:salmon", 1]], "out": ["minecraft:cooked_salmon", 1], "ticks": 80, "power": 10},
-
     {"machine": "mill", "in": [["minecraft:wheat", 1]], "out": ["veio:flour", 1], "ticks": 20, "power": 4},
     {"machine": "mill", "in": [["minecraft:sugar_cane", 1]], "out": ["minecraft:sugar", 2], "ticks": 20, "power": 4},
     {"machine": "mill", "in": [["@plants", 4]], "out": ["veio:biomass", 1], "ticks": 30, "power": 4},
     {"machine": "mill", "in": [["@logs", 1]], "out": ["veio:biomass", 4], "ticks": 40, "power": 6},
-
     {"machine": "kitchen", "in": [["veio:flour", 2], ["minecraft:cocoa_beans", 1]], "out": ["minecraft:cookie", 8], "ticks": 80, "power": 8},
     {"machine": "kitchen", "in": [["veio:flour", 3], ["minecraft:sugar", 2]], "out": ["minecraft:cake", 1], "ticks": 200, "power": 12},
     {"machine": "kitchen", "in": [["veio:flour", 2]], "out": ["minecraft:bread", 1], "ticks": 60, "power": 8},
@@ -65,7 +66,52 @@
     {"machine": "kitchen", "in": [["minecraft:carrot", 1], ["minecraft:gold_nugget", 8]], "out": ["minecraft:golden_carrot", 1], "ticks": 80, "power": 10},
     {"machine": "kitchen", "in": [["minecraft:apple", 1], ["minecraft:gold_ingot", 8]], "out": ["minecraft:golden_apple", 1], "ticks": 200, "power": 20},
     {"machine": "kitchen", "in": [["minecraft:beetroot", 6], ["minecraft:bowl", 1]], "out": ["minecraft:beetroot_soup", 1], "ticks": 60, "power": 8},
-    {"machine": "kitchen", "in": [["minecraft:brown_mushroom", 1], ["minecraft:red_mushroom", 1]], "out": ["minecraft:mushroom_stew", 1], "ticks": 60, "power": 8}
+    {"machine": "kitchen", "in": [["minecraft:brown_mushroom", 1], ["minecraft:red_mushroom", 1]], "out": ["minecraft:mushroom_stew", 1], "ticks": 60, "power": 8},
+    {"machine": "mill", "in": [["@red_pigment", 1]], "out": ["minecraft:red_dye", 2], "ticks": 20, "power": 4, "book": "industry"},
+    {"machine": "mill", "in": [["@yellow_pigment", 1]], "out": ["minecraft:yellow_dye", 2], "ticks": 20, "power": 4, "book": "industry"},
+    {"machine": "mill", "in": [["@white_pigment", 1]], "out": ["minecraft:white_dye", 1], "ticks": 20, "power": 4, "book": "industry"},
+    {"machine": "mill", "in": [["@black_pigment", 1]], "out": ["minecraft:black_dye", 2], "ticks": 20, "power": 4, "book": "industry"},
+    {"machine": "mill", "in": [["minecraft:cornflower", 1]], "out": ["minecraft:blue_dye", 2], "ticks": 20, "power": 4, "book": "industry"},
+    {"machine": "mill", "in": [["minecraft:orange_tulip", 1]], "out": ["minecraft:orange_dye", 2], "ticks": 20, "power": 4, "book": "industry"},
+    {"machine": "crusher", "in": [["minecraft:lapis_lazuli", 1]], "out": ["minecraft:blue_dye", 2], "ticks": 30, "power": 10, "book": "industry"},
+    {"machine": "crusher", "in": [["@coal", 1]], "out": ["minecraft:black_dye", 1], "ticks": 30, "power": 10, "book": "industry"},
+    {"machine": "paint_mixer", "in": [["minecraft:black_dye", 2], ["minecraft:clay_ball", 1]], "out": ["veio:black_paint", 2], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_mixer", "in": [["minecraft:white_dye", 2], ["minecraft:clay_ball", 1]], "out": ["veio:white_paint", 2], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_mixer", "in": [["minecraft:red_dye", 2], ["minecraft:clay_ball", 1]], "out": ["veio:red_paint", 2], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_mixer", "in": [["minecraft:yellow_dye", 2], ["minecraft:clay_ball", 1]], "out": ["veio:yellow_paint", 2], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_mixer", "in": [["minecraft:blue_dye", 2], ["minecraft:clay_ball", 1]], "out": ["veio:blue_paint", 2], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_mixer", "in": [["minecraft:green_dye", 2], ["minecraft:clay_ball", 1]], "out": ["veio:green_paint", 2], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_mixer", "in": [["minecraft:orange_dye", 2], ["minecraft:clay_ball", 1]], "out": ["veio:orange_paint", 2], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_mixer", "in": [["veio:blue_paint", 1], ["veio:yellow_paint", 1]], "out": ["veio:green_paint", 2], "ticks": 40, "power": 8, "alt": true, "book": "industry"},
+    {"machine": "paint_mixer", "in": [["veio:red_paint", 1], ["veio:yellow_paint", 1]], "out": ["veio:orange_paint", 2], "ticks": 40, "power": 8, "alt": true, "book": "industry"},
+    {"machine": "paint_booth", "in": [["veio:gear", 4], ["veio:black_paint", 1]], "out": ["veio:black_gear", 4], "ticks": 40, "power": 12, "book": "industry"},
+    {"machine": "paint_booth", "in": [["veio:gear", 4], ["veio:white_paint", 1]], "out": ["veio:white_gear", 4], "ticks": 40, "power": 12, "book": "industry"},
+    {"machine": "paint_booth", "in": [["veio:iron_plate", 4], ["veio:red_paint", 1]], "out": ["veio:red_plate", 4], "ticks": 40, "power": 12, "book": "industry"},
+    {"machine": "paint_booth", "in": [["veio:iron_plate", 4], ["veio:yellow_paint", 1]], "out": ["veio:yellow_plate", 4], "ticks": 40, "power": 12, "book": "industry"},
+    {"machine": "paint_booth", "in": [["veio:steel_plate", 2], ["veio:blue_paint", 1]], "out": ["veio:blue_steel_plate", 2], "ticks": 40, "power": 12, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:white_wool", 8], ["veio:black_paint", 1]], "out": ["minecraft:black_wool", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:white_wool", 8], ["veio:red_paint", 1]], "out": ["minecraft:red_wool", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:white_wool", 8], ["veio:yellow_paint", 1]], "out": ["minecraft:yellow_wool", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:white_wool", 8], ["veio:blue_paint", 1]], "out": ["minecraft:blue_wool", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:white_wool", 8], ["veio:green_paint", 1]], "out": ["minecraft:green_wool", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:white_wool", 8], ["veio:orange_paint", 1]], "out": ["minecraft:orange_wool", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:terracotta", 8], ["veio:black_paint", 1]], "out": ["minecraft:black_terracotta", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:terracotta", 8], ["veio:white_paint", 1]], "out": ["minecraft:white_terracotta", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:terracotta", 8], ["veio:red_paint", 1]], "out": ["minecraft:red_terracotta", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:terracotta", 8], ["veio:yellow_paint", 1]], "out": ["minecraft:yellow_terracotta", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:terracotta", 8], ["veio:blue_paint", 1]], "out": ["minecraft:blue_terracotta", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:terracotta", 8], ["veio:green_paint", 1]], "out": ["minecraft:green_terracotta", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:terracotta", 8], ["veio:orange_paint", 1]], "out": ["minecraft:orange_terracotta", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:glass", 8], ["veio:black_paint", 1]], "out": ["minecraft:black_stained_glass", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:glass", 8], ["veio:white_paint", 1]], "out": ["minecraft:white_stained_glass", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:glass", 8], ["veio:red_paint", 1]], "out": ["minecraft:red_stained_glass", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:glass", 8], ["veio:yellow_paint", 1]], "out": ["minecraft:yellow_stained_glass", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:glass", 8], ["veio:blue_paint", 1]], "out": ["minecraft:blue_stained_glass", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:glass", 8], ["veio:green_paint", 1]], "out": ["minecraft:green_stained_glass", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "paint_booth", "in": [["minecraft:glass", 8], ["veio:orange_paint", 1]], "out": ["minecraft:orange_stained_glass", 8], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "integrator", "in": [["veio:black_gear", 2], ["veio:white_gear", 1]], "out": ["veio:wall_clock", 1], "ticks": 80, "power": 12, "book": "industry"},
+    {"machine": "integrator", "in": [["veio:frame", 1], ["veio:yellow_plate", 1]], "out": ["veio:road_sign", 2], "ticks": 60, "power": 10, "book": "industry"},
+    {"machine": "fabricator", "in": [["veio:red_plate", 2], ["veio:frame", 2], ["veio:black_gear", 4]], "out": ["veio:bicycle", 1], "ticks": 200, "power": 24, "book": "industry"}
   ],
   "nodes": [
     {"blocks": ["minecraft:copper_ore", "minecraft:deepslate_copper_ore"], "out": ["minecraft:raw_copper", 1], "tier": 1, "slow": 1},
@@ -94,20 +140,174 @@
   ],
   "fuels": {
     "generator": [
-      ["@coal", 1600], ["minecraft:coal_block", 16000], ["minecraft:blaze_rod", 2400], ["minecraft:dried_kelp_block", 4000],
-      ["minecraft:stick", 100], ["@logs", 300], ["minecraft:bamboo_block", 300]
+      [
+        "@coal",
+        1600
+      ],
+      [
+        "minecraft:coal_block",
+        16000
+      ],
+      [
+        "minecraft:blaze_rod",
+        2400
+      ],
+      [
+        "minecraft:dried_kelp_block",
+        4000
+      ],
+      [
+        "minecraft:stick",
+        100
+      ],
+      [
+        "@logs",
+        300
+      ],
+      [
+        "minecraft:bamboo_block",
+        300
+      ]
     ],
     "biomass_generator": [
-      ["veio:biomass", 600], ["@plants", 75], ["minecraft:wheat", 100], ["minecraft:sugar_cane", 100], ["minecraft:dried_kelp_block", 900], ["minecraft:hay_block", 900]
+      [
+        "veio:biomass",
+        600
+      ],
+      [
+        "@plants",
+        75
+      ],
+      [
+        "minecraft:wheat",
+        100
+      ],
+      [
+        "minecraft:sugar_cane",
+        100
+      ],
+      [
+        "minecraft:dried_kelp_block",
+        900
+      ],
+      [
+        "minecraft:hay_block",
+        900
+      ]
     ]
   },
   "food": [
-    ["minecraft:wheat", 1], ["minecraft:carrot", 1], ["minecraft:potato", 1], ["minecraft:beetroot", 1], ["minecraft:sweet_berries", 1],
-    ["minecraft:melon_slice", 1], ["minecraft:apple", 2], ["minecraft:egg", 1], ["minecraft:sugar", 1], ["minecraft:pumpkin", 2],
-    ["minecraft:baked_potato", 4], ["minecraft:bread", 6], ["minecraft:cookie", 1], ["minecraft:dried_kelp", 1],
-    ["minecraft:cooked_beef", 8], ["minecraft:cooked_porkchop", 8], ["minecraft:cooked_mutton", 7], ["minecraft:cooked_chicken", 6],
-    ["minecraft:cooked_rabbit", 6], ["minecraft:cooked_cod", 5], ["minecraft:cooked_salmon", 6], ["minecraft:pumpkin_pie", 10],
-    ["minecraft:beetroot_soup", 8], ["minecraft:mushroom_stew", 8], ["minecraft:golden_carrot", 14], ["minecraft:golden_apple", 50],
-    ["minecraft:cake", 30], ["minecraft:honey_bottle", 6]
+    [
+      "minecraft:wheat",
+      1
+    ],
+    [
+      "minecraft:carrot",
+      1
+    ],
+    [
+      "minecraft:potato",
+      1
+    ],
+    [
+      "minecraft:beetroot",
+      1
+    ],
+    [
+      "minecraft:sweet_berries",
+      1
+    ],
+    [
+      "minecraft:melon_slice",
+      1
+    ],
+    [
+      "minecraft:apple",
+      2
+    ],
+    [
+      "minecraft:egg",
+      1
+    ],
+    [
+      "minecraft:sugar",
+      1
+    ],
+    [
+      "minecraft:pumpkin",
+      2
+    ],
+    [
+      "minecraft:baked_potato",
+      4
+    ],
+    [
+      "minecraft:bread",
+      6
+    ],
+    [
+      "minecraft:cookie",
+      1
+    ],
+    [
+      "minecraft:dried_kelp",
+      1
+    ],
+    [
+      "minecraft:cooked_beef",
+      8
+    ],
+    [
+      "minecraft:cooked_porkchop",
+      8
+    ],
+    [
+      "minecraft:cooked_mutton",
+      7
+    ],
+    [
+      "minecraft:cooked_chicken",
+      6
+    ],
+    [
+      "minecraft:cooked_rabbit",
+      6
+    ],
+    [
+      "minecraft:cooked_cod",
+      5
+    ],
+    [
+      "minecraft:cooked_salmon",
+      6
+    ],
+    [
+      "minecraft:pumpkin_pie",
+      10
+    ],
+    [
+      "minecraft:beetroot_soup",
+      8
+    ],
+    [
+      "minecraft:mushroom_stew",
+      8
+    ],
+    [
+      "minecraft:golden_carrot",
+      14
+    ],
+    [
+      "minecraft:golden_apple",
+      50
+    ],
+    [
+      "minecraft:cake",
+      30
+    ],
+    [
+      "minecraft:honey_bottle",
+      6
+    ]
   ]
 }
