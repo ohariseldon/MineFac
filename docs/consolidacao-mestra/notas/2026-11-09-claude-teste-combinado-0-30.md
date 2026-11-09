@@ -38,3 +38,9 @@
 ## Adendo: 0.34.0 (#61 com o capítulo 3)
 - O #61 subiu para a 0.34.0 (`17f229f`): entrou o capítulo 3 do tutorial, a cidade, e o save passou a `veio-onboarding-7`, que lê todos os saves antigos. Entrou sem conflito.
 - E1: `python3 tools/check_rust.py` → 389 passam. Os geradores rodaram sem diferença.
+
+## Adendo: 0.35.0 (#61)
+- O #61 subiu para a 0.35.0 (`cf9ab4e`): o começo ganhou 4 atos com fogos, uma dica do prefeito depois de 3 minutos parado numa etapa, uma seta de direção na barra e o livro Diário de Otávio. O capítulo 3 tem 10 etapas. O save continua `veio-onboarding-7`.
+- Houve um conflito em `tools/build_tutorial.py`: ficaram tanto os rótulos de UI do #57 (`build_ui_text.add_labels`) quanto o livro do diário. Os geradores rodaram sem diferença.
+- E1: `python3 tools/check_rust.py` → 391 passam.
+- Testar em jogo: os fogos, o Diário de Otávio e a seta na barra.
