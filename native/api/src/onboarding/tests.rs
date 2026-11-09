@@ -212,7 +212,7 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     p.crafted = 0b101; p.tips = TIP_BELT;
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.crafted, loaded.tips), (0b101, TIP_BELT));
-    let old = p.encode().replace("veio-onboarding-5", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0\n", "\n", 1);
+    let old = p.encode().replace("veio-onboarding-6", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0 0 0\n", "\n", 1);
     assert_eq!(Progress::decode(&old).map(|old| (old.step, old.crafted)), Some((6, 0)));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
@@ -456,7 +456,15 @@ fn old_saves_skip_the_prologue_once_the_factory_started_and_v3_keeps_the_plot() 
     let fresh = "veio-onboarding-2\n0 0 0 0 0 0 0 0 0 0 0 0\nminecraft:overworld\n-\n-\n-\n-\n-\n";
     assert_eq!(Progress::decode(fresh).unwrap().intro, intro::VILLAGE_STAGE);
     let finished = "veio-onboarding-1\n8 0 1 4 1 1 2 1 4 1\nminecraft:overworld\n-\n-\n-\n-\n-\n";
-    assert!(Progress::decode(finished).unwrap().outro, "quem já terminou não precisa voltar ao prefeito");
+    let finished = Progress::decode(finished).unwrap();
+    // O tutorial antigo acabava na etapa 8: quem terminou segue para os sistemas da vila.
+    assert_eq!((finished.step, finished.intro, finished.outro), (BOARD_STEP, intro::INTRO_DONE, false));
+    // v5 do capítulo da vila: quem já está nele não volta para a fábrica.
+    let chapter = "veio-onboarding-5\n8 0 1 4 1 1 2 1 4 1 0 0 4 1 3 0 0\nminecraft:overworld\n-\n-\n-\n-\n-\n-\n-\n-\n-\n-\n-\n-\n-\n";
+    let chapter = Progress::decode(chapter).unwrap();
+    assert_eq!((chapter.step, chapter.outro, chapter.village), (DONE, true, 3));
+    let factory = "veio-onboarding-5\n8 0 1 4 1 1 2 1 4 1 0 0 4 1 0 0 0\nminecraft:overworld\n-\n-\n-\n-\n-\n-\n-\n-\n-\n-\n-\n-\n-\n";
+    assert_eq!(Progress::decode(factory).map(|p| (p.step, p.outro)), Some((BOARD_STEP, false)));
     let mut p = Progress { intro: intro::PLOT_STAGE, plot: Some([30, 65, -4]), dimension: "minecraft:overworld".into(), ..Progress::default() };
     p = Progress::decode(&p.encode()).unwrap();
     assert_eq!((p.intro, p.plot), (intro::PLOT_STAGE, Some([30, 65, -4])));
@@ -682,4 +690,74 @@ fn the_arrow_turns_with_the_player() {
     assert_eq!(arrow(from, south, 90.0), "←");
     assert_eq!(arrow(from, south, -90.0), "→");
     assert_eq!(arrow(from, [30.0, 64.0, 30.0], 0.0), "↖", "sudeste, olhando para o sul: à frente e à esquerda");
+}
+
+#[test]
+fn the_systems_steps_follow_the_board_the_bottlenecks_the_poles_the_order_and_the_house() {
+    struct World { blocks: HashMap<Pos, ModBlockEntity> }
+    impl Host for World {
+        fn mod_block_entity(&self, pos: Pos) -> Option<ModBlockEntity> { self.blocks.get(&pos).cloned() }
+    }
+    let player = NativeServerPlayer { uuid: 5, name: "Fundador".into(), dimension: "minecraft:overworld".into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut world = World { blocks: HashMap::new() };
+    let mut p = line(BOARD_STEP);
+    assert!(!p.ready());
+    // Abrir um Quadro antes da etapa não conta; colocar conta.
+    p.step = 7; p.systems([1, 64, 5], milestones::BOARD, true);
+    assert_eq!(p.board, None);
+    p.step = BOARD_STEP; p.systems([1, 64, 5], milestones::BOARD, false);
+    assert!(p.ready());
+    // Fase: lê as chapas entregues e a fase do Quadro colocado.
+    p.step = PHASE_STEP;
+    let mut board = ModBlockEntity::default(); board.id = milestones::BOARD.into();
+    set_number(&mut board, "Delivered", 9);
+    world.blocks.insert([1, 64, 5], board.clone());
+    look(&mut world, &player, &mut p);
+    assert_eq!((goal_count(&p), p.ready()), (9, false));
+    set_number(&mut board, "Phase", 1); set_number(&mut board, "Delivered", 0);
+    world.blocks.insert([1, 64, 5], board);
+    look(&mut world, &player, &mut p);
+    assert!(p.ready());
+    // Outra extratora e o divisor: só contam colocados na etapa deles.
+    p.systems([20, 64, 0], DRILL, false);
+    assert_eq!(p.drills, 0, "extratora de antes da etapa não conta");
+    p.step = DRILL_STEP; p.systems([20, 64, 0], DRILL, false);
+    assert!(p.ready());
+    p.step = SPLIT_STEP; assert!(!p.ready());
+    p.systems([5, 64, 0], SPLITTER, false);
+    assert!(p.ready());
+    // Postes: dois colocados, e o último com energia.
+    p.step = POLE_STEP;
+    p.systems([3, 64, 0], POLE, false); p.systems([10, 64, 0], POLE, false);
+    let mut pole = ModBlockEntity::default(); pole.id = POLE.into();
+    world.blocks.insert([10, 64, 0], pole.clone());
+    look(&mut world, &player, &mut p);
+    assert!(!p.ready(), "poste sem energia ainda não leva nada");
+    set_number(&mut pole, "energy", 40); world.blocks.insert([10, 64, 0], pole);
+    look(&mut world, &player, &mut p);
+    assert!(p.ready());
+    // Pedido do dia: conta o entregue e fecha quando o Quadro pagou.
+    p.step = ORDER_STEP;
+    let mut board = ModBlockEntity::default(); board.id = milestones::BOARD.into();
+    set_number(&mut board, "Phase", 1); set_number(&mut board, "OrderDone", 30);
+    world.blocks.insert([1, 64, 5], board.clone());
+    look(&mut world, &player, &mut p);
+    assert_eq!((goal_count(&p), p.ready()), (30, false));
+    set_number(&mut board, "OrderDone", 64); set_number(&mut board, "OrderPaid", 1);
+    world.blocks.insert([1, 64, 5], board);
+    look(&mut world, &player, &mut p);
+    assert!(p.ready());
+    // Refeição no Lar e centro de controle só contam na etapa deles.
+    p.step = MEAL_STEP; p.events |= EVENT_MEAL; assert!(p.ready());
+    p.step = CENTER_STEP;
+    p.systems([0, 64, -8], workforce::CONTROL_CENTER, false);
+    assert!(!p.ready(), "colocar não é abrir");
+    p.systems([0, 64, -8], workforce::CONTROL_CENTER, true);
+    assert!(p.ready());
+    // O save v5 guarda os blocos e os eventos dos sistemas.
+    let loaded = Progress::decode(&p.encode()).unwrap();
+    assert_eq!((loaded.board, loaded.pole, loaded.drills, loaded.events),
+        (Some([1, 64, 5]), Some([10, 64, 0]), 1, EVENT_SPLIT | EVENT_MEAL | EVENT_CENTER));
+    assert_eq!(loaded.step, CENTER_STEP);
 }

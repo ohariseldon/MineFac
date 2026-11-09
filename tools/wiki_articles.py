@@ -8,16 +8,20 @@ ARTICLES = [
         "title": ("Primeiros passos", "First steps"),
         "game": ([
             "O Veio é automação industrial dentro do Minecraft: você extrai das jazidas do mundo, transforma em peças e monta linhas que trabalham sozinhas.",
-            "O tutorial na tela (acima da barra de itens) leva do gerador à primeira encomenda em 8 etapas. Cada etapa mostra a receita, de onde vêm os materiais e uma lista que marca o que você já tem.",
+            "O tutorial na tela (acima da barra de itens) leva do gerador ao primeiro pedido do dia em 16 etapas. Cada etapa mostra a receita, de onde vêm os materiais e uma lista que marca o que você já tem.",
             "• 1. Gerador com carvão  • 2. Prensa ligada por cabos  • 3. Chapas à mão  • 4. Engrenagem no montador",
             "• 5. Extratora sobre cobre  • 6. Esteira até a prensa  • 7. Esteira até um baú  • 8. Encomenda na central",
+            "• 9. Quadro da fábrica  • 10. 1ª fase do Quadro  • 11. Outra extratora  • 12. Divisor",
+            "• 13. Postes  • 14. Pedido do dia  • 15. Refeição no Lar  • 16. Centro de controle",
             "As receitas do Veio aparecem no livro de receitas (o livro verde do inventário) assim que são liberadas pelos avanços.",
             "Esta wiki abre com J. Clique num item para ver como fabricar, onde é produzido e onde é usado.",
         ], [
             "Veio is industrial automation inside Minecraft: mine the world's deposits, turn them into parts and build lines that run on their own.",
-            "The on-screen tutorial (above the hotbar) goes from the generator to the first order in 8 steps. Each step shows the recipe, where materials come from and a checklist of what you already have.",
+            "The on-screen tutorial (above the hotbar) goes from the generator to the first daily order in 16 steps. Each step shows the recipe, where materials come from and a checklist of what you already have.",
             "• 1. Generator with coal  • 2. Press wired with cables  • 3. Plates by hand  • 4. Gear in the assembler",
             "• 5. Extractor on copper  • 6. Belt into the press  • 7. Belt into a chest  • 8. Order at the hub",
+            "• 9. Factory board  • 10. First board phase  • 11. Another extractor  • 12. Splitter",
+            "• 13. Poles  • 14. Daily order  • 15. Meal at the Home  • 16. Control center",
             "Veio recipes show up in the recipe book (the green book in your inventory) as soon as advancements unlock them.",
             "This wiki opens with J. Click an item to see how to craft it, where it is made and where it is used.",
         ]),
@@ -33,7 +37,16 @@ ARTICLES = [
 <tr><td>5</td><td>Extratora sobre minério de cobre</td><td>Extração automática</td></tr>
 <tr><td>6</td><td>Esteira da extratora até a prensa</td><td>Transporte</td></tr>
 <tr><td>7</td><td>Esteira da prensa até um baú</td><td>Saída e estoque</td></tr>
-<tr><td>8</td><td>24 chapas + 8 engrenagens na central</td><td>Encomendas e metas</td></tr></table>
+<tr><td>8</td><td>24 chapas + 8 engrenagens na central</td><td>Encomendas e metas</td></tr>
+<tr><td>9</td><td>Colocar o Quadro da fábrica</td><td>O plano da vila e o painel de gargalos</td></tr>
+<tr><td>10</td><td>16 chapas no Quadro</td><td>Fases e desbloqueios</td></tr>
+<tr><td>11</td><td>Outra extratora na linha</td><td>Gargalo de minério</td></tr>
+<tr><td>12</td><td>Um divisor na esteira</td><td>Repartir e equilibrar</td></tr>
+<tr><td>13</td><td>Dois postes com energia</td><td>Energia a distância</td></tr>
+<tr><td>14</td><td>O pedido do dia pago</td><td>Esmeraldas da vila</td></tr>
+<tr><td>15</td><td>Refeição no Lar</td><td>A casa e os efeitos</td></tr>
+<tr><td>16</td><td>Abrir o centro de controle</td><td>A vila inteira</td></tr></table>
+<p>Depois, o prefeito abre o capítulo 2, a vila operária (ver Trabalhadores).</p>
 <p>Comandos: <code>/veiotutorial ocultar</code>, <code>/veiotutorial mostrar</code>, <code>/veiotutorial reiniciar</code>. A wiki dentro do jogo abre com <kbd>J</kbd>.</p>
 """,
     },
