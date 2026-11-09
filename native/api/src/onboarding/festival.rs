@@ -40,7 +40,7 @@ fn schedule(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress, 
         let name = &player.name;
         host.run_command(&format!(r#"title {name} subtitle {{"translate":"veio.festival.{key}.when","with":["{days}"]}}"#));
         host.run_command(&format!(r#"title {name} title {{"translate":"veio.festival.{key}.name","color":"gold"}}"#));
-        host.run_command(&format!("playsound minecraft:block.bell.use master {name}"));
+        host.run_command(&format!("execute as {name} at @s run playsound minecraft:block.bell.use master @s"));
     }
 }
 
@@ -61,7 +61,7 @@ pub(super) fn tick(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
                 if safe {
                     host.run_command(&format!(r#"title {name} subtitle {{"translate":"veio.festival.{key}.good_sub"}}"#));
                     host.run_command(&format!(r#"title {name} title {{"translate":"veio.festival.{key}.name","color":"gold"}}"#));
-                    host.run_command(&format!("playsound minecraft:entity.player.levelup master {name}"));
+                    host.run_command(&format!("execute as {name} at @s run playsound minecraft:entity.player.levelup master @s"));
                     let (item, count, xp) = if festival == HARVEST { ("minecraft:bread", 16, 60) } else { ("minecraft:cake", 1, 120) };
                     host.run_command(&format!("give {name} {item} {count}"));
                     host.run_command(&format!("xp add {name} {xp} points"));

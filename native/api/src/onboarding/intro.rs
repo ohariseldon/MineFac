@@ -309,7 +309,8 @@ fn title(host: &mut dyn Host, player: &NativeServerPlayer, title: &str, subtitle
 }
 
 fn sound(host: &mut dyn Host, player: &NativeServerPlayer, sound: &str) {
-    if spawn_safe(&player.name) { host.run_command(&format!("playsound {sound} master {}", player.name)); }
+    // Pelo console, o som tocaria no spawn do mundo: toca onde o jogador está.
+    if spawn_safe(&player.name) { host.run_command(&format!("execute as {0} at @s run playsound {sound} master @s", player.name)); }
 }
 
 /// Uma fala do prefeito no chat do jogador.

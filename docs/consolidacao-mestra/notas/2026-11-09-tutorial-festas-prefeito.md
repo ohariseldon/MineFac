@@ -26,10 +26,11 @@ Luiz (2026-11-09): o capítulo 2 com eventos como no Stardew Valley, para dar ur
   - Com o jogador a até 6 blocos, um aldeão solta um resmungo curto, em cinza itálico, sobre o assunto do momento: prefeito, recursos, terreno, festa (na véspera e no dia), fábrica, vila ou livre.
   - São 4 falas por assunto, no máximo 1 por jogador a cada 40 s.
   - O gancho fica no tick do aldeão em `lib.rs`, amostrado a 1/97.
+- Junta a 0.35.0 da outra sessão na base (detalhes do capítulo 3, sons no jogador). Os sons das festas também tocam onde o jogador está (`execute as ... at @s`).
 - Wiki (artigo da vila) e README falam das festas e de quem fala.
 
 ## Evidência
-- E1: `python tools/check_rust.py` → 374 testes passando.
+- E1: `python tools/check_rust.py` → 375 testes passando (com os da base).
   - Testes novos: `village_festivals_set_a_date_reward_a_ready_village_and_move_a_weak_one` (data, véspera, festa fraca remarcada, festa boa com pão e fogos, Governador com bolo, save) e `common_villagers_only_comment_and_the_mayor_reacts_and_dresses_apart`.
   - Os 3 ignorados passam com `--ignored --test-threads=1`. `python tools/check_project.py` ok.
 - J: não testado em jogo. A confirmar no PC:

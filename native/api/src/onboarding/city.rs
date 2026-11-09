@@ -22,10 +22,17 @@ pub(super) const DONE_CITY: u8 = STEPS + 1;
 pub(super) const DO_LINES: [u8; 10] = [4, 4, 4, 4, 3, 4, 4, 4, 4, 4];
 /// Famílias da etapa do bairro (a mesma conta da fase Vila).
 pub(super) const FAMILIES: i32 = 3;
-/// Parado na mesma etapa por isto (3 min de jogo), o prefeito dá uma dica.
-pub(super) const STUCK: u64 = 3600;
+/// Parado na mesma etapa por isto (20 min), a barra avisa, discreta, que o prefeito tem uma dica.
+/// Ele não fala sozinho: a dica sai quando o jogador clica nele.
+pub(super) const STUCK: u64 = 24_000;
+/// Metas da fase Vila (as mesmas de `mayor::PHASES[0]`).
+const VILLAGE_RESIDENTS: i32 = 12;
+const VILLAGE_IDH: i32 = 40;
+
 /// Mais longe que isto da loja ou da prefeitura, a barra mostra a seta.
 const FAR: i32 = 12;
+/// Depois de uma etapa concluída, a próxima espera isto (3 s) para não chegar junto com a festa.
+const BREATH: u64 = 60;
 
 /// O bloco que cada etapa pede (ficha, livro de receitas e lista de materiais); vazio quando a
 /// etapa não pede bloco novo.
@@ -72,6 +79,18 @@ pub(super) struct Town {
     /// Onde apontar: a loja (sem comerciante ou sem venda) e a prefeitura.
     pub shop: Option<[i32; 3]>,
     pub hall: Option<[i32; 3]>,
+    /// O que a primeira venda pede ao mesmo tempo: comerciante no balcão, dia e famílias com
+    /// dinheiro na carteira.
+    pub open_shop: bool,
+    pub day: bool,
+    pub wallets: bool,
+    /// Saldos das contas, em moedas.
+    pub company_coins: i64,
+    pub public_coins: i64,
+    /// A prefeitura tem funcionário (a fase só sobe com ele).
+    pub staffed: bool,
+    /// A próxima festa do calendário (evento) e em quantos dias o visitante dela chega.
+    pub next_visitor: Option<(usize, i64)>,
 }
 
 /// O centro da vila para o capítulo: a prefeitura que governa o jogador, a do capítulo 2, a casa
@@ -95,10 +114,12 @@ pub(super) fn survey(host: &mut dyn Host, dimension: &str, at: [i32; 3], now: u6
         (0..4).min_by_key(|&index| parts[index]).unwrap_or(0)
     });
     let hall = society::governing(dimension, at, now);
+    let day_time = host.day_time();
+    let today = agenda::day_of(day_time);
+    let next_visitor = (0..=12).find_map(|ahead| agenda::scheduled(today + ahead).map(|event| (event, (ahead - agenda::LEAD).max(0))));
     // A agenda fica no bloco da prefeitura: o pedido preparado e o aberto mais próximo.
     let (mut prepared, mut request) = (false, None);
     if let Some(hall) = &hall {
-        let today = agenda::day_of(host.day_time());
         host.change_mod_block_entity(hall.pos, &mut |entity| {
             if entity.id != society::TOWN_HALL { return; }
             let open = agenda::proposals(entity);
@@ -108,15 +129,24 @@ pub(super) fn survey(host: &mut dyn Host, dimension: &str, at: [i32; 3], now: u6
         });
     }
     let shop = shops.iter().find(|shop| shop.merchant.is_none() || shop.cash <= 0).or(shops.first()).map(|shop| shop.pos);
+    let company_coins = society::ledger::total(Book::Company, dimension);
+    let public_coins = society::ledger::total(Book::Public, dimension);
     Town {
+        open_shop: shops.iter().any(|shop| shop.open),
+        day: !workforce::night(host),
+        wallets: families.iter().any(|home| home.wallet > 0),
+        company_coins,
+        public_coins,
+        staffed: hall.as_ref().is_some_and(|hall| hall.staffed),
+        next_visitor,
         homes: families.len() as i32,
         sanitized: count(&|home| home.sanitation),
         powered: count(&|home| home.power),
         entertained: count(&|home| home.leisure),
         merchant: shops.iter().any(|shop| shop.merchant.is_some()),
         sales: shops.iter().any(|shop| shop.cash > 0),
-        company: society::ledger::total(Book::Company, dimension) > 0,
-        public: society::ledger::total(Book::Public, dimension) > 0,
+        company: company_coins > 0,
+        public: public_coins > 0,
         families: families.len() as i32,
         residents: families.iter().map(|home| home.residents).sum(),
         idh,
@@ -154,10 +184,15 @@ pub(super) fn goal(step: usize, town: &Town) -> (Text, Option<[i32; 3]>) {
         4 => (Text::tr("veio.city.goal.4", &[&town.powered, &town.homes]), None),
         5 => (Text::tr("veio.city.goal.5", &[&town.entertained, &town.homes]), None),
         6 => (Text::tr("veio.city.goal.6", &[&town.families]), None),
-        7 => (Text::tr("veio.city.goal.7", &[]), town.hall),
-        8 => match &town.request {
-            Some(request) => (Text::tr("veio.city.goal.8", &[request]), town.hall),
-            None => (Text::tr("veio.city.goal.8_wait", &[]), town.hall),
+        3 => (Text::tr("veio.city.goal.3", &[&town.company_coins]), None),
+        7 => (Text::tr("veio.city.goal.7", &[&town.public_coins]), town.hall),
+        8 => match (&town.request, town.next_visitor) {
+            (Some(request), _) => (Text::tr("veio.city.goal.8", &[request]), town.hall),
+            (None, Some((event, days))) => {
+                let name = Text::tr(&format!("veio.agenda.{}.name", agenda::EVENTS[event].key), &[]).plain();
+                (Text::tr("veio.city.goal.8_wait", &[&days, &name]), town.hall)
+            }
+            (None, None) => (Text::tr("veio.city.goal.8_soon", &[]), town.hall),
         },
         9 => {
             let weak = town.weakest.map_or(String::new(), |index| Text::tr(&format!("veio.city.weak.{index}"), &[]).plain());
@@ -182,10 +217,46 @@ fn announce(host: &mut dyn Host, player: &NativeServerPlayer, step: usize) {
     for line in 1..=DO_LINES[step] {
         host.tell(uuid, Text::tr(&format!("veio.city.do.{step}.{line}"), &[]));
     }
+    host.tell(uuid, Text::tr(&format!("veio.city.more.{step}"), &[]));
 }
 
-/// A barra: lista de materiais enquanto o bloco da etapa não foi fabricado; depois o objetivo com
-/// os números da vila e, longe da loja ou da prefeitura, a seta até ela.
+/// As condições que a etapa pede ao mesmo tempo, para a lista ✔/✘ da barra: (cumprida, chave,
+/// argumentos). Só nas etapas em que várias coisas precisam estar certas juntas.
+pub(super) fn checks(step: usize, town: &Town) -> Vec<(bool, &'static str, Vec<String>)> {
+    match step {
+        2 => vec![
+            (town.open_shop, "veio.city.check.open", vec![]),
+            (town.day, "veio.city.check.day", vec![]),
+            (town.company, "veio.city.check.wages", vec![]),
+            (town.wallets, "veio.city.check.wallets", vec![]),
+        ],
+        9 => vec![
+            (town.staffed, "veio.city.check.clerk", vec![]),
+            (town.residents >= VILLAGE_RESIDENTS, "veio.city.check.residents", vec![town.residents.to_string()]),
+            (town.families >= FAMILIES, "veio.city.check.families", vec![town.families.to_string()]),
+            (town.idh >= VILLAGE_IDH, "veio.city.check.idh", vec![format!("{},{:02}", town.idh / 100, town.idh % 100)]),
+        ],
+        _ => Vec::new(),
+    }
+}
+
+/// O número que a etapa acompanha (casas atendidas, famílias, moradores): quando sobe, um "plim".
+pub(super) fn metric(step: usize, town: &Town) -> Option<i32> {
+    match step {
+        0 => Some(town.sanitized),
+        4 => Some(town.powered),
+        5 => Some(town.entertained),
+        6 => Some(town.families),
+        9 => Some(town.residents),
+        _ => None,
+    }
+}
+
+fn json(text: &str) -> String { text.replace('\\', "\\\\").replace('"', "\\\"") }
+
+/// A barra: lista de materiais enquanto o bloco da etapa não foi fabricado; depois o objetivo
+/// (ou a lista ✔/✘ das condições), a seta até a loja ou a prefeitura quando longe, e o aviso
+/// discreto de que o prefeito tem uma dica.
 fn bar(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress, town: &Town) {
     let Some(step) = step(p) else { return };
     let (block, ingredients) = PARTS[step];
@@ -199,23 +270,46 @@ fn bar(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress, town:
         }
     }
     let (goal, target) = goal(step, town);
-    let mut line = goal.plain();
+    let mut tail = String::new();
     if let Some(pos) = target {
         let (distance, way) = intro::pointer(player, [f64::from(pos[0]) + 0.5, f64::from(pos[1]), f64::from(pos[2]) + 0.5]);
-        if distance > FAR { line = Text::tr("veio.village.far", &[&line, &distance, &way]).plain(); }
+        if distance > FAR { tail = format!(" · {distance} {way}"); }
     }
-    host.action_bar(player.uuid, Text::tr("veio.city.bar", &[&(step + 1), &line]));
+    let checks = checks(step, town);
+    if checks.is_empty() || !spawn_safe(&player.name) {
+        let mut line = goal.plain() + &tail;
+        if p.city_hinted { line += &Text::tr("veio.city.hint_ready", &[]).plain(); }
+        host.action_bar(player.uuid, Text::tr("veio.city.bar", &[&(step + 1), &line]));
+        return;
+    }
+    let mut parts = vec![format!(r#"{{"translate":"veio.city.bar_prefix","with":["{}"],"color":"gold"}}"#, step + 1)];
+    for (ok, key, args) in checks {
+        let (mark, color) = if ok { ("✔", "green") } else { ("✘", "red") };
+        let with = args.iter().map(|arg| format!(r#""{}""#, json(arg))).collect::<Vec<_>>().join(",");
+        parts.push(format!(r#"{{"text":"  {mark} ","color":"{color}"}},{{"translate":"{key}","with":[{with}],"color":"{color}"}}"#));
+    }
+    if step == 9 && let Some(index) = town.weakest {
+        parts.push(format!(r#"{{"translate":"veio.city.weak.{index}","color":"yellow"}}"#));
+    }
+    if !tail.is_empty() { parts.push(format!(r#"{{"text":"{}","color":"gray"}}"#, json(&tail))); }
+    if p.city_hinted { parts.push(r#"{"translate":"veio.city.hint_ready","color":"aqua"}"#.into()); }
+    host.run_command(&format!(r#"title {} actionbar ["",{}]"#, player.name, parts.join(",")));
 }
 
-/// Parado numa etapa: o prefeito percebe e dá a dica dela (na fase, a da parte mais fraca do IDH).
-fn hint(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress, town: &Town, step: usize, now: u64) {
-    let since = *p.city_since.get_or_insert(now);
-    if p.city_hinted || now < since + STUCK { return; }
-    p.city_hinted = true;
-    village::say(host, player.uuid, &format!("veio.city.hint.{step}"));
-    if step == 9 && let Some(index) = town.weakest {
-        village::say(host, player.uuid, &format!("veio.city.fix.{index}"));
+/// Um número da etapa subiu (mais uma casa atendida, mais uma família): um "plim" discreto, sem chat.
+fn progress_sound(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress, step: usize, town: &Town) {
+    let Some(value) = metric(step, town) else { return };
+    if p.city_metric.is_some_and(|before| value > before) && spawn_safe(&player.name) {
+        host.run_command(&format!("execute as {0} at @s run playsound minecraft:block.note_block.bell master @s ~ ~ ~ 0.6 1.6", player.name));
     }
+    p.city_metric = Some(value);
+}
+
+/// Parado numa etapa por muito tempo: a barra avisa que o prefeito tem uma dica. Ele só fala
+/// quando o jogador vai até ele.
+fn hint(p: &mut Progress, now: u64) {
+    let since = *p.city_since.get_or_insert(now);
+    if now >= since + STUCK { p.city_hinted = true; }
 }
 
 /// Etapa concluída: o prefeito comenta, título, som e experiência.
@@ -226,7 +320,7 @@ fn celebrate(host: &mut dyn Host, player: &NativeServerPlayer, finished: usize) 
     let next = if finished + 1 < usize::from(STEPS) { format!("veio.city.title.{}", finished + 1) } else { "veio.city.end_sub".into() };
     host.run_command(&format!(r#"title {name} subtitle {{"translate":"{next}"}}"#));
     host.run_command(&format!(r#"title {name} title {{"translate":"veio.onboarding.done","color":"gold"}}"#));
-    host.run_command(&format!("playsound minecraft:ui.toast.challenge_complete master {name}"));
+    host.run_command(&format!("execute as {name} at @s run playsound minecraft:ui.toast.challenge_complete master @s"));
     host.run_command(&format!("xp add {name} {} points", 30 + 5 * finished));
 }
 
@@ -239,8 +333,9 @@ pub(super) fn tick(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
     if done(step, &town) {
         celebrate(host, player, step);
         p.city += 1;
-        p.city_since = None;
+        p.city_since = Some(now);
         p.city_hinted = false;
+        p.city_metric = None;
         p.dirty = true;
         if p.city == DONE_CITY {
             finish(host, player);
@@ -251,10 +346,12 @@ pub(super) fn tick(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
     if p.hidden { return; }
     let Some(step) = self::step(p) else { return };
     if p.city_announced != Some(p.city) {
+        if p.city_since.is_some_and(|since| now < since + BREATH) { return; }
         announce(host, player, step);
         p.city_announced = Some(p.city);
     }
-    hint(host, player, p, &town, step, now);
+    hint(p, now);
+    progress_sound(host, player, p, step, &town);
     bar(host, player, p, &town);
 }
 
@@ -276,7 +373,15 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
         Some(step) => {
             village::say(host, player.uuid, "veio.village.again");
             announce(host, player, step);
-            if p.city_hinted { village::say(host, player.uuid, &format!("veio.city.hint.{step}")); }
+            // A dica vem quando o jogador pede: ao clicar, sempre, e o aviso da barra some.
+            village::say(host, player.uuid, &format!("veio.city.hint.{step}"));
+            if step == 9 {
+                let now = defense::clock();
+                let town = survey(host, &player.dimension, anchor(p, player, now), now);
+                if let Some(index) = town.weakest { village::say(host, player.uuid, &format!("veio.city.fix.{index}")); }
+            }
+            p.city_hinted = false;
+            p.city_since = None;
         }
     }
 }
@@ -294,6 +399,7 @@ pub(super) fn start(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pr
     p.city_crafted = 0;
     p.city_since = None;
     p.city_hinted = false;
+    p.city_metric = None;
     p.hidden = false;
     p.dirty = true;
 }

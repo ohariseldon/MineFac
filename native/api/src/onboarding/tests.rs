@@ -353,7 +353,7 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
     tick(&mut host, 40);
     assert!(host.bars.last().unwrap().contains("goal.1"));
     // Etapa concluída: título, som de conquista e experiência.
-    assert!(host.messages.iter().any(|line| line == "playsound minecraft:ui.toast.challenge_complete master Tutorial"));
+    assert!(host.messages.iter().any(|line| line == "execute as Tutorial at @s run playsound minecraft:ui.toast.challenge_complete master @s"));
     assert!(host.messages.iter().any(|line| line.starts_with("xp add Tutorial ")));
     select(&host, PRESS_AT, PRESS, false);
     let mut press = machine(PRESS, None, 0);
@@ -550,6 +550,7 @@ impl Host for Town {
     fn change_mod_block_entity(&mut self, pos: [i32; 3], change: &mut dyn FnMut(&mut ModBlockEntity)) -> bool {
         match self.entities.get_mut(&pos) { Some(entity) => { change(entity); true } None => false }
     }
+    fn day_time(&self) -> i64 { 1000 }
     fn tell(&mut self, _: u128, text: Text) -> bool { self.said.push(text.plain()); true }
     fn action_bar(&mut self, _: u128, text: Text) -> bool { self.bars.push(text.plain()); true }
     fn run_command(&mut self, line: &str) -> bool {
@@ -782,7 +783,8 @@ fn the_city_chapter_closes_each_step_from_what_the_village_registers() {
     assert_eq!(goal(1, &town).1, Some([5, 64, 5]));
     assert_eq!(goal(8, &town).1, Some([9, 64, 9]));
     assert_eq!(goal(8, &town).0.plain(), "veio.city.goal.8");
-    assert_eq!(goal(8, &Town { request: None, ..town.clone() }).0.plain(), "veio.city.goal.8_wait");
+    assert_eq!(goal(8, &Town { request: None, next_visitor: Some((6, 1)), ..town.clone() }).0.plain(), "veio.city.goal.8_wait");
+    assert_eq!(goal(8, &Town { request: None, ..town.clone() }).0.plain(), "veio.city.goal.8_soon");
     assert_eq!(goal(0, &town).1, None);
     // Save: a v6 guarda a cidade; saves v5 (só a vila) abrem com a cidade por começar.
     let p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE,
@@ -857,22 +859,43 @@ fn acts_end_with_fireworks_and_a_stuck_player_gets_one_hint_from_the_mayor() {
 }
 
 #[test]
-fn a_stuck_player_gets_one_hint_from_the_mayor() {
+fn the_mayor_waits_to_be_asked_for_a_hint() {
     let mut town = Town::default();
     let player = NativeServerPlayer { uuid: 9, name: "Caio".into(), dimension: workforce::spawn::OVERWORLD.into(),
         position: [0.0, 64.0, 0.0], ..Default::default() };
-    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE, city: 1, ..Progress::default() };
+    // Etapa 1 com o poço já fabricado: a barra mostra o objetivo, não a lista de materiais.
+    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE, city: 1,
+        city_crafted: 1, ..Progress::default() };
     city::tick(&mut town, &player, &mut p, 1000);
     let says = |town: &Town| town.said.iter().filter(|line| *line == "veio.agenda.says").count();
     let before = says(&town);
     city::tick(&mut town, &player, &mut p, 1000 + city::STUCK - 1);
-    assert_eq!(says(&town), before, "ainda sem dica");
+    assert!(!p.city_hinted);
     city::tick(&mut town, &player, &mut p, 1000 + city::STUCK);
-    assert_eq!(says(&town), before + 1, "parado 3 minutos: uma dica");
+    assert!(p.city_hinted, "parado 20 minutos: a dica fica disponível");
     city::tick(&mut town, &player, &mut p, 1000 + 3 * city::STUCK);
-    assert_eq!(says(&town), before + 1, "uma dica só");
-    // Sem o poço no inventário, a barra é a lista de materiais dele.
-    assert!(town.commands.iter().any(|line| line.starts_with("title Caio actionbar") && line.contains("veio.onboarding.name.bucket")));
+    assert_eq!(says(&town), before, "o prefeito não fala sozinho");
+    // Clicar nele dá a dica e zera o aviso.
+    intro::talk(&mut town, &player, &mut p);
+    assert!(says(&town) > before);
+    assert!(!p.city_hinted && p.city_since.is_none());
+    assert!(city::STUCK >= 20 * 60 * 20 - 1, "pelo menos 20 minutos");
+}
+
+#[test]
+fn the_town_bar_lists_what_each_hard_step_needs_and_chimes_on_progress() {
+    use city::{checks, metric, Town};
+    let town = Town { open_shop: true, day: false, company: true, wallets: false, staffed: true,
+        residents: 12, families: 2, idh: 41, ..Town::default() };
+    let sale: Vec<bool> = checks(2, &town).iter().map(|(ok, _, _)| *ok).collect();
+    assert_eq!(sale, [true, false, true, false], "balcão, dia, salários, carteiras");
+    let phase: Vec<(bool, &str)> = checks(9, &town).iter().map(|(ok, key, _)| (*ok, *key)).collect();
+    assert_eq!(phase, [(true, "veio.city.check.clerk"), (true, "veio.city.check.residents"),
+        (false, "veio.city.check.families"), (true, "veio.city.check.idh")]);
+    assert_eq!(checks(9, &town)[3].2, ["0,41"]);
+    assert!(checks(0, &town).is_empty());
+    assert_eq!(metric(6, &town), Some(2));
+    assert_eq!(metric(2, &town), None);
 }
 
 #[test]

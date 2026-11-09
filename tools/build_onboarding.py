@@ -657,7 +657,7 @@ def add_city_labels(label, names, recipe_line):
         ('2. Ponha esmeraldas no cofre: cada uma vira 60 moedas na conta da companhia.', '2. Put emeralds in the vault: each one becomes 60 coins in the company account.'),
         ('3. Sem saldo, os trabalhadores ficam sem salário e as famílias empobrecem.', '3. Without a balance, workers go unpaid and families get poorer.'),
         ('4. Clique na linha da companhia no painel para sacar de volta, se precisar.', '4. Click the company line on the panel to withdraw, if you need to.')],
-       ('Esmeraldas no cofre do centro de controle', 'Emeralds in the control center vault'),
+       ('Conta da companhia: %s moedas (ponha esmeraldas no cofre do centro de controle)', 'Company account: %s coins (put emeralds in the control center vault)'),
        ('Salários garantidos. Agora, conforto nas casas.', 'Wages secured. Now, comfort at home.'),
        ('O cofre é o espaço de esmeralda do centro de controle. Esmeraldas vêm de troca com aldeões, da central de contratos e da exportação.',
         'The vault is the emerald slot of the control center. Emeralds come from villager trades, the contract hub and exports.')),
@@ -700,7 +700,7 @@ def add_city_labels(label, names, recipe_line):
         ('2. Clique nela com um livro: o relatório traz a moeda em circulação por conta.', '2. Click it with a book: the report shows the money in circulation per account.'),
         ('3. Cada venda das lojas deixa uma parte aqui. Nada some: o dinheiro só muda de conta.', '3. Every shop sale leaves a share here. Nothing vanishes: money only changes account.'),
         ('4. O espaço de esmeralda da prefeitura aceita um aporte voluntário seu.', '4. The town hall emerald slot takes a voluntary contribution from you.')],
-       ('Imposto recolhido pela prefeitura', 'Tax collected by the town hall'),
+       ('Conta pública: %s moedas (o imposto chega a cada venda)', 'Public account: %s coins (tax arrives with every sale)'),
        ('A conta pública tem dinheiro. É assim que a vila se mantém.', 'The public account has money. That is how the village keeps going.'),
        ('A conta pública só recebe quando a loja vende. Confira se a loja tem estoque e se as famílias têm salário.',
         'The public account only receives when the shop sells. Check that the shop has stock and families have wages.')),
@@ -734,7 +734,29 @@ def add_city_labels(label, names, recipe_line):
         label(f'veio.city.goal.{i}', *goal)
         label(f'veio.city.done.{i}', *done)
         label(f'veio.city.hint.{i}', *hint)
-    label('veio.city.goal.8_wait', 'Festa: o próximo visitante chega 2 dias antes do domingo ou feriado', 'Festival: the next visitor arrives 2 days before Sunday or a holiday')
+    label('veio.city.goal.8_wait', 'Festa: o próximo visitante chega em %s dia(s) (%s). Enquanto isso, junte comida pronta', 'Festival: the next visitor arrives in %s day(s) (%s). Meanwhile, gather cooked food')
+    label('veio.city.goal.8_soon', 'Festa: um visitante chega em breve à prefeitura', 'Festival: a visitor will soon arrive at the town hall')
+    label('veio.city.bar_prefix', 'Cidade %s/10 |', 'Town %s/10 |')
+    for key, pt, en in [
+        ('open', 'comerciante no balcão', 'merchant at the counter'), ('day', 'é dia', 'daytime'),
+        ('wages', 'salários pagos', 'wages paid'), ('wallets', 'famílias com dinheiro', 'families with money'),
+        ('clerk', 'funcionário na prefeitura', 'town hall clerk'), ('residents', 'moradores %s/12', 'residents %s/12'),
+        ('families', 'famílias %s/3', 'families %s/3'), ('idh', 'IDH %s/0,40', 'HDI %s/0.40'),
+    ]: label(f'veio.city.check.{key}', pt, en)
+    label('veio.city.hint_ready', ' · o prefeito tem uma dica', ' · the mayor has a tip')
+    more = [
+      ('Saiba mais: J → Sistemas → Sociedade da vila (serviços e IDH).', 'Learn more: J → Systems → Village society (services and HDI).'),
+      ('Saiba mais: J → Sistemas → Sociedade da vila (lojas e preços locais).', 'Learn more: J → Systems → Village society (shops and local prices).'),
+      ('Saiba mais: J → Sistemas → Economia e moeda (o caminho do dinheiro).', 'Learn more: J → Systems → Economy and money (where money goes).'),
+      ('Saiba mais: J → Sistemas → Economia e moeda (as quatro contas).', 'Learn more: J → Systems → Economy and money (the four accounts).'),
+      ('Saiba mais: J → Sistemas → Energia (postes e alcance).', 'Learn more: J → Systems → Power (poles and reach).'),
+      ('Saiba mais: J → Sistemas → Agenda, feriados e obras (lazer e ânimo).', 'Learn more: J → Systems → Calendar, holidays and civic works (leisure and morale).'),
+      ('Saiba mais: J → Sistemas → Sociedade da vila (casas e famílias).', 'Learn more: J → Systems → Village society (houses and families).'),
+      ('Saiba mais: J → Sistemas → Economia e moeda (imposto na fonte).', 'Learn more: J → Systems → Economy and money (tax at source).'),
+      ('Saiba mais: J → Sistemas → Agenda, feriados e obras (o calendário e os visitantes).', 'Learn more: J → Systems → Calendar, holidays and civic works (calendar and visitors).'),
+      ('Saiba mais: J → Sistemas → Sociedade da vila (fases do plano diretor).', 'Learn more: J → Systems → Village society (master plan phases).'),
+    ]
+    for i, (pt, en) in enumerate(more): label(f'veio.city.more.{i}', pt, en)
     weak = [('comida', 'food'), ('moradia', 'housing'), ('serviços', 'services'), ('renda', 'income')]
     for i, (pt, en) in enumerate(weak): label(f'veio.city.weak.{i}', f' · mais fraco: {pt}', f' · weakest: {en}')
     fixes = [
