@@ -351,7 +351,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.factory_monitor",
+                  "translate": "block.veio.manufacturer",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -363,7 +363,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.cargo_station",
+                  "translate": "block.veio.factory_monitor",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -375,7 +375,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.unloading_station",
+                  "translate": "block.veio.cargo_station",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -387,7 +387,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.chunk_anchor",
+                  "translate": "block.veio.unloading_station",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -399,7 +399,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.express_belt",
+                  "translate": "block.veio.chunk_anchor",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -411,7 +411,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.belt_tunnel",
+                  "translate": "block.veio.express_belt",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -423,7 +423,7 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.blueprint_designer",
+                  "translate": "block.veio.belt_tunnel",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
@@ -435,12 +435,24 @@
                   "text": "\n"
                 },
                 {
-                  "translate": "block.veio.build_marker",
+                  "translate": "block.veio.blueprint_designer",
                   "color": "dark_blue",
                   "underlined": true,
                   "click_event": {
                     "action": "change_page",
                     "page": 28
+                  }
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "block.veio.build_marker",
+                  "color": "dark_blue",
+                  "underlined": true,
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 29
                   }
                 },
                 {
@@ -511,6 +523,41 @@
                 },
                 {
                   "translate": "veio.guide.craft.fabricator",
+                  "color": "dark_gray"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.back",
+                  "color": "dark_blue",
+                  "click_event": {
+                    "action": "change_page",
+                    "page": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": {
+              "text": "",
+              "extra": [
+                {
+                  "translate": "block.veio.manufacturer",
+                  "bold": true
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.use.manufacturer"
+                },
+                {
+                  "text": "\n"
+                },
+                {
+                  "translate": "veio.guide.craft.manufacturer",
                   "color": "dark_gray"
                 },
                 {

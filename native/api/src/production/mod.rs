@@ -32,6 +32,13 @@ pub(super) const RANCH: &str = "veio:ranch";
 pub(super) const PANTRY: &str = "veio:pantry";
 /// Fabricadora: três entradas, para os produtos de topo (núcleo de automação, kit Mk.II).
 pub(super) const FABRICATOR: &str = "veio:fabricator";
+/// Fabricante: quatro entradas, saída e subproduto, receita automática ou fixada no painel.
+pub(super) const MANUFACTURER: &str = "veio:manufacturer";
+/// `Info` do fabricante: receita atual + `PICK_SHIFT` × receita fixada (0 = automática).
+pub(super) const PICK_SHIFT: i32 = 64;
+/// Botões do painel do fabricante (`menu_button`).
+pub(super) const PICK_PREVIOUS: i32 = 1;
+pub(super) const PICK_NEXT: i32 = 2;
 // Itens criados pela produção; as receitas os citam pelo nome em `tools/production.json`.
 #[allow(dead_code)]
 pub(super) const FLOUR: &str = "veio:flour";
@@ -50,9 +57,14 @@ pub(crate) struct Input {
 }
 
 pub(crate) struct Recipe {
+    /// Nome estável da receita; o painel do fabricante a mostra por `veio.recipe.<id>`.
+    pub id: &'static str,
     pub machine: &'static str,
     pub inputs: &'static [Input],
     pub output: (&'static str, u32),
+    /// Segunda saída (escória, sobras). Só em máquinas com dois slots de saída: o gerador confere.
+    /// Se ela não tiver para onde ir, a máquina para, como no Satisfactory.
+    pub byproduct: Option<(&'static str, u32)>,
     pub ticks: i32,
     pub power: i32,
     /// Receita alternativa: o guia a marca como tal.
@@ -76,12 +88,12 @@ pub(crate) struct Fuel {
 pub(super) fn is_machine(block: &str) -> bool {
     matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | BIOMASS_GENERATOR | WATER_WHEEL |
         WIND_TURBINE | STEAM_ENGINE | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PANTRY |
-        PUMP | PIPE | SPRINKLER | HYDRO_TURBINE | FABRICATOR)
+        PUMP | PIPE | SPRINKLER | HYDRO_TURBINE | FABRICATOR | MANUFACTURER)
 }
 
 /// Máquinas que consomem energia: recebem pela rede, param com redstone, mostram métricas.
 pub(super) fn consumes(block: &str) -> bool {
-    matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PUMP | FABRICATOR)
+    matches!(block, DRILL_MK3 | ELECTRIC_FURNACE | MILL | KITCHEN | PLANTER | GROW_LAMP | TREE_FARM | RANCH | PUMP | FABRICATOR | MANUFACTURER)
 }
 
 /// Fontes de energia deste módulo (as antigas: gerador, geotérmico e solar).
@@ -97,7 +109,7 @@ pub(super) fn burns(block: &str) -> bool {
 /// Entrada de itens, sem alocar o `layout`.
 pub(super) fn has_inputs(block: &str) -> bool {
     matches!(block, ELECTRIC_FURNACE | MILL | PANTRY | KITCHEN | BIOMASS_GENERATOR | STEAM_ENGINE |
-        PLANTER | TREE_FARM | RANCH | SPRINKLER | FABRICATOR)
+        PLANTER | TREE_FARM | RANCH | SPRINKLER | FABRICATOR | MANUFACTURER)
 }
 
 pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
@@ -111,6 +123,7 @@ pub(super) fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         PIPE => (0, vec![], vec![]),
         TREE_FARM => (4, vec![0], vec![1, 2, 3]),
         RANCH => (5, vec![0, 1], vec![2, 3, 4]),
+        MANUFACTURER => (6, vec![0, 1, 2, 3], vec![4, 5]),
         _ => return None,
     })
 }
@@ -123,6 +136,7 @@ pub(super) fn outputs(block: &str) -> std::ops::Range<usize> {
         FABRICATOR => 3..4,
         TREE_FARM => 1..4,
         RANCH => 2..5,
+        MANUFACTURER => 4..6,
         _ => 0..0,
     }
 }
@@ -163,7 +177,7 @@ pub(super) fn emission(block: &str) -> f32 {
     match block {
         DRILL_MK3 => 6.0,
         STEAM_ENGINE => 4.0,
-        BIOMASS_GENERATOR | ELECTRIC_FURNACE | FABRICATOR => 2.0,
+        BIOMASS_GENERATOR | ELECTRIC_FURNACE | FABRICATOR | MANUFACTURER => 2.0,
         MILL | KITCHEN | TREE_FARM => 1.0,
         _ => 0.0,
     }
@@ -212,13 +226,11 @@ pub(super) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     false
 }
 
-/// Primeira receita da máquina cujas entradas estão todas nos slots.
-pub(super) fn find(block: &str, slots: &[Option<ItemStack>]) -> Option<&'static Recipe> {
-    recipes(block).find(|recipe| {
-        recipe.inputs.iter().enumerate().all(|(slot, input)| {
-            slots.get(slot).and_then(Option::as_ref)
-                .is_some_and(|stack| matches_input(input, stack) && stack.count >= input.count)
-        })
+/// Todas as entradas da receita estão nos slots, na quantidade pedida.
+fn ready(recipe: &Recipe, slots: &[Option<ItemStack>]) -> bool {
+    recipe.inputs.iter().enumerate().all(|(slot, input)| {
+        slots.get(slot).and_then(Option::as_ref)
+            .is_some_and(|stack| matches_input(input, stack) && stack.count >= input.count)
     })
 }
 
@@ -252,8 +264,9 @@ pub(super) fn closest(block: &str, slots: &[Option<ItemStack>]) -> Option<(usize
 pub(super) fn missing_line(block: &str, data: &[i32]) -> Option<String> {
     use horizon_client::mod_api::Text;
     let read = |index: usize| data.get(index).copied().unwrap_or(0);
-    let (item, count) = missing_input(block, read(0), read(8), read(12))?;
-    Some(Text::tr("veio.todo.missing", &[&count, &contracts::item_name(item), &read(12)]).plain())
+    let slot = read(12).rem_euclid(PICK_SHIFT);
+    let (item, count) = missing_input(block, read(0), read(8), slot)?;
+    Some(Text::tr("veio.todo.missing", &[&count, &contracts::item_name(item), &slot]).plain())
 }
 
 /// (item, quantidade por ciclo) que falta, se o estado for "faltam ingredientes".
@@ -266,23 +279,72 @@ pub(super) fn missing_input(block: &str, status: i32, recipe: i32, slot: i32) ->
     Some((input.items.first()?, input.count))
 }
 
+/// Receita automática: entre as que estão prontas, a de mais ingredientes. Assim "engrenagem +
+/// chapa" faz uma coisa e "engrenagem + chapa + fiação" faz outra, sem a menor roubar a maior.
+/// Em empate vale a ordem do `production.json`.
+pub(super) fn find(block: &str, slots: &[Option<ItemStack>]) -> Option<&'static Recipe> {
+    recipes(block).filter(|recipe| ready(recipe, slots))
+        .fold(None, |best: Option<&'static Recipe>, recipe| match best {
+            Some(best) if best.inputs.len() >= recipe.inputs.len() => Some(best),
+            _ => Some(recipe),
+        })
+}
+
+/// Receita fixada pelo jogador (NBT `Pick`: 0 = automática, n = n-ésima receita da máquina).
+/// Novas receitas de uma máquina entram no fim da lista dela para não mudar as escolhas salvas.
+pub(super) fn picked(block: &str, pick: i32) -> Option<&'static Recipe> {
+    usize::try_from(pick).ok().filter(|pick| *pick > 0).and_then(|pick| recipes(block).nth(pick - 1))
+}
+
+/// Posição (1, 2...) da receita na lista da máquina, para o painel.
+fn position(block: &str, recipe: &Recipe) -> i32 {
+    recipes(block).position(|known| std::ptr::eq(known, recipe)).map_or(0, |index| index as i32 + 1)
+}
+
+/// Parte do `Info` que guarda a receita fixada (só no fabricante): `Pick` × `PICK_SHIFT`. A parte
+/// de baixo (`Info % PICK_SHIFT`) continua sendo a entrada que falta, como nas outras máquinas.
+fn pick_info(block: &str, pick: i32) -> i32 {
+    if block == MANUFACTURER { pick.max(0) * PICK_SHIFT } else { 0 }
+}
+
+/// Primeira entrada da receita que ainda não está atendida.
+fn first_missing(recipe: &Recipe, slots: &[Option<ItemStack>]) -> Option<usize> {
+    recipe.inputs.iter().enumerate().position(|(slot, input)| {
+        !slots.get(slot).and_then(Option::as_ref).is_some_and(|stack| matches_input(input, stack) && stack.count >= input.count)
+    })
+}
+
 /// Motor comum das máquinas de receita: espera ingredientes, espaço e energia; aplica módulos.
 pub(super) fn process(entity: &mut ModBlockEntity) {
-    let output_slot = output_slots(&entity.id).start;
-    let Some(recipe) = find(&entity.id, &entity.items) else {
+    let outputs = output_slots(&entity.id);
+    let output_slot = outputs.start;
+    let pick = number(entity, "Pick");
+    let chosen = if pick > 0 {
+        picked(&entity.id, pick).filter(|recipe| ready(recipe, &entity.items))
+    } else {
+        find(&entity.id, &entity.items)
+    };
+    let Some(recipe) = chosen else {
         set_number(entity, "Status", 2);
         // A receita mais próxima do que está nas entradas: o painel mostra as taxas dela e
         // o que falta (`Info` = entrada que falta, a partir de 1; 0 = entradas vazias).
-        match closest(&entity.id, &entity.items) {
+        // Receita fixada: o painel mostra ela e o que falta nela. Senão, a mais próxima do que
+        // está nas entradas (`Info` = entrada que falta, a partir de 1; 0 = entradas vazias).
+        let target = match picked(&entity.id, pick) {
+            Some(recipe) => Some((position(&entity.id, recipe) as usize - 1, first_missing(recipe, &entity.items).unwrap_or(0))),
+            None => closest(&entity.id, &entity.items),
+        };
+        match target {
             Some((index, slot)) => {
                 set_number(entity, "RecipeIndex", index as i32 + 1);
-                set_number(entity, "Info", slot as i32 + 1);
+                set_number(entity, "Info", slot as i32 + 1 + pick_info(&entity.id, pick));
             }
-            None => set_number(entity, "Info", 0),
+            None => set_number(entity, "Info", pick_info(&entity.id, pick)),
         }
         return;
     };
-    set_number(entity, "Info", 0);
+    set_number(entity, "Info", pick_info(&entity.id, pick));
+    let byproduct_slot = (outputs.len() > 1).then_some(output_slot + 1);
     let (item, amount) = recipe.output;
     let (duration, draw) = upgrades::apply(recipe.ticks, recipe.power, upgrades::effect(entity));
     set_number(entity, "Duration", duration);
@@ -299,7 +361,11 @@ pub(super) fn process(entity: &mut ModBlockEntity) {
         set_number(entity, "Progress", 0);
     }
     let produced = upgrades::output_amount(entity, item, amount);
-    if !can_add(&entity.items[output_slot], item, produced) {
+    let byproduct_full = match (recipe.byproduct, byproduct_slot) {
+        (Some((extra, count)), Some(slot)) => !can_add(&entity.items[slot], extra, count),
+        _ => false,
+    };
+    if !can_add(&entity.items[output_slot], item, produced) || byproduct_full {
         set_number(entity, "Status", 3);
         return;
     }
@@ -319,6 +385,9 @@ pub(super) fn process(entity: &mut ModBlockEntity) {
         consume(&mut entity.items[slot], input.count);
     }
     add(&mut entity.items[output_slot], item, amount);
+    if let (Some((extra, count)), Some(slot)) = (recipe.byproduct, byproduct_slot) {
+        add(&mut entity.items[slot], extra, count);
+    }
     if upgrades::bonus_ready(entity, item) {
         add(&mut entity.items[output_slot], item, amount);
     }
@@ -359,6 +428,8 @@ pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
         WATER_WHEEL | WIND_TURBINE | GROW_LAMP => vec![None],
         TREE_FARM => vec![Some([26.0, 45.0]), Some([98.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0])],
         RANCH => vec![Some([17.0, 45.0]), Some([39.0, 45.0]), Some([116.0, 45.0]), Some([134.0, 45.0]), Some([152.0, 45.0])],
+        MANUFACTURER => vec![Some([13.0, 45.0]), Some([31.0, 45.0]), Some([49.0, 45.0]), Some([67.0, 45.0]),
+            Some([125.0, 45.0]), Some([157.0, 45.0])],
         _ => return None,
     })
 }
@@ -376,6 +447,7 @@ pub(super) fn roles(block: &str) -> Option<&'static [&'static str]> {
         TREE_FARM => &["saplings", "output", "", ""],
         RANCH => &["feed", "bucket", "output", "", ""],
         PANTRY => &["food", "emeralds"],
+        MANUFACTURER => &["", "", "", "", "output", "byproduct"],
         WATER_WHEEL | WIND_TURBINE | GROW_LAMP => &[],
         _ => return None,
     })
@@ -422,12 +494,52 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         GROW_LAMP => vec![tr("veio.metric.grown", &[&read(9)]), tr("veio.hint.grow_lamp", &[])],
         TREE_FARM => vec![tr("veio.metric.trees", &[&read(9)]), tr("veio.hint.tree_farm", &[])],
         RANCH => vec![tr("veio.metric.animals", &[&info]), tr("veio.hint.ranch", &[])],
+        // Automática e parada: nenhuma receita rodando, mesmo que `RecipeIndex` lembre a última.
+        MANUFACTURER => manufacturer_lines(if read(0) == 1 { read(8) } else { 0 }, info.div_euclid(PICK_SHIFT), read(6)),
         PANTRY => vec![
             tr("veio.metric.credit", &[&read(1), &pantry::PRICE]),
             if info >= pantry::VILLAGE_SIZE { tr("veio.pantry.village", &[&info]) } else { tr("veio.pantry.no_village", &[&info]) },
         ],
         _ => return None,
     })
+}
+
+/// Painel do fabricante: a receita (com as setas para trocar) e a vazão.
+fn manufacturer_lines(current: i32, pick: i32, rate: i32) -> Vec<String> {
+    use horizon_client::mod_api::Text;
+    let name = |position: i32| picked(MANUFACTURER, position)
+        .map(|recipe| Text::tr(&format!("veio.recipe.{}", recipe.id), &[]).plain());
+    let recipe = match (pick, name(current)) {
+        (0, Some(running)) => Text::tr("veio.pick.auto", &[&running]).plain(),
+        (0, None) => Text::tr("veio.pick.auto_idle", &[]).plain(),
+        (_, running) => Text::tr("veio.pick.fixed", &[&running.or_else(|| name(pick)).unwrap_or_default()]).plain(),
+    };
+    vec![
+        format!("< {recipe} >"),
+        Text::tr("veio.metric.rate", &[&rate]).plain(),
+    ]
+}
+
+/// Região clicável da linha da receita: metade esquerda volta, metade direita avança.
+pub(super) fn click(block: &str, at: [f32; 2]) -> Option<i32> {
+    (block == MANUFACTURER && (106.0..119.0).contains(&at[1]) && (6.0..188.0).contains(&at[0]))
+        .then(|| if at[0] < 97.0 { PICK_PREVIOUS } else { PICK_NEXT })
+}
+
+/// O botão chegou ao servidor: passa à receita anterior ou seguinte (0 = automática).
+pub(super) fn press(entity: &mut ModBlockEntity, id: i32) {
+    if entity.id != MANUFACTURER {
+        return;
+    }
+    let choices = recipes(MANUFACTURER).count() as i32 + 1;
+    let step = match id { PICK_PREVIOUS => choices - 1, PICK_NEXT => 1, _ => return };
+    let pick = (number(entity, "Pick").max(0) + step).rem_euclid(choices);
+    set_number(entity, "Pick", pick);
+    set_number(entity, "Progress", 0);
+    if pick > 0 {
+        set_number(entity, "RecipeIndex", pick);
+    }
+    set_number(entity, "Info", pick * PICK_SHIFT);
 }
 
 /// Peças animadas próprias (roda d'água, pás do cata-vento). Devolve `true` se desenhou.

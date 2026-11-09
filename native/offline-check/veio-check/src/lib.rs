@@ -119,6 +119,7 @@ mod preview {
         let fallback = vec![
             ("kitchen".to_owned(), "veio:kitchen".to_owned(), vec![1, 30, 80, 1500, 0, 2000, 12, 70, 0, 40, 0, 2, 0, 0], [-100.0, -100.0], 0),
             ("barn".to_owned(), "veio:barn".to_owned(), vec![0, 0, 1, 0, 0, 2000, 12, 27, 0, 0, 0, 0, 0, 0], [-100.0, -100.0], 0),
+            ("manufacturer".to_owned(), "veio:manufacturer".to_owned(), vec![1, 90, 240, 1500, 0, 2000, 4, 80, 5, 18, 0, 0, 5 * 64, 0], [-100.0, -100.0], 0),
         ];
         let screens = cases(&root.join("preview_cases.txt")).unwrap_or(fallback);
         let path = root.join("screens.jsonl");

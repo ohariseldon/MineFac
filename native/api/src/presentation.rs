@@ -249,6 +249,10 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
     if !extra.is_empty() && lines.len() < 3 {
         lines.push(extra.join(" · "));
     }
+    if event.block == production::MANUFACTURER {
+        // A linha da receita é um botão: metade esquerda volta, metade direita avança.
+        bevel(host, event, [x + 6.0, y + 106.0, 182.0, 12.0], true, 0xffb0b0b0);
+    }
     for (index, line) in lines.iter().enumerate() {
         host.text(event.batch, line, [x + 10.0, y + 108.0 + index as f32 * 11.0], SOFT_INK, false);
     }

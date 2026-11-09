@@ -97,6 +97,17 @@ TIERS = {
 }
 
 MOTIFS = {
+    # Fabricante: quatro bocas de entrada sobre um rotor dourado.
+    "manufacturer": [
+        "e.e..e.e",
+        "c.c..c.c",
+        "bbbbbbbb",
+        "b.YyyY.b",
+        "byY..Yyb",
+        "byY..Yyb",
+        "b.YyyY.b",
+        "bbbbbbbb",
+    ],
     "drill": [
         ".ebbbbe.",
         "..cYYc..",
@@ -581,6 +592,7 @@ MOTIFS.update({
     ],
 })
 MACHINE_TIER = {
+    "manufacturer": "steel",
     "drill": "copper", "press": "copper", "assembler": "copper", "generator": "copper",
     "contract_hub": "copper", "factory_board": "copper", "blueprint_designer": "steel", "cutter": "iron", "integrator": "iron", "crusher": "iron",
     "alloy_furnace": "iron", "harvester": "iron", "electronics": "steel", "geothermal": "steel",
@@ -982,6 +994,34 @@ BIOMASS = [
     "................",
 ]
 
+def riveted(light, mid, dark, edge):
+    """Chapa com cantoneiras e rebites: a placa reforçada."""
+    rows = [list(row) for row in plate(light, mid, dark, edge)]
+    for x, y in ((4, 5), (9, 5), (3, 9), (8, 9)):
+        rows[y][x] = "g"
+    for x in range(3, 11):
+        rows[7][x + 1] = "S" if rows[7][x + 1] != "." else "."
+    return ["".join(r) for r in rows]
+
+ROTOR = [
+    "................",
+    "......MM........",
+    ".....MSST.......",
+    ".....MSST.......",
+    "......SST.......",
+    ".......ST..MMM..",
+    "...TT..yy.MSSST.",
+    "..MSSSyYYySSSST.",
+    ".TSSSSyYYyST....",
+    "..TTT..yy..TT...",
+    ".......TS.......",
+    ".......MSS......",
+    "......MSSST.....",
+    "......MSSST.....",
+    ".......TTT......",
+    "................",
+]
+
 def material():
     """Textura clara e uniforme que o bloco tinge nas luzes e peças animadas."""
     rows = []
@@ -1151,6 +1191,8 @@ def main():
     out["item/permit_workshop"] = permit("qx")
     out["item/permit_steel"] = permit("ST")
     out["item/permit_electronics"] = permit("HG")
+    out["item/reinforced_plate"] = render(riveted("a", "b", "c", "e"), salt=14)
+    out["item/rotor"] = render(ROTOR, salt=15)
     for name, pixels in out.items():
         write_png(ROOT / f"{name}.png", pixels)
     print(f"{len(out)} texturas 16x16 em {ROOT.relative_to(ROOT.parents[3])}")

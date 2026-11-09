@@ -172,7 +172,9 @@ fn electric_furnace_turns_any_log_into_charcoal() {
 fn every_recipe_machine_and_item_is_known() {
     for recipe in data::RECIPES {
         assert!(super::super::layout(recipe.machine).is_some(), "{}", recipe.machine);
-        assert!(recipe.inputs.len() <= if recipe.machine == FABRICATOR { 3 } else { 2 } && recipe.ticks > 0 && recipe.power > 0);
+        let (_, inputs, outputs) = super::super::layout(recipe.machine).unwrap();
+        assert!(recipe.inputs.len() <= inputs.len() && recipe.ticks > 0 && recipe.power > 0, "{}", recipe.id);
+        assert!(recipe.byproduct.is_none() || outputs.len() > 1, "{}: sem slot de subproduto", recipe.id);
     }
 }
 
@@ -489,4 +491,78 @@ fn a_ranch_never_treats_saddled_transport_pigs_as_surplus_meat() {
     ranch::tick(&mut host, [0, 64, 0], &mut pen, 0);
     assert_eq!(number(&pen, "Info"), 0, "mounts do not enter the farm's breeding/culling pool");
     assert_eq!(number(&pen, "Status"), NO_ANIMALS);
+}
+
+fn stocked(items: &[(usize, &str, u32)]) -> ModBlockEntity {
+    let mut entity = machine(MANUFACTURER);
+    for &(slot, item, count) in items {
+        entity.items[slot] = Some(ItemStack::new(item, count));
+    }
+    entity
+}
+
+#[test]
+fn manufacturer_makes_more_from_a_fuller_mix() {
+    // Engrenagem + chapa: uma placa reforçada.
+    let mut plain = stocked(&[(0, "veio:iron_plate", 4), (1, GEAR, 2)]);
+    run(&mut plain, 120);
+    assert_eq!(plain.items[4], Some(ItemStack::new("veio:reinforced_plate", 1)));
+    // Engrenagem + chapa + fiação: a receita maior vence e rende o dobro.
+    let mut stitched = stocked(&[(0, "veio:iron_plate", 4), (1, GEAR, 2), (2, "veio:wire", 4)]);
+    run(&mut stitched, 160);
+    assert_eq!(stitched.items[4], Some(ItemStack::new("veio:reinforced_plate", 2)));
+    assert!(stitched.items[2].is_none(), "a fiação foi usada");
+}
+
+#[test]
+fn byproduct_goes_to_its_slot_and_stops_the_line_when_full() {
+    let mut steel = stocked(&[(0, "veio:iron_plate", 3), (1, "minecraft:coal", 2), (2, "minecraft:sand", 1)]);
+    run(&mut steel, 160);
+    assert_eq!(steel.items[4], Some(ItemStack::new("veio:steel_plate", 2)));
+    assert_eq!(steel.items[5], Some(ItemStack::new("minecraft:gravel", 1)));
+    // Sobra entupida: nada é consumido, a máquina avisa saída bloqueada.
+    let mut jammed = stocked(&[(0, "veio:iron_plate", 3), (1, "minecraft:coal", 2), (2, "minecraft:sand", 1),
+        (5, "minecraft:gravel", 64)]);
+    run(&mut jammed, 200);
+    assert!(jammed.items[4].is_none());
+    assert_eq!(jammed.items[0].as_ref().unwrap().count, 3);
+    assert_eq!(number(&jammed, "Status"), 3);
+}
+
+#[test]
+fn locked_recipe_waits_for_its_own_ingredients() {
+    let mut entity = stocked(&[(0, "veio:iron_plate", 4), (1, GEAR, 2)]);
+    let motor = recipes(MANUFACTURER).position(|recipe| recipe.id == "motor").unwrap() as i32 + 1;
+    for _ in 0..motor {
+        press(&mut entity, PICK_NEXT);
+    }
+    assert_eq!(number(&entity, "Pick"), motor);
+    run(&mut entity, 200);
+    assert!(entity.items[4].is_none(), "fixada no motor, não faz placa reforçada");
+    assert_eq!(number(&entity, "Status"), 2);
+    assert_eq!(number(&entity, "RecipeIndex"), motor);
+    assert_eq!(number(&entity, "Info"), 1 + motor * PICK_SHIFT, "falta a entrada 1 da receita fixada");
+    // Voltar até a automática destrava.
+    for _ in 0..motor {
+        press(&mut entity, PICK_PREVIOUS);
+    }
+    assert_eq!(number(&entity, "Pick"), 0);
+    run(&mut entity, 120);
+    assert_eq!(entity.items[4], Some(ItemStack::new("veio:reinforced_plate", 1)));
+    // Antes da automática vem a última receita: o ciclo dá a volta.
+    press(&mut entity, PICK_PREVIOUS);
+    assert_eq!(number(&entity, "Pick"), recipes(MANUFACTURER).count() as i32);
+}
+
+#[test]
+fn manufacturer_slots_route_each_ingredient_to_one_place() {
+    let gear = ItemStack::new(GEAR, 1);
+    let accepted: Vec<usize> = (0..6).filter(|slot| accepts(MANUFACTURER, *slot, &gear)).collect();
+    assert_eq!(accepted, vec![1]);
+    assert!(!accepts(MANUFACTURER, 4, &ItemStack::new("veio:reinforced_plate", 1)), "saída só para retirada");
+    assert!(accepts(MANUFACTURER, 2, &ItemStack::new("minecraft:cherry_planks", 1)));
+    assert_eq!(click(MANUFACTURER, [20.0, 110.0]), Some(PICK_PREVIOUS));
+    assert_eq!(click(MANUFACTURER, [150.0, 110.0]), Some(PICK_NEXT));
+    assert_eq!(click(MANUFACTURER, [150.0, 60.0]), None);
+    assert_eq!(click(KITCHEN, [150.0, 110.0]), None);
 }

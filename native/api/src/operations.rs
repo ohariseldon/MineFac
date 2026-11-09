@@ -36,7 +36,7 @@ pub(crate) fn profile(block: &str) -> Option<Profile> {
     if freight::owns(block) { return Some(Profile { sector: Sector::Logistics, kind: StationKind::Transport }); }
     let sector = match block {
         DRILL | DRILL_MK2 | DRILL_MK3 => Sector::Extraction,
-        PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE | FABRICATOR
+        PRESS | ASSEMBLER | CUTTER | INTEGRATOR | CRUSHER | ALLOY | ELECTRONICS | ELECTRIC_FURNACE | FABRICATOR | MANUFACTURER
             | workforce::HAULER_POST => Sector::Industry,
         workforce::FOREMAN_DESK | workforce::CONTROL_CENTER | workforce::SHOP | workforce::TOWN_HALL | workforce::SITE => Sector::Workforce,
         _ if workforce::society::is_society_block(block) => Sector::Workforce,

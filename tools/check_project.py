@@ -251,6 +251,12 @@ def check_assets(languages):
     counts = (generated.count("    Recipe {"), generated.count("    Node {"))
     assert counts == (len(production["recipes"]), len(production["nodes"])), \
         "data.rs desatualizado: rode python tools/build_production.py"
+    # O painel do fabricante mostra o nome da receita: todas precisam de tradução.
+    for code in ("pt_br", "en_us"):
+        lang = read_json(assets / f"lang/{code}.json")
+        for recipe in production["recipes"]:
+            if recipe["machine"] == "manufacturer":
+                assert f"veio.recipe.{recipe['id']}" in lang, f"{code}: falta veio.recipe.{recipe['id']}"
     unlocked = set()
     for advancement in (data / "advancement").rglob("*.json"):
         unlocked.update(read_json(advancement).get("rewards", {}).get("recipes", []))

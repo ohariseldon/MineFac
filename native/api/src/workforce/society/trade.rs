@@ -43,7 +43,7 @@ const MAX_CONTRACTS: usize = 3;
 pub(crate) const TIER_AT: [i32; 3] = [1, 3, 6];
 
 /// Produtos do mercado mundial: (item, chave de nome, valor base em moedas, camada de complexidade).
-pub(crate) const PRODUCTS: [(&str, &str, i32, i32); 34] = [
+pub(crate) const PRODUCTS: [(&str, &str, i32, i32); 37] = [
     ("minecraft:raw_iron", "item.minecraft.raw_iron", 2, 0),
     ("minecraft:raw_copper", "item.minecraft.raw_copper", 1, 0),
     ("minecraft:raw_gold", "item.minecraft.raw_gold", 4, 0),
@@ -78,6 +78,10 @@ pub(crate) const PRODUCTS: [(&str, &str, i32, i32); 34] = [
     ("veio:module", "item.veio.module", 20, 3),
     ("veio:repair_kit", "item.veio.repair_kit", 12, 3),
     ("veio:speed_module", "item.veio.speed_module", 40, 4),
+    // Peças do fabricante (sempre no fim: contratos e saves guardam a posição).
+    ("veio:reinforced_plate", "item.veio.reinforced_plate", 34, 2),
+    ("veio:rotor", "item.veio.rotor", 42, 3),
+    ("veio:motor", "item.veio.motor", 110, 4),
 ];
 
 /// Comida que as lojas podem importar (a que a loja mais vende, ou pão).

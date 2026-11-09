@@ -47,6 +47,7 @@ BLOCKS = {
     "alloy_furnace": ("machine", "iron", 3, [2], 2.0),
     "harvester": ("machine", "iron", 4, [1, 2, 3], 1.5),
     "electronics": ("machine", "steel", 3, [2], 2.0),
+    "manufacturer": ("machine", "steel", 6, [4, 5], 2.5),
     "geothermal": ("machine", "steel", 2, [1], 2.0),
     "drill_mk2": ("machine", "steel", 1, [0], 2.0),
     "tesla": ("tesla", "steel", 1, [0], 2.5),
@@ -152,12 +153,15 @@ ITEMS = {
     "permit_workshop": ("minecraft:paper", 16),
     "permit_steel": ("minecraft:paper", 16),
     "permit_electronics": ("minecraft:paper", 16),
+    # Peças do fabricante (o motor é o mesmo da Fabricadora, acima).
+    "reinforced_plate": ("minecraft:iron_ingot", 64),
+    "rotor": ("minecraft:iron_nugget", 64),
 }
 
 TABS = {
     "industry": ("veio:press", ["drill", "drill_mk2", "drill_mk3", "press", "assembler", "cutter", "integrator",
-        "crusher", "alloy_furnace", "electronics", "electric_furnace", "factory_board", "blueprint_designer", "build_marker", "contract_hub", "wrench", "copper_plate", "iron_plate",
-        "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module", "speed_module",
+        "crusher", "alloy_furnace", "electronics", "manufacturer", "electric_furnace", "factory_board", "blueprint_designer", "build_marker", "contract_hub", "wrench", "copper_plate", "iron_plate",
+        "steel_plate", "gear", "wire", "frame", "silicon", "circuit", "module", "reinforced_plate", "rotor", "speed_module",
         "efficiency_module", "productivity_module", "fabricator", "research_lab", "factory_monitor", "chunk_anchor", "cargo_station", "unloading_station",
         "motor", "processor", "automation_core", "mk2_kit", "permit_workshop", "permit_steel", "permit_electronics"]),
     "power": ("veio:generator", ["generator", "biomass_generator", "water_wheel", "wind_turbine", "steam_engine",

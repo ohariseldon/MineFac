@@ -4650,6 +4650,216 @@
       "model": "veio:block/structure/fabricator_45",
       "y": 270
     },
+    "facing=south,piece=manufacturer_0": {
+      "model": "veio:block/structure/manufacturer_0"
+    },
+    "facing=west,piece=manufacturer_0": {
+      "model": "veio:block/structure/manufacturer_0",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_0": {
+      "model": "veio:block/structure/manufacturer_0",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_0": {
+      "model": "veio:block/structure/manufacturer_0",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_1": {
+      "model": "veio:block/structure/manufacturer_1"
+    },
+    "facing=west,piece=manufacturer_1": {
+      "model": "veio:block/structure/manufacturer_1",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_1": {
+      "model": "veio:block/structure/manufacturer_1",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_1": {
+      "model": "veio:block/structure/manufacturer_1",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_2": {
+      "model": "veio:block/structure/manufacturer_2"
+    },
+    "facing=west,piece=manufacturer_2": {
+      "model": "veio:block/structure/manufacturer_2",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_2": {
+      "model": "veio:block/structure/manufacturer_2",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_2": {
+      "model": "veio:block/structure/manufacturer_2",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_3": {
+      "model": "veio:block/structure/manufacturer_3"
+    },
+    "facing=west,piece=manufacturer_3": {
+      "model": "veio:block/structure/manufacturer_3",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_3": {
+      "model": "veio:block/structure/manufacturer_3",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_3": {
+      "model": "veio:block/structure/manufacturer_3",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_4": {
+      "model": "veio:block/structure/manufacturer_4"
+    },
+    "facing=west,piece=manufacturer_4": {
+      "model": "veio:block/structure/manufacturer_4",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_4": {
+      "model": "veio:block/structure/manufacturer_4",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_4": {
+      "model": "veio:block/structure/manufacturer_4",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_5": {
+      "model": "veio:block/structure/manufacturer_5"
+    },
+    "facing=west,piece=manufacturer_5": {
+      "model": "veio:block/structure/manufacturer_5",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_5": {
+      "model": "veio:block/structure/manufacturer_5",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_5": {
+      "model": "veio:block/structure/manufacturer_5",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_6": {
+      "model": "veio:block/structure/manufacturer_6"
+    },
+    "facing=west,piece=manufacturer_6": {
+      "model": "veio:block/structure/manufacturer_6",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_6": {
+      "model": "veio:block/structure/manufacturer_6",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_6": {
+      "model": "veio:block/structure/manufacturer_6",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_7": {
+      "model": "veio:block/structure/manufacturer_7"
+    },
+    "facing=west,piece=manufacturer_7": {
+      "model": "veio:block/structure/manufacturer_7",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_7": {
+      "model": "veio:block/structure/manufacturer_7",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_7": {
+      "model": "veio:block/structure/manufacturer_7",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_8": {
+      "model": "veio:block/structure/manufacturer_8"
+    },
+    "facing=west,piece=manufacturer_8": {
+      "model": "veio:block/structure/manufacturer_8",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_8": {
+      "model": "veio:block/structure/manufacturer_8",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_8": {
+      "model": "veio:block/structure/manufacturer_8",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_9": {
+      "model": "veio:block/structure/manufacturer_9"
+    },
+    "facing=west,piece=manufacturer_9": {
+      "model": "veio:block/structure/manufacturer_9",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_9": {
+      "model": "veio:block/structure/manufacturer_9",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_9": {
+      "model": "veio:block/structure/manufacturer_9",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_10": {
+      "model": "veio:block/structure/manufacturer_10"
+    },
+    "facing=west,piece=manufacturer_10": {
+      "model": "veio:block/structure/manufacturer_10",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_10": {
+      "model": "veio:block/structure/manufacturer_10",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_10": {
+      "model": "veio:block/structure/manufacturer_10",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_11": {
+      "model": "veio:block/structure/manufacturer_11"
+    },
+    "facing=west,piece=manufacturer_11": {
+      "model": "veio:block/structure/manufacturer_11",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_11": {
+      "model": "veio:block/structure/manufacturer_11",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_11": {
+      "model": "veio:block/structure/manufacturer_11",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_12": {
+      "model": "veio:block/structure/manufacturer_12"
+    },
+    "facing=west,piece=manufacturer_12": {
+      "model": "veio:block/structure/manufacturer_12",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_12": {
+      "model": "veio:block/structure/manufacturer_12",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_12": {
+      "model": "veio:block/structure/manufacturer_12",
+      "y": 270
+    },
+    "facing=south,piece=manufacturer_13": {
+      "model": "veio:block/structure/manufacturer_13"
+    },
+    "facing=west,piece=manufacturer_13": {
+      "model": "veio:block/structure/manufacturer_13",
+      "y": 90
+    },
+    "facing=north,piece=manufacturer_13": {
+      "model": "veio:block/structure/manufacturer_13",
+      "y": 180
+    },
+    "facing=east,piece=manufacturer_13": {
+      "model": "veio:block/structure/manufacturer_13",
+      "y": 270
+    },
     "facing=south,piece=generator_0": {
       "model": "veio:block/structure/generator_0"
     },

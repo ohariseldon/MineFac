@@ -28,7 +28,8 @@
       "veio:hydro_turbine",
       "veio:chunk_anchor",
       "veio:cargo_station",
-      "veio:unloading_station"
+      "veio:unloading_station",
+      "veio:manufacturer"
     ]
   }
 }

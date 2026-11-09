@@ -9,6 +9,16 @@ def write(path,value):
 langs={code:read(f"{A}/lang/{code}.json") for code in ("pt_br","en_us")}
 def label(key,pt,en):
  langs["pt_br"][key]=pt;langs["en_us"][key]=en
+# Combinadora (veio:manufacturer, frente do Fabricante): nomes que vinham escritos à mão no
+# lang da 0.25. Renomeada de "Fabricante" para não confundir com a Fabricadora.
+for key,pt,en in [
+ ("block.veio.manufacturer","Combinadora","Combiner"),
+ ("item.veio.reinforced_plate","Placa reforçada","Reinforced plate"),
+ ("item.veio.rotor","Rotor","Rotor"),
+ ("advancement.veio.motor.title","Linha pesada","Heavy line"),
+ ("advancement.veio.motor.description","Monte seu primeiro motor elétrico.","Build your first electric motor."),
+]:
+ label(key,pt,en)
 vanilla={
  "campfire":("Fogueira","Campfire"),"flower_pot":("Vaso de flor","Flower pot"),"bricks":("Tijolos","Bricks"),
  "copper_ingot":("Lingote de cobre","Copper ingot"),"iron_ingot":("Lingote de ferro","Iron ingot"),
@@ -99,6 +109,9 @@ help={
  "alloy_furnace":(
  "Entrada 1: 2 chapas de ferro.\nEntrada 2: 1 carvão.\nProduz 1 chapa de aço.\nTambém aceita carvão vegetal.\nPrecisa de energia.",
  "Input 1: 2 iron plates.\nInput 2: 1 coal.\nMakes 1 steel plate.\nCharcoal works too.\nRequires electricity."),
+ "manufacturer":(
+ "Até 4 ingredientes.\nMais ingredientes, mais\nproduto: veja as alternativas.\nClique < > para fixar.",
+ "Up to 4 ingredients.\nMore ingredients, more\noutput: see the alternates.\nClick < > to lock one."),
  "electronics":(
  "Entrada 1: 2 fiações.\nEntrada 2: 1 silício.\nProduz 1 placa de circuito.\nPrecisa de energia.",
  "Input 1: 2 copper wiring.\nInput 2: 1 silicon wafer.\nMakes 1 circuit board.\nRequires electricity."),
@@ -879,7 +892,7 @@ help.update({
 })
 # Terminais de transporte: consulta no livro Transportes (build_transport_guide.py).
 transport_order=["rail_terminal","drone_port","caravan_station"]
-industry_order=["research_lab","fabricator","factory_monitor","cargo_station","unloading_station","chunk_anchor","express_belt","belt_tunnel","blueprint_designer","build_marker"]
+industry_order=["research_lab","fabricator","manufacturer","factory_monitor","cargo_station","unloading_station","chunk_anchor","express_belt","belt_tunnel","blueprint_designer","build_marker"]
 
 # Quadro da fábrica (milestones/): fases, pedido do dia, censo de gargalos e ritmo do dia.
 for key, pt, en in [
@@ -978,6 +991,7 @@ slothelp={
  "crusher":["Coloque quartzo, osso, pedregulho ou cascalho.","Recolha o produto triturado."],
  "alloy_furnace":["Coloque DUAS chapas de ferro.","Coloque UM carvão ou carvão vegetal.","Recolha as chapas de aço."],
  "electronics":["Coloque DUAS fiações de cobre.","Coloque UMA pastilha de silício.","Recolha as placas de circuito."],
+ "manufacturer":["Chapas (ferro, cobre, aço, reforçada) ou cascalho.","Engrenagem, rotor, carvão, pedregulho, graveto, baú ou farinha de osso.","Fiação, tábuas ou areia.","Circuito ou redstone.","Recolha o produto.","Subproduto (escória, aparas). Cheio, a máquina para."],
  "belt":["Itens guardados neste trecho da esteira."],
  "fast_belt":["Itens guardados neste trecho da esteira."],
  "splitter":["Itens aguardando as saídas laterais."],
@@ -1029,6 +1043,7 @@ slot_en={
  "crusher":["Insert quartz, bone, cobblestone or gravel.","Collect the crushed product."],
  "alloy_furnace":["Insert TWO iron plates.","Insert ONE coal or charcoal.","Collect the steel plates."],
  "electronics":["Insert TWO copper wiring.","Insert ONE silicon wafer.","Collect the circuit boards."],
+ "manufacturer":["Plates (iron, copper, steel, reinforced) or gravel.","Gear, rotor, coal, cobblestone, stick, chest or bone meal.","Wiring, planks or sand.","Circuit or redstone.","Collect the product.","Byproduct (slag, scraps). When full, the machine stops."],
  "belt":["Items held by this conveyor segment."],
  "fast_belt":["Items held by this conveyor segment."],
  "splitter":["Items waiting for the side outputs."],
@@ -1360,7 +1375,8 @@ for g,(pt,en,members) in enumerate(categories):
 production_data=json.loads((root.parent/"tools/production.json").read_text(encoding="utf-8"))
 BLOCK_ITEMS={"sand","red_sand","gravel","cobblestone","stone","smooth_stone","cobbled_deepslate","deepslate",
  "glass","netherrack","cactus","wet_sponge","sponge","ancient_debris","clay","pumpkin","brown_mushroom",
- "red_mushroom","sugar_cane","kelp","cake","coal_block","dried_kelp_block","hay_block","bamboo"}
+ "red_mushroom","sugar_cane","kelp","cake","coal_block","dried_kelp_block","hay_block","bamboo",
+ "piston","rail","hopper","chest","white_concrete_powder"}
 label("veio.guide.group.logs","Qualquer tronco","Any log")
 label("veio.guide.group.plants","Plantas, folhas ou mudas","Plants, leaves or saplings")
 label("veio.guide.group.coal","Carvão","Coal")
@@ -1368,6 +1384,26 @@ label("veio.guide.recipes","Receitas das máquinas","Machine recipes")
 label("veio.guide.alt","alternativa","alternate")
 label("veio.guide.per_minute"," /min · %ss"," /min · %ss")
 label("veio.metric.utilization_max","Tempo ativo %s%% · máx. %s ciclos/min","Active %s%% · max %s cycles/min")
+label("veio.guide.group.planks","Tábuas","Planks")
+label("veio.guide.role.byproduct","Sobra","Extra")
+label("veio.pick.auto","Automática: %s","Auto: %s")
+label("veio.pick.auto_idle","Automática: a mais completa","Auto: the fullest recipe")
+label("veio.pick.fixed","Fixa: %s","Locked: %s")
+for rid,pt,en in [
+ ("reinforced_plate","Placa reforçada","Reinforced plate"),
+ ("stitched_plate","Placa costurada","Stitched plate"),
+ ("rotor","Rotor","Rotor"),
+ ("copper_rotor","Rotor de cobre","Copper rotor"),
+ ("motor","Motor elétrico","Electric motor"),
+ ("electric_motor","Motor com circuito","Circuit motor"),
+ ("slag_steel","Aço com escória","Slag steel"),
+ ("piston","Pistões","Pistons"),
+ ("rail","Trilhos","Rails"),
+ ("hopper","Funis","Hoppers"),
+ ("minecart","Carrinho","Minecart"),
+ ("concrete","Pó de concreto","Concrete powder"),
+]:
+ label(f"veio.recipe.{rid}",pt,en)
 def name_component(item):
  if item.startswith("@"):
   return {"translate":f"veio.guide.group.{item[1:]}"}
@@ -1376,8 +1412,11 @@ def name_component(item):
   return {"translate":f"item.veio.{path}"}
  return {"translate":f"{'block' if path in BLOCK_ITEMS else 'item'}.minecraft.{path}"}
 machines=[]
+# A combinadora (12 receitas, 3 páginas) passaria o limite de 100 páginas do livro: as
+# receitas dela ficam na wiki (J) e no Guia da Grande Indústria.
+GUIDE_SKIPS_RECIPES={"manufacturer"}
 for recipe in production_data["recipes"]:
- if recipe["machine"] not in machines: machines.append(recipe["machine"])
+ if recipe["machine"] not in machines and recipe["machine"] not in GUIDE_SKIPS_RECIPES: machines.append(recipe["machine"])
 recipe_pages={}
 # Receitas por página: 4, menos onde os nomes longos quebram linha (14 linhas por página).
 RECIPES_PER_PAGE={"electronics":2,"kitchen":3}
@@ -1406,6 +1445,8 @@ for machine in machines:
    extra.append({"translate":"veio.guide.per_minute","with":[cycle],"color":"dark_gray"})
    if r.get("alt"):
     extra.extend([{"text":" ("},{"translate":"veio.guide.alt","italic":True},{"text":")"}])
+   if r.get("by"):
+    extra.extend([{"text":" + ","color":"dark_gray"},{"text":f"{r['by'][1]} "},name_component(r["by"][0])])
   extra.extend([{"text":"\n"},{"translate":"veio.guide.recipes","color":"dark_blue","click_event":{"action":"change_page","page":recipe_index}}])
   recipe_pages.setdefault(machine,len(pages)+1)
   pages.append({"text":"","extra":extra})

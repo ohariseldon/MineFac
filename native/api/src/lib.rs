@@ -527,7 +527,14 @@ impl Hooks for Factory {
                 None
             };
         }
-        (event.block == workforce::CONTROL_CENTER && !event.right).then(|| holding::click(event.at, tab)).flatten()
+        if event.right {
+            return None;
+        }
+        if event.block == workforce::CONTROL_CENTER {
+            holding::click(event.at, tab)
+        } else {
+            production::click(event.block, event.at)
+        }
     }
 
     fn menu_button(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::MenuButtonEvent<'_>) {
@@ -541,6 +548,8 @@ impl Hooks for Factory {
         if event.entity.id == workforce::CONTROL_CENTER {
             let time = host.level(host.dimension()).and_then(|level| level.game_time(host)).unwrap_or(0);
             holding::press(host.dimension(), event.pos, event.entity, event.id, time);
+        } else {
+            production::press(event.entity, event.id);
         }
     }
 

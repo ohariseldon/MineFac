@@ -1,9 +1,10 @@
 {
-  "_doc": "Fonte única da produção do Veio. tools/build_production.py gera native/api/src/production/data.rs e as páginas de receitas do guia. '@nome' expande um grupo. 'alt': receita alternativa, mostrada como tal no guia.",
+  "_doc": "Fonte única da produção do Veio. tools/build_production.py gera native/api/src/production/data.rs e as páginas de receitas do guia. '@nome' expande um grupo. 'alt': receita alternativa, mostrada como tal no guia. 'by': subproduto (só no fabricante, que tem segundo slot de saída). 'id': nome estável; as receitas do fabricante têm tradução veio.recipe.<id>, cada ingrediente ocupa sempre o mesmo slot e receitas novas entram no fim da lista dele (a escolha salva no painel é a posição).",
   "groups": {
     "logs": ["minecraft:oak_log", "minecraft:spruce_log", "minecraft:birch_log", "minecraft:jungle_log", "minecraft:acacia_log", "minecraft:dark_oak_log", "minecraft:mangrove_log", "minecraft:cherry_log", "minecraft:pale_oak_log", "minecraft:stripped_oak_log", "minecraft:stripped_spruce_log", "minecraft:stripped_birch_log", "minecraft:stripped_jungle_log", "minecraft:stripped_acacia_log", "minecraft:stripped_dark_oak_log", "minecraft:stripped_mangrove_log", "minecraft:stripped_cherry_log", "minecraft:stripped_pale_oak_log"],
     "plants": ["minecraft:wheat_seeds", "minecraft:beetroot_seeds", "minecraft:melon_seeds", "minecraft:pumpkin_seeds", "minecraft:short_grass", "minecraft:tall_grass", "minecraft:fern", "minecraft:large_fern", "minecraft:vine", "minecraft:kelp", "minecraft:seagrass", "minecraft:cactus", "minecraft:bamboo", "minecraft:dead_bush", "minecraft:lily_pad", "minecraft:moss_carpet", "minecraft:oak_leaves", "minecraft:spruce_leaves", "minecraft:birch_leaves", "minecraft:jungle_leaves", "minecraft:acacia_leaves", "minecraft:dark_oak_leaves", "minecraft:mangrove_leaves", "minecraft:cherry_leaves", "minecraft:oak_sapling", "minecraft:spruce_sapling", "minecraft:birch_sapling", "minecraft:jungle_sapling", "minecraft:acacia_sapling", "minecraft:dark_oak_sapling", "minecraft:cherry_sapling"],
-    "coal": ["minecraft:coal", "minecraft:charcoal"]
+    "coal": ["minecraft:coal", "minecraft:charcoal"],
+    "planks": ["minecraft:oak_planks", "minecraft:spruce_planks", "minecraft:birch_planks", "minecraft:jungle_planks", "minecraft:acacia_planks", "minecraft:dark_oak_planks", "minecraft:mangrove_planks", "minecraft:cherry_planks", "minecraft:pale_oak_planks", "minecraft:bamboo_planks", "minecraft:crimson_planks", "minecraft:warped_planks"]
   },
   "recipes": [
     {"machine": "press", "in": [["minecraft:raw_copper", 1]], "out": ["veio:copper_plate", 1], "ticks": 30, "power": 8},
@@ -65,7 +66,19 @@
     {"machine": "kitchen", "in": [["minecraft:carrot", 1], ["minecraft:gold_nugget", 8]], "out": ["minecraft:golden_carrot", 1], "ticks": 80, "power": 10},
     {"machine": "kitchen", "in": [["minecraft:apple", 1], ["minecraft:gold_ingot", 8]], "out": ["minecraft:golden_apple", 1], "ticks": 200, "power": 20},
     {"machine": "kitchen", "in": [["minecraft:beetroot", 6], ["minecraft:bowl", 1]], "out": ["minecraft:beetroot_soup", 1], "ticks": 60, "power": 8},
-    {"machine": "kitchen", "in": [["minecraft:brown_mushroom", 1], ["minecraft:red_mushroom", 1]], "out": ["minecraft:mushroom_stew", 1], "ticks": 60, "power": 8}
+    {"machine": "kitchen", "in": [["minecraft:brown_mushroom", 1], ["minecraft:red_mushroom", 1]], "out": ["minecraft:mushroom_stew", 1], "ticks": 60, "power": 8},
+    {"id": "reinforced_plate", "machine": "manufacturer", "in": [["veio:iron_plate", 4], ["veio:gear", 2]], "out": ["veio:reinforced_plate", 1], "ticks": 120, "power": 16},
+    {"id": "stitched_plate", "machine": "manufacturer", "in": [["veio:iron_plate", 4], ["veio:gear", 2], ["veio:wire", 4]], "out": ["veio:reinforced_plate", 2], "ticks": 160, "power": 20, "alt": true},
+    {"id": "rotor", "machine": "manufacturer", "in": [["veio:steel_plate", 1], ["veio:gear", 4]], "out": ["veio:rotor", 1], "ticks": 120, "power": 16},
+    {"id": "copper_rotor", "machine": "manufacturer", "in": [["veio:copper_plate", 6], ["veio:gear", 4], ["veio:wire", 2]], "out": ["veio:rotor", 1], "ticks": 160, "power": 20, "alt": true},
+    {"id": "motor", "machine": "manufacturer", "in": [["veio:reinforced_plate", 1], ["veio:rotor", 1], ["veio:wire", 8]], "out": ["veio:motor", 1], "ticks": 240, "power": 24},
+    {"id": "electric_motor", "machine": "manufacturer", "in": [["veio:reinforced_plate", 1], ["veio:rotor", 1], ["veio:wire", 4], ["veio:circuit", 1]], "out": ["veio:motor", 2], "ticks": 320, "power": 32, "alt": true},
+    {"id": "slag_steel", "machine": "manufacturer", "in": [["veio:iron_plate", 3], ["@coal", 2], ["minecraft:sand", 1]], "out": ["veio:steel_plate", 2], "by": ["minecraft:gravel", 1], "ticks": 160, "power": 20, "alt": true},
+    {"id": "piston", "machine": "manufacturer", "in": [["veio:iron_plate", 1], ["minecraft:cobblestone", 4], ["@planks", 3], ["minecraft:redstone", 1]], "out": ["minecraft:piston", 2], "ticks": 80, "power": 12},
+    {"id": "rail", "machine": "manufacturer", "in": [["veio:iron_plate", 4], ["minecraft:stick", 2]], "out": ["minecraft:rail", 24], "by": ["minecraft:iron_nugget", 3], "ticks": 120, "power": 14},
+    {"id": "hopper", "machine": "manufacturer", "in": [["veio:reinforced_plate", 1], ["minecraft:chest", 1]], "out": ["minecraft:hopper", 2], "ticks": 100, "power": 14},
+    {"id": "minecart", "machine": "manufacturer", "in": [["veio:reinforced_plate", 1], ["veio:gear", 2]], "out": ["minecraft:minecart", 1], "ticks": 100, "power": 14},
+    {"id": "concrete", "machine": "manufacturer", "in": [["minecraft:gravel", 4], ["minecraft:bone_meal", 1], ["minecraft:sand", 4]], "out": ["minecraft:white_concrete_powder", 10], "ticks": 60, "power": 10}
   ],
   "nodes": [
     {"blocks": ["minecraft:copper_ore", "minecraft:deepslate_copper_ore"], "out": ["minecraft:raw_copper", 1], "tier": 1, "slow": 1},

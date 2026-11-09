@@ -1,0 +1,26 @@
+{
+  "parent": "veio:circuits",
+  "display": {
+    "icon": {
+      "id": "veio:motor"
+    },
+    "title": {
+      "translate": "advancement.veio.motor.title"
+    },
+    "description": {
+      "translate": "advancement.veio.motor.description"
+    }
+  },
+  "criteria": {
+    "stock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "veio:motor"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -728,8 +728,27 @@ def research_lab():  # 3 x 3: laboratório com cúpula, bancadas e antena
     return m
 
 
+def manufacturer():  # 3 x 3: combinadora com quatro tremonhas sobre a mesa e saída de sobra
+    m = Machine("manufacturer", "steel", 3, 3, 1, [(1, 0, "out"), (0, 1, "in"), (2, 1, "in")])
+    m.plinth()
+    for x in (0, 46):
+        for z in (0, 23, 46):
+            m.box([x, 1.5, z], [x + 2, 26, z + 2], "trim")
+    m.box([2, 1.5, 2], [46, 12, 46], "body")                           # mesa de mistura
+    m.box([0, 12, 0], [48, 14, 48], "trim")
+    for x0, z0 in ((6, 6), (28, 6), (6, 28), (28, 28)):                # uma tremonha por entrada
+        m.hopper(x0, z0, x0 + 14, z0 + 14, 14, h=10)
+    m.box([0, 26, 0], [48, 28, 48], "body")                            # pórtico
+    m.box([22, 24, 2], [26, 26, 46], "trim")
+    m.conveyor(18, 2, 30, 14, 9, axis="z")                             # saída
+    m.cabinet(34, 2, 46, 10, 1.5, 12, face="s")                        # painel da receita
+    m.tank(40, 40, 3.5, 14, 24, bands=1, material="rust")              # sobra (escória)
+    m.stripes(2, 46, 3, 47.5)
+    return m
+
+
 MACHINES = [drill, drill_mk2, drill_mk3, press, assembler, cutter, integrator, crusher, alloy_furnace,
-            electric_furnace, electronics, mill, kitchen, fabricator, generator, biomass_generator,
+            electric_furnace, electronics, mill, kitchen, fabricator, manufacturer, generator, biomass_generator,
             steam_engine, geothermal, research_lab]
 LAYOUTS = {}
 
