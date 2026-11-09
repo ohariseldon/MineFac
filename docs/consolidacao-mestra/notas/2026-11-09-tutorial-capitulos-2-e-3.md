@@ -44,3 +44,14 @@ quando o jogador fica 3 min parado). O formato do save continua a v6.
   barra (`city::checks`), "plim" quando o número da etapa sobe (`city::metric`), 3 s entre etapas.
 - **Correção que vale para o capítulo 1 também:** `playsound` pelo console toca no spawn do mundo, não no
   jogador. Os sons do tutorial (inclusive `intro::sound`) agora usam `execute as <nome> at @s run playsound ... @s`.
+
+## 0.36.0: a noite e a nova ordem (ver `frentes/HISTORIA.md`)
+
+- Ordem depois da fábrica: **noite** (`onboarding/night.rs`, capítulo 2) → **vila operária** (`village.rs`,
+  agora capítulo 3) → **a vila cresce** (`city.rs`, agora capítulo 4). Em `intro::talk`, os braços seguem essa ordem.
+- **A primeira noite** (`night::overlay`) roda antes de tudo no `tick`, inclusive no prólogo: no primeiro
+  anoitecer, o resto do tutorial espera o amanhecer. Para o capítulo 1 (etapas 9 a 16), nada muda além disso.
+- `player_bed_enter` avisa o tutorial (`onboarding::slept`); `place_block` conta tochas, muros e portões.
+- Save **v7** (6 números da noite); a v6 e anteriores continuam abrindo (quem já começou a fábrica não revive a
+  primeira noite).
+- **Um prefeito só:** o aldeão contratado é o "secretário de Otávio" nos textos (`build_tutorial.py`, wiki).

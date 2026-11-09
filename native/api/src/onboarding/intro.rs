@@ -559,6 +559,7 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
             }
         }
         // Capítulo da vila aberto (também pelo comando, antes de acabar a fábrica): ele vem primeiro.
+        _ if super::night::step(p).is_some() => super::night::talk(host, player, p),
         _ if super::city::step(p).is_some() => super::city::talk(host, player, p),
         _ if let Some(step) = super::village::step(p) => {
             super::village::talk(host, player, p);
@@ -580,7 +581,7 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
         }
         _ if !p.outro => {
             for line in 1..=5 { say(host, uuid, &format!("veio.onboarding.mayor.next.{line}"), &[]); }
-            say(host, uuid, "veio.village.offer", &[]);
+            say(host, uuid, "veio.night.offer", &[]);
             p.outro = true; p.dirty = true;
             react(host, Mood::Happy);
             title(host, player, "veio.onboarding.outro.title", "veio.onboarding.outro.sub");
@@ -591,7 +592,8 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
             }
             host.action_bar(uuid, Text::literal(""));
         }
-        // Depois da fábrica, o prefeito conduz o capítulo da vila até o fim.
+        // Depois da fábrica: a noite, a vila operária e a vila que cresce, nessa ordem.
+        _ if p.night < super::night::DONE_NIGHT => super::night::talk(host, player, p),
         _ if p.village < super::village::DONE_VILLAGE => super::village::talk(host, player, p),
         // Depois da vila, o capítulo da cidade.
         _ if p.city < super::city::DONE_CITY => super::city::talk(host, player, p),

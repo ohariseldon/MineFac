@@ -22,13 +22,16 @@ Luiz (2026-11-09): o primeiro loop deve ficar mais fácil. Em vez de entregar tu
 - O prefeito, quando clicado, lembra quem procurar.
 - Os aldeões comuns comentam o favor (assunto `favor`).
 - Os dois vizinhos são tipos novos com template de aldeão (`tools/build_content.py`), em lugares fixos a partir do centro da vila (o chão mais baixo e seco entre 4 colunas). As cópias a mais são removidas como as do prefeito.
-- **Save v9:** guarda `favor`.
+- **Junta a base ee6327b** (outra sessão): a noite. Com ela vêm a primeira noite, o sino ao anoitecer e o capítulo "A noite", e a vila operária passa a ser o capítulo 3.
+- **Save v10:** a v9 (com o favor) mais os 6 números da noite.
+  - A "v7" da outra linha (25 números, a noite sem Quadro e poste) se distingue pela contagem e também abre.
+- **Save v9** (intermediária): guarda `favor`.
   - Os saves v1 a v8 que já passaram do pedido de recursos ficam com o favor feito, porque já tinham as receitas.
   - Os que ainda não passaram fazem o favor.
 - Wiki (artigo do começo) e README.
 
 ## Evidência
-- E1: `python tools/check_rust.py` → 376 testes passando. O teste novo `the_press_comes_from_the_smith_after_a_wheat_field_for_the_farmer` cobre:
+- E1: `python tools/check_rust.py` → 378 testes passando (com os da noite). O teste novo `the_press_comes_from_the_smith_after_a_wheat_field_for_the_farmer` cobre:
   - a ordem das conversas e os presentes;
   - a contagem do campo (o trigo longe não conta);
   - a entrega parcial devolvida;

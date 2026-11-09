@@ -353,7 +353,9 @@ impl Hooks for Factory {
     }
 
     fn player_bed_enter(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerBedEnterEvent<'_>) -> Flow {
-        home::bed_enter(host, event.player, event.pos)
+        let flow = home::bed_enter(host, event.player, event.pos);
+        if matches!(flow, Flow::Continue) && workforce::night(host) { onboarding::slept(host, event.player); }
+        flow
     }
 
     /// Comida do jogador: refeições e banquetes aceleram as máquinas (`home::food`).
@@ -428,7 +430,7 @@ impl Hooks for Factory {
     }
 
     fn register_commands(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::RegisterCommandsEvent<'_>) {
-        for action in ["ocultar", "mostrar", "reiniciar", "vila", "cidade"] {
+        for action in ["ocultar", "mostrar", "reiniciar", "noite", "vila", "cidade"] {
             event.commands.push(horizon_client::mod_api::NativeCommand::new(&format!("veiotutorial {action}")));
         }
     }
