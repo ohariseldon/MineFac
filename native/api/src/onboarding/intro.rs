@@ -97,7 +97,7 @@ pub(super) fn heading(from: [f64; 3], to: [f64; 3]) -> (i32, &'static str) {
 }
 
 /// Distância e seta (ou rumo por extenso, sem a visão da janela) até `to`.
-fn pointer(player: &NativeServerPlayer, to: [f64; 3]) -> (i32, String) {
+pub(super) fn pointer(player: &NativeServerPlayer, to: [f64; 3]) -> (i32, String) {
     let (distance, key) = heading(player.position, to);
     let way = match yaw_of(player) {
         Some(yaw) => arrow(player.position, to, yaw).to_owned(),
@@ -280,7 +280,7 @@ fn sound(host: &mut dyn Host, player: &NativeServerPlayer, sound: &str) {
 }
 
 /// Uma fala do prefeito no chat do jogador.
-fn say(host: &mut dyn Host, player: u128, key: &str, args: &[&dyn std::fmt::Display]) {
+pub(super) fn say(host: &mut dyn Host, player: u128, key: &str, args: &[&dyn std::fmt::Display]) {
     let name = Text::tr("veio.onboarding.mayor.name", &[]).plain();
     host.tell(player, Text::tr("veio.agenda.says", &[&name, &Text::tr(key, args).plain()]));
 }
@@ -518,8 +518,11 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
                 say(host, uuid, "veio.onboarding.mayor.plot_again", &[&distance, &way, &left]);
             }
         }
+        // Capítulo da vila aberto (também pelo comando, antes de acabar a fábrica): ele vem primeiro.
+        _ if super::village::step(p).is_some() => super::village::talk(host, player, p),
         _ if p.step < DONE => {
             say(host, uuid, "veio.onboarding.mayor.now", &[&Text::tr(&format!("veio.onboarding.title.{}", p.step), &[]).plain()]);
+            say(host, uuid, &format!("veio.onboarding.story.{}", p.step), &[]);
             host.tell(uuid, Text::tr(&format!("veio.onboarding.why.{}", p.step), &[]));
             for line in 1..=DO_LINES.get(usize::from(p.step)).copied().unwrap_or(0) {
                 host.tell(uuid, Text::tr(&format!("veio.onboarding.do.{}.{line}", p.step), &[]));
@@ -527,6 +530,7 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
         }
         _ if !p.outro => {
             for line in 1..=5 { say(host, uuid, &format!("veio.onboarding.mayor.next.{line}"), &[]); }
+            say(host, uuid, "veio.village.offer", &[]);
             p.outro = true; p.dirty = true;
             title(host, player, "veio.onboarding.outro.title", "veio.onboarding.outro.sub");
             sound(host, player, "minecraft:ui.toast.challenge_complete");
@@ -536,6 +540,8 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
             }
             host.action_bar(uuid, Text::literal(""));
         }
+        // Depois da fábrica, o prefeito conduz o capítulo da vila até o fim.
+        _ if p.village < super::village::DONE_VILLAGE => super::village::talk(host, player, p),
         // Depois do tutorial: a fase do Quadro da fábrica e o gargalo que ela vai revelar.
         _ => match milestones::census::board_phase(&player.dimension) {
             None => say(host, uuid, "veio.onboarding.mayor.board.none", &[]),
