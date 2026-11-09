@@ -37,3 +37,10 @@ Branch `claude/trusting-ritchie-sc9ty8`, versões 0.32.0 e 0.33.0. Feita sobre a
 O capítulo 3 passou a ter 10 etapas (impostos e conta pública; uma festa da Agenda) e `DONE_CITY` = 11.
 `Progress` ganhou dois campos que não vão para o save (`city_since`, `city_hinted`: a dica do prefeito
 quando o jogador fica 3 min parado). O formato do save continua a v6.
+
+## 0.35.0
+
+- Capítulo 3: o prefeito só dá dica quando clicado (a barra avisa depois de 20 min parado); lista ✔/✘ na
+  barra (`city::checks`), "plim" quando o número da etapa sobe (`city::metric`), 3 s entre etapas.
+- **Correção que vale para o capítulo 1 também:** `playsound` pelo console toca no spawn do mundo, não no
+  jogador. Os sons do tutorial (inclusive `intro::sound`) agora usam `execute as <nome> at @s run playsound ... @s`.

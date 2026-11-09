@@ -212,7 +212,7 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     p.crafted = 0b101; p.tips = TIP_BELT;
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.crafted, loaded.tips), (0b101, TIP_BELT));
-    let old = p.encode().replace("veio-onboarding-7", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0 0 0 0 0\n", "\n", 1);
+    let old = p.encode().replace("veio-onboarding-8", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0 0 0 0 0 0 0\n", "\n", 1);
     assert_eq!(Progress::decode(&old).map(|old| (old.step, old.crafted)), Some((6, 0)));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
@@ -353,7 +353,7 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
     tick(&mut host, 40);
     assert!(host.bars.last().unwrap().contains("goal.1"));
     // Etapa concluída: título, som de conquista e experiência.
-    assert!(host.messages.iter().any(|line| line == "playsound minecraft:ui.toast.challenge_complete master Tutorial"));
+    assert!(host.messages.iter().any(|line| line == "execute as Tutorial at @s run playsound minecraft:ui.toast.challenge_complete master @s"));
     assert!(host.messages.iter().any(|line| line.starts_with("xp add Tutorial ")));
     select(&host, PRESS_AT, PRESS, false);
     let mut press = machine(PRESS, None, 0);
@@ -550,6 +550,7 @@ impl Host for Town {
     fn change_mod_block_entity(&mut self, pos: [i32; 3], change: &mut dyn FnMut(&mut ModBlockEntity)) -> bool {
         match self.entities.get_mut(&pos) { Some(entity) => { change(entity); true } None => false }
     }
+    fn day_time(&self) -> i64 { 1000 }
     fn tell(&mut self, _: u128, text: Text) -> bool { self.said.push(text.plain()); true }
     fn action_bar(&mut self, _: u128, text: Text) -> bool { self.bars.push(text.plain()); true }
     fn run_command(&mut self, line: &str) -> bool {
@@ -782,7 +783,8 @@ fn the_city_chapter_closes_each_step_from_what_the_village_registers() {
     assert_eq!(goal(1, &town).1, Some([5, 64, 5]));
     assert_eq!(goal(8, &town).1, Some([9, 64, 9]));
     assert_eq!(goal(8, &town).0.plain(), "veio.city.goal.8");
-    assert_eq!(goal(8, &Town { request: None, ..town.clone() }).0.plain(), "veio.city.goal.8_wait");
+    assert_eq!(goal(8, &Town { request: None, next_visitor: Some((6, 1)), ..town.clone() }).0.plain(), "veio.city.goal.8_wait");
+    assert_eq!(goal(8, &Town { request: None, ..town.clone() }).0.plain(), "veio.city.goal.8_soon");
     assert_eq!(goal(0, &town).1, None);
     // Save: a v6 guarda a cidade; saves v5 (só a vila) abrem com a cidade por começar.
     let p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE,
@@ -790,7 +792,7 @@ fn the_city_chapter_closes_each_step_from_what_the_village_registers() {
     assert_eq!(city::DONE_CITY, 11);
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.village, loaded.city, loaded.city_crafted), (village::DONE_VILLAGE, 5, 0b11));
-    let v5 = p.encode().replace("veio-onboarding-7", "veio-onboarding-5").replacen(" 5 3 0 0\n", "\n", 1);
+    let v5 = p.encode().replace("veio-onboarding-8", "veio-onboarding-5").replacen(" 5 3 0 0 0 0\n", "\n", 1);
     let old = Progress::decode(&v5).unwrap();
     assert_eq!((old.village, old.city), (village::DONE_VILLAGE, 0));
 }
@@ -857,20 +859,112 @@ fn acts_end_with_fireworks_and_a_stuck_player_gets_one_hint_from_the_mayor() {
 }
 
 #[test]
-fn a_stuck_player_gets_one_hint_from_the_mayor() {
+fn the_mayor_waits_to_be_asked_for_a_hint() {
     let mut town = Town::default();
     let player = NativeServerPlayer { uuid: 9, name: "Caio".into(), dimension: workforce::spawn::OVERWORLD.into(),
         position: [0.0, 64.0, 0.0], ..Default::default() };
-    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE, city: 1, ..Progress::default() };
+    // Etapa 1 com o poço já fabricado: a barra mostra o objetivo, não a lista de materiais.
+    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE, city: 1,
+        city_crafted: 1, ..Progress::default() };
     city::tick(&mut town, &player, &mut p, 1000);
     let says = |town: &Town| town.said.iter().filter(|line| *line == "veio.agenda.says").count();
     let before = says(&town);
     city::tick(&mut town, &player, &mut p, 1000 + city::STUCK - 1);
-    assert_eq!(says(&town), before, "ainda sem dica");
+    assert!(!p.city_hinted);
     city::tick(&mut town, &player, &mut p, 1000 + city::STUCK);
-    assert_eq!(says(&town), before + 1, "parado 3 minutos: uma dica");
+    assert!(p.city_hinted, "parado 20 minutos: a dica fica disponível");
     city::tick(&mut town, &player, &mut p, 1000 + 3 * city::STUCK);
-    assert_eq!(says(&town), before + 1, "uma dica só");
-    // Sem o poço no inventário, a barra é a lista de materiais dele.
-    assert!(town.commands.iter().any(|line| line.starts_with("title Caio actionbar") && line.contains("veio.onboarding.name.bucket")));
+    assert_eq!(says(&town), before, "o prefeito não fala sozinho");
+    // Clicar nele dá a dica e zera o aviso.
+    intro::talk(&mut town, &player, &mut p);
+    assert!(says(&town) > before);
+    assert!(!p.city_hinted && p.city_since.is_none());
+    assert!(city::STUCK >= 20 * 60 * 20 - 1, "pelo menos 20 minutos");
+}
+
+#[test]
+fn the_town_bar_lists_what_each_hard_step_needs_and_chimes_on_progress() {
+    use city::{checks, metric, Town};
+    let town = Town { open_shop: true, day: false, company: true, wallets: false, staffed: true,
+        residents: 12, families: 2, idh: 41, ..Town::default() };
+    let sale: Vec<bool> = checks(2, &town).iter().map(|(ok, _, _)| *ok).collect();
+    assert_eq!(sale, [true, false, true, false], "balcão, dia, salários, carteiras");
+    let phase: Vec<(bool, &str)> = checks(9, &town).iter().map(|(ok, key, _)| (*ok, *key)).collect();
+    assert_eq!(phase, [(true, "veio.city.check.clerk"), (true, "veio.city.check.residents"),
+        (false, "veio.city.check.families"), (true, "veio.city.check.idh")]);
+    assert_eq!(checks(9, &town)[3].2, ["0,41"]);
+    assert!(checks(0, &town).is_empty());
+    assert_eq!(metric(6, &town), Some(2));
+    assert_eq!(metric(2, &town), None);
+}
+
+#[test]
+fn village_festivals_set_a_date_reward_a_ready_village_and_move_a_weak_one() {
+    struct Calendar { day: i64, lines: Vec<String> }
+    impl Host for Calendar {
+        fn day_time(&self) -> i64 { self.day * 24_000 + 1_000 }
+        fn run_command(&mut self, line: &str) -> bool { self.lines.push(line.to_owned()); true }
+        fn tell(&mut self, _: u128, text: Text) -> bool { self.lines.push(text.plain()); true }
+    }
+    let player = NativeServerPlayer { uuid: 5, name: "Ana".into(), dimension: "minecraft:overworld".into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut host = Calendar { day: 10, lines: vec![] };
+    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: 1, ..Progress::default() };
+    // Abrir o capítulo marca a Festa da Colheita para daqui a 3 dias, com título e sino.
+    festival::tick(&mut host, &player, &mut p);
+    assert_eq!((p.festival, p.festival_day), (festival::HARVEST, 13));
+    assert!(host.lines.iter().any(|l| l.contains("veio.festival.harvest.when")), "{:?}", host.lines);
+    assert!(host.lines.iter().any(|l| l.contains("block.bell.use")));
+    assert!(festival::countdown(&host, &p).is_some_and(|t| t.plain().contains("veio.festival.countdown")));
+    assert!(!festival::soon(&host, &p));
+    // Antes do dia, nada acontece; na véspera, os aldeões falam da festa.
+    host.day = 12; host.lines.clear();
+    festival::tick(&mut host, &player, &mut p);
+    assert!(host.lines.is_empty());
+    assert!(festival::soon(&host, &p));
+    assert_eq!(barks::topic(&host, &p), "festival");
+    // No dia, a vila não está pronta: o prefeito fica triste e remarca para 2 dias depois.
+    host.day = 13;
+    festival::tick(&mut host, &player, &mut p);
+    assert_eq!(host.lines.iter().filter(|l| *l == "veio.agenda.says").count(), 2, "a festa fraca e a nova data");
+    assert!(host.lines.iter().any(|l| l.contains("angry_villager")));
+    assert!(!host.lines.iter().any(|l| l.contains("give Ana")));
+    assert_eq!((p.festival, p.festival_day), (festival::HARVEST, 15));
+    // Com as 4 primeiras etapas feitas, a festa sai: pão, fogos, corações, e a próxima data.
+    host.day = 15; host.lines.clear(); p.village = festival::needs(festival::HARVEST);
+    festival::tick(&mut host, &player, &mut p);
+    assert!(host.lines.iter().any(|l| l == "give Ana minecraft:bread 16"));
+    assert!(host.lines.iter().any(|l| l.contains("minecraft:heart")));
+    assert!(host.lines.iter().any(|l| l.contains("summon minecraft:firework_rocket")));
+    assert_eq!((p.festival, p.festival_day), (festival::GOVERNOR, 19));
+    // A Visita do Governador pede o capítulo inteiro e encerra as festas.
+    host.day = 19; host.lines.clear(); p.village = village::DONE_VILLAGE;
+    festival::tick(&mut host, &player, &mut p);
+    assert!(host.lines.iter().any(|l| l == "give Ana minecraft:cake 1"));
+    assert_eq!(p.festival, festival::DONE);
+    assert!(festival::countdown(&host, &p).is_none());
+    // A data marcada vai para o save.
+    p.festival = festival::GOVERNOR; p.festival_day = 42;
+    let loaded = Progress::decode(&p.encode()).unwrap();
+    assert_eq!((loaded.festival, loaded.festival_day), (festival::GOVERNOR, 42));
+}
+
+#[test]
+fn common_villagers_only_comment_and_the_mayor_reacts_and_dresses_apart() {
+    let mut p = Progress::default();
+    struct Quiet;
+    impl Host for Quiet { fn day_time(&self) -> i64 { 0 } }
+    assert_eq!(barks::topic(&Quiet, &p), "mayor");
+    p.intro = intro::GATHER_STAGE;
+    assert_eq!(barks::topic(&Quiet, &p), "gather");
+    p.intro = intro::INTRO_DONE; p.step = 3;
+    assert_eq!(barks::topic(&Quiet, &p), "factory");
+    p.step = DONE; p.outro = true; p.village = 1;
+    assert_eq!(barks::topic(&Quiet, &p), "village");
+    struct Log { lines: Vec<String> }
+    impl Host for Log { fn run_command(&mut self, line: &str) -> bool { self.lines.push(line.to_owned()); true } }
+    let mut log = Log { lines: vec![] };
+    intro::react(&mut log, intro::Mood::Happy);
+    assert!(log.lines.iter().any(|l| l.contains(MAYOR) && l.contains("minecraft:heart")));
+    assert!(log.lines.iter().any(|l| l.contains("entity.villager.celebrate")));
 }

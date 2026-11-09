@@ -219,6 +219,81 @@ def add_labels(label):
     ]
     for n,(pt,en) in enumerate(diary): label(f'veio.onboarding.diary.{n}',pt,en)
     label('veio.onboarding.diary.title','Diário do Prefeito Otávio','Mayor Otávio\'s Diary')
+    # Festas do capítulo da vila (como os eventos do Stardew Valley): data marcada, contagem, festa.
+    festivals={
+        'harvest':('Festa da Colheita','Harvest Festival',
+            ('Daqui a %s dias é a Festa da Colheita! A vila inteira vai à praça ver o primeiro campo da fazenda.',
+             'The Harvest Festival is in %s days! The whole village will come to the square to see the farm\'s first field.'),
+            ('Até lá quero o posto do lavrador, alguém contratado, o campo marcado e a primeira colheita. Não me deixe passar vergonha!',
+             'By then I want the farmer post, someone hired, the field marked and the first harvest. Don\'t let me down!'),
+            ('A vila comemorou! Pão quente para todos, e um saco para os seus postos.',
+             'The village celebrated! Warm bread for everyone, and a sack for your posts.'),
+            ('Ouviu os sinos? É isso que o veio faz quando a vila trabalha junta.',
+             'Hear the bells? That is what the vein does when the village works together.'),
+            ('Pão para os postos e experiência','Bread for the posts and experience'),
+            'O campo não ficou pronto e a festa foi fraca. Vamos remarcar: mais 2 dias.',
+            'The field wasn\'t ready and the festival fell flat. Let\'s move it: 2 more days.',
+            'Remarquei a Festa da Colheita para daqui a %s dias. Desta vez vai!',
+            'I moved the Harvest Festival to %s days from now. This time it will work!'),
+        'governor':('Visita do Governador','Governor\'s Visit',
+            ('O governador vem nos visitar em %s dias! Ele decide se a vila merece estrada e comércio.',
+             'The governor visits in %s days! He decides whether the village deserves a road and trade.'),
+            ('Ele vai querer ver o carregador, o capataz, uma casa nova e a prefeitura de pé. Mãos à obra!',
+             'He will want to see the hauler, the foreman, a new house and the town hall standing. Get to work!'),
+            ('O governador saiu impressionado! Mandou um bolo para o Lar: hoje tem banquete.',
+             'The governor left impressed! He sent a cake for the Hearth: tonight there is a feast.'),
+            ('Ele disse que vai falar da nossa vila na capital. Isso é obra sua.',
+             'He said he will talk about our village in the capital. That is your doing.'),
+            ('Um bolo para o banquete e experiência','A cake for the feast and experience'),
+            'O governador viu a vila pela metade e torceu o nariz. Ele volta em 2 dias.',
+            'The governor saw a half-built village and frowned. He comes back in 2 days.',
+            'O governador volta daqui a %s dias. Vamos terminar o que falta!',
+            'The governor returns in %s days. Let\'s finish what is left!'),
+    }
+    for key,(name_pt,name_en,a1,a2,g1,g2,sub,weak_pt,weak_en,retry_pt,retry_en) in festivals.items():
+        label(f'veio.festival.{key}.name',name_pt,name_en)
+        label(f'veio.festival.{key}.when','em %s dias','in %s days')
+        for n,(pt,en) in enumerate([a1,a2],1): label(f'veio.festival.{key}.announce.{n}',pt,en)
+        for n,(pt,en) in enumerate([g1,g2],1): label(f'veio.festival.{key}.good.{n}',pt,en)
+        label(f'veio.festival.{key}.good_sub',*sub)
+        label(f'veio.festival.{key}.weak',weak_pt,weak_en)
+        label(f'veio.festival.{key}.retry',retry_pt,retry_en)
+    label('veio.festival.countdown','%s em %s dia(s)','%s in %s day(s)')
+    label('veio.festival.reminder','Não esqueça: %s.','Don\'t forget: %s.')
+    # Aldeões comuns: só um resmungo curto. Quem conversa de verdade é o prefeito.
+    label('veio.villager.who','Aldeão','Villager')
+    label('veio.villager.says','§7§o%s: %s','§7§o%s: %s')
+    barks={
+        'mayor':[('Hrm! O prefeito está na praça.','Hrm! The mayor is in the square.'),
+                 ('Fala com o prefeito, ele sabe das coisas.','Talk to the mayor, he knows things.'),
+                 ('Hmm. Você é o novo do veio?','Hmm. You\'re the new one for the vein?'),
+                 ('O prefeito? Ali, o de casaco de pele.','The mayor? Over there, the one in the fur coat.')],
+        'gather':[('Hrm. Madeira tem no bosque.','Hrm. There\'s wood in the grove.'),
+                  ('Pedra? É só cavar um pouco.','Stone? Just dig a bit.'),
+                  ('O prefeito quer tudo de uma vez, hein.','The mayor wants it all at once, huh.'),
+                  ('Hmm! Cobre aparece nos morros.','Hmm! Copper shows up in the hills.')],
+        'plot':[('Hrm. Terreno torto não serve pra oficina.','Hrm. Crooked ground won\'t do for a workshop.'),
+                ('Aplana bem, hein.','Level it well, huh.'),
+                ('Uma fábrica! Na nossa vila!','A factory! In our village!'),
+                ('Hmm. Onze por onze, foi o que ele disse.','Hmm. Eleven by eleven, that\'s what he said.')],
+        'festival':[('A festa é logo! Hrm!','The festival is soon! Hrm!'),
+                    ('Já enfeitei a minha porta.','I already decorated my door.'),
+                    ('Hmm, tomara que a festa saia bonita.','Hmm, hope the festival turns out nice.'),
+                    ('O prefeito está nervoso com a festa.','The mayor is nervous about the festival.')],
+        'factory':[('Hrm. Que barulho é esse da oficina?','Hrm. What\'s that noise from the workshop?'),
+                   ('As esteiras andam sozinhas! Hmm!','The belts move on their own! Hmm!'),
+                   ('O prefeito diz que o veio não acaba.','The mayor says the vein never ends.'),
+                   ('Hmm. Cuidado com os dedos na prensa.','Hmm. Mind your fingers on the press.')],
+        'village':[('Hrm! Tem trabalho pra mim?','Hrm! Got work for me?'),
+                   ('Um posto e eu trabalho, hein.','Give me a post and I\'ll work, huh.'),
+                   ('Hmm. A vila está crescendo.','Hmm. The village is growing.'),
+                   ('O prefeito está contente com você.','The mayor is happy with you.')],
+        'free':[('Hrm.','Hrm.'),('Hmm! Bom dia.','Hmm! Good day.'),
+                ('A vila está bonita, hein.','The village looks nice, huh.'),
+                ('Hrm. O veio ainda dá cobre.','Hrm. The vein still gives copper.')],
+    }
+    for topic,lines in barks.items():
+        for n,(pt,en) in enumerate(lines,1): label(f'veio.villager.{topic}.{n}',pt,en)
     # Nomes dos materiais (lista acima da barra de itens e fichas).
     names={
       'generator':('Gerador','Generator'), 'press':('Prensa','Press'), 'cable':('Cabo','Cable'),
@@ -582,7 +657,7 @@ def add_city_labels(label, names, recipe_line):
         ('2. Ponha esmeraldas no cofre: cada uma vira 60 moedas na conta da companhia.', '2. Put emeralds in the vault: each one becomes 60 coins in the company account.'),
         ('3. Sem saldo, os trabalhadores ficam sem salário e as famílias empobrecem.', '3. Without a balance, workers go unpaid and families get poorer.'),
         ('4. Clique na linha da companhia no painel para sacar de volta, se precisar.', '4. Click the company line on the panel to withdraw, if you need to.')],
-       ('Esmeraldas no cofre do centro de controle', 'Emeralds in the control center vault'),
+       ('Conta da companhia: %s moedas (ponha esmeraldas no cofre do centro de controle)', 'Company account: %s coins (put emeralds in the control center vault)'),
        ('Salários garantidos. Agora, conforto nas casas.', 'Wages secured. Now, comfort at home.'),
        ('O cofre é o espaço de esmeralda do centro de controle. Esmeraldas vêm de troca com aldeões, da central de contratos e da exportação.',
         'The vault is the emerald slot of the control center. Emeralds come from villager trades, the contract hub and exports.')),
@@ -625,7 +700,7 @@ def add_city_labels(label, names, recipe_line):
         ('2. Clique nela com um livro: o relatório traz a moeda em circulação por conta.', '2. Click it with a book: the report shows the money in circulation per account.'),
         ('3. Cada venda das lojas deixa uma parte aqui. Nada some: o dinheiro só muda de conta.', '3. Every shop sale leaves a share here. Nothing vanishes: money only changes account.'),
         ('4. O espaço de esmeralda da prefeitura aceita um aporte voluntário seu.', '4. The town hall emerald slot takes a voluntary contribution from you.')],
-       ('Imposto recolhido pela prefeitura', 'Tax collected by the town hall'),
+       ('Conta pública: %s moedas (o imposto chega a cada venda)', 'Public account: %s coins (tax arrives with every sale)'),
        ('A conta pública tem dinheiro. É assim que a vila se mantém.', 'The public account has money. That is how the village keeps going.'),
        ('A conta pública só recebe quando a loja vende. Confira se a loja tem estoque e se as famílias têm salário.',
         'The public account only receives when the shop sells. Check that the shop has stock and families have wages.')),
@@ -659,7 +734,29 @@ def add_city_labels(label, names, recipe_line):
         label(f'veio.city.goal.{i}', *goal)
         label(f'veio.city.done.{i}', *done)
         label(f'veio.city.hint.{i}', *hint)
-    label('veio.city.goal.8_wait', 'Festa: o próximo visitante chega 2 dias antes do domingo ou feriado', 'Festival: the next visitor arrives 2 days before Sunday or a holiday')
+    label('veio.city.goal.8_wait', 'Festa: o próximo visitante chega em %s dia(s) (%s). Enquanto isso, junte comida pronta', 'Festival: the next visitor arrives in %s day(s) (%s). Meanwhile, gather cooked food')
+    label('veio.city.goal.8_soon', 'Festa: um visitante chega em breve à prefeitura', 'Festival: a visitor will soon arrive at the town hall')
+    label('veio.city.bar_prefix', 'Cidade %s/10 |', 'Town %s/10 |')
+    for key, pt, en in [
+        ('open', 'comerciante no balcão', 'merchant at the counter'), ('day', 'é dia', 'daytime'),
+        ('wages', 'salários pagos', 'wages paid'), ('wallets', 'famílias com dinheiro', 'families with money'),
+        ('clerk', 'funcionário na prefeitura', 'town hall clerk'), ('residents', 'moradores %s/12', 'residents %s/12'),
+        ('families', 'famílias %s/3', 'families %s/3'), ('idh', 'IDH %s/0,40', 'HDI %s/0.40'),
+    ]: label(f'veio.city.check.{key}', pt, en)
+    label('veio.city.hint_ready', ' · o prefeito tem uma dica', ' · the mayor has a tip')
+    more = [
+      ('Saiba mais: J → Sistemas → Sociedade da vila (serviços e IDH).', 'Learn more: J → Systems → Village society (services and HDI).'),
+      ('Saiba mais: J → Sistemas → Sociedade da vila (lojas e preços locais).', 'Learn more: J → Systems → Village society (shops and local prices).'),
+      ('Saiba mais: J → Sistemas → Economia e moeda (o caminho do dinheiro).', 'Learn more: J → Systems → Economy and money (where money goes).'),
+      ('Saiba mais: J → Sistemas → Economia e moeda (as quatro contas).', 'Learn more: J → Systems → Economy and money (the four accounts).'),
+      ('Saiba mais: J → Sistemas → Energia (postes e alcance).', 'Learn more: J → Systems → Power (poles and reach).'),
+      ('Saiba mais: J → Sistemas → Agenda, feriados e obras (lazer e ânimo).', 'Learn more: J → Systems → Calendar, holidays and civic works (leisure and morale).'),
+      ('Saiba mais: J → Sistemas → Sociedade da vila (casas e famílias).', 'Learn more: J → Systems → Village society (houses and families).'),
+      ('Saiba mais: J → Sistemas → Economia e moeda (imposto na fonte).', 'Learn more: J → Systems → Economy and money (tax at source).'),
+      ('Saiba mais: J → Sistemas → Agenda, feriados e obras (o calendário e os visitantes).', 'Learn more: J → Systems → Calendar, holidays and civic works (calendar and visitors).'),
+      ('Saiba mais: J → Sistemas → Sociedade da vila (fases do plano diretor).', 'Learn more: J → Systems → Village society (master plan phases).'),
+    ]
+    for i, (pt, en) in enumerate(more): label(f'veio.city.more.{i}', pt, en)
     weak = [('comida', 'food'), ('moradia', 'housing'), ('serviços', 'services'), ('renda', 'income')]
     for i, (pt, en) in enumerate(weak): label(f'veio.city.weak.{i}', f' · mais fraco: {pt}', f' · weakest: {en}')
     fixes = [

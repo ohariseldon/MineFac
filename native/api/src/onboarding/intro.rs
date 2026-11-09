@@ -53,6 +53,7 @@ const VIEW_FRESH: u64 = 40;
 
 /// Prefeito no mundo aberto: o id da entidade (visto no tick dela ou ao invocar).
 static MAYOR_ID: Mutex<Option<u32>> = Mutex::new(None);
+static DRESSED: AtomicBool = AtomicBool::new(false);
 /// Onde o jogador da janela está e para onde olha (yaw do Minecraft), e quando foi lido.
 static VIEW: Mutex<Option<([f64; 3], f32, u64)>> = Mutex::new(None);
 /// Contornos para a janela desenhar (terreno ou prefeito) e quando foram feitos.
@@ -126,11 +127,43 @@ fn village() -> Option<[f64; 3]> {
 
 /// Tick de uma entidade do prefeito: guarda o id e tira uma cópia a mais.
 pub(crate) fn mayor_seen(host: &mut dyn Host, dimension: &str, id: u32) {
-    let Ok(mut known) = MAYOR_ID.lock() else { return };
-    match *known {
-        Some(other) if other != id && host.entity(other).is_some() => { host.remove_mob(dimension, id); }
-        _ => *known = Some(id),
+    {
+        let Ok(mut known) = MAYOR_ID.lock() else { return };
+        match *known {
+            Some(other) if other != id && host.entity(other).is_some() => { host.remove_mob(dimension, id); return; }
+            _ => *known = Some(id),
+        }
     }
+    // Roupa de prefeito uma vez por mundo (também no prefeito de um save antigo).
+    if !DRESSED.swap(true, Ordering::Relaxed) { dress(host); }
+    // Brilho dourado em volta dele, para ser achado de longe na praça.
+    if let Some(at) = host.entity(id).and_then(|entity| entity.position(host)) {
+        host.run_command(&format!("particle minecraft:wax_on {:.1} {:.1} {:.1} 0.35 0.6 0.35 0 2", at[0], at[1] + 1.2, at[2]));
+    }
+}
+
+/// O prefeito se veste diferente dos outros aldeões: casaco de pele da taiga, insígnia de mestre
+/// (cartógrafo nível 5) e o nome em dourado. Os aldeões comuns são os "ajudantes"; ele é a pessoa.
+fn dress(host: &mut dyn Host) {
+    let name = Text::tr("veio.onboarding.mayor.name", &[]).plain().replace(['"', '\\'], "");
+    host.run_command(&format!(concat!("execute as @e[type={}] run data merge entity @s ",
+        r#"{{VillagerData:{{profession:"minecraft:cartographer",type:"minecraft:taiga",level:5}},"#,
+        r#"CustomName:{{text:"{}",color:"gold",bold:1b}}}}"#), MAYOR, name));
+}
+
+/// Como o prefeito reage: corações e "sim" quando algo dá certo, nuvem brava e "não" quando
+/// falta algo, e um aceno quando você chega para conversar.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub(super) enum Mood { Hello, Happy, Sad }
+
+pub(super) fn react(host: &mut dyn Host, mood: Mood) {
+    let (particle, sound) = match mood {
+        Mood::Hello => ("minecraft:happy_villager", "minecraft:entity.villager.ambient"),
+        Mood::Happy => ("minecraft:heart", "minecraft:entity.villager.celebrate"),
+        Mood::Sad => ("minecraft:angry_villager", "minecraft:entity.villager.no"),
+    };
+    host.run_command(&format!("execute at @e[type={MAYOR},limit=1] run particle {particle} ~ ~2.1 ~ 0.3 0.2 0.3 0 5"));
+    host.run_command(&format!("execute at @e[type={MAYOR},limit=1] run playsound {sound} neutral @a[distance=..16] ~ ~ ~"));
 }
 
 /// Onde o prefeito está: a entidade, ou o lugar salvo quando ela está longe (chunk descarregado).
@@ -174,7 +207,7 @@ fn summon_mayor(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progre
         ("PersistenceRequired".into(), Tag::Byte(1)),
         ("VillagerData".into(), Tag::Compound(Compound::from([
             ("profession".into(), Tag::String("minecraft:cartographer".into())),
-            ("type".into(), Tag::String("minecraft:plains".into())),
+            ("type".into(), Tag::String("minecraft:taiga".into())),
             ("level".into(), Tag::Int(5)),
         ]))),
     ]);
@@ -276,7 +309,8 @@ fn title(host: &mut dyn Host, player: &NativeServerPlayer, title: &str, subtitle
 }
 
 fn sound(host: &mut dyn Host, player: &NativeServerPlayer, sound: &str) {
-    if spawn_safe(&player.name) { host.run_command(&format!("playsound {sound} master {}", player.name)); }
+    // Pelo console, o som tocaria no spawn do mundo: toca onde o jogador está.
+    if spawn_safe(&player.name) { host.run_command(&format!("execute as {0} at @s run playsound {sound} master @s", player.name)); }
 }
 
 /// Uma fala do prefeito no chat do jogador.
@@ -480,6 +514,7 @@ fn deliver(host: &mut dyn Host) -> Vec<(u32, &'static str)> {
 pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) {
     let uuid = player.uuid;
     sound(host, player, "minecraft:entity.villager.ambient");
+    react(host, Mood::Hello);
     match p.intro {
         VILLAGE_STAGE | MAYOR_STAGE => {
             for line in 1..=5 { say(host, uuid, &format!("veio.onboarding.mayor.hello.{line}"), &[]); }
@@ -495,9 +530,11 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
                 let list = missing.iter().map(|(count, key)| format!("{count} {}", Text::tr(key, &[]).plain()))
                     .collect::<Vec<_>>().join(", ");
                 say(host, uuid, "veio.onboarding.mayor.missing", &[&list]);
+                react(host, Mood::Sad);
                 return;
             }
             host.give_items(GENERATOR, 1);
+            react(host, Mood::Happy);
             // O diário do prefeito: a história da vila e o caminho das 16 etapas.
             if spawn_safe(&player.name) { host.run_command(&format!("loot give {} loot veio:tutorial/diary", player.name)); }
             if spawn_safe(&player.name) {
@@ -525,6 +562,7 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
         _ if let Some(step) = super::village::step(p) => {
             super::village::talk(host, player, p);
             say(host, uuid, &format!("veio.village.hint.{step}"), &[]);
+            if let Some(when) = super::festival::countdown(host, p) { say(host, uuid, "veio.festival.reminder", &[&when.plain()]); }
         }
         _ if p.step < DONE => {
             say(host, uuid, "veio.onboarding.mayor.now", &[&Text::tr(&format!("veio.onboarding.title.{}", p.step), &[]).plain()]);
@@ -539,6 +577,7 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
             for line in 1..=5 { say(host, uuid, &format!("veio.onboarding.mayor.next.{line}"), &[]); }
             say(host, uuid, "veio.village.offer", &[]);
             p.outro = true; p.dirty = true;
+            react(host, Mood::Happy);
             title(host, player, "veio.onboarding.outro.title", "veio.onboarding.outro.sub");
             sound(host, player, "minecraft:ui.toast.challenge_complete");
             if spawn_safe(&player.name) {
@@ -571,6 +610,7 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
 
 /// Outro mundo abriu: os ids e as marcas eram do anterior.
 pub(super) fn reset() {
+    DRESSED.store(false, Ordering::Relaxed);
     if let Ok(mut id) = MAYOR_ID.lock() { *id = None; }
     if let Ok(mut marks) = MARKS.lock() { *marks = (Vec::new(), 0); }
 }

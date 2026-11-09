@@ -157,7 +157,10 @@ pub(super) fn bar(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Prog
         }
         None => Text::literal(goal),
     };
-    host.action_bar(player.uuid, Text::tr("veio.village.bar", &[&(step + 1), &text.plain()]));
+    let mut bar = Text::tr("veio.village.bar", &[&(step + 1), &text.plain()]).plain();
+    // A festa marcada soma a contagem: "Festa da Colheita em 2 dias".
+    if let Some(when) = super::festival::countdown(host, p) { bar = format!("{bar} · {}", when.plain()); }
+    host.action_bar(player.uuid, Text::literal(&bar));
 }
 
 /// Faíscas no lugar da etapa: em volta do posto, a área onde o marco pode ficar (etapa da zona),
@@ -192,7 +195,7 @@ pub(super) fn celebrate(host: &mut dyn Host, player: &NativeServerPlayer, finish
     let next = if finished + 1 < usize::from(STEPS) { format!("veio.village.title.{}", finished + 1) } else { "veio.village.end_sub".into() };
     host.run_command(&format!(r#"title {name} subtitle {{"translate":"{next}"}}"#));
     host.run_command(&format!(r#"title {name} title {{"translate":"veio.onboarding.done","color":"gold"}}"#));
-    host.run_command(&format!("playsound minecraft:ui.toast.challenge_complete master {name}"));
+    host.run_command(&format!("execute as {name} at @s run playsound minecraft:ui.toast.challenge_complete master @s"));
     host.run_command(&format!("xp add {name} {} points", 20 + 5 * finished));
 }
 

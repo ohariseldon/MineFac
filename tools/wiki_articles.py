@@ -340,6 +340,8 @@ ARTICLES = [
 <tr><td>6. O capataz</td><td>mesa a até 12 blocos dos postos, com pão e esmeraldas</td><td>capataz contratado</td></tr>
 <tr><td>7. Uma casa</td><td>casa a até 10 blocos dos aldeões, comida na despensa</td><td>pelo menos 1 morador</td></tr>
 <tr><td>8. A prefeitura</td><td>prefeitura no centro da vila</td><td>funcionário contratado</td></tr></table>
+<p><b>Festas:</b> ao abrir o capítulo, o prefeito marca a Festa da Colheita para 3 dias depois (pede as 4 primeiras etapas; dá pão e experiência) e, depois dela, a Visita do Governador para 4 dias depois (pede o capítulo inteiro; dá um bolo). A barra conta os dias. Se a vila não estiver pronta no dia, a festa sai fraca e é remarcada para 2 dias depois, sem castigo.</p>
+<p><b>Quem fala:</b> o prefeito Otávio, de casaco de pele e nome dourado, é quem conversa e reage (aceno, corações, nuvem brava). Os outros aldeões só soltam um comentário curto quando você passa perto.</p>
 """,
     },
     {
@@ -378,7 +380,7 @@ ARTICLES = [
 <tr><td>Metrópole</td><td>80, 20 famílias, IDH 0,70, Gini ≤ 0,45, 3 bairros</td><td>150 aldeões, 48 casas</td><td>+ loja a 40</td></tr></table>
 <p><b>IDH</b> de cada família: comida, moradia, serviços (saneamento, energia, comércio e lazer) e renda, multiplicados pelo ânimo da vila. Se o IDH cai muito, o prefeito suspende novos níveis de zona e nascimentos.</p>
 <h3>Tutorial da cidade (capítulo 3)</h3>
-<p>Depois do capítulo da vila, o prefeito <b>Otávio</b> ensina a transformar a vila em cidade (ou use <code>/veiotutorial cidade</code>). As etapas fecham pelo que a própria vila registra: casas, lojas, contas, a prefeitura e a agenda. A barra mostra os números da vila (casas atendidas, famílias, o pedido aberto e a parte mais fraca do IDH) e aponta para a loja ou a prefeitura; se você fica 3 minutos parado numa etapa, o prefeito dá uma dica.</p>
+<p>Depois do capítulo da vila, o prefeito <b>Otávio</b> ensina a transformar a vila em cidade (ou use <code>/veiotutorial cidade</code>). As etapas fecham pelo que a própria vila registra: casas, lojas, contas, a prefeitura e a agenda. A barra mostra os números da vila (casas atendidas, famílias, o pedido aberto e a parte mais fraca do IDH) e aponta para a loja ou a prefeitura; nas etapas com várias condições (a primeira venda e a fase), uma lista ✔/✘ mostra o que já está certo. Cada etapa indica o artigo da wiki que explica o sistema. Depois de bastante tempo numa etapa, a barra avisa que o prefeito tem uma dica: ele só fala quando você clica nele.</p>
 <table><tr><th>Etapa</th><th>O que fazer</th><th>Como o jogo confere</th></tr>
 <tr><td>1. Saneamento</td><td>poço a até 24 blocos das casas</td><td>uma casa com saneamento</td></tr>
 <tr><td>2. Comércio</td><td>loja perto das casas, comerciante contratado</td><td>loja com comerciante</td></tr>
