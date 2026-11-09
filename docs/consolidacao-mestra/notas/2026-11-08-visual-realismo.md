@@ -132,3 +132,16 @@ são a chuva do Minecraft começando (vanilla), não defeito.
 - Folhas voltam ao original: os furos finos do 256x viravam chuvisco de céu a distância.
 - Nuvens com chuva: cinza da neblina da chuva (0,95, antes 0,75) e o sol ainda passa nas partes
   finas (corte 65%, antes 80%).
+
+## 3.2.3 (commit desta seção): nuvens claras, morro sem véu, lado de bloco visível
+
+Print do Luiz com a 3.2.2 (00:09): grama melhor; morro lavado e azulado, nuvens escuras e
+pesadas, lado de terra dos blocos quase preto.
+
+- Nuvens: luz espalhada dentro da nuvem 0,35 → 0,6, céu de cima mais forte e luz que volta do
+  chão iluminado (as bases de cúmulo reais são cinza-claro, não ardósia).
+- Raios de sol sobre o terreno a 55% (olhando para o sol, lavavam o morro de branco); no céu
+  continuam iguais.
+- Névoa de distância começa mais longe (48 blocos ou 35% da distância de visão), no máximo 22%
+  (antes 30%) e menos azul.
+- Faces de costas para o sol: luz do céu 0,66 → 0,74 (de dia); a terra do lado mostra a textura.

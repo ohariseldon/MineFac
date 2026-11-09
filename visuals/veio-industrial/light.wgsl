@@ -148,7 +148,9 @@ fn veio_rays(input: PostInput) -> f32 {
     let g = 0.62;
     let phase = (1.0 - g * g) / pow(max(1.0 + g * g - 2.0 * g * cos_theta, 0.0001), 1.5) * 0.08 + 0.05;
     let underground = smoothstep(0.2, 0.7, frame.eye_light_smooth.y);
-    let strength = lit * phase * 0.020 * sun_rays * underground * (1.0 - 0.6 * frame.rain) * mix(0.25, 1.0, veio_daylight());
+    // Over terrain the shafts stay a hint: looking toward the sun they washed nearby hills white.
+    let over_terrain = select(1.0, 0.55, depth > 0.000001);
+    let strength = lit * phase * 0.020 * over_terrain * sun_rays * underground * (1.0 - 0.6 * frame.rain) * mix(0.25, 1.0, veio_daylight());
     // Thick mist saturates instead of washing the picture out.
     return 1.0 - exp(-strength);
 }
