@@ -478,6 +478,12 @@ pub(super) fn seed_for_test(dimension: &str, cells: &[((i32, i32), f32)], anchor
     });
 }
 
+/// Para o tutorial: o chunk mais poluído da dimensão, se o aviso já veio e quantas ondas vieram.
+pub(super) fn alarm(dimension: &str) -> (f32, bool, u32) {
+    with_world(dimension, |world| (world.cells.values().copied().fold(0.0, f32::max), world.noticed_at.is_some(), world.waves))
+        .unwrap_or((0.0, false, 0))
+}
+
 #[cfg(test)]
 pub(super) fn waves_for_test(dimension: &str) -> u32 {
     with_world(dimension, |world| world.waves).unwrap_or(0)

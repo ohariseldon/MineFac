@@ -559,6 +559,8 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
             }
         }
         // Capítulo da vila aberto (também pelo comando, antes de acabar a fábrica): ele vem primeiro.
+        _ if super::forge::step(p).is_some() => super::forge::talk(host, player, p),
+        _ if super::metro::step(p).is_some() => super::metro::talk(host, player, p),
         _ if super::night::step(p).is_some() => super::night::talk(host, player, p),
         _ if super::city::step(p).is_some() => super::city::talk(host, player, p),
         _ if let Some(step) = super::village::step(p) => {
@@ -597,6 +599,9 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
         _ if p.village < super::village::DONE_VILLAGE => super::village::talk(host, player, p),
         // Depois da vila, o capítulo da cidade.
         _ if p.city < super::city::DONE_CITY => super::city::talk(host, player, p),
+        // Depois: a grande indústria e a cidade.
+        _ if p.forge < super::forge::SPEC.done() => super::forge::talk(host, player, p),
+        _ if p.metro < super::metro::SPEC.done() => super::metro::talk(host, player, p),
         // Depois do tutorial: a fase do Quadro da fábrica e o gargalo que ela vai revelar.
         _ => match milestones::census::board_phase(&player.dimension) {
             None => say(host, uuid, "veio.onboarding.mayor.board.none", &[]),

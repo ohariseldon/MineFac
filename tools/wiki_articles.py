@@ -356,7 +356,7 @@ ARTICLES = [
             "Da fase 2, casa nova pede poço a até 24 blocos; da 3, também poste; da 4, também loja. IDH baixo demais suspende novos níveis de zona.",
             "Casas muito juntas (mais de 6 vizinhas a 16 blocos) ficam apertadas, e poluição perto piora a moradia: bairros espalhados vivem melhor.",
             "Livro na prefeitura: relatório com bairros, problemas e a meta da próxima fase.",
-            "Tutorial da cidade: depois da vila, fale com o prefeito Otávio (ou /veiotutorial cidade). 10 etapas: poço, loja, primeira venda, conta da companhia, energia, lazer, três famílias, impostos, uma festa e a fase Vila.",
+            "Capítulo 4, a vila cresce (/veiotutorial crescer): poço, loja, primeira venda, conta da companhia, energia, lazer, três famílias, impostos, uma festa e a fase Vila. Capítulo 6, a cidade (/veiotutorial cidade): 9 famílias, emprego, serviços em todas as casas, uma obra cívica, o PIB e a fase Cidade.",
         ], [
             "House: up to 4 villagers within 10 blocks become a family. Workers earn wages; the family eats from the pantry and buys at the nearest shop.",
             "Shop: hire a merchant and stock it. Prices rise with demand and fall with idle stock; each village has its own market.",
@@ -365,7 +365,7 @@ ARTICLES = [
             "From phase 2 a new house needs a well within 24 blocks; from 3 also a pole; from 4 also a shop. Too low an HDI suspends new zone levels.",
             "Houses packed together (more than 6 neighbours within 16 blocks) are crowded, and nearby pollution hurts housing: spread districts live better.",
             "Book at the town hall: report with districts, problems and the next phase goal.",
-            "Town tutorial: after the village, talk to mayor Otávio (or /veiotutorial cidade). Ten steps: well, shop, first sale, company account, power, leisure, three families, taxes, a festival and the Village phase.",
+            "Chapter 4, the village grows (/veiotutorial crescer): well, shop, first sale, company account, power, leisure, three families, taxes, a festival and the Village phase. Chapter 6, the city (/veiotutorial cidade): 9 families, jobs, services in every house, a civic work, GDP and the City phase.",
         ]),
         "web": """
 <p>A vila deixa de ser só mão de obra: ela tem <b>famílias</b>, <b>comércio</b> e um <b>Estado</b> (a prefeitura) com indicadores e barreiras de progressão.</p>
@@ -381,7 +381,7 @@ ARTICLES = [
 <tr><td>Metrópole</td><td>80, 20 famílias, IDH 0,70, Gini ≤ 0,45, 3 bairros</td><td>150 aldeões, 48 casas</td><td>+ loja a 40</td></tr></table>
 <p><b>IDH</b> de cada família: comida, moradia, serviços (saneamento, energia, comércio e lazer) e renda, multiplicados pelo ânimo da vila. Se o IDH cai muito, o prefeito suspende novos níveis de zona e nascimentos.</p>
 <h3>Tutorial "a vila cresce" (capítulo 4)</h3>
-<p>Depois do capítulo da vila, o prefeito <b>Otávio</b> ensina a transformar a vila em cidade (ou use <code>/veiotutorial cidade</code>). As etapas fecham pelo que a própria vila registra: casas, lojas, contas, a prefeitura e a agenda. A barra mostra os números da vila (casas atendidas, famílias, o pedido aberto e a parte mais fraca do IDH) e aponta para a loja ou a prefeitura; nas etapas com várias condições (a primeira venda e a fase), uma lista ✔/✘ mostra o que já está certo. Cada etapa indica o artigo da wiki que explica o sistema. Depois de bastante tempo numa etapa, a barra avisa que o prefeito tem uma dica: ele só fala quando você clica nele.</p>
+<p>Depois do capítulo da vila, o prefeito <b>Otávio</b> ensina a vila a crescer até a fase Vila (ou use <code>/veiotutorial crescer</code>). As etapas fecham pelo que a própria vila registra: casas, lojas, contas, a prefeitura e a agenda. A barra mostra os números da vila (casas atendidas, famílias, o pedido aberto e a parte mais fraca do IDH) e aponta para a loja ou a prefeitura; nas etapas com várias condições (a primeira venda e a fase), uma lista ✔/✘ mostra o que já está certo. Cada etapa indica o artigo da wiki que explica o sistema. Depois de bastante tempo numa etapa, a barra avisa que o prefeito tem uma dica: ele só fala quando você clica nele.</p>
 <table><tr><th>Etapa</th><th>O que fazer</th><th>Como o jogo confere</th></tr>
 <tr><td>1. Saneamento</td><td>poço a até 24 blocos das casas</td><td>uma casa com saneamento</td></tr>
 <tr><td>2. Comércio</td><td>loja perto das casas, comerciante contratado</td><td>loja com comerciante</td></tr>
@@ -393,6 +393,15 @@ ARTICLES = [
 <tr><td>8. Impostos e conta pública</td><td>ver a conta pública e o relatório da prefeitura</td><td>imposto recolhido</td></tr>
 <tr><td>9. Uma festa</td><td>atender um visitante: itens no espaço Agenda da prefeitura</td><td>um pedido preparado</td></tr>
 <tr><td>10. Subir de fase</td><td>12 moradores, 3 famílias, IDH 0,40</td><td>a prefeitura na fase Vila</td></tr></table>
+<h3>Tutorial "a cidade" (capítulo 6)</h3>
+<p>Depois da grande indústria, o prefeito leva a Vila até a fase <b>Cidade</b> (ou use <code>/veiotutorial cidade</code>). A barra mostra os números de cada meta; na última etapa, uma lista ✔/✘ com todas.</p>
+<table><tr><th>Etapa</th><th>O que fazer</th><th>Como o jogo confere</th></tr>
+<tr><td>1. Nove famílias</td><td>mais casas, em bairros espalhados; camas livres; comida</td><td>9 famílias</td></tr>
+<tr><td>2. Emprego</td><td>contratar em postos, lojas e quartel; companhia com saldo</td><td>60% dos adultos empregados</td></tr>
+<tr><td>3. Serviços para todos</td><td>poço a 24, poste a 12, loja a 40, lazer a 32 blocos de cada casa</td><td>todas as casas com os quatro serviços</td></tr>
+<tr><td>4. Uma obra cívica</td><td>construir o parque, praça ou monumento que o prefeito pede</td><td>obra entregue (ou todas as casas já com lazer)</td></tr>
+<tr><td>5. O PIB</td><td>lojas abastecidas, salários em dia, bens além de comida</td><td>PIB de 400 moedas no dia</td></tr>
+<tr><td>6. A fase Cidade</td><td>36 moradores, 9 famílias, IDH 0,55, PIB 400, 60% de emprego, secretário</td><td>a prefeitura na fase Cidade</td></tr></table>
 """,
     },
     {
@@ -524,6 +533,14 @@ ARTICLES = [
         "web": """
 <p><b>A noite é o medo da vila desde o primeiro dia.</b> Ao anoitecer, o sino toca e os moradores se recolhem: monstros caçam quem fica fora. Na primeira noite, o tutorial pausa e leva você para casa; depois, o capítulo 2 ("A noite", com o prefeito Otávio ou <code>/veiotutorial noite</code>) pede luz na vila (8 tochas ou lanternas a até 40 blocos do centro), uma muralha com portão (64 blocos de muro, cerca ou pedra entre 12 e 64 blocos do centro) e uma noite dormida na cama.</p>
 <p><b>Os Saqueadores fazem parte do ciclo.</b> Para atender a vila e o mundo, a fábrica precisa crescer, e crescer polui. A defesa cresce junto: luz, muralha e cama no começo; quartel e torre Tesla depois.</p>
+<h3>Defesa: o que custa e onde falha</h3>
+<p>Como no Factorio, cada defesa tem um gargalo. O capítulo da noite termina com o prefeito explicando este quadro.</p>
+<table><tr><th>Defesa</th><th>Quando</th><th>O que faz</th><th>O que custa</th><th>Onde falha</th></tr>
+<tr><td>Luz</td><td>desde o início</td><td>monstro não nasce em chão claro</td><td>tochas (carvão)</td><td>não segura quem vem de fora</td></tr>
+<tr><td>Muralha com portão</td><td>desde o início</td><td>barra quem anda (monstros e Saqueadores)</td><td>pedra, cercas, muros</td><td>arqueiros atiram por cima; precisa cercar a fábrica também</td></tr>
+<tr><td>Quartel</td><td>com os circuitos</td><td>um soldado por prédio: milícia, guarda (se cura), arqueiro (16 blocos), mago (acerta dois)</td><td>comida a cada golpe; esmeralda para trocar de classe</td><td>sem comida, ninguém sai do posto</td></tr>
+<tr><td>Torre Tesla</td><td>pesquisa de eletrônica</td><td>abate o hostil mais perto a 10 blocos, a cada 2 s</td><td>2.400 FE por tiro; guarda 20.000 (8 tiros)</td><td>de noite o solar não rende; sem acumulador ou gerador, apaga no meio da onda; o gerador a carvão polui e chama mais ondas</td></tr>
+<tr><td>Kit de reparo</td><td>fase da oficina</td><td>recupera 50% de uma máquina</td><td>materiais do kit</td><td>o Bruto (5ª noite) bate o dobro e vai direto às máquinas</td></tr></table>
 <p>Máquinas trabalhando poluem o chunk onde estão; a poluição se espalha aos vizinhos a cada 3,2 s e 2% se dissipa.</p>
 <table><tr><th>Máquina</th><th>Poluição por segundo</th></tr><tr><td>Gerador</td><td>6</td></tr><tr><td>Forno de ligas, extratora Mk.II</td><td>4</td></tr>
 <tr><td>Extratora, triturador, geotérmico</td><td>2</td></tr><tr><td>Demais máquinas</td><td>1</td></tr><tr><td>Colheita da colheitadeira</td><td>−3 por colheita</td></tr></table>
@@ -537,6 +554,27 @@ ARTICLES = [
 <li><b>Quartel</b>: milícia, guarda (se cura), arqueiro e mago; troca de classe agachando com uma esmeralda.</li>
 <li>Muros vanilla, lavouras (absorvem poluição) e módulos de eficiência.</li>
 <li><b>Kit de reparo</b>: recupera 50% da integridade de uma máquina; máquina zerada para sem perder estoque.</li></ul>
+<h3>Gargalos da defesa</h3>
+<p>Como no Factorio, defender também custa, e cada defesa tem um ponto fraco:</p>
+<table><tr><th>Defesa</th><th>Quando chega</th><th>Custa</th><th>Onde falha</th></tr>
+<tr><td>Luz</td><td>desde o começo</td><td>tochas</td><td>só impede monstro de nascer; não para uma onda</td></tr>
+<tr><td>Muralha com portão</td><td>desde o começo</td><td>pedra, muros, cercas</td><td>segura quem anda; arqueiros atiram por cima; precisa cercar a fábrica, não só as casas</td></tr>
+<tr><td>Quartel</td><td>com os circuitos</td><td>esmeralda para contratar e trocar de classe; comida a cada golpe</td><td>sem comida no quartel, o soldado não sai do posto; um soldado por prédio</td></tr>
+<tr><td>Torre Tesla</td><td>pesquisa de eletrônica</td><td>2.400 FE por tiro; guarda 20.000 (8 tiros)</td><td>de noite o solar não rende; sem acumulador ou gerador, apaga no meio da onda; o gerador a carvão polui e chama mais ondas</td></tr>
+<tr><td>Kit de reparo</td><td>oficina</td><td>materiais</td><td>conserta depois: não evita os 4 golpes que param a máquina</td></tr></table>
+<p>O capítulo 2 do tutorial (a noite) ensina luz, muralha, cama, o medidor de poluição, a muralha da fábrica e termina no <b>conselho de defesa</b> com o prefeito Otávio, que apresenta esse plano.</p>
+<h3>Tutorial "a grande indústria" (capítulo 5)</h3>
+<p>O capítulo 5 (com o prefeito ou <code>/veiotutorial industria</code>) cumpre o plano: a fábrica cresce, polui, e a defesa vem junto.</p>
+<table><tr><th>Etapa</th><th>O que fazer</th><th>Como o jogo confere</th></tr>
+<tr><td>1. Oficina e aço</td><td>Quadro da fábrica; 32 engrenagens e 16 chapas de aço</td><td>fase Aço no Quadro</td></tr>
+<tr><td>2. Eletrônica</td><td>fiação, silício e montador de circuitos; 16 circuitos</td><td>fase Eletrônica no Quadro</td></tr>
+<tr><td>3. Extratora Mk.II</td><td>fabricar e colocar num veio</td><td>Mk.II colocada</td></tr>
+<tr><td>4. O primeiro aviso</td><td>deixar a fábrica trabalhar; a barra mostra o chunk mais poluído</td><td>aviso de poluição (400)</td></tr>
+<tr><td>5. O quartel</td><td>quartel dentro da muralha, soldado contratado, comida</td><td>quartel com soldado e comida</td></tr>
+<tr><td>6. A torre Tesla</td><td>torre perto das máquinas que poluem, ligada na rede</td><td>pelo menos 1 tiro guardado (2.400 FE)</td></tr>
+<tr><td>7. Energia para a noite</td><td>acumulador na rede da Tesla, carregado de dia</td><td>acumulador com energia</td></tr>
+<tr><td>8. Reparos</td><td>fabricar kits de reparo</td><td>kit no inventário</td></tr></table>
+<p>Se uma onda vier no meio do capítulo, o prefeito comenta uma vez e o capítulo continua.</p>
 """,
     },
     {
@@ -598,7 +636,7 @@ ARTICLES = [
             "• Pausada: um sinal de redstone está chegando nela",
             "• Esteira laranja: parada de verdade (o destino não aceita). Esteira que entra na face vermelha não é aceita.",
             "• Trabalhador ausente: o aldeão está longe, num chunk descarregado ou morreu; contrate de novo",
-            "Comandos: /veiotutorial ocultar · mostrar · reiniciar · noite · vila · cidade. Wiki: tecla J.",
+            "Comandos: /veiotutorial ocultar · mostrar · reiniciar · noite · vila · crescer · industria · cidade. Wiki: tecla J.",
         ], [
             "Hover over the machine panel status: it tells you why it stopped.",
             "• No power: generator fuel, touching cables, pole reach",
@@ -607,7 +645,7 @@ ARTICLES = [
             "• Paused: a redstone signal is reaching it",
             "• Orange belt: truly stuck (the target refuses). A belt entering the red face is not accepted.",
             "• Worker missing: the villager is far, in an unloaded chunk or dead; hire again",
-            "Commands: /veiotutorial ocultar · mostrar · reiniciar · noite · vila · cidade. Wiki: J key.",
+            "Commands: /veiotutorial ocultar · mostrar · reiniciar · noite · vila · crescer · industria · cidade. Wiki: J key.",
         ]),
         "web": """
 <p>Primeiro passo, sempre: <b>passe o mouse no estado do painel</b> da máquina. Ele diz o motivo.</p>
@@ -628,7 +666,9 @@ ARTICLES = [
 <tr><td><code>/veiotutorial reiniciar</code></td><td>refaz os exercícios</td></tr>
 <tr><td><code>/veiotutorial noite</code></td><td>começa o capítulo da noite (luz, muralha e cama)</td></tr>
 <tr><td><code>/veiotutorial vila</code></td><td>começa o capítulo da vila operária com o prefeito</td></tr>
-<tr><td><code>/veiotutorial cidade</code></td><td>começa o capítulo da cidade com o prefeito</td></tr>
+<tr><td><code>/veiotutorial crescer</code></td><td>começa o capítulo 4, a vila cresce (até a fase Vila)</td></tr>
+<tr><td><code>/veiotutorial industria</code></td><td>começa o capítulo 5, a grande indústria (aço, eletrônica, Mk.II e defesa)</td></tr>
+<tr><td><code>/veiotutorial cidade</code></td><td>começa o capítulo 6, a cidade (até a fase Cidade)</td></tr>
 <tr><td>Chave + botão direito</td><td>gira a máquina; agachado, devolve módulo ou dispensa trabalhador</td></tr></table>
 """,
     },

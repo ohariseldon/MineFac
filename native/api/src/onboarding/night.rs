@@ -15,9 +15,20 @@ use super::*;
 
 /// `Progress::night_first`: 0 ainda não anoiteceu no tutorial, 1 primeira noite em curso, 2 passou.
 pub(super) const FIRST_DONE: u8 = 2;
-pub(super) const STEPS: u8 = 3;
+pub(super) const STEPS: u8 = 6;
 pub(super) const DONE_NIGHT: u8 = STEPS + 1;
-pub(super) const DO_LINES: [u8; 3] = [4, 4, 3];
+pub(super) const DO_LINES: [u8; 6] = [4, 4, 3, 4, 4, 3];
+/// Blocos da muralha em volta da fábrica, e a que distância do gerador eles contam.
+pub(super) const FACTORY_WALL: u16 = 32;
+pub(super) const FACTORY_RING: (i32, i32) = (4, 24);
+/// Falas do conselho de defesa (`veio.night.council.<n>`).
+const COUNCIL_LINES: u8 = 8;
+/// Bits de `Progress::night_flags`.
+pub(super) const GATE: u8 = 1;
+pub(super) const SLEPT: u8 = 2;
+pub(super) const SEEN: u8 = 4;
+pub(super) const FACTORY_GATE: u8 = 8;
+pub(super) const COUNCIL: u8 = 16;
 /// Luzes e blocos de muralha que o capítulo pede.
 pub(super) const LIGHTS: u16 = 8;
 pub(super) const WALL: u16 = 64;
@@ -59,31 +70,62 @@ fn center() -> Option<[i32; 3]> {
 
 fn horizontal(a: [i32; 3], b: [i32; 3]) -> i32 { (a[0] - b[0]).abs().max((a[2] - b[2]).abs()) }
 
-/// O jogador colocou um bloco: conta luz, muralha e portão em volta da vila, com o capítulo aberto.
+/// A oficina: o gerador do tutorial, o terreno ou, sem eles, o centro da vila.
+pub(super) fn factory(p: &Progress) -> Option<[i32; 3]> {
+    p.blocks[GENERATOR_SLOT].or(p.plot).or_else(center)
+}
+
+/// O jogador colocou um bloco: conta luz, muralha e portão em volta da vila e da fábrica, com o
+/// capítulo aberto.
 pub(super) fn placed(p: &mut Progress, dimension: &str, pos: Pos, block: &str) {
     if step(p).is_none() || dimension != workforce::spawn::OVERWORLD { return; }
-    let Some(center) = center() else { return };
-    let distance = horizontal(pos, center);
-    if is_light(block) && distance <= LIGHT_REACH {
-        p.night_lights = (p.night_lights + 1).min(LIGHTS);
-        p.dirty = true;
-    } else if (RING.0..=RING.1).contains(&distance) {
-        if is_gate(block) { p.night_gate = true; p.dirty = true; }
-        else if is_wall(block) { p.night_wall = (p.night_wall + 1).min(WALL); p.dirty = true; }
+    if let Some(center) = center() {
+        let distance = horizontal(pos, center);
+        if is_light(block) && distance <= LIGHT_REACH {
+            p.night_lights = (p.night_lights + 1).min(LIGHTS);
+            p.dirty = true;
+        } else if (RING.0..=RING.1).contains(&distance) {
+            if is_gate(block) { p.night_flags |= GATE; p.dirty = true; }
+            else if is_wall(block) { p.night_wall = (p.night_wall + 1).min(WALL); p.dirty = true; }
+        }
+    }
+    // A muralha da fábrica (etapa 5): perto do gerador. Um bloco pode valer para as duas.
+    if step(p) == Some(4) && let Some(at) = factory(p) {
+        let distance = horizontal(pos, at);
+        if (FACTORY_RING.0..=FACTORY_RING.1).contains(&distance) {
+            if is_gate(block) { p.night_flags |= FACTORY_GATE; p.dirty = true; }
+            else if is_wall(block) { p.night_factory_wall = (p.night_factory_wall + 1).min(FACTORY_WALL); p.dirty = true; }
+        }
     }
 }
 
 /// Deitou na cama à noite: vale para a etapa da noite segura.
 pub(super) fn slept(p: &mut Progress) {
-    if step(p) == Some(2) { p.night_slept = true; p.dirty = true; }
+    if step(p) == Some(2) { p.night_flags |= SLEPT; p.dirty = true; }
+}
+
+/// Abriu uma máquina que polui: viu o número no painel (etapa do preço da fábrica).
+pub(super) fn opened(p: &mut Progress, block: &str) {
+    if step(p) == Some(3) && pollution::emission(block) > 0.0 { p.night_flags |= SEEN; p.dirty = true; }
 }
 
 pub(super) fn ready(step: usize, p: &Progress) -> bool {
     match step {
         0 => p.night_lights >= LIGHTS,
-        1 => p.night_wall >= WALL && p.night_gate,
-        _ => p.night_slept,
+        1 => p.night_wall >= WALL && p.night_flags & GATE != 0,
+        2 => p.night_flags & SLEPT != 0,
+        3 => p.night_flags & SEEN != 0,
+        4 => p.night_factory_wall >= FACTORY_WALL && p.night_flags & FACTORY_GATE != 0,
+        _ => p.night_flags & COUNCIL != 0,
     }
+}
+
+/// O conselho de defesa: o plano do prefeito para quando a fábrica crescer, com o que cada defesa
+/// custa e onde ela falha.
+fn council(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) {
+    for line in 1..=COUNCIL_LINES { village::say(host, player.uuid, &format!("veio.night.council.{line}")); }
+    p.night_flags |= COUNCIL;
+    p.dirty = true;
 }
 
 fn speaker(p: &Progress) -> &'static str {
@@ -190,10 +232,18 @@ pub(super) fn tick(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
         announce(host, player, p, current);
         p.night_announced = Some(p.night);
     }
+    let gate = |bit: u8| Text::tr(if p.night_flags & bit != 0 { "veio.night.gate_yes" } else { "veio.night.gate_no" }, &[]).plain();
     let goal = match current {
         0 => Text::tr("veio.night.goal.0", &[&p.night_lights]),
-        1 => Text::tr("veio.night.goal.1", &[&p.night_wall, &Text::tr(if p.night_gate { "veio.night.gate_yes" } else { "veio.night.gate_no" }, &[]).plain()]),
-        _ => Text::tr(if workforce::night(host) { "veio.night.goal.2_night" } else { "veio.night.goal.2_day" }, &[]),
+        1 => Text::tr("veio.night.goal.1", &[&p.night_wall, &gate(GATE)]),
+        2 => Text::tr(if workforce::night(host) { "veio.night.goal.2_night" } else { "veio.night.goal.2_day" }, &[]),
+        3 => {
+            // O medidor ao vivo: a poluição do chunk da oficina contra o aviso e as ondas.
+            let level = factory(p).map_or(0, |at| pollution::local(&player.dimension, at).round() as i32);
+            Text::tr("veio.night.goal.3", &[&level, &(pollution::NOTICE as i32), &(pollution::RAID as i32)])
+        }
+        4 => Text::tr("veio.night.goal.4", &[&p.night_factory_wall, &gate(FACTORY_GATE)]),
+        _ => Text::tr("veio.night.goal.5", &[]),
     };
     host.action_bar(player.uuid, Text::tr("veio.night.bar", &[&(current + 1), &goal.plain()]));
 }
@@ -202,6 +252,8 @@ pub(super) fn tick(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
 pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) {
     match step(p) {
         None => start(host, player, p),
+        // O conselho de defesa acontece na conversa com o prefeito.
+        Some(5) => council(host, player, p),
         Some(current) => {
             village::say(host, player.uuid, "veio.village.again");
             announce(host, player, p, current);
@@ -217,8 +269,8 @@ pub(super) fn start(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pr
     p.night_announced = None;
     p.night_lights = 0;
     p.night_wall = 0;
-    p.night_gate = false;
-    p.night_slept = false;
+    p.night_factory_wall = 0;
+    p.night_flags = 0;
     p.hidden = false;
     p.dirty = true;
 }

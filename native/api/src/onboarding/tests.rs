@@ -212,7 +212,7 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     p.crafted = 0b101; p.tips = TIP_BELT;
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.crafted, loaded.tips), (0b101, TIP_BELT));
-    let old = p.encode().replace("veio-onboarding-10", "veio-onboarding-1").replacen(&format!(" 5 2{}\n", " 0".repeat(18)), "\n", 1);
+    let old = p.encode().replace("veio-onboarding-11", "veio-onboarding-1").replacen(&format!(" 5 2{}\n", " 0".repeat(22)), "\n", 1);
     assert_eq!(Progress::decode(&old).map(|old| (old.step, old.crafted)), Some((6, 0)));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
@@ -795,7 +795,7 @@ fn the_city_chapter_closes_each_step_from_what_the_village_registers() {
     assert_eq!(city::DONE_CITY, 11);
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.village, loaded.city, loaded.city_crafted), (village::DONE_VILLAGE, 5, 0b11));
-    let v5 = p.encode().replace("veio-onboarding-10", "veio-onboarding-5").replacen(&format!(" 5 3{}\n", " 0".repeat(11)), "\n", 1);
+    let v5 = p.encode().replace("veio-onboarding-11", "veio-onboarding-5").replacen(&format!(" 5 3{}\n", " 0".repeat(15)), "\n", 1);
     let old = Progress::decode(&v5).unwrap();
     assert_eq!((old.village, old.city), (village::DONE_VILLAGE, 0));
 }
@@ -1025,18 +1025,25 @@ fn the_press_comes_from_the_smith_after_a_wheat_field_for_the_farmer() {
     // O favor vai para o save; saves antigos que já passaram do pedido de recursos não o fazem.
     p.favor = favors::PLANT;
     assert_eq!(Progress::decode(&p.encode()).unwrap().favor, favors::PLANT);
-    let old = p.encode().replace("veio-onboarding-10", "veio-onboarding-8").replacen(&format!(" {}{}\n", favors::PLANT, " 0".repeat(6)), "\n", 1);
+    let old = p.encode().replace("veio-onboarding-11", "veio-onboarding-8").replacen(&format!(" {}{}\n", favors::PLANT, " 0".repeat(10)), "\n", 1);
     assert_eq!(Progress::decode(&old).unwrap().favor, favors::FAVOR_DONE);
     let mut fresh = Progress { intro: intro::GATHER_STAGE, ..Progress::default() };
     fresh.favor = 0;
-    let fresh_old = fresh.encode().replace("veio-onboarding-10", "veio-onboarding-8").replacen(&format!("{}\n", " 0".repeat(7)), "\n", 1);
+    let fresh_old = fresh.encode().replace("veio-onboarding-11", "veio-onboarding-8").replacen(&format!("{}\n", " 0".repeat(11)), "\n", 1);
     assert_eq!(Progress::decode(&fresh_old).unwrap().favor, 0);
     // A "v7" da outra linha do tutorial (a noite, 25 números, sem Quadro e poste) também abre.
     let night7 = format!("veio-onboarding-7\n3 0 0 0 0 0 0 0 0 0 0 0 4 0 0 0 0 0 0 2 1 5 30 1 0\nminecraft:overworld\n{}", "-\n".repeat(13));
     let loaded = Progress::decode(&night7).expect("save da noite");
-    assert_eq!((loaded.step, loaded.night_first, loaded.night, loaded.night_lights, loaded.night_wall, loaded.night_gate),
-        (3, night::FIRST_DONE, 1, 5, 30, true));
+    assert_eq!((loaded.step, loaded.night_first, loaded.night, loaded.night_lights, loaded.night_wall, loaded.night_flags),
+        (3, night::FIRST_DONE, 1, 5, 30, night::GATE));
     assert_eq!((loaded.drills, loaded.favor), (0, favors::FAVOR_DONE));
+    // A "v9" da base (capítulos 5 e 6, 29 números e os 4 blocos da grande indústria) também abre;
+    // a fábrica de 8 etapas dela conta como pronta para quem já está num capítulo.
+    let chapters9 = format!("veio-onboarding-9\n8 0 0 0 0 0 0 0 0 0 0 0 4 1 9 0 0 11 0 2 6 0 0 0 0 3 5 1 0\nminecraft:overworld\n{}1 64 2\n-\n",
+        "-\n".repeat(15));
+    let loaded = Progress::decode(&chapters9).expect("save dos capítulos 5 e 6");
+    assert_eq!((loaded.step, loaded.outro, loaded.night, loaded.forge, loaded.forge_crafted, loaded.forge_flags), (DONE, true, 6, 3, 5, 1));
+    assert_eq!(loaded.forge_blocks[3], Some([1, 64, 2]));
 }
 
 #[test]
@@ -1074,7 +1081,6 @@ fn the_first_night_sends_the_player_home_and_pauses_the_tutorial_until_dawn() {
 
 #[test]
 fn the_night_chapter_counts_light_wall_and_gate_around_the_village() {
-    let center = home::dashboard().or_else(|| workforce::spawn::center().map(|(at, _)| at));
     let mut p = Progress { night: 1, ..Progress::default() };
     assert!(night::is_light("minecraft:torch") && night::is_light("minecraft:lantern"));
     assert!(night::is_wall("minecraft:cobblestone_wall") && night::is_wall("minecraft:oak_fence") && night::is_wall("minecraft:stone_bricks"));
@@ -1084,23 +1090,117 @@ fn the_night_chapter_counts_light_wall_and_gate_around_the_village() {
     assert!(night::ready(0, &p));
     p.night_wall = night::WALL;
     assert!(!night::ready(1, &p), "sem portão");
-    p.night_gate = true;
+    p.night_flags |= night::GATE;
     assert!(night::ready(1, &p));
-    assert!(!night::ready(2, &p));
+    // Cama só conta na etapa da noite segura.
     night::slept(&mut p);
-    assert!(!p.night_slept, "só conta na etapa da noite segura");
+    assert!(!night::ready(2, &p));
     p.night = 3;
     night::slept(&mut p);
     assert!(night::ready(2, &p));
-    // Sem centro de vila conhecido, nada é contado (e nada quebra).
-    if center.is_none() {
-        let mut fresh = Progress { night: 1, ..Progress::default() };
-        night::placed(&mut fresh, workforce::spawn::OVERWORLD, [0, 64, 0], "minecraft:torch");
-        assert_eq!(fresh.night_lights, 0);
+    // O preço da fábrica: abrir uma máquina que polui.
+    p.night = 4;
+    night::opened(&mut p, "minecraft:chest");
+    assert!(!night::ready(3, &p), "baú não polui");
+    night::opened(&mut p, GENERATOR);
+    assert!(night::ready(3, &p));
+    // A muralha da fábrica: perto do gerador, com portão.
+    p.night = 5;
+    p.blocks[GENERATOR_SLOT] = Some([100, 64, 100]);
+    for x in 0..night::FACTORY_WALL as i32 {
+        night::placed(&mut p, workforce::spawn::OVERWORLD, [90 + x % 20, 64, 92], "minecraft:cobblestone_wall");
     }
-    // O save guarda a noite; saves antigos de quem já passou do prólogo não revivem a primeira noite.
-    let saved = Progress { step: 3, night_first: night::FIRST_DONE, night: 2, night_lights: 5, night_wall: 30, night_gate: true, ..Progress::default() };
-    let loaded = Progress::decode(&saved.encode()).unwrap();
-    assert_eq!((loaded.night_first, loaded.night, loaded.night_lights, loaded.night_wall, loaded.night_gate),
-        (night::FIRST_DONE, 2, 5, 30, true));
+    night::placed(&mut p, workforce::spawn::OVERWORLD, [300, 64, 300], "minecraft:cobblestone_wall");
+    assert_eq!(p.night_factory_wall, night::FACTORY_WALL, "só os blocos perto da fábrica");
+    assert!(!night::ready(4, &p));
+    night::placed(&mut p, workforce::spawn::OVERWORLD, [100, 64, 92], "minecraft:oak_fence_gate");
+    assert!(night::ready(4, &p));
+    // O save guarda tudo da noite; a v10 (portão e cama separados) ainda abre.
+    let loaded = Progress::decode(&p.encode()).unwrap();
+    assert_eq!((loaded.night, loaded.night_factory_wall, loaded.night_flags), (5, night::FACTORY_WALL, p.night_flags));
+    let v7 = p.encode().replace("veio-onboarding-11", "veio-onboarding-10")
+        .replacen(&format!(" {} {} 0 0 0 0\n", night::FACTORY_WALL, p.night_flags), " 1 1\n", 1);
+    let old = Progress::decode(&v7).unwrap();
+    assert_eq!(old.night_flags, night::GATE | night::SLEPT);
+}
+
+#[test]
+fn the_defense_council_closes_the_night_chapter_in_a_talk_with_the_mayor() {
+    let mut town = Town::default();
+    let player = NativeServerPlayer { uuid: 12, name: "Lia".into(), dimension: workforce::spawn::OVERWORLD.into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, night_first: night::FIRST_DONE, night: 6, ..Progress::default() };
+    // A etapa espera a conversa; clicar no prefeito dá o conselho (8 falas) e a etapa fecha.
+    night::tick(&mut town, &player, &mut p);
+    assert_eq!(p.night, 6);
+    let before = town.said.iter().filter(|line| *line == "veio.agenda.says").count();
+    intro::talk(&mut town, &player, &mut p);
+    assert_eq!(town.said.iter().filter(|line| *line == "veio.agenda.says").count(), before + 8);
+    night::tick(&mut town, &player, &mut p);
+    assert_eq!(p.night, night::DONE_NIGHT);
+    assert!(town.commands.iter().any(|line| line.contains("veio.night.end_title")));
+}
+
+#[test]
+fn the_industry_chapter_follows_the_board_the_mk2_and_a_defense_with_its_costs() {
+    use forge::{done, Works};
+    let none = Works::default();
+    for step in 0..8 { assert!(!done(step, &none), "etapa {step}"); }
+    assert!(!done(0, &Works { phase: Some(2), ..none.clone() }) && done(0, &Works { phase: Some(forge::STEEL_PHASE), ..none.clone() }));
+    assert!(done(1, &Works { phase: Some(forge::ELECTRONICS_PHASE), ..none.clone() }));
+    assert!(done(2, &Works { mk2: true, ..none.clone() }));
+    assert!(done(3, &Works { warned: true, ..none.clone() }), "o primeiro aviso de poluição");
+    assert!(!done(4, &Works { barracks: true, soldier: true, ..none.clone() }), "soldado sem comida não sai do posto");
+    assert!(done(4, &Works { barracks: true, soldier: true, rations: true, ..none.clone() }));
+    assert!(!done(5, &Works { tesla: Some(defense::SHOT_COST - 1), ..none.clone() }), "Tesla sem um tiro de energia");
+    assert!(done(5, &Works { tesla: Some(defense::SHOT_COST), ..none.clone() }));
+    assert!(!done(6, &Works { battery: Some(0), ..none.clone() }) && done(6, &Works { battery: Some(100), ..none.clone() }));
+    assert!(done(7, &Works { kit: true, ..none.clone() }));
+    // Os blocos do capítulo só contam com ele aberto; o save guarda tudo.
+    let mut p = Progress::default();
+    forge::placed(&mut p, workforce::spawn::OVERWORLD, [1, 64, 1], DRILL_MK2);
+    assert_eq!(p.forge_blocks[0], None);
+    p.forge = 3;
+    forge::placed(&mut p, workforce::spawn::OVERWORLD, [1, 64, 1], DRILL_MK2);
+    forge::placed(&mut p, workforce::spawn::OVERWORLD, [5, 64, 5], TESLA);
+    p.forge_crafted = 0b100;
+    p.metro = 2;
+    let loaded = Progress::decode(&p.encode()).unwrap();
+    assert_eq!((loaded.forge, loaded.forge_crafted, loaded.metro), (3, 0b100, 2));
+    assert_eq!(loaded.forge_blocks, p.forge_blocks);
+}
+
+#[test]
+fn the_city_chapter_lists_every_goal_of_the_city_phase() {
+    use city::Town;
+    let town = Town { homes: 9, families: 9, residents: 30, sanitized: 9, powered: 8, serviced: 8, entertained: 9,
+        adults: 20, employed: 13, idh: 56, gdp: 410, staffed: true, phase: 2, ..Town::default() };
+    assert!(metro::done(0, &town), "nove famílias");
+    assert!(metro::done(1, &town), "65% de emprego");
+    assert!(!metro::done(2, &town), "uma casa sem energia");
+    assert!(metro::done(3, &town), "nenhum bairro sem lazer: a obra não precisa vir");
+    assert!(metro::done(4, &town) && !metro::done(5, &town));
+    let phase: Vec<bool> = metro::checks(5, &town).iter().map(|(ok, _, _)| *ok).collect();
+    assert_eq!(phase, [true, false, true, true, true, true], "falta só morador");
+    assert!(metro::done(5, &Town { phase: metro::CITY_PHASE, ..town.clone() }));
+    let services: Vec<bool> = metro::checks(2, &town).iter().map(|(ok, _, _)| *ok).collect();
+    assert_eq!(services, [true, false, false]);
+}
+
+#[test]
+fn the_mayor_leads_from_the_town_to_industry_and_then_to_the_city() {
+    let mut town = Town::default();
+    let player = NativeServerPlayer { uuid: 13, name: "Ivo".into(), dimension: workforce::spawn::OVERWORLD.into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, night_first: night::FIRST_DONE,
+        night: night::DONE_NIGHT, village: village::DONE_VILLAGE, city: city::DONE_CITY, ..Progress::default() };
+    intro::talk(&mut town, &player, &mut p);
+    assert_eq!(p.forge, 1, "depois da vila que cresce, a grande indústria");
+    assert!(town.commands.iter().any(|line| line.contains("veio.forge.start_title")));
+    forge::tick(&mut town, &player, &mut p);
+    assert!(town.said.iter().any(|line| line.contains("veio.forge.title.0")));
+    p.forge = forge::SPEC.done();
+    intro::talk(&mut town, &player, &mut p);
+    assert_eq!(p.metro, 1, "depois, a cidade");
+    assert!(town.commands.iter().any(|line| line.contains("veio.metro.start_title")));
 }
