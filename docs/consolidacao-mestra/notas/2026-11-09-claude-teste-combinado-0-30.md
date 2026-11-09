@@ -44,3 +44,13 @@
 - Houve um conflito em `tools/build_tutorial.py`: ficaram tanto os rótulos de UI do #57 (`build_ui_text.add_labels`) quanto o livro do diário. Os geradores rodaram sem diferença.
 - E1: `python3 tools/check_rust.py` → 391 passam.
 - Testar em jogo: os fogos, o Diário de Otávio e a seta na barra.
+
+## Adendo: 0.36.0 (#61)
+- O #61 subiu para a 0.36.0 (`10994df`) e o save passou a `veio-onboarding-8`. Entraram:
+  - as festas do capítulo 2, com a Festa da Colheita 3 dias depois de abrir o capítulo;
+  - a roupa e as reações do prefeito;
+  - comentários curtos dos aldeões comuns;
+  - os documentos da história do Veio.
+- Houve conflito só nas línguas, juntadas chave a chave, sem choque. Os geradores rodaram sem diferença.
+- E1: `python3 tools/check_rust.py` → 394 passam.
+- Testar em jogo: a festa (dormir avança os dias), o casaco e o nome dourado do prefeito, as partículas e os sons dele, e os comentários dos aldeões.
