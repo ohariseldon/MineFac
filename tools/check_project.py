@@ -51,8 +51,12 @@ def main():
                "veio.onboarding.act.end", "veio.onboarding.act.end.sub", "veio.onboarding.diary.title"]
             + [f"veio.festival.{f}.{part}" for f in ("harvest", "governor") for part in
                ("name", "when", "announce.1", "announce.2", "good.1", "good.2", "good_sub", "weak", "retry")]
+            + [f"veio.favor.{k}" for k in ("smith.name", "farmer.name", "bar", "done", "done.sub", "farmer.gift",
+               "farmer.plant", "farmer.planted", "farmer.more", "farmer.after", "farmer.wait", "smith.after", "smith.wait")]
+            + [f"veio.favor.{k}.{n}" for k, top in (("start", 2), ("mayor", 5), ("goal", 5), ("smith.ask", 4),
+               ("farmer.ask", 3), ("farmer.thanks", 3), ("smith.thanks", 3)) for n in range(1, top + 1)]
             + ["veio.festival.countdown", "veio.festival.reminder", "veio.villager.who", "veio.villager.says"]
-            + [f"veio.villager.{t}.{n}" for t in ("mayor", "gather", "plot", "festival", "factory", "village", "free")
+            + [f"veio.villager.{t}.{n}" for t in ("mayor", "gather", "plot", "festival", "favor", "factory", "village", "free")
                for n in range(1, 5)]
             + [f"veio.onboarding.blocked.{i}" for i in (3, 5, 9)]
             + ["veio.onboarding.hidden", "veio.onboarding.shown", "veio.onboarding.save_failed"])

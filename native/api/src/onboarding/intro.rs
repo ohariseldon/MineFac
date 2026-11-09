@@ -30,8 +30,9 @@ pub(super) const RESOURCES: [(&str, u32, &str); 3] = [
     ("minecraft:iron_ingot", 2, "item.minecraft.iron_ingot"),
     ("minecraft:copper_ingot", 2, "item.minecraft.copper_ingot"),
 ];
-/// Receitas que o prefeito libera ao entregar o gerador.
-const UNLOCKS: [&str; 3] = [GENERATOR, PRESS, CABLE];
+/// Receitas que o prefeito libera ao entregar o gerador. A prensa e os cabos vêm do favor ao
+/// Seu Bento (`favors.rs`).
+const UNLOCKS: [&str; 1] = [GENERATOR];
 /// Lado do terreno da oficina, em blocos.
 pub(super) const PLOT: i32 = 11;
 const HALF: i32 = PLOT / 2;
@@ -563,6 +564,10 @@ pub(super) fn talk(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Pro
             super::village::talk(host, player, p);
             say(host, uuid, &format!("veio.village.hint.{step}"), &[]);
             if let Some(when) = super::festival::countdown(host, p) { say(host, uuid, "veio.festival.reminder", &[&when.plain()]); }
+        }
+        // O favor da prensa: o prefeito lembra quem procurar.
+        _ if p.step == 1 && p.favor < super::favors::FAVOR_DONE => {
+            say(host, uuid, &format!("veio.favor.mayor.{}", p.favor.max(super::favors::ASK_SMITH)), &[]);
         }
         _ if p.step < DONE => {
             say(host, uuid, "veio.onboarding.mayor.now", &[&Text::tr(&format!("veio.onboarding.title.{}", p.step), &[]).plain()]);

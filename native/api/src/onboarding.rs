@@ -113,6 +113,10 @@ struct Progress {
     /// Festas do capítulo da vila (`festival`): qual está marcada (0 nenhuma) e o dia dela. Salvos.
     festival: u8,
     festival_day: u32,
+    /// O favor do primeiro ato (`favors.rs`): a prensa vem do Seu Bento depois do campo da Dona
+    /// Cida. Salvo; os pés de trigo contados são só da sessão.
+    favor: u8,
+    favor_crops: u32,
     /// Dica do prefeito: a etapa que está contando (fábrica, ou 100 + etapa da vila), desde
     /// quando, e se a dica já saiu. Não salvo.
     hint_for: Option<u16>,
@@ -335,11 +339,11 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-8\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-9\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
             self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips,
             self.intro, u8::from(self.outro), self.village, self.village_crafted, self.village_base.max(0),
-            self.city, self.city_crafted, self.drills, self.events, self.festival, self.festival_day, self.dimension);
+            self.city, self.city_crafted, self.drills, self.events, self.festival, self.festival_day, self.favor, self.dimension);
         for pos in self.blocks.iter().chain([&self.plot]).chain(self.village_blocks.iter()) {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
@@ -363,7 +367,7 @@ impl Progress {
         let (fields, version) = match lines.next()? {
             "veio-onboarding-1" => (10, 1), "veio-onboarding-2" => (12, 2), "veio-onboarding-3" => (14, 3),
             "veio-onboarding-4" => (14, 4), "veio-onboarding-5" => (17, 5), "veio-onboarding-6" => (19, 6),
-            "veio-onboarding-7" => (21, 7), "veio-onboarding-8" => (23, 8), _ => return None,
+            "veio-onboarding-7" => (21, 7), "veio-onboarding-8" => (23, 8), "veio-onboarding-9" => (24, 9), _ => return None,
         };
         let version4 = version >= 4;
         let values: Vec<u32> = lines.next()?.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
@@ -379,6 +383,10 @@ impl Progress {
                 [usize::from((values[12] as u8).min(3))], values[13] != 0) }
             else if values[0] > 0 || crafted != 0 { (intro::INTRO_DONE, values[0] == u32::from(DONE)) }
             else { (0, false) };
+        // v9: o favor do primeiro ato. Antes dele o prefeito já dava as receitas da prensa e dos
+        // cabos: quem passou do pedido de recursos não faz o favor.
+        let favor = if version >= 9 { (values[23] as u8).min(favors::FAVOR_DONE) }
+            else if intro >= intro::PLOT_STAGE { favors::FAVOR_DONE } else { 0 };
         let dimension = lines.next()?.to_owned();
         if dimension.len() > 128 { return None; }
         let parse = |line: &str| -> Option<Option<Pos>> {
@@ -417,7 +425,7 @@ impl Progress {
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
             delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro, mayor,
             village, village_blocks, village_crafted, village_base, city, city_crafted, board, pole, drills, events,
-            festival, festival_day, poles: u32::from(pole.is_some()), ..Self::default() })
+            festival, festival_day, favor, poles: u32::from(pole.is_some()), ..Self::default() })
     }
 }
 
@@ -800,7 +808,9 @@ fn tick(host: &mut dyn Host, now: u64) {
             }
             p.pending_tips = 0;
         }
-        if !p.hidden && p.step < DONE {
+        if !p.hidden && p.step == 1 && p.favor < favors::FAVOR_DONE {
+            favors::tick(host, player, p, now);
+        } else if !p.hidden && p.step < DONE {
             let count = goal_count(p);
             if !checklist(host, player, p) {
                 let goal = Text::tr(&format!("veio.onboarding.goal.{}", p.step), &[&count]);
@@ -894,11 +904,29 @@ pub(super) fn talk(host: &mut dyn Host) -> bool {
     true
 }
 
-/// Outro mundo vai abrir: esquece o prefeito do mundo anterior.
-pub(super) fn world_changed() { intro::reset(); }
+/// Clique no ferreiro ou na lavradora do favor. `true` se o Veio tomou o clique (senão a troca
+/// vanilla segue).
+pub(super) fn neighbor_talk(host: &mut dyn Host, kind: &str) -> bool {
+    let Some(who) = favors::who(kind) else { return false };
+    let Some(player) = host.acting_player() else { return true };
+    let Ok(mut slot) = SESSION.lock() else { return true };
+    if !session(host, &mut slot) { return true; }
+    let s = slot.as_mut().unwrap();
+    let p = s.players.entry(player.uuid).or_insert_with(|| load(&s.root, player.uuid));
+    let took = favors::talk(host, &player, p, who);
+    if p.dirty && save(&s.root, player.uuid, p).is_err() {
+        host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[]));
+    }
+    took
+}
+
+/// Outro mundo vai abrir: esquece o prefeito e os vizinhos do mundo anterior.
+pub(super) fn world_changed() { intro::reset(); favors::reset(); }
 
 mod intro;
 mod festival;
+mod favors;
+pub(super) use favors::{seen as neighbor_seen, FARMER, SMITH};
 mod barks;
 pub(super) use barks::villager_seen;
 mod village;

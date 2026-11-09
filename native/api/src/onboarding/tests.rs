@@ -212,7 +212,7 @@ fn save_roundtrip_preserves_progress_but_never_restores_transient_credit() {
     p.crafted = 0b101; p.tips = TIP_BELT;
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.crafted, loaded.tips), (0b101, TIP_BELT));
-    let old = p.encode().replace("veio-onboarding-8", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0 0 0 0 0 0 0\n", "\n", 1);
+    let old = p.encode().replace("veio-onboarding-9", "veio-onboarding-1").replacen(" 5 2 0 0 0 0 0 0 0 0 0 0 0 0\n", "\n", 1);
     assert_eq!(Progress::decode(&old).map(|old| (old.step, old.crafted)), Some((6, 0)));
     assert!(Progress::decode(&p.encode().replace("6 1", "99 1")).is_none());
 }
@@ -328,8 +328,8 @@ fn server_lifecycle_displays_one_goal_saves_rejoins_and_isolates_worlds() {
     let player = NativeServerPlayer { uuid: 10, name: "Tutorial".into(), dimension: "minecraft:overworld".to_owned(), ..Default::default() };
     let mut host = Server { root: root.clone(), player: player.clone(), bars: vec![], messages: vec![],
         inventory: Some(vec!["minecraft:iron_ingot"]) };
-    // O prólogo (casa, prefeito, terreno) já foi feito neste mundo; ele tem teste próprio.
-    save(&root.join("veio/tutorial"), player.uuid, &mut Progress { intro: intro::INTRO_DONE,
+    // O prólogo (casa, prefeito, terreno) e o favor da prensa já foram feitos neste mundo; eles têm teste próprio.
+    save(&root.join("veio/tutorial"), player.uuid, &mut Progress { intro: intro::INTRO_DONE, favor: favors::FAVOR_DONE,
         dimension: "minecraft:overworld".into(), ..Progress::default() }).unwrap();
     tick(&mut host, 20);
     // Sem o gerador: a lista de materiais ocupa a barra (ferro já tem, o resto falta).
@@ -516,7 +516,8 @@ fn the_mayor_asks_for_resources_gives_the_generator_and_a_level_plot_starts_the_
     assert_eq!(p.intro, intro::PLOT_STAGE);
     assert_eq!(land.bag[GENERATOR], 1);
     assert_eq!((land.bag["minecraft:cobblestone"], land.bag["minecraft:copper_ingot"]), (4, 1));
-    assert!(land.chat.iter().any(|line| line == "recipe give Fundador veio:press"));
+    assert!(land.chat.iter().any(|line| line == "recipe give Fundador veio:generator"));
+    assert!(!land.chat.iter().any(|line| line == "recipe give Fundador veio:press"), "a prensa vem do favor ao ferreiro");
     let plot = p.plot.expect("o prefeito escolheu o terreno");
     assert_eq!(plot[1], 64, "nível do meio do terreno");
     // Um bloco a mais no meio do terreno: ainda não conta, mas cabe na folga.
@@ -792,7 +793,7 @@ fn the_city_chapter_closes_each_step_from_what_the_village_registers() {
     assert_eq!(city::DONE_CITY, 11);
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.village, loaded.city, loaded.city_crafted), (village::DONE_VILLAGE, 5, 0b11));
-    let v5 = p.encode().replace("veio-onboarding-8", "veio-onboarding-5").replacen(" 5 3 0 0 0 0\n", "\n", 1);
+    let v5 = p.encode().replace("veio-onboarding-9", "veio-onboarding-5").replacen(" 5 3 0 0 0 0 0\n", "\n", 1);
     let old = Progress::decode(&v5).unwrap();
     assert_eq!((old.village, old.city), (village::DONE_VILLAGE, 0));
 }
@@ -967,4 +968,65 @@ fn common_villagers_only_comment_and_the_mayor_reacts_and_dresses_apart() {
     intro::react(&mut log, intro::Mood::Happy);
     assert!(log.lines.iter().any(|l| l.contains(MAYOR) && l.contains("minecraft:heart")));
     assert!(log.lines.iter().any(|l| l.contains("entity.villager.celebrate")));
+}
+
+#[test]
+fn the_press_comes_from_the_smith_after_a_wheat_field_for_the_farmer() {
+    struct Village { player: NativeServerPlayer, lines: Vec<String>, bag: HashMap<String, u32>, wheat: Vec<Pos> }
+    impl Host for Village {
+        fn acting_player(&self) -> Option<NativeServerPlayer> { Some(self.player.clone()) }
+        fn run_command(&mut self, line: &str) -> bool { self.lines.push(line.to_owned()); !line.starts_with("execute if entity") }
+        fn tell(&mut self, _: u128, text: Text) -> bool { self.lines.push(text.plain()); true }
+        fn action_bar(&mut self, _: u128, text: Text) -> bool { self.lines.push(format!("bar {}", text.plain())); true }
+        fn entity(&self, _: u32) -> Option<horizon_client::mod_api::EntityRef> { None }
+        fn block(&self, pos: Pos) -> String { if self.wheat.contains(&pos) { "minecraft:wheat".into() } else { "minecraft:air".into() } }
+        fn take_items(&mut self, item: &str, count: u32) -> u32 {
+            let have = self.bag.entry(item.to_owned()).or_default();
+            let n = (*have).min(count); *have -= n; n
+        }
+        fn give_items(&mut self, item: &str, count: u32) -> u32 { *self.bag.entry(item.to_owned()).or_default() += count; count }
+    }
+    let player = NativeServerPlayer { uuid: 8, name: "Rita".into(), dimension: "minecraft:nether".into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut v = Village { player: player.clone(), lines: vec![], bag: HashMap::new(), wheat: vec![] };
+    let mut p = Progress { intro: intro::INTRO_DONE, step: 1, ..Progress::default() };
+    // O prefeito só monta o gerador; na etapa 2 ele manda ao ferreiro, e a barra mostra o favor.
+    favors::tick(&mut v, &player, &mut p, 20);
+    assert_eq!(p.favor, favors::ASK_SMITH);
+    assert!(v.lines.iter().any(|l| l == "bar veio.favor.bar"));
+    // O ferreiro tem a prensa, mas pede ajuda para a lavradora; ela dá sementes, farinha de osso e enxada.
+    assert!(favors::talk(&mut v, &player, &mut p, favors::Who::Smith));
+    assert_eq!(p.favor, favors::ASK_FARMER);
+    assert!(favors::talk(&mut v, &player, &mut p, favors::Who::Farmer));
+    assert_eq!(p.favor, favors::PLANT);
+    assert_eq!((v.bag["minecraft:wheat_seeds"], v.bag["minecraft:bone_meal"], v.bag["minecraft:stone_hoe"]), (16, 32, 1));
+    // O campo conta o trigo plantado em volta dela (até 10 blocos), não o de longe.
+    v.wheat = (0..12).map(|i| [i - 5, 63, 3]).chain([[40, 63, 0]]).collect();
+    assert_eq!(favors::crops(&v, [0.5, 64.0, 0.5]), 12);
+    p.favor = favors::HARVEST;
+    // Sem o trigo colhido, ela pede o que falta e devolve o que pegou.
+    v.bag.insert("minecraft:wheat".into(), 5);
+    assert!(favors::talk(&mut v, &player, &mut p, favors::Who::Farmer));
+    assert_eq!((p.favor, v.bag["minecraft:wheat"]), (favors::HARVEST, 5));
+    // Com 12, ela agradece e passa a vender pão mais barato.
+    v.bag.insert("minecraft:wheat".into(), 14);
+    favors::talk(&mut v, &player, &mut p, favors::Who::Farmer);
+    assert_eq!((p.favor, v.bag["minecraft:wheat"]), (favors::BACK_TO_SMITH, 2));
+    assert!(v.lines.iter().any(|l| l.contains("data merge") && l.contains("minecraft:bread") && l.contains(favors::FARMER)));
+    // O ferreiro cumpre a palavra: prensa, cabos e as receitas.
+    favors::talk(&mut v, &player, &mut p, favors::Who::Smith);
+    assert_eq!(p.favor, favors::FAVOR_DONE);
+    assert_eq!((v.bag[PRESS], v.bag[CABLE]), (1, 16));
+    assert!(v.lines.iter().any(|l| l == "recipe give Rita veio:press"));
+    // Depois do favor, clicar nela abre a troca do pão (o Veio não toma o clique).
+    assert!(!favors::talk(&mut v, &player, &mut p, favors::Who::Farmer));
+    // O favor vai para o save; saves antigos que já passaram do pedido de recursos não o fazem.
+    p.favor = favors::PLANT;
+    assert_eq!(Progress::decode(&p.encode()).unwrap().favor, favors::PLANT);
+    let old = p.encode().replace("veio-onboarding-9", "veio-onboarding-8").replacen(&format!(" {}\n", favors::PLANT), "\n", 1);
+    assert_eq!(Progress::decode(&old).unwrap().favor, favors::FAVOR_DONE);
+    let mut fresh = Progress { intro: intro::GATHER_STAGE, ..Progress::default() };
+    fresh.favor = 0;
+    let fresh_old = fresh.encode().replace("veio-onboarding-9", "veio-onboarding-8").replacen(" 0\n", "\n", 1);
+    assert_eq!(Progress::decode(&fresh_old).unwrap().favor, 0);
 }

@@ -46,6 +46,7 @@ ARTICLES = [
 <tr><td>14</td><td>O pedido do dia pago</td><td>Esmeraldas da vila</td></tr>
 <tr><td>15</td><td>Refeição no Lar</td><td>A casa e os efeitos</td></tr>
 <tr><td>16</td><td>Abrir o centro de controle</td><td>A vila inteira</td></tr></table>
+<p><b>O primeiro favor:</b> o prefeito monta o gerador, mas a prensa e os cabos estão com o Seu Bento, o ferreiro (a leste da praça). Ele pede que você ajude a Dona Cida, a lavradora (a oeste): plante 12 pés de trigo ao lado da casa dela (ela dá sementes, farinha de osso e enxada), colha e entregue 12 trigos. Com o campo novo ela vende pão mais barato (6 por esmeralda em vez de 2), e o Seu Bento entrega a prensa, 16 cabos e as receitas.</p>
 <p>Depois, o prefeito abre o capítulo 2, a vila operária (ver Trabalhadores).</p>
 <p>Comandos: <code>/veiotutorial ocultar</code>, <code>/veiotutorial mostrar</code>, <code>/veiotutorial reiniciar</code>. A wiki dentro do jogo abre com <kbd>J</kbd>.</p>
 """,
