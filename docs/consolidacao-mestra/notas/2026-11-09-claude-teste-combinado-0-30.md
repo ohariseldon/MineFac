@@ -34,3 +34,7 @@
 - A branch recebeu também o #62 (`88f9aea`): cada máquina grande vira um modelo único cortado em blocos. Entrou sem conflito.
 - E1: `python3 tools/check_rust.py` → 387 passam. Os geradores rodaram sem diferença.
 - Ainda não testado em jogo. O teste no PC deve usar um mundo novo.
+
+## Adendo: 0.34.0 (#61 com o capítulo 3)
+- O #61 subiu para a 0.34.0 (`17f229f`): entrou o capítulo 3 do tutorial, a cidade, e o save passou a `veio-onboarding-7`, que lê todos os saves antigos. Entrou sem conflito.
+- E1: `python3 tools/check_rust.py` → 389 passam. Os geradores rodaram sem diferença.
