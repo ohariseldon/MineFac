@@ -33,6 +33,11 @@ material, que este shader lê. O original é 256x; o Veio reduz para 128x para c
 pacote em `resourcepacks/`, liga por último na lista (os seus pacotes continuam) e sobe o
 orçamento de texturas para 1024 MiB. No Leve ele sai.
 
+**Sem contorno branco (3.2.4):** as nuvens em meia tela deixavam 1 a 2 pixels de céu limpo em
+volta de cada silhueta e entre as folhas da grama, que pareciam um neon branco; agora o texel
+calcula nuvem se houver céu em qualquer pixel ao redor. Nitidez mais suave e borda de nuvem perto
+do sol que não estoura em branco.
+
 **Nuvens claras e ar mais limpo (3.2.3):** bases de nuvem cinza-claro (luz que volta do chão e
 mais luz espalhada dentro), raios de sol só como um toque sobre o terreno, névoa de distância
 mais longe e mais fraca, e faces de costas para o sol com luz do céu suficiente para mostrar a

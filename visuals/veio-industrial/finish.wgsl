@@ -79,7 +79,8 @@ fn post(input: PostInput) -> vec4<f32> {
             // smoothing just softened are left alone.
             let around = (left + right + up + down) * 0.25;
             let room = clamp(min(lo, 1.0 - hi) / max(hi, 0.05), 0.0, 1.0);
-            color += (color - around) * sharpen * 0.9 * sqrt(room) * (1.0 - blend * 3.0);
+            // 0.5 (was 0.9): stronger left a bright rim around every block and blade.
+            color += (color - around) * sharpen * 0.5 * sqrt(room) * (1.0 - blend * 3.0);
         }
     }
     if quality >= 1u && input.depth > 0.000001 {

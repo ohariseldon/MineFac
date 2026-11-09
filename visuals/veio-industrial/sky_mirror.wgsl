@@ -56,7 +56,7 @@ fn veio_volumetric_clouds(input: PostInput) -> vec4<f32> {
     let sun = veio_key_direction();
     let day = veio_daylight();
     let cos_theta = dot(direction, sun);
-    let g1 = 0.65;
+    let g1 = 0.55;
     let g2 = -0.25;
     let forward = (1.0 - g1 * g1) / pow(max(1.0 + g1 * g1 - 2.0 * g1 * cos_theta, 0.0001), 1.5);
     let back = (1.0 - g2 * g2) / pow(max(1.0 + g2 * g2 - 2.0 * g2 * cos_theta, 0.0001), 1.5);
@@ -110,6 +110,10 @@ fn veio_volumetric_clouds(input: PostInput) -> vec4<f32> {
     // instead of a colour guessed here.
     let fade = exp(-t0 / 9000.0) * smoothstep(0.015, 0.14, direction.y);
     let alpha = (1.0 - transmittance) * fade;
+    // The silver lining toward the sun rolls off instead of burning white: values over 0.8 are
+    // compressed (the sky beside it is already near white).
+    let over = max(light - vec3<f32>(0.8), vec3<f32>(0.0));
+    light = min(light, vec3<f32>(0.8)) + over / (vec3<f32>(1.0) + over * 2.5);
     let smog = veio_smog();
     let tinted = mix(light * fade, vec3<f32>(0.45, 0.42, 0.36) * alpha * mix(0.25, 1.0, day), smog * 0.4);
     return vec4<f32>(tinted, alpha);
@@ -196,7 +200,19 @@ fn post(input: PostInput) -> vec4<f32> {
     if quality == 0u {
         return vec4<f32>(0.0);
     }
-    if depth_at(input.uv) <= 0.000001 {
+    // A half-size texel that holds any sky pixel computes clouds, even if its centre is a leaf or
+    // a block edge: otherwise the sky between grass blades and along every silhouette had no
+    // cloud to show and the bare sky glowed through as a white outline. Reflections, which only
+    // lose a texel on the edge of the sky, give way.
+    let full = 1.0 / vec2<f32>(textureDimensions(scene_depth));
+    var sky_here = false;
+    for (var i = 0; i < 9; i++) {
+        let offset = vec2<f32>(f32(i % 3) - 1.0, f32(i / 3) - 1.0) * full;
+        if depth_at(input.uv + offset) <= 0.000001 {
+            sky_here = true;
+        }
+    }
+    if sky_here {
         return veio_volumetric_clouds(input);
     }
     return veio_screen_reflection(input);
