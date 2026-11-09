@@ -6,15 +6,22 @@ personagens e o lugar de cada capítulo.
 
 ## A premissa
 
-Uma terra sem indústria. Uma vila pequena vive da lavoura, mas a terra sozinha já não basta. Embaixo
-dos morros corre o **veio**: cobre e ferro que ninguém ali sabe transformar.
+Uma terra sem indústria. Uma vila pequena vive da lavoura e está **minguando**: a terra sozinha já não
+basta, os jovens vão embora e as casas esvaziam. Embaixo dos morros corre o **veio**: cobre e ferro que
+ninguém ali sabe transformar.
 
-Você chega como **forasteiro** e vira o **fundador da primeira fábrica**. O prefeito propõe um trato:
+Você chega como **forasteiro** e vira o **fundador da primeira fábrica**, quem pode **reerguer a vila
+pelo veio**. O prefeito propõe um trato:
 *a vila dá o chão, os trabalhadores e as encomendas; você monta a fábrica e ela paga a vila.* A
 história é a desse trato: a fábrica faz a vila crescer, e a vila dá à fábrica um motivo.
 
 O nome do jogo é a imagem dela: o veio de minério que sustenta tudo, e o veio que liga a fábrica
 à vila e, no fim, a vila ao mundo.
+
+**A linha que amarra tudo (aprovada):** a vila está em declínio e o fundador chega para reerguê-la pelo
+veio de minério. A fábrica traz prosperidade, mas também poluição e os Saqueadores (capítulo 4). O
+comércio liga a vila ao mundo (capítulo 5). O final é a Torre de transmissão, que conecta a vila de vez.
+Os visitantes voltam ao longo dos anos com pequenas histórias que avançam, e não só pedidos de festa.
 
 ## O tom
 
