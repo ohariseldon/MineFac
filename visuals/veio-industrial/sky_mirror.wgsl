@@ -95,8 +95,10 @@ fn veio_volumetric_clouds(input: PostInput) -> vec4<f32> {
         let h = clamp((p.y - VEIO_CLOUD_BASE) / (VEIO_CLOUD_TOP - VEIO_CLOUD_BASE), 0.0, 1.0);
         let direct = sun_colour * to_sun * mix(1.0, powder * 2.0, 0.5) * phase * 6.0;
         let ambient = sky_top * mix(0.8, 1.3, h);
-        var sample = direct * (1.0 - storm * 0.8) + ambient;
-        sample = mix(sample, frame.fog_color * 0.75, storm * 0.6);
+        // Rain clouds turn grey, not charcoal: the light inside a storm cloud is the same grey
+        // as the rain fog, and the sun still gets through the thinner parts.
+        var sample = direct * (1.0 - storm * 0.65) + ambient;
+        sample = mix(sample, frame.fog_color * 0.95 + ambient * 0.15, storm * 0.5);
         let absorb = exp(-density * sigma * step_length);
         light += transmittance * (1.0 - absorb) * sample;
         transmittance *= absorb;

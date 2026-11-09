@@ -115,3 +115,20 @@ pouco a identidade do Minecraft.
   jarro), itens, criaturas, interface, partículas e água. 66 MB.
 - Próximas frentes do Luiz (loop de jogo, tutorial, aldeões, forma em cruz) são de outras
   threads; não entram aqui.
+
+## 3.2.2 (commit desta seção): texturas com o brilho do Minecraft
+
+Luiz (23:59, com print): "ta meio ruim ainda". No print: grama verde-oliva escura, morro de pedra
+lavado, nuvens de chuva carvão, folhas com chuvisco de céu. Os riscos diagonais claros à direita
+são a chuva do Minecraft começando (vanilla), não defeito.
+
+- Causa principal medida: o PBR JG é calibrado para shaders PBR, que acendem a cena bem mais.
+  Com a luz do jogo, comparado ao Minecraft 26.3 (média de brilho): pedra 57%, pedregulho 57%,
+  grama 76%, terra 71%, cascalho 44%, andesito 49%.
+- `tools/build_realistic_textures.py` agora mede o brilho de cada textura original no client.jar
+  do 26.3 (baixado da Mojang, conferido por SHA-1; só as médias, nada da Mojang entra no zip) e
+  aplica uma curva de luz em linear até a média bater (sem estourar os claros). Texturas com
+  desenho diferente do original (mais de 6x de diferença, ex.: caldeirão) ficam como estão.
+- Folhas voltam ao original: os furos finos do 256x viravam chuvisco de céu a distância.
+- Nuvens com chuva: cinza da neblina da chuva (0,95, antes 0,75) e o sol ainda passa nas partes
+  finas (corte 65%, antes 80%).
