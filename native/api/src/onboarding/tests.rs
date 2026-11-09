@@ -686,20 +686,30 @@ fn the_arrow_turns_with_the_player() {
 
 #[test]
 fn the_city_chapter_closes_each_step_from_what_the_village_registers() {
-    use city::{done, Town};
+    use city::{done, goal, Town};
     let empty = Town::default();
-    for step in 0..8 { assert!(!done(step, &empty), "etapa {step} não fecha sem nada"); }
-    assert!(done(0, &Town { sanitation: true, ..empty }));
-    assert!(done(1, &Town { merchant: true, ..empty }));
-    assert!(done(2, &Town { sales: true, ..empty }));
-    assert!(done(3, &Town { company: true, ..empty }));
-    assert!(done(4, &Town { power: true, ..empty }));
-    assert!(done(5, &Town { leisure: true, ..empty }));
-    assert!(!done(6, &Town { families: 2, ..empty }) && done(6, &Town { families: 3, ..empty }));
-    assert!(!done(7, &Town { phase: 1, ..empty }) && done(7, &Town { phase: 2, ..empty }), "fase 2 é a Vila");
+    for step in 0..10 { assert!(!done(step, &empty), "etapa {step} não fecha sem nada"); }
+    assert!(done(0, &Town { sanitized: 1, ..empty.clone() }));
+    assert!(done(1, &Town { merchant: true, ..empty.clone() }));
+    assert!(done(2, &Town { sales: true, ..empty.clone() }));
+    assert!(done(3, &Town { company: true, ..empty.clone() }));
+    assert!(done(4, &Town { powered: 1, ..empty.clone() }));
+    assert!(done(5, &Town { entertained: 1, ..empty.clone() }));
+    assert!(!done(6, &Town { families: 2, ..empty.clone() }) && done(6, &Town { families: 3, ..empty.clone() }));
+    assert!(done(7, &Town { public: true, ..empty.clone() }), "imposto na conta pública");
+    assert!(done(8, &Town { prepared: true, ..empty.clone() }), "um pedido da agenda preparado");
+    assert!(!done(9, &Town { phase: 1, ..empty.clone() }) && done(9, &Town { phase: 2, ..empty.clone() }), "fase 2 é a Vila");
+    // A barra aponta para a loja e a prefeitura quando a etapa depende delas, e mostra o pedido.
+    let town = Town { shop: Some([5, 64, 5]), hall: Some([9, 64, 9]), request: Some("pedido".into()), weakest: Some(3), ..empty.clone() };
+    assert_eq!(goal(1, &town).1, Some([5, 64, 5]));
+    assert_eq!(goal(8, &town).1, Some([9, 64, 9]));
+    assert_eq!(goal(8, &town).0.plain(), "veio.city.goal.8");
+    assert_eq!(goal(8, &Town { request: None, ..town.clone() }).0.plain(), "veio.city.goal.8_wait");
+    assert_eq!(goal(0, &town).1, None);
     // Save: a v6 guarda a cidade; saves v5 (só a vila) abrem com a cidade por começar.
     let p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE,
         city: 5, city_crafted: 0b11, ..Progress::default() };
+    assert_eq!(city::DONE_CITY, 11);
     let loaded = Progress::decode(&p.encode()).unwrap();
     assert_eq!((loaded.village, loaded.city, loaded.city_crafted), (village::DONE_VILLAGE, 5, 0b11));
     let v5 = p.encode().replace("veio-onboarding-6", "veio-onboarding-5").replacen(" 5 3\n", "\n", 1);
@@ -729,4 +739,23 @@ fn after_the_village_the_mayor_opens_the_city_chapter() {
     intro::talk(&mut town, &player, &mut p);
     assert!(town.said.iter().any(|line| line.contains("veio.city.title.0")));
     assert_eq!(p.city, 1);
+}
+
+#[test]
+fn a_stuck_player_gets_one_hint_from_the_mayor() {
+    let mut town = Town::default();
+    let player = NativeServerPlayer { uuid: 9, name: "Caio".into(), dimension: workforce::spawn::OVERWORLD.into(),
+        position: [0.0, 64.0, 0.0], ..Default::default() };
+    let mut p = Progress { intro: intro::INTRO_DONE, step: DONE, outro: true, village: village::DONE_VILLAGE, city: 1, ..Progress::default() };
+    city::tick(&mut town, &player, &mut p, 1000);
+    let says = |town: &Town| town.said.iter().filter(|line| *line == "veio.agenda.says").count();
+    let before = says(&town);
+    city::tick(&mut town, &player, &mut p, 1000 + city::STUCK - 1);
+    assert_eq!(says(&town), before, "ainda sem dica");
+    city::tick(&mut town, &player, &mut p, 1000 + city::STUCK);
+    assert_eq!(says(&town), before + 1, "parado 3 minutos: uma dica");
+    city::tick(&mut town, &player, &mut p, 1000 + 3 * city::STUCK);
+    assert_eq!(says(&town), before + 1, "uma dica só");
+    // Sem o poço no inventário, a barra é a lista de materiais dele.
+    assert!(town.commands.iter().any(|line| line.starts_with("title Caio actionbar") && line.contains("veio.onboarding.name.bucket")));
 }

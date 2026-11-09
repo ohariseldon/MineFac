@@ -87,6 +87,9 @@ struct Progress {
     city: u8,
     city_crafted: u16,
     city_announced: Option<u8>,
+    /// Quando a etapa da cidade começou (relógio da sociedade) e se o prefeito já deu a dica.
+    city_since: Option<u64>,
+    city_hinted: bool,
     // Unsaved transient evidence must not survive a reload or manual intervention.
     input_credit: u32,
     output_credit: u32,

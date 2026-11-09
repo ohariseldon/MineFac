@@ -1,4 +1,6 @@
-# Veio 0.33.0
+# Veio 0.34.0
+
+A 0.34.0 completa o **capítulo 3 (a cidade)**: agora são 10 etapas, com **impostos e a conta pública** (a prefeitura vive do imposto retido em cada venda) e **uma festa** (atender um visitante da Agenda) antes da subida para a fase Vila. A barra mostra os números da vila em cada etapa (casas com saneamento, energia e lazer, famílias, o pedido aberto da festa e a parte mais fraca do IDH na fase) e aponta para a loja ou a prefeitura quando a etapa depende delas. Parado 3 minutos numa etapa, o prefeito percebe e dá uma dica; na fase, diz como melhorar a parte mais fraca do IDH (comida, moradia, serviços ou renda).
 
 A 0.33.0 traz o **capítulo 3 do tutorial: a cidade**, com o prefeito Otávio depois do capítulo da vila (ou direto com `/veiotutorial cidade`). Em 8 etapas: poço (saneamento), loja com comerciante, a primeira venda, esmeraldas na conta da companhia, energia nas casas, lazer com um parque, um bairro de três famílias e a subida para a fase Vila, com moradores, famílias e IDH ao vivo na barra. As etapas fecham pelo que a própria vila registra (casas, lojas, contas e prefeitura). A wiki ganhou a tabela das etapas e o comando novo.
 
