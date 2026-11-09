@@ -40,6 +40,8 @@ def main():
             + [f"veio.onboarding.name.{item.rsplit(':', 1)[-1]}" for item in onboarding_items()]
             + [f"veio.village.{part}.{i}" for part in ("title", "why", "goal", "done") for i in range(8)]
             + [f"veio.village.recipe.{i}" for i in (0, 2, 4, 5, 6, 7)] + [f"veio.village.end.{i}" for i in range(1, 5)]
+            + [f"veio.city.{part}.{i}" for part in ("title", "why", "goal", "done") for i in range(8)]
+            + [f"veio.city.recipe.{i}" for i in (0, 1, 4, 5, 6)] + [f"veio.city.end.{i}" for i in range(1, 5)]
             + [f"veio.onboarding.blocked.{i}" for i in (3, 5, 9)]
             + ["veio.onboarding.hidden", "veio.onboarding.shown", "veio.onboarding.save_failed"])
     for language in languages:
@@ -113,11 +115,13 @@ def onboarding_items():
     import re
     source = (ROOT / "native/api/src/onboarding.rs").read_text(encoding="utf-8")
     village = (ROOT / "native/api/src/onboarding/village.rs").read_text(encoding="utf-8")
-    block = source[source.index("const CRAFT"):source.index("fn craft_bit")] + village[village.index("const PARTS"):village.index("pub(super) fn slot")]
+    city = (ROOT / "native/api/src/onboarding/city.rs").read_text(encoding="utf-8")
+    block = (source[source.index("const CRAFT"):source.index("fn craft_bit")] + village[village.index("const PARTS"):village.index("pub(super) fn slot")]
+             + city[city.index("const PARTS"):city.index("pub(super) fn step")])
     consts = {"GENERATOR": "generator", "PRESS": "press", "CABLE": "cable", "ASSEMBLER": "assembler", "DRILL": "drill",
               "BELT": "belt", "HUB": "contract_hub", "PLATE": "copper_plate", "GEAR": "gear", "FARM_POST": "farm_post",
               "FIELD_MARKER": "field_marker", "HAULER_POST": "hauler_post", "FOREMAN_DESK": "foreman_desk", "HOUSE": "house",
-              "TOWN_HALL": "town_hall",
+              "TOWN_HALL": "town_hall", "WELL": "well", "SHOP": "shop", "PARK": "park",
               "BOARD": "factory_board", "POLE": "pole", "SPLITTER": "splitter"}
     return re.findall(r'"#?([a-z_]+:[a-z_]+)"', block) + [consts[name] for name in re.findall(r"\b([A-Z_]+)\b", block) if name in consts]
 
