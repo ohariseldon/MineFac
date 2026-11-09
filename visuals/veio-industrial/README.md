@@ -33,6 +33,10 @@ material, que este shader lê. O original é 256x; o Veio reduz para 128x para c
 pacote em `resourcepacks/`, liga por último na lista (os seus pacotes continuam) e sobe o
 orçamento de texturas para 1024 MiB. No Leve ele sai.
 
+**Claridade e contraste (3.2.5):** níveis como um fotógrafo ajusta: ponto de preto que tira o
+véu, meios-tons mais claros, curva S mais firme e um pouco mais de cor. A opção "Cor e clima da
+imagem" controla tudo isso (0 desliga).
+
 **Sem contorno branco (3.2.4):** as nuvens em meia tela deixavam 1 a 2 pixels de céu limpo em
 volta de cada silhueta e entre as folhas da grama, que pareciam um neon branco; agora o texel
 calcula nuvem se houver céu em qualquer pixel ao redor. Nitidez mais suave e borda de nuvem perto

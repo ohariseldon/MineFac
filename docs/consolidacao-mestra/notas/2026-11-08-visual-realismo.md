@@ -159,3 +159,15 @@ neon branca, ao redor de todos os objetos".
 - Nitidez 0,9 → 0,5 (a mais forte deixava um contorno claro em blocos e folhas).
 - Canto branco perto do sol: lóbulo de frente da nuvem menos pontudo (g 0,65 → 0,55) e luz das
   nuvens acima de 0,8 comprimida, em vez de estourar em branco.
+
+## 3.2.5 (commit desta seção): claridade e contraste
+
+Luiz (02:36): "a claridade, o contraste não tá legal. Não tá 100%."
+
+Medido nos prints dele (só o mundo, sem céu): preto em 25/255 (névoa levantando o preto), cinza
+médio em 74/255 e saturação mediana 0,25: imagem lavada e escura ao mesmo tempo.
+
+- Níveis como um fotógrafo faria: ponto de preto 0,035 (0,014 à noite), meios-tons levantados
+  (expoente 0,80 na luminância), curva S 0,10 → 0,35, saturação +0,10 → +0,20. Tudo escala com
+  a opção "Cor e clima da imagem" (valor padrão 0,65 = ajuste completo). Simulado nos dois prints: cinza médio 74 → 88, preto mais limpo
+  (comparação em /mnt/project-files/visual/comparacao-contraste-3.2.5.png).
