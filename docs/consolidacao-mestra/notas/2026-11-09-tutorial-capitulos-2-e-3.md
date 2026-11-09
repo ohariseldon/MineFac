@@ -55,3 +55,19 @@ quando o jogador fica 3 min parado). O formato do save continua a v6.
 - Save **v7** (6 números da noite); a v6 e anteriores continuam abrindo (quem já começou a fábrica não revive a
   primeira noite).
 - **Um prefeito só:** o aldeão contratado é o "secretário de Otávio" nos textos (`build_tutorial.py`, wiki).
+
+## 0.37.0: capítulos 5 e 6, e a noite com 6 etapas
+
+- Capítulo 2 (noite) agora tem 6 etapas: luz, muralha, noite em paz, o preço da fábrica (medidor de
+  poluição), muralha da fábrica e o conselho de defesa.
+- **Motor comum** `onboarding/chapter.rs` (`Spec`): anunciar, ficha da receita, materiais, barra/lista ✔/✘,
+  comemoração, abertura e fim. Capítulos novos só descrevem o `Spec` e quando cada etapa fecha.
+- Capítulo 5, **a grande indústria** (`forge.rs`, 8 etapas, `/veiotutorial industria`): fases do Quadro
+  (Aço, Eletrônica), Mk.II colocada, aviso de poluição (`pollution::alarm`), quartel com soldado e comida,
+  Tesla com 1 tiro, acumulador carregado, kit de reparo. Uma onda no meio vira fala do prefeito.
+- Capítulo 6, **a cidade** (`metro.rs`, 6 etapas, `/veiotutorial cidade`): lê a vila por `city::survey`
+  (agora com emprego, serviços, PIB e obra cívica) até a fase Cidade.
+- Capítulo 4 abre com `/veiotutorial crescer` (antes `cidade`).
+- Save **v9** (29 números + blocos da forja); v1 a v8 continuam abrindo.
+- Para o capítulo 1 (etapas 9 a 16): nada muda. As etapas 1 e 2 do capítulo 5 usam as fases do Quadro;
+  se o capítulo 1 passar a ensinar essas fases, o capítulo 5 simplesmente fecha essas etapas na hora.

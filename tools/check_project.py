@@ -44,7 +44,12 @@ def main():
             + [f"veio.city.{part}.{i}" for part in ("weak", "fix") for i in range(4)] + ["veio.city.goal.8_wait", "veio.city.goal.8_soon"]
             + [f"veio.city.more.{i}" for i in range(10)] + ["veio.city.bar_prefix", "veio.city.hint_ready"]
             + [f"veio.city.check.{key}" for key in ("open", "day", "wages", "wallets", "clerk", "residents", "families", "idh")]
-            + [f"veio.night.{part}.{i}" for part in ("title", "why", "goal", "done", "more") for i in range(3)]
+            + [f"veio.night.{part}.{i}" for part in ("title", "why", "goal", "done", "more") for i in range(6)]
+            + [f"veio.night.council.{i}" for i in range(1, 9)]
+            + [f"veio.forge.{part}.{i}" for part in ("title", "why", "done", "more") for i in range(8)]
+            + [f"veio.forge.recipe.{i}" for i in (2, 4, 5, 6, 7)] + [f"veio.forge.end.{i}" for i in range(1, 5)]
+            + [f"veio.metro.{part}.{i}" for part in ("title", "why", "done", "more") for i in range(6)]
+            + [f"veio.metro.end.{i}" for i in range(1, 5)] + ["veio.forge.wave", "veio.metro.goal.3_wait"]
             + [f"veio.night.first.{i}" for i in range(1, 4)] + [f"veio.night.dusk.{i}" for i in range(1, 5)] + [f"veio.night.end.{i}" for i in range(1, 4)]
             + ["veio.night.goal.home", "veio.night.goal.inside", "veio.night.goal.shelter", "veio.night.dawn", "veio.night.offer", "veio.night.villager"]
             + [f"veio.city.recipe.{i}" for i in (0, 1, 4, 5, 6)] + [f"veio.city.end.{i}" for i in range(1, 6)]
@@ -58,6 +63,9 @@ def main():
                "farmer.plant", "farmer.planted", "farmer.more", "farmer.after", "farmer.wait", "smith.after", "smith.wait")]
             + [f"veio.favor.{k}.{n}" for k, top in (("start", 2), ("mayor", 5), ("goal", 5), ("smith.ask", 4),
                ("farmer.ask", 3), ("farmer.thanks", 3), ("smith.thanks", 3)) for n in range(1, top + 1)]
+            + [f"veio.{c}.story.{i}" for c, n in (("forge", 8), ("metro", 6)) for i in range(n)]
+            + [f"veio.forge.voice.{i}" for i in (0, 1, 2, 3, 4, 5, 7)] + [f"veio.metro.voice.{i}" for i in range(5)]
+            + [f"veio.onboarding.voice.{i}" for i in (2, 3, 7, 14)]
             + ["veio.festival.countdown", "veio.festival.reminder", "veio.villager.who", "veio.villager.says"]
             + [f"veio.villager.{t}.{n}" for t in ("mayor", "gather", "plot", "festival", "favor", "factory", "village", "free")
                for n in range(1, 5)]
@@ -135,13 +143,15 @@ def onboarding_items():
     source = (ROOT / "native/api/src/onboarding.rs").read_text(encoding="utf-8")
     village = (ROOT / "native/api/src/onboarding/village.rs").read_text(encoding="utf-8")
     city = (ROOT / "native/api/src/onboarding/city.rs").read_text(encoding="utf-8")
+    forge = (ROOT / "native/api/src/onboarding/forge.rs").read_text(encoding="utf-8")
     block = (source[source.index("const CRAFT"):source.index("fn craft_bit")] + village[village.index("const PARTS"):village.index("pub(super) fn slot")]
-             + city[city.index("const PARTS"):city.index("pub(super) fn step")])
+             + city[city.index("const PARTS"):city.index("pub(super) fn step")] + forge[forge.index("parts:"):forge.index("intro:")])
     consts = {"GENERATOR": "generator", "PRESS": "press", "CABLE": "cable", "ASSEMBLER": "assembler", "DRILL": "drill",
               "BELT": "belt", "HUB": "contract_hub", "PLATE": "copper_plate", "GEAR": "gear", "FARM_POST": "farm_post",
               "FIELD_MARKER": "field_marker", "HAULER_POST": "hauler_post", "FOREMAN_DESK": "foreman_desk", "HOUSE": "house",
               "TOWN_HALL": "town_hall", "WELL": "well", "SHOP": "shop", "PARK": "park",
-              "BOARD": "factory_board", "POLE": "pole", "SPLITTER": "splitter"}
+               "BOARD": "factory_board", "POLE": "pole", "SPLITTER": "splitter",
+              "DRILL_MK2": "drill_mk2", "BARRACKS": "barracks", "TESLA": "tesla", "BATTERY": "battery"}
     return re.findall(r'"#?([a-z_]+:[a-z_]+)"', block) + [consts[name] for name in re.findall(r"\b([A-Z_]+)\b", block) if name in consts]
 
 

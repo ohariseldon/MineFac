@@ -481,7 +481,7 @@ impl Hooks for Factory {
     }
 
     fn register_commands(&self, _host: &mut dyn Host, event: &mut horizon_client::mod_api::RegisterCommandsEvent<'_>) {
-        for action in ["ocultar", "mostrar", "reiniciar", "noite", "vila", "cidade"] {
+        for action in ["ocultar", "mostrar", "reiniciar", "noite", "vila", "crescer", "industria", "cidade"] {
             event.commands.push(horizon_client::mod_api::NativeCommand::new(&format!("veiotutorial {action}")));
         }
     }

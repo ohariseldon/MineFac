@@ -122,6 +122,9 @@ fn say(host: &mut dyn Host, player: u128, who: Who, key: &str, args: &[&dyn std:
     host.tell(player, Text::tr("veio.agenda.says", &[&name, &Text::tr(key, args).plain()]));
 }
 
+/// Um comentário do vizinho em outra etapa da história (sem precisar estar perto dele).
+pub(super) fn voice(host: &mut dyn Host, player: u128, who: Who, key: &str) { say(host, player, who, key, &[]); }
+
 fn react(host: &mut dyn Host, who: Who, happy: bool) {
     let (particle, sound) = if happy { ("minecraft:heart", "minecraft:entity.villager.celebrate") }
         else { ("minecraft:angry_villager", "minecraft:entity.villager.no") };
