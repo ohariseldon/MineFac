@@ -47,6 +47,11 @@ def main():
             + [f"veio.onboarding.act.{i}{part}" for i in range(4) for part in ("", ".sub", ".line")]
             + [f"veio.onboarding.diary.{i}" for i in range(5)] + ["veio.onboarding.hint.head", "veio.onboarding.far",
                "veio.onboarding.act.end", "veio.onboarding.act.end.sub", "veio.onboarding.diary.title"]
+            + [f"veio.festival.{f}.{part}" for f in ("harvest", "governor") for part in
+               ("name", "when", "announce.1", "announce.2", "good.1", "good.2", "good_sub", "weak", "retry")]
+            + ["veio.festival.countdown", "veio.festival.reminder", "veio.villager.who", "veio.villager.says"]
+            + [f"veio.villager.{t}.{n}" for t in ("mayor", "gather", "plot", "festival", "factory", "village", "free")
+               for n in range(1, 5)]
             + [f"veio.onboarding.blocked.{i}" for i in (3, 5, 9)]
             + ["veio.onboarding.hidden", "veio.onboarding.shown", "veio.onboarding.save_failed"])
     for language in languages:

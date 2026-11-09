@@ -110,6 +110,9 @@ struct Progress {
     drills: u32,
     events: u32,
     poles: u32,
+    /// Festas do capítulo da vila (`festival`): qual está marcada (0 nenhuma) e o dia dela. Salvos.
+    festival: u8,
+    festival_day: u32,
     /// Dica do prefeito: a etapa que está contando (fábrica, ou 100 + etapa da vila), desde
     /// quando, e se a dica já saiu. Não salvo.
     hint_for: Option<u16>,
@@ -330,11 +333,11 @@ impl Progress {
     }
 
     fn encode(&self) -> String {
-        let mut text = format!("veio-onboarding-7\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
+        let mut text = format!("veio-onboarding-8\n{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n{}\n",
             self.step, u8::from(self.hidden), u8::from(self.powered), self.plates, self.gears,
             self.copper, self.fed, self.made, self.stored, u8::from(self.delivered), self.crafted, self.tips,
             self.intro, u8::from(self.outro), self.village, self.village_crafted, self.village_base.max(0),
-            self.city, self.city_crafted, self.drills, self.events, self.dimension);
+            self.city, self.city_crafted, self.drills, self.events, self.festival, self.festival_day, self.dimension);
         for pos in self.blocks.iter().chain([&self.plot]).chain(self.village_blocks.iter()) {
             if let Some([x,y,z]) = pos { text.push_str(&format!("{x} {y} {z}\n")); }
             else { text.push_str("-\n"); }
@@ -358,13 +361,15 @@ impl Progress {
         let (fields, version) = match lines.next()? {
             "veio-onboarding-1" => (10, 1), "veio-onboarding-2" => (12, 2), "veio-onboarding-3" => (14, 3),
             "veio-onboarding-4" => (14, 4), "veio-onboarding-5" => (17, 5), "veio-onboarding-6" => (19, 6),
-            "veio-onboarding-7" => (21, 7), _ => return None,
+            "veio-onboarding-7" => (21, 7), "veio-onboarding-8" => (23, 8), _ => return None,
         };
         let version4 = version >= 4;
         let values: Vec<u32> = lines.next()?.split_whitespace().map(str::parse).collect::<Result<_,_>>().ok()?;
         if values.len() != fields || values[0] > u32::from(DONE) { return None; }
         let (crafted, tips) = if fields >= 12 { (values[10], values[11] as u16) } else { (0, 0) };
         let (drills, events) = if version >= 7 { (values[19].min(64), values[20]) } else { (0, 0) };
+        // v8: as festas do capítulo da vila (qual está marcada e o dia).
+        let (festival, festival_day) = if version >= 8 { ((values[21] as u8).min(festival::DONE), values[22]) } else { (0, 0) };
         // Saves de antes do prólogo: quem já começou a fábrica não volta para a casa e o prefeito.
         // A v3 não tinha a vila nem os recursos: 0 casa, 1 prefeito, 2 terreno, 3 pronto.
         let (intro, outro) = if version4 { ((values[12] as u8).min(intro::INTRO_DONE), values[13] != 0) }
@@ -410,7 +415,7 @@ impl Progress {
             fed: values[6].min(64), made: values[7].min(64), stored: values[8].min(4),
             delivered: values[9] != 0, crafted, tips, dimension, blocks, intro, plot, outro, mayor,
             village, village_blocks, village_crafted, village_base, city, city_crafted, board, pole, drills, events,
-            poles: u32::from(pole.is_some()), ..Self::default() })
+            festival, festival_day, poles: u32::from(pole.is_some()), ..Self::default() })
     }
 }
 
@@ -762,6 +767,7 @@ fn tick(host: &mut dyn Host, now: u64) {
             }
             continue;
         }
+        if p.village > 0 && p.festival < festival::DONE { festival::tick(host, player, p); }
         if let Some(step) = village::step(p) {
             village::tick(host, player, p, now);
             if village::step(p) == Some(step) { hint(host, player, p, now, 100 + step as u16, &format!("veio.village.hint.{step}")); }
@@ -890,6 +896,9 @@ pub(super) fn talk(host: &mut dyn Host) -> bool {
 pub(super) fn world_changed() { intro::reset(); }
 
 mod intro;
+mod festival;
+mod barks;
+pub(super) use barks::villager_seen;
 mod village;
 mod city;
 pub(super) use intro::{mayor_seen, visuals, MAYOR};

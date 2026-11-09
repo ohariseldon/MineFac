@@ -295,6 +295,8 @@ impl Hooks for Factory {
             let now = defense::clock();
             workforce::village::observe(host, event.dimension, event.entity, now);
             workforce::village::scan_homes(host, event.dimension, event.entity, now);
+            // Os aldeões comuns comentam o momento do tutorial quando o jogador passa perto.
+            if (now + u64::from(event.entity)) % 97 == 0 { onboarding::villager_seen(host, event.dimension, event.entity, now); }
         }
         Flow::Continue
     }

@@ -340,6 +340,8 @@ ARTICLES = [
 <tr><td>6. O capataz</td><td>mesa a até 12 blocos dos postos, com pão e esmeraldas</td><td>capataz contratado</td></tr>
 <tr><td>7. Uma casa</td><td>casa a até 10 blocos dos aldeões, comida na despensa</td><td>pelo menos 1 morador</td></tr>
 <tr><td>8. A prefeitura</td><td>prefeitura no centro da vila</td><td>funcionário contratado</td></tr></table>
+<p><b>Festas:</b> ao abrir o capítulo, o prefeito marca a Festa da Colheita para 3 dias depois (pede as 4 primeiras etapas; dá pão e experiência) e, depois dela, a Visita do Governador para 4 dias depois (pede o capítulo inteiro; dá um bolo). A barra conta os dias. Se a vila não estiver pronta no dia, a festa sai fraca e é remarcada para 2 dias depois, sem castigo.</p>
+<p><b>Quem fala:</b> o prefeito Otávio, de casaco de pele e nome dourado, é quem conversa e reage (aceno, corações, nuvem brava). Os outros aldeões só soltam um comentário curto quando você passa perto.</p>
 """,
     },
     {
