@@ -205,6 +205,9 @@ def check_assets(languages):
             name = path.stem
             for language in languages:
                 assert f"{kind}.veio.{name}" in language, f"Falta o nome de {kind}.veio.{name}"
+            if kind == "block" and name in ("structure", "hatch_in", "hatch_out"):
+                check_shapes(path)  # Partes das máquinas grandes: sem item nem receita.
+                continue
             assert (assets / f"items/{name}.json").exists(), f"Falta assets/veio/items/{name}.json"
             if kind == "block":  # Componentes saem das máquinas, não da bancada.
                 check_shapes(path)

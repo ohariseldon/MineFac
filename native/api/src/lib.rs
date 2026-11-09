@@ -9,6 +9,7 @@ mod appearance;
 mod motion;
 mod soundscape;
 mod contracts;
+mod frames;
 mod freight;
 mod logistics;
 mod logistics_controls;
@@ -134,11 +135,14 @@ impl Hooks for Factory {
             faces: std::array::from_fn(|_| (0..slots).collect()),
             inputs,
             outputs,
-            menu: (slots > 0).then(|| event.block.to_owned()),
+            menu: (slots > 0 && !frames::is_hatch(event.block)).then(|| event.block.to_owned()),
         })
     }
 
     fn container_accepts(&self, host: &dyn Host, event: &mut ContainerAcceptsEvent<'_>) -> Flow {
+        if event.entity.id == frames::HATCH_IN && !frames::hatch_accepts(host, event.pos, event.entity, event.stack) {
+            return Flow::Cancel;
+        }
         if operations::accepts_delivery(host, event) {
             Flow::Continue
         } else {
@@ -151,6 +155,10 @@ impl Hooks for Factory {
     {
         let block = host.block(event.pos);
         if let Some(flow) = freight::right_click(host, event.pos, &block) { return flow; }
+        if frames::is_part(&block) {
+            let empty = host.held().is_none();
+            return frames::right_click(host, event.pos, empty).unwrap_or(Flow::Continue);
+        }
         onboarding::select(host, event.pos, &block, true);
         if let Some(flow) = logistics_controls::right_click(host, event.pos, &block) { return flow; }
         if blueprint::owns(&block) {
@@ -228,6 +236,9 @@ impl Hooks for Factory {
         if host.sneaking() && tier >= 2 && upgrades::supports(&block) {
             host.change_mod_block_entity(pos, &mut |entity| set_number(entity, "Tier", 0));
             host.give_items(upgrades::MK2_KIT, 1);
+            return Flow::Cancel;
+        }
+        if frames::fixed(host, pos, &block) {
             return Flow::Cancel;
         }
         let facing = host.block_property(pos, "facing");
@@ -416,23 +427,38 @@ impl Hooks for Factory {
 
     fn place_block(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlaceBlockEvent<'_>) {
         onboarding::select(host, event.pos, &host.block(event.pos), false);
+        frames::placed(host, &event.stack.item, event.pos);
     }
 
     // Território das obras (`workforce::territory`): ruínas e obras em construção ou de pé.
+    // Máquinas grandes (`frames`): quebrar uma parte desmonta a máquina inteira.
     fn destroy_block(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::DestroyBlockEvent) -> Flow {
-        workforce::territory::destroy(host, event.pos, true)
+        let flow = workforce::territory::destroy(host, event.pos, true);
+        if matches!(flow, Flow::Continue) {
+            frames::destroy(host, event.pos);
+        }
+        flow
     }
 
     fn left_click_block(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::LeftClickBlockEvent) -> Flow {
-        workforce::territory::destroy(host, event.pos, false)
+        let flow = workforce::territory::destroy(host, event.pos, false);
+        if matches!(flow, Flow::Continue) {
+            frames::left_click(host, event.pos);
+        }
+        flow
     }
 
     fn use_item_on(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::UseItemOnEvent<'_>) -> Flow {
-        workforce::territory::use_item(host, &event.stack.item, event.pos)
+        let flow = workforce::territory::use_item(host, &event.stack.item, event.pos);
+        if matches!(flow, Flow::Continue) {
+            return frames::use_item(host, &event.stack.item, event.pos, event.face);
+        }
+        flow
     }
 
     fn explosion_detonate(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::ExplosionDetonateEvent<'_>) {
         workforce::territory::explosion(host, event.dimension, event.blocks);
+        frames::explosion(host, event.blocks);
     }
 
     fn player_logged_out(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedOutEvent<'_>) {
@@ -555,6 +581,7 @@ impl Hooks for Factory {
     fn visuals(&self, host: &dyn Host, event: &mut horizon_client::mod_api::VisualsEvent) {
         ambience::visuals(host, event.lights);
         onboarding::visuals(event.rims);
+        frames::visuals(event.rims);
     }
 
     /// Estação, temperatura e fumaça da fábrica para o pacote de shaders (`frame.mods`).
@@ -585,6 +612,10 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
     let Some(time) = host.level(host.dimension()).and_then(|level| level.game_time(host)) else {
         return;
     };
+    if frames::is_hatch(&entity.id) {
+        frames::hatch_tick(host, pos, entity, time);
+        return;
+    }
     pollution::update(host, time);
     if logistics::quiet_belt(entity, pos, time) && !onboarding::tracking() {
         // Mesmo resultado do tick completo: os observadores leem o mesmo estado, a esteira só
@@ -611,6 +642,7 @@ fn block_entity_tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEn
         (number(entity, "Total"), if entity.id == HUB { number(entity, "ContractStage") } else { 0 })
     });
     tick_factory(host, pos, entity, time);
+    frames::core_tick(host, pos, entity, defense::clock());
     if entity.id == freight::DRONE {
         set_number(entity, "FlightVisualAt", stamp(time));
     }
@@ -637,6 +669,7 @@ fn is_factory_block(block: &str) -> bool {
         GEOTHERMAL | CRUSHER | ALLOY | ELECTRONICS | HUB | HARVESTER | TESLA | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG)
         || production::is_machine(block) || workforce::owns(block) || freight::owns(block) || milestones::owns(block) || blueprint::owns(block)
         || matches!(block, research::LAB | industry::MONITOR | industry::ANCHOR) || stations::is_station(block)
+        || frames::is_hatch(block)
 }
 
 /// Consumidores: recebem energia por cabos, param com redstone e mostram métricas.
@@ -683,6 +716,8 @@ fn layout(block: &str) -> Option<(usize, Vec<usize>, Vec<usize>)> {
         industry::MONITOR | industry::ANCHOR => (1, vec![], vec![]),
         stations::SENDER => (4, vec![0, 1, 2, 3], vec![]),
         stations::RECEIVER => (4, vec![], vec![0, 1, 2, 3]),
+        frames::HATCH_IN => (1, vec![0], vec![]),
+        frames::HATCH_OUT => (1, vec![], vec![0]),
         _ if freight::owns(block) => return freight::layout(block),
         _ if milestones::owns(block) => milestones::layout(),
         _ if workforce::owns(block) => return workforce::layout(block),
@@ -696,7 +731,8 @@ fn has_item_inputs(block: &str) -> bool {
         BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL | lift::LIFT | PRESS | ASSEMBLER | CUTTER | CRUSHER |
         INTEGRATOR | ALLOY | ELECTRONICS | GENERATOR | GEOTHERMAL | HUB | HARVESTER | research::LAB | stations::SENDER => true,
         DRILL | DRILL_MK2 | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG
-            | industry::MONITOR | industry::ANCHOR | stations::RECEIVER => false,
+            | industry::MONITOR | industry::ANCHOR | stations::RECEIVER | frames::HATCH_OUT => false,
+        frames::HATCH_IN => true,
         _ if freight::owns(block) => true,
         _ if workforce::is_post(block) || workforce::storage::is_store(block) || milestones::owns(block) => true,
         _ => production::has_inputs(block),
@@ -711,7 +747,8 @@ fn output_slots(block: &str) -> std::ops::Range<usize> {
         INTEGRATOR | ALLOY | ELECTRONICS => 2..3,
         HUB => 2..4,
         HARVESTER => 1..4,
-        research::LAB | industry::MONITOR | industry::ANCHOR | stations::SENDER => 0..0,
+        research::LAB | industry::MONITOR | industry::ANCHOR | stations::SENDER | frames::HATCH_IN => 0..0,
+        frames::HATCH_OUT => 0..1,
         stations::RECEIVER => 0..4,
         GENERATOR | SOLAR | BATTERY | TESLA | CABLE | POLE | STEEL_POLE | inserters::ID | inserters::FAST | inserters::LONG => 0..0,
         _ if freight::owns(block) => 3..6,
@@ -727,7 +764,9 @@ fn accepts(block: &str, slot: usize, stack: &ItemStack) -> bool {
         (HUB, _) => contracts::valid_input(slot, stack),
         (research::LAB, _) => research::accepts(slot, stack),
         (stations::SENDER, 0..4) => stack.damage == 0 && stack.extra.is_none(),
-        (stations::RECEIVER, _) => false,
+        (stations::RECEIVER, _) | (frames::HATCH_OUT, _) => false,
+        // O núcleo decide pela escotilha de entrada (`container_accepts`).
+        (frames::HATCH_IN, 0) => true,
         (milestones::BOARD, _) => milestones::valid_input(slot, stack),
         (BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | TUNNEL | lift::LIFT, 0) => true,
         (MERGER, 0 | 1) => true,

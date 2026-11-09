@@ -3,7 +3,7 @@
 34 modelos receberam novas formas, com 27 silhuetas diferentes. O objetivo é
 reconhecer a função pela estrutura e pelo material, com cores sóbrias e a escala
 do Minecraft. Cada máquina continua usando um ponto de colocação. Os novos
-modelos cabem nessa célula, com alturas e vazios diferentes; não são multiblocos.
+modelos cabem nessa célula, com alturas e vazios diferentes. Desde as máquinas grandes (seção no fim), 19 delas montam uma estrutura multibloco em volta desse núcleo.
 
 ![Comparação de formas](docs/visual/machines-before-after.png)
 
@@ -88,3 +88,19 @@ Base do lote: `8b8e8d9`, incluindo os transportes e caravanas do trabalho
 anterior. Compilação pelo launcher, aparência no jogo e circulação junto às
 máquinas ainda precisam de validação local. A versão consolidada e o pacote
 jogável continuam com a integração; este lote não gera release.
+
+## Máquinas grandes (0.30, multibloco)
+
+O bloco da máquina passou a ser o **núcleo** de uma estrutura maior. Ao ser colocado, monta
+em volta a planta própria da máquina, com peças de estrutura (`veio:structure`) e escotilhas
+(`veio:hatch_in`, `veio:hatch_out`). Plantas, peças e modelos ficam em
+`tools/machine_frames.py`; a regra de jogo em `native/api/src/frames.rs`.
+
+![Máquinas grandes](docs/visual/machine-frames.png)
+
+- Precisa de área livre e chão firme e plano embaixo de toda a planta; senão a máquina não é
+  posta e o que atrapalha fica contornado de vermelho.
+- O núcleo fica na frente: painel, luz e entrada continuam nele. A saída é a escotilha de trás.
+- Quebrar qualquer parte desmonta tudo e devolve o núcleo.
+
+Prévia: `python3 tools/preview_machine_frames.py` (grava `.build/visual/machine-frames.png`).

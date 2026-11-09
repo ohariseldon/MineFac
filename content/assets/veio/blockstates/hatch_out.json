@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "facing=south,tier=copper": {
+      "model": "veio:block/structure/hatch_out_copper"
+    },
+    "facing=west,tier=copper": {
+      "model": "veio:block/structure/hatch_out_copper",
+      "y": 90
+    },
+    "facing=north,tier=copper": {
+      "model": "veio:block/structure/hatch_out_copper",
+      "y": 180
+    },
+    "facing=east,tier=copper": {
+      "model": "veio:block/structure/hatch_out_copper",
+      "y": 270
+    },
+    "facing=south,tier=iron": {
+      "model": "veio:block/structure/hatch_out_iron"
+    },
+    "facing=west,tier=iron": {
+      "model": "veio:block/structure/hatch_out_iron",
+      "y": 90
+    },
+    "facing=north,tier=iron": {
+      "model": "veio:block/structure/hatch_out_iron",
+      "y": 180
+    },
+    "facing=east,tier=iron": {
+      "model": "veio:block/structure/hatch_out_iron",
+      "y": 270
+    },
+    "facing=south,tier=steel": {
+      "model": "veio:block/structure/hatch_out_steel"
+    },
+    "facing=west,tier=steel": {
+      "model": "veio:block/structure/hatch_out_steel",
+      "y": 90
+    },
+    "facing=north,tier=steel": {
+      "model": "veio:block/structure/hatch_out_steel",
+      "y": 180
+    },
+    "facing=east,tier=steel": {
+      "model": "veio:block/structure/hatch_out_steel",
+      "y": 270
+    }
+  }
+}

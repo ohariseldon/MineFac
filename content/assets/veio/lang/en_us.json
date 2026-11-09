@@ -2812,5 +2812,12 @@
   "veio.onboarding.mayor.board.none": "I have not seen your Factory board yet. Make one (chest, 2 copper ingots and a stick) and put it near the machines.",
   "veio.onboarding.mayor.board.phase": "The village is in the %s phase: deliver %s %s at the Factory board.",
   "veio.onboarding.mayor.board.grow": "If the line cannot keep up, it is not lack of effort: it is a bottleneck. See on the board what stopped and double that part.",
-  "veio.onboarding.mayor.board.done": "You took the village to the end of the plan. Now it is about growing: more lines, more people, more town."
+  "veio.onboarding.mayor.board.done": "You took the village to the end of the plan. Now it is about growing: more lines, more people, more town.",
+  "block.veio.structure": "Machine Structure",
+  "block.veio.hatch_in": "Input Hatch",
+  "block.veio.hatch_out": "Output Hatch",
+  "veio.frame.blocked": "This machine needs %s×%s of flat, solid ground and %s blocks of clear height: %s block(s) in the way, outlined in red.",
+  "veio.frame.built": "Machine assembled: %s×%s footprint, %s tall. Panel at the front; output from the back hatch.",
+  "veio.frame.part": "Part of: %s. The panel is on the core, at the front, where the light is.",
+  "veio.frame.fixed": "An assembled machine doesn't rotate: break it and place it again facing the other way."
 }

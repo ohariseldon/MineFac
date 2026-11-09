@@ -2812,5 +2812,12 @@
   "veio.onboarding.mayor.board.none": "Ainda não vi o seu Quadro da fábrica. Faça um (baú, 2 lingotes de cobre e graveto) e ponha perto das máquinas.",
   "veio.onboarding.mayor.board.phase": "A vila está na fase %s: entregue %s %s no Quadro da fábrica.",
   "veio.onboarding.mayor.board.grow": "Se a linha não dá conta, não é falta de esforço: é gargalo. Veja no Quadro o que parou e dobre essa parte.",
-  "veio.onboarding.mayor.board.done": "Você levou a vila até o fim do plano. Agora é crescer: mais linhas, mais gente, mais cidade."
+  "veio.onboarding.mayor.board.done": "Você levou a vila até o fim do plano. Agora é crescer: mais linhas, mais gente, mais cidade.",
+  "block.veio.structure": "Estrutura de máquina",
+  "block.veio.hatch_in": "Escotilha de entrada",
+  "block.veio.hatch_out": "Escotilha de saída",
+  "veio.frame.blocked": "Esta máquina precisa de %s×%s de chão plano e firme e %s de altura livre: %s bloco(s) no caminho, contornados em vermelho.",
+  "veio.frame.built": "Máquina montada: %s×%s de chão, %s de altura. Painel na frente; a saída é a escotilha de trás.",
+  "veio.frame.part": "Parte de: %s. O painel fica no núcleo, na frente, onde está a luz.",
+  "veio.frame.fixed": "Máquina montada não gira: desmonte (quebre) e coloque de novo virada para o outro lado."
 }
