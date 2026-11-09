@@ -229,7 +229,8 @@ fn material(input: MaterialInput) -> Surface {
     let contrast = select(0.0, 1.0, quality >= 1u);
     let sky_ambient = mix(vec3<f32>(0.91, 0.96, 1.06), mix(vec3<f32>(0.97, 1.005, 1.035), vec3<f32>(0.90, 0.97, 1.10), contrast), day);
     // At night the sky light keeps the game's own level: the moon adds, it never darkens.
-    let hemisphere = mix(0.96, mix(0.76, 0.66 + 0.10 * frame.rain, contrast), day) + 0.12 * max(normal.y, 0.0);
+    // Faces turned from the sun keep enough sky light to show their texture (0.66 left dirt black).
+    let hemisphere = mix(0.96, mix(0.78, 0.74 + 0.06 * frame.rain, contrast), day) + 0.12 * max(normal.y, 0.0);
     let key = mix(0.23, 0.44, contrast);
     let lighting = sky_ambient * hemisphere + veio_key_color() * (key * facing * visibility * key_strength);
     var color = vanilla * mix(vec3<f32>(1.0), lighting, sky_light * (1.0 - input.emission));
