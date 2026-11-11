@@ -186,6 +186,12 @@ pub(crate) fn seen(host: &mut dyn Host, dimension: &str, kind: &str, id: u32) {
 
 pub(super) fn reset() { if let Ok(mut ids) = IDS.lock() { *ids = [None; 4]; } }
 
+/// Os moradores dos pedidos no mundo: (tipo, id, onde trabalham).
+pub(super) fn residents(host: &dyn Host) -> Vec<(&'static str, Option<u32>, Option<[f64; 3]>)> {
+    let ids = IDS.lock().map(|ids| *ids).unwrap_or([None; 4]);
+    PEOPLE.into_iter().map(|who| (who.kind(), ids[who.slot()], home(host, who))).collect()
+}
+
 /// O lugar fixo de cada um: o chão mais baixo e seco entre as colunas dele.
 fn home(host: &dyn Host, who: Person) -> Option<[f64; 3]> {
     let ([x, _, z], _) = workforce::spawn::center()?;

@@ -1,16 +1,46 @@
 {
   "comentario": "Os mapas que o jogador escolhe ao criar o mundo. Estado: foco (em desenvolvimento), espera (só a planta geral) ou pronto. A planta de cada um sai de tools/mapa/preview_maps.py (concept_N).",
   "mapas": [
-    {"id": 1, "nome": "Continente clássico", "estado": "espera", "planta": "concept_1", "previa": "../previas/mapa_1.png",
-     "resumo": "Frio ao norte, quente ao sul, seco a oeste, úmido a leste; mar em volta."},
-    {"id": 2, "nome": "Vale entre serras", "estado": "espera", "planta": "concept_2", "previa": "../previas/mapa_2.png",
-     "resumo": "A vila num vale entre duas serras com passos; atrás de cada serra, outro clima."},
-    {"id": 3, "nome": "Ilha-mãe e arquipélago", "estado": "espera", "planta": "concept_3", "previa": "../previas/mapa_3.png",
-     "resumo": "A vila numa ilha temperada; os climas extremos em ilhas do outro lado do mar."},
-    {"id": 4, "nome": "Anéis de dificuldade", "estado": "espera", "planta": "concept_4", "previa": "../previas/mapa_4.png",
-     "resumo": "Centro ameno; cada anel para fora é mais extremo; serra em anel com quatro passos."},
-    {"id": 5, "nome": "Costa oeste", "estado": "foco", "planta": "concept_5", "previa": "../previas/mapa_5.png",
-     "resumo": "Mar a oeste, muralha de montanhas a leste; rios descem ao mar.",
-     "detalhe": "../costa-oeste/README.md"}
+    {
+      "id": 1,
+      "nome": "Continente clássico",
+      "estado": "espera",
+      "planta": "concept_1",
+      "previa": "../previas/mapa_1.png",
+      "resumo": "Frio ao norte, quente ao sul, seco a oeste, úmido a leste; mar em volta."
+    },
+    {
+      "id": 2,
+      "nome": "Vale entre serras",
+      "estado": "espera",
+      "planta": "concept_2",
+      "previa": "../previas/mapa_2.png",
+      "resumo": "A vila num vale entre duas serras com passos; atrás de cada serra, outro clima."
+    },
+    {
+      "id": 3,
+      "nome": "Ilha-mãe e arquipélago",
+      "estado": "espera",
+      "planta": "concept_3",
+      "previa": "../previas/mapa_3.png",
+      "resumo": "A vila numa ilha temperada; os climas extremos em ilhas do outro lado do mar."
+    },
+    {
+      "id": 4,
+      "nome": "Anéis de dificuldade",
+      "estado": "espera",
+      "planta": "concept_4",
+      "previa": "../previas/mapa_4.png",
+      "resumo": "Centro ameno; cada anel para fora é mais extremo; serra em anel com quatro passos."
+    },
+    {
+      "id": 5,
+      "nome": "Costa oeste",
+      "estado": "foco",
+      "planta": "tools/mapa/costa_oeste.py",
+      "previa": "../costa-oeste/mapa_final_previa.jpg",
+      "resumo": "Mar a oeste, muralha de gelo a leste; delta da Foz do Veio, Mar das Ilhas, fiordes, bacia leste com rios para leste.",
+      "detalhe": "../costa-oeste/README.md"
+    }
   ]
 }

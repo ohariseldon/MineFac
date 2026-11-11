@@ -165,14 +165,23 @@ pub(crate) fn flat_site(host: &dyn Host, around: [i32; 2]) -> Option<([i32; 3], 
     best.map(|(score, at)| (at, score > 0))
 }
 
-/// Tira folhas e troncos de árvore em volta do centro, antes de gerar a vila.
+/// O que sobra no chão de uma floresta e some junto com as árvores: serrapilheira, galhos e
+/// arbustos (só existem nas versões novas do Minecraft; nas outras o comando falha sem efeito).
+pub(crate) const FOREST_FLOOR: [&str; 6] = ["minecraft:leaf_litter", "minecraft:bush", "minecraft:firefly_bush",
+    "minecraft:short_dry_grass", "minecraft:tall_dry_grass", "minecraft:vine"];
+
+/// Tira folhas, troncos e o chão de floresta em volta do centro, antes de gerar a vila.
 fn clear_trees(host: &mut dyn Host, [x, y, z]: [i32; 3]) {
     for dx in (-CLEAR_HALF..CLEAR_HALF).step_by(16) {
         for dz in (-CLEAR_HALF..CLEAR_HALF).step_by(16) {
             let (x0, z0) = (x + dx, z + dz);
-            for tag in ["minecraft:leaves", "minecraft:logs"] {
-                host.run_command(&format!("execute in {OVERWORLD} run fill {x0} {} {z0} {} {} {} minecraft:air replace #{tag}",
-                    y - 1, x0 + 15, y + 30, z0 + 15));
+            let fill = |what: &str| format!("execute in {OVERWORLD} run fill {x0} {} {z0} {} {} {} minecraft:air replace {what}",
+                y - 1, x0 + 15, y + 30, z0 + 15);
+            for tag in ["#minecraft:leaves", "#minecraft:logs"] {
+                host.run_command(&fill(tag));
+            }
+            for block in FOREST_FLOOR {
+                host.run_command(&fill(block));
             }
         }
     }

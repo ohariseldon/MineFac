@@ -283,9 +283,14 @@ pub(super) fn wave_mix(size: u32, waves: u32) -> (u32, u32, u32) {
 
 fn spawn_wave(host: &mut dyn Host, dimension: &str, anchor: [i32; 3], size: u32, waves: u32, time: i64) -> u32 {
     let factory = [f64::from(anchor[0]) + 0.5, f64::from(anchor[1]), f64::from(anchor[2]) + 0.5];
-    // Uma frente: um arco de 90 graus num lado da fábrica, que muda a cada noite. Os saqueadores
-    // farejam o jogador a 40 blocos; quem está na fábrica os vê chegar.
-    let angle = (time.div_euclid(DAY).rem_euclid(97) as f64) * 2.399;
+    // Uma frente: um arco de 90 graus do lado do Acampamento dos Saqueadores (`camp_angle`), que
+    // oscila um pouco a cada noite. Os saqueadores farejam o jogador a 40 blocos; quem está na
+    // fábrica os vê chegar.
+    let night = time.div_euclid(DAY);
+    let angle = match camp_angle() {
+        Some(camp) => camp + (night.rem_euclid(5) as f64 - 2.0) * 0.3,
+        None => (night.rem_euclid(97) as f64) * 2.399,
+    };
     let (raiders, archers, brutes) = wave_mix(size, waves);
     let kinds = std::iter::repeat_n(RAIDER, raiders as usize)
         .chain(std::iter::repeat_n(ARCHER, archers as usize))
@@ -308,6 +313,15 @@ fn spawn_wave(host: &mut dyn Host, dimension: &str, anchor: [i32; 3], size: u32,
         host.play_sound("minecraft:event.raid.horn", at, 16, 4.0, 0.7);
     }
     spawned
+}
+
+/// De que lado da vila fica o Acampamento dos Saqueadores (radianos; 0 é leste, e cresce para o
+/// sul). Fixo para cada vila: as ondas sempre vêm de lá. No mapa fixo, o acampamento tem lugar na
+/// planta (`docs/mapa/costa-oeste`); num mundo aleatório, o lado sai do centro da vila.
+pub(super) fn camp_angle() -> Option<f64> {
+    let ([x, _, z], _) = workforce::spawn::center()?;
+    let hash = (x as i64).wrapping_mul(73_856_093) ^ (z as i64).wrapping_mul(19_349_663);
+    Some((hash.rem_euclid(360) as f64).to_radians())
 }
 
 /// Golpes dos saqueadores nesta máquina desde o último tick.

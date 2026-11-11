@@ -52,7 +52,9 @@ muralhas, luz e cama no começo; quartel, torre Tesla e defesas automáticas dep
 | **Seu Lino, o carvoeiro** | a carvoaria velha que dá fogo e luz à vila, apagada | sim (`veio:collier`, a nordeste) |
 | **Os aldeões** | viram trabalhadores, famílias, comerciantes e o funcionário da prefeitura | sim |
 | **Os visitantes do calendário** | Seu Anselmo (o primeiro morador), Dona Margarida (floristas), Seu Benedito (sanfoneiro), Tia Ceres (lavradores), Mestre Lumen (vidreiro), a pequena Aurora, Dona Lia (feira), Juca (baile) e o pescador Tião | sim (pedem as festas, 2 dias antes) |
-| **Os Saqueadores e o Bruto** | atraídos pela poluição; vêm à noite | sim (sem fala) |
+| **Os Saqueadores e o Bruto** | atraídos pela poluição; vêm à noite, sempre do lado do **Acampamento dos Saqueadores**, longe da vila (no mapa Costa oeste, na Taiga Velha, a ~2.600 blocos) | sim (sem fala) |
+
+À noite, o prefeito e os vizinhos com nome dormem na cama mais perto de onde trabalham e voltam de manhã (`onboarding/rest.rs`): a vila inteira se recolhe ao sino.
 
 Decidido: **um prefeito só, o Otávio.** O aldeão contratado na prefeitura é o **secretário de
 Otávio** (o vice-prefeito), nunca "prefeito" nas telas e nas falas.

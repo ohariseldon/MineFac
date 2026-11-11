@@ -1,4 +1,16 @@
-# Veio 0.38.0
+# Veio 0.39.0
+
+A 0.39.0 é uma rodada de revisão:
+- **À noite, os moradores com nome dormem.** O prefeito Otávio e os vizinhos (Seu Bento, Dona Cida, Dona Zefa, Seu Zé, Seu Tonho, Seu Lino) eram aldeões parados que nunca saíam do lugar. Agora, ao anoitecer, cada um vai para a cama mais perto de onde trabalha e volta de manhã.
+- **Os Saqueadores vêm do acampamento deles.** As ondas da poluição chegam sempre do lado do **Acampamento dos Saqueadores**, um lugar fixo de cada vila, com pouca variação de uma noite para outra. O aviso ao anoitecer diz isso.
+- **Sem patrulhas de pillagers.** As patrulhas do Minecraft (que no jogo em português também se chamam "Saqueadores") ficam desligadas, para não confundir com os da história.
+- **Chão limpo onde a vila nasce.** Quando a vila nasce num lugar que tinha floresta, a limpeza tira também a serrapilheira, os arbustos e as trepadeiras, não só as árvores.
+- **O mapa fixo "Costa oeste".** A planta final ganhou:
+  - terra até a borda ao norte, a leste e ao sul;
+  - o Pantanal do Leste;
+  - rios revisados um a um: sempre descendo, sem cruzar e cavando os próprios vales;
+  - 59 estruturas com o bioma conferido;
+  - o plano de crescimento da vila em 6 estágios, em `docs/mapa/costa-oeste/`.
 
 A 0.38.0 traz **os pedidos da vila**: a vila está em declínio, e cada morador que ficou tem um problema que abre uma área do jogo, feita à mão como no começo do Minecraft. Logo depois do primeiro encontro, o prefeito Otávio conta da vila e pede **o telhado do coreto**: a **Dona Zefa, a oleira**, ensina argila, fornalha e tijolo, e você cobre o coreto em volta do prefeito. A cada conversa, ele conta de mais alguém: **o Seu Zé da vendinha** (pão, lã e a primeira venda, para ela não fechar), **o Seu Tonho, o vaqueiro**, que só tem a Mimosa (atrair vacas com trigo, criar bezerro, ovelhas e tesoura), **o Seu Lino, o carvoeiro** (lenha, carvão vegetal e a roda d'água) e, depois do favor da prensa, **a forja do Seu Bento** (ferro à mão e a chapa na prensa). Os pedidos correm em paralelo ao tutorial, na ordem que você quiser; quem tem algo para você solta faíscas verdes, a barra mostra o pedido quando você chega perto e `/veiotutorial pedidos` abre o caderno. Com todos atendidos, **a vila respira**. Cada morador passa a ter trocas vanilla, e cada pedido termina apontando o sistema do Veio que automatiza aquilo mais tarde. A versão também junta o trabalho da outra frente do tutorial (16 etapas da fábrica, o favor da prensa, as festas, os resmungos dos aldeões) com os capítulos 2 a 6, num save só (v11).
 

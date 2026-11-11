@@ -293,7 +293,7 @@
   "veio.metric.pollution": "Local pollution %s (%s%% of limit)",
   "veio.raid.notice": "Your factory's smoke travels far. Monsters have started to notice it.",
   "veio.raid.notice_help": "In about a day, if pollution stays high, Raiders will come at night to damage polluting machines. Prepare walls, Tesla towers and repair kits. Crops and efficiency modules cut pollution. See the Veio Field Guide.",
-  "veio.raid.warning": "Night falls. Raiders drawn by pollution will come tonight!",
+  "veio.raid.warning": "Night falls. Raiders drawn by the pollution will come tonight, from the side of their camp!",
   "veio.raid.arrived": "Raiders are heading for the factory!",
   "advancement.veio.wiring.title": "Power line",
   "advancement.veio.wiring.description": "Poles link up on their own and power nearby machines.",

@@ -105,7 +105,7 @@ cada troca a um evento da história. Dois ritmos:
 
   Uma obra por dia de jogo, no máximo, para a vila mudar sem "pular".
 
-**Estágio 0** (a vila em declínio, a planta acima):
+**Estágio 1** (a chegada, a vila em declínio; desenho de perto em costa-oeste/vila_estagio1.png):
 - 7 casas habitadas;
 - 2 em obra;
 - 1 abandonada;
@@ -117,7 +117,7 @@ cada troca a um evento da história. Dois ritmos:
 ## Próximos passos
 
 1. ~~Escolher um conceito~~: o mapa 5. ~~Atualizar o MAPA.md~~: feito.
-2. Detalhar o bloco C do mapa 5 com o Luiz (nomes, recursos, onde a vila cresce).
+2. ~~Detalhar o bloco C~~ e ~~fechar a planta do mapa 5 inteiro~~: feito (docs/mapa/costa-oeste/).
 3. Passar a planta para o formato que o gerador lê e testar no motor real: comparar a imagem do mundo
    gerado com a planta e conferir a cobertura de biomas, estruturas e recursos.
 4. Modelos da vila no estágio 0 e a tabela de estágios, começando pela fonte.

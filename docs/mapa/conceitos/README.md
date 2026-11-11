@@ -10,7 +10,7 @@ launcher vão ler está em [catalogo.json](catalogo.json).
 | 2 | Vale entre serras | espera | [mapa_2.png](../previas/mapa_2.png) |
 | 3 | Ilha-mãe e arquipélago | espera | [mapa_3.png](../previas/mapa_3.png) |
 | 4 | Anéis de dificuldade | espera | [mapa_4.png](../previas/mapa_4.png) |
-| 5 | **Costa oeste** | **foco** | [mapa_5.png](../previas/mapa_5.png) · [detalhe](../costa-oeste/README.md) |
+| 5 | **Costa oeste** | **foco** (planta final) | [mapa final](../costa-oeste/mapa_final_previa.jpg) · [detalhe](../costa-oeste/README.md) |
 
 **Em espera** quer dizer: a planta geral está guardada como está (a função `concept_N` em
 `tools/mapa/preview_maps.py` e a prévia). Nada mais foi feito nesses mapas. Quando um deles sair da

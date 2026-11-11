@@ -314,6 +314,10 @@ impl Hooks for Factory {
     }
 
     fn player_logged_in(&self, host: &mut dyn Host, event: &mut horizon_client::mod_api::PlayerLoggedInEvent<'_>) {
+        // Os Saqueadores da história são as ondas do Veio, que vêm do acampamento quando a fábrica
+        // polui (`pollution`). As patrulhas de pillagers do Minecraft (que no jogo em português também
+        // se chamam "Saqueadores") apareceriam do nada a partir do 5º dia: ficam desligadas.
+        host.run_command("gamerule doPatrolSpawning false");
         onboarding::logged_in(host);
         workforce::spawn::logged_in(event.player, event.name, defense::clock());
     }

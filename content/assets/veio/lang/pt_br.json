@@ -293,7 +293,7 @@
   "veio.metric.pollution": "Poluição local %s (%s%% do limite)",
   "veio.raid.notice": "A fumaça da sua fábrica chegou longe. Os monstros começaram a notá-la.",
   "veio.raid.notice_help": "Daqui a um dia, se a poluição seguir alta, Saqueadores virão à noite danificar as máquinas que poluem. Prepare muros, torres Tesla e kits de reparo. Lavouras e módulos de eficiência reduzem a poluição. Veja o Guia do Veio.",
-  "veio.raid.warning": "Anoitece. Saqueadores atraídos pela poluição virão esta noite!",
+  "veio.raid.warning": "Anoitece. Saqueadores atraídos pela poluição virão esta noite, do lado do acampamento deles!",
   "veio.raid.arrived": "Saqueadores estão vindo para a fábrica!",
   "advancement.veio.wiring.title": "Linha de transmissão",
   "advancement.veio.wiring.description": "Postes ligam-se sozinhos e alimentam as máquinas por perto.",

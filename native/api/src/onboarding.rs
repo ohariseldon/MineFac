@@ -839,6 +839,7 @@ pub(super) fn server_tick(host: &mut dyn Host) {
 
 fn tick(host: &mut dyn Host, now: u64) {
     if now % 20 != 0 { return; }
+    rest::tick(host, now);
     let online = host.server_players();
     let Ok(mut slot) = SESSION.lock() else { return; };
     if !session(host, &mut slot) { return; }
@@ -1051,7 +1052,7 @@ pub(super) fn neighbor_talk(host: &mut dyn Host, kind: &str) -> bool {
 }
 
 /// Outro mundo vai abrir: esquece o prefeito e os vizinhos do mundo anterior.
-pub(super) fn world_changed() { intro::reset(); favors::reset(); errands::reset(); }
+pub(super) fn world_changed() { intro::reset(); favors::reset(); errands::reset(); rest::reset(); }
 
 /// Clique num morador dos pedidos da vila. `true` se o Veio tomou o clique.
 pub(super) fn errand_talk(host: &mut dyn Host, kind: &str) -> bool {
@@ -1083,6 +1084,7 @@ mod festival;
 mod favors;
 pub(super) use favors::{seen as neighbor_seen, FARMER, SMITH};
 mod errands;
+mod rest;
 pub(super) use errands::{seen as errand_seen, COLLIER, COWHERD, GROCER, POTTER};
 mod barks;
 pub(super) use barks::villager_seen;

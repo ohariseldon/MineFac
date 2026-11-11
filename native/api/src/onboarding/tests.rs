@@ -1303,3 +1303,23 @@ fn the_village_errands_teach_bricks_commerce_cattle_and_power_in_any_order() {
     let old: String = p.encode().lines().filter(|l| !l.starts_with("pedidos")).map(|l| format!("{l}\n")).collect();
     assert_eq!(Progress::decode(&old).unwrap().errands, [0; errands::COUNT]);
 }
+
+#[test]
+fn named_villagers_find_their_own_bed_near_where_they_work() {
+    struct Beds(Vec<Pos>);
+    impl Host for Beds {
+        fn block(&self, pos: Pos) -> String {
+            if self.0.contains(&pos) { "minecraft:red_bed".into() } else { "minecraft:air".into() }
+        }
+    }
+    // Uma cama de duas metades perto do ferreiro e outra mais longe.
+    let host = Beds(vec![[10, 64, 4], [11, 64, 4], [-20, 65, 3]]);
+    let first = rest::bed_near(&host, [8.5, 64.0, 4.5], &[]).expect("cama perto");
+    assert!(first == [10, 64, 4] || first == [11, 64, 4]);
+    // A mesma cama (nenhuma das metades) não serve a dois moradores.
+    let second = rest::bed_near(&host, [8.5, 64.0, 4.5], &[first]).expect("a outra cama");
+    assert_eq!(second, [-20, 65, 3]);
+    assert_eq!(rest::bed_near(&host, [8.5, 64.0, 4.5], &[first, second]), None);
+    // Longe demais (mais de 28 blocos) não conta.
+    assert_eq!(rest::bed_near(&host, [80.5, 64.0, 4.5], &[]), None);
+}

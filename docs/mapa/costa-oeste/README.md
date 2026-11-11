@@ -1,99 +1,188 @@
 # Mapa 5 · Costa oeste (foco)
 
-Mar a oeste, uma muralha de montanhas a leste; os rios descem da muralha até o mar. O litoral é úmido
-e o interior, atrás das serras, seco. Planta em `tools/mapa/preview_maps.py` (`concept_5`); grade e
-detalhe em `tools/mapa/costa_oeste.py`.
+Planta final do mundo inteiro: [mapa_final.jpg](mapa_final.jpg) (15.000 x 15.000 blocos, 4 blocos por
+pixel) e uma prévia leve em [mapa_final_previa.jpg](mapa_final_previa.jpg). A planta em dados, para o
+gerador e para o mod: [plano.json](plano.json). A vila:
+- de perto no estágio 1: [vila_estagio1.png](vila_estagio1.png);
+- o plano de crescimento: [vila_crescimento.png](vila_crescimento.png).
 
-## A grade dos 9 blocos
+**Ferramentas:**
+- `tools/mapa/costa_oeste.py`: o mundo, a revisão dos rios, as estruturas e o `plano.json`;
+- `tools/mapa/vila_estagio1.py`: a vila no estágio 1;
+- `tools/mapa/vila_crescimento.py`: o crescimento da vila, com a checagem de conflitos.
 
-Cada bloco tem 5.000 x 5.000 blocos. Imagem: [grade.png](grade.png).
+Os biomas usam a mesma tabela e o mesmo equilíbrio das prévias (`tools/mapa/preview_maps.py`): os
+53 biomas estão no mapa.
 
-| Bloco | x | z | O que tem | Situação |
-|---|---|---|---|---|
-| NO · Noroeste | -7500 a -2500 | -7500 a -2500 | mar frio | espera |
-| N · Norte | -2500 a 2500 | -7500 a -2500 | neve, taiga e o rio do norte | espera |
-| NE · Nordeste | 2500 a 7500 | -7500 a -2500 | a Muralha de Pedra gelada | espera |
-| O · Oeste | -7500 a -2500 | -2500 a 2500 | o Mar do Oeste e a ilha dos cogumelos | espera |
-| **C · Centro** | -2500 a 2500 | -2500 a 2500 | a vila, o Morro da Mina e a Serra do Veio | **em detalhe** |
-| L · Leste | 2500 a 7500 | -2500 a 2500 | a Muralha de Pedra e os passos para o interior | espera |
-| SO · Sudoeste | -7500 a -2500 | 2500 a 7500 | mar morno e quente | espera |
-| S · Sul | -2500 a 2500 | 2500 a 7500 | litoral quente: selva, savana e deserto | espera |
-| SE · Sudeste | 2500 a 7500 | 2500 a 7500 | o interior seco: deserto e terras áridas | espera |
+## A ideia
 
-O zoom de um bloco usa os mesmos cortes de clima do mapa inteiro: mostra os mesmos biomas, só com
-mais detalhe de relevo e de borda.
+A costa oeste da América do Sul, em escala de jogo:
+- **a oeste,** o "Pacífico" e um litoral de planícies e cidades (o "Chile"), onde fica a vila;
+- **no meio,** a Muralha de Gelo (os "Andes");
+- **do outro lado da muralha,** uma bacia úmida em que os rios correm para leste e terminam no
+  **Pantanal do Leste** (a "Amazônia" e o "Pantanal").
 
-## Bloco C · Centro (proposta para conversar)
+Só o oeste tem mar. Ao norte, a leste e ao sul o continente segue até a muralha de bedrock, como uma
+fatia de um continente maior.
 
-Imagem: [bloco_C.png](bloco_C.png). Planta da vila de perto: [../previas/vila.png](../previas/vila.png).
+## Geografia
 
-### O lugar
+**A costa, de norte a sul:**
+- **O Golfo do Norte** e os **fiordes e penhascos** (Noruega, Escócia): um planalto baixo que cai
+  direto no mar frio, com quatro fiordes. O Rio do Norte despenca num deles, nas **Cataratas do
+  Fiorde**.
+- **Os Lençóis:** dunas brancas com lagoas entre elas.
+- **A Foz do Veio:** uma fenda larga que entra uns 1.500 blocos na terra, até ~1.350 blocos da
+  vila. O rio chega em três braços (o delta), a água vai alargando até virar mar, e na boca fica a
+  **Ilha Grande** (como Marajó). O **cais velho** fica junto do delta.
+- **A Ponta do Paredão:** uma península alta, esticada para o mar, com a Cascata do Paredão.
+- **O Mar das Ilhas** (um Caribe): água turquesa e rasa, recifes de coral, ilhotas com coqueiros e
+  praia em volta, e praias brancas no continente, com o deserto logo atrás.
 
-- **A vila** fica na **Planície do Veio**, uma planície pequena e amena (uns 600 x 700 blocos)
-  encaixada entre três coisas:
-  - o **Morro da Mina**, ao norte;
-  - o **Rio Veio**, a leste;
-  - a **mata**, a ~150 blocos a oeste.
-- **Terraços:** a vila desce em degraus de 2 blocos até o rio.
-- **O Morro da Mina** (prado, de x -650 a 850, crista em z ≈ -480) é o primeiro contraforte da
-  serra. O rio o atravessa no **Passo do Rio**. Na encosta sul ficam:
-  - a **mina do avô**, fechada, a ~300 blocos da praça;
-  - a **pedreira**.
-- **A Serra do Veio**, a nordeste (z ≈ -1.800), tem neve no alto, picos e um pouco de cerejeiral
-  nas encostas, longe da vila. Embaixo dela fica a **escuridão profunda**, para a cidade
-  ancestral.
-- **O Rio Veio** desce da serra, passa pelo leste da vila, faz uma curva para sudoeste e atravessa
-  o **Brejo do Rio** (pântano e um pouco de manguezal) até a **Foz**, com praia, no canto sudoeste
-  do bloco. Na foz está o **cais velho**, por onde o minério descia o rio quando a mina funcionava;
-  é a porta do "mundo lá fora" (capítulo 7).
-- **As matas em volta:**
-  - a oeste, a **Mata Escura** (floresta escura);
-  - a noroeste, o **Pinhal do Norte** (taigas antigas);
-  - a leste, o **Bosque das Bétulas**;
-  - a sudeste, a **Taiga Velha**;
-  - ao sul, os **Bosques do Sul**, que esquentam até selva esparsa perto da borda.
+**No interior:**
+- **A Lagoa da Restinga:** uma lagoa no meio do deserto, cercada de manguezal, onde o Rio do Sul
+  termina.
+- **A Ilha da Bruma:** no mar aberto a oeste, alta, de campos de cogumelos.
 
-### Recursos garantidos perto da vila
+**As serras e as matas:**
+- **As serras:**
+  - a **Muralha de Gelo**, de norte a sul;
+  - a **Serra do Veio**, que sai da muralha para oeste e é a divisa de clima entre a **Mata Escura**,
+    ao sul, e o **Pinhal do Norte**, ao norte;
+  - os **Montes do Norte**;
+  - a **Serra do Sul**, entre as **Terras Vermelhas**.
+- **Ao norte,** o Planalto Gelado (neve e picos de gelo).
+- **Na bacia leste,** taigas ao norte e selva e bambu ao sul.
 
-O subsolo é o do Minecraft; estes pontos o plano reserva, porque a história precisa deles:
+## Os rios
 
-| Recurso | Onde | Para quê |
+Cada rio é uma árvore: nascentes pequenas viram córregos, os córregos se juntam em afluentes, e os
+afluentes no rio principal. A largura cresce com a soma de tudo o que chegou: um fio de 2 blocos na
+nascente, 40 ou mais perto da foz.
+
+| Rio | Afluentes | Foz |
 |---|---|---|
-| Cobre | afloramento a ~350 blocos a nordeste da praça, no terraço da margem | a primeira extratora (etapa 5) perto da oficina |
-| Ferro | no Morro da Mina, junto da mina do avô | o ferro à mão e, depois, a mina reaberta |
-| Carvão | veio raso na borda da mata, junto da carvoaria | o gerador e o Seu Lino |
-| Argila | o barreiro na curva do rio e a foz | a Dona Zefa e o telhado do coreto |
-| Pedra | a pedreira do Morro | a fonte da praça e a prefeitura de pedra |
+| Rio Veio | Ribeirão da Serra (com o Córrego do Gelo), Rio Claro (com o Arroio da Pedra e o Arroio Fundo), Córrego do Morro, Rio das Bétulas (com a Sanga Clara), Riacho da Mata (com a Grota Escura) | o delta da Foz do Veio |
+| Rio do Sul | Rio Seco de Cima (com o Córrego Vermelho), Rio Manso, Sanga do Oásis | a Lagoa da Restinga |
+| Arroio das Palmas | — | o Mar das Ilhas |
+| Rio do Norte | Riacho dos Montes | as Cataratas do Fiorde |
+| Grande Rio do Leste | Rio do Sul do Leste e oito igarapés que descem da muralha, um deles com o próprio afluente | o Lago do Pantanal |
 
-### Onde a vila cresce
+O Rio Veio corre entre a Serra do Veio e o Morro da Mina e atravessa o morro no **Passo do Rio**,
+logo ao norte da vila.
 
-- **Distrito industrial** (capítulos 1 a 5): o terraço a leste, entre a vila, o rio e o morro.
-  Tem chão plano, água para a roda d'água e o cobre embaixo.
-- **Lavouras e pastos**: a planície a sudoeste da praça.
-- **Expansão da cidade** (capítulos 4 e 6): ao sul, do outro lado da curva do rio, com pontes.
+### A revisão física (automática)
 
-### Estradas
+`costa_oeste.py` confere os rios a cada vez que gera o mapa. Hoje sai sem problemas.
 
-- **Estrada da Mina**: da praça até a mina do avô.
-- **Trilha da Mata**: até a carvoaria.
-- **Trilha da Serra**: sobe o rio até a Serra do Veio.
-- **Estrada velha do Rio**: acompanha o rio até o cais velho, na foz.
+**O que ela confere:**
+- **A água só desce.** O perfil de cada rio é o ponto mais baixo do terreno da nascente até ali.
+  - Se um morro mais alto que a nascente está no caminho, a nascente de verdade é o alto antes dele.
+  - Na confluência, o afluente chega abaixo do rio que o recebe; na foz, no nível do mar ou do lago.
+- **O rio cava o vale.** O terreno em volta é rebaixado: estreito e fundo nas serras, largo e raso na
+  planície. Onde o vale corta a serra, o bioma vira o de encosta, e não o de pico.
+- **Cachoeiras** aparecem onde o perfil cai mais de 9 blocos em menos de 60. Ao todo são 40: as 9
+  com nome e as que o relevo pediu.
+- **Nenhum rio cruza outro** fora da confluência.
+- **Nenhum passa pelo mar** antes da foz.
 
-### Regras do bloco
+**O que a primeira rodada da revisão corrigiu:**
+- três cruzamentos (a Sanga Clara com o Rio das Bétulas e com o Rio Manso, e o Rio Manso com o Rio do
+  Sul);
+- o Rio Veio e o Rio Claro correndo por cima da crista do Morro da Mina;
+- o Arroio das Palmas subindo do litoral para o interior (agora desce direto para o mar);
+- a Grota Escura, refeita;
+- rios cortando morros em cânions de quase 200 blocos.
 
-- **Perto da vila:**
-  - 600 blocos em volta da vila sem ravinas e sem bocas de caverna;
-  - nenhuma variante rara de bioma (cerejeiral, girassóis, bétulas antigas, taigas antigas) a menos
-    de ~1.000 blocos: o raro fica para quem explora.
-- **Ravina permitida:** a **Fenda da Serra**, a nordeste, a ~2.300 blocos da vila. É a primeira
-  aventura subterrânea.
+## Estruturas
 
-### Para conversar
+São 59 estruturas, todas com o bioma conferido pelas regras do Minecraft. Uma estrutura fora do
+bioma certo vai para o lugar válido mais perto, até 1.500 blocos; dez foram movidas. Nenhuma fica a
+menos de 700 blocos da vila, fora as da história.
 
-1. **Nomes:** Planície do Veio, Morro da Mina, Rio Veio, Passo do Rio, Mata Escura, Pinhal do
-   Norte, Bosque das Bétulas, Taiga Velha, Bosques do Sul, Brejo do Rio, Foz e Fenda da Serra.
-2. **O cais velho na foz** como porta do capítulo 7 (porto e exportação).
-3. **Onde fica a cidade grande:** ao sul, do outro lado do rio; ou na margem leste, junto da
-   indústria?
-4. **A distância até o mar:** a foz fica a ~2.500 blocos da vila. Perto o bastante para ser uma
-   viagem, longe o bastante para não ser o quintal.
+- **Do Minecraft, na superfície:**
+  - 9 vilas (dos Campos, do Planalto, do deserto, do Oásis, da savana, da Chapada, da taiga, do Leste
+    e nevada);
+  - 2 templos do deserto e 2 da selva, a mansão (na Mata Escura), 2 cabanas de bruxa (Brejo e
+    Pantanal) e 2 iglus;
+  - 2 postos de pillagers, 2 ruínas de trilha, 3 portais em ruínas e 2 poços do deserto.
+- **Do Minecraft, no mar:** 2 monumentos oceânicos, ruínas submersas, naufrágios (um na praia) e um
+  tesouro enterrado.
+- **No subsolo:**
+  - a cidade ancestral, sob a muralha;
+  - 2 câmaras de desafio;
+  - 3 fortalezas do End, no anel de 1.300 a 2.800 blocos, como no Minecraft;
+  - mina abandonada, geodo e fósseis.
+- **Do Veio, ligadas à história:** o **Acampamento dos Saqueadores** (de onde vêm as ondas), o cais
+  velho e a mina do avô.
+- **Do Veio, extras** (ideias de estruturas da comunidade, como o farol, o forte, a torre, as
+  catacumbas e a taverna, que aqui seriam construídas pelo próprio Veio):
+  - o farol abandonado (Ilhota do Farol) e o forte em ruínas (Ponta do Paredão);
+  - a torre de vigia (Serra do Veio), o mosteiro (Muralha) e o observatório (Montes do Norte);
+  - a vila de pescadores abandonada (Lençóis), a ponte de pedra antiga e o moinho velho;
+  - a taverna da encruzilhada, as catacumbas sob a Mata Escura, o templo submerso (Mar das Ilhas) e o
+    santuário da Bruma.
+
+## Perto da vila
+
+- **Argila:** o barreiro grande fica no **Brejo do Rio**, a meio caminho entre a vila e a foz (~1.200
+  blocos), e também no delta.
+  - O Minecraft põe manchas pequenas de argila em qualquer rio raso. Para a argila ser difícil de
+    verdade, o gerador vai tirar essas manchas num raio em volta da vila.
+- **Outros recursos garantidos:**
+  - **cobre** aflorando ao lado do terreno da oficina;
+  - **ferro** no Morro da Mina;
+  - **carvão** junto da carvoaria;
+  - **pedra** na pedreira do morro.
+- **Proteção:** 600 blocos sem ravinas nem bocas de caverna em volta da vila, e nenhum bioma raro a
+  menos de ~1.000 blocos.
+
+## A vila e os estágios
+
+**Estágio 1** ([vila_estagio1.png](vila_estagio1.png)): a vila em declínio, como o jogador a encontra.
+- **A praça:** a fonte seca e quebrada e o coreto sem telhado.
+- **As casas:** 7 habitadas, 2 em obra, 1 abandonada e 4 lotes vazios.
+- **Os moradores dos pedidos:** a vendinha vazia, a carvoaria apagada, o forno da olaria rachado e um
+  pasto com uma vaca só.
+- **O terreno:** terraços descendo para o rio, com escadas de pedra.
+
+**O crescimento** ([vila_crescimento.png](vila_crescimento.png)): a vila cresce por anéis
+irregulares que ligam as ruas de terra do começo e formam quarteirões tortos. O que existe no
+estágio 1 fica no lugar (pode ganhar andar, telhado ou toldo), e o novo entra nos espaços livres.
+`vila_crescimento.py` confere que nenhuma rua, casa ou prédio novo passa por cima de algo que já
+existe; hoje, nenhum conflito.
+
+| Estágio | Quando | O que acrescenta |
+|---|---|---|
+| 2 · A vila respira | os pedidos da vila e o capítulo 2 (a noite) | fonte com água, coreto com telhado, as casas em obra prontas, a abandonada reformada, o Anel da Praça, lanternas, a muralha de margem a margem do rio |
+| 3 · A vila operária | capítulo 3 | prefeitura, postos de lavoura e de pastor, mesa do capataz, casas nos 4 lotes vazios, o começo do Anel de Fora |
+| 4 · A vila cresce | capítulo 4 (fase Vila) | o Anel de Fora fecha os quarteirões; poço novo, parque, a vendinha vira loja no mesmo lugar, 14 casas novas |
+| 5 · A grande indústria | capítulo 5 | o distrito industrial em volta do terreno da oficina, o quartel e a torre Tesla |
+| 6 · A cidade | capítulo 6 (fase Cidade) | ruas de pedra, a ponte e o bairro da margem, a Rua do Sul para a expansão, a praça cívica |
+
+**As trocas:**
+- **Quando:** as do estágio acontecem longe dos olhos do jogador (a mais de 32 blocos) ou com um
+  efeito de obra. As grandes, uma por dia de jogo.
+- **Como no jogo:** cada prédio vira um conjunto de modelos de estrutura, um por estágio.
+
+## O que já está no jogo (0.39.0)
+
+- **Os moradores com nome dormem.** O prefeito e os vizinhos vão à cama mais perto ao anoitecer e
+  voltam de manhã (`onboarding/rest.rs`). No mapa fixo, cada um mora num dos prédios do estágio 1.
+- **As ondas de Saqueadores vêm do lado do acampamento.** Num mundo aleatório, o lado sai do
+  centro da vila; no mapa fixo, ele vem do acampamento da planta.
+- **Sem patrulhas de pillagers do Minecraft.**
+- **Chão limpo onde a vila nasce:** a limpeza tira a serrapilheira e os arbustos junto com as
+  árvores.
+
+**Ainda não está no jogo:**
+- o gerador que usa esta planta (o rascunho está em `work-in-progress/finite-world`);
+- os modelos dos prédios por estágio.
+
+No código, os moradores dos pedidos ainda nascem a ~10 blocos da praça (`errands.rs`, `favors.rs`).
+Com o mapa fixo, eles passam para as coordenadas da planta.
+
+## Histórico
+
+A divisão em 9 blocos ([grade.png](grade.png)) e o zoom do bloco central ([bloco_C.png](bloco_C.png))
+serviram para a primeira rodada de detalhe.

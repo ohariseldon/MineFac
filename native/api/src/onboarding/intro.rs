@@ -173,6 +173,22 @@ pub(super) fn mayor_at(host: &dyn Host, p: &Progress) -> Option<[f64; 3]> {
     id.and_then(|id| host.entity(id)).and_then(|handle| handle.position(host)).or(p.mayor)
 }
 
+/// O lugar do prefeito na praça: o ponto mais baixo e seco a 3 blocos do centro da vila.
+pub(super) fn plaza_spot(host: &dyn Host) -> Option<[f64; 3]> {
+    let ([x, _, z], _) = workforce::spawn::center()?;
+    let columns: Vec<(i32, i32)> = [(3, 0), (-3, 0), (0, 3), (0, -3), (2, 2), (-2, 2), (2, -2), (-2, -2)]
+        .iter().map(|(dx, dz)| (x + dx, z + dz)).collect();
+    let ground = host.surface_heights(OVERWORLD, &columns, NativeHeightmap::MotionBlockingNoLeaves).ok()?;
+    let floor = host.surface_heights(OVERWORLD, &columns, NativeHeightmap::OceanFloor).ok()?;
+    columns.iter().zip(ground.iter().zip(&floor))
+        .filter_map(|(col, (g, f))| (g.is_some() && g == f).then(|| (*col, g.unwrap())))
+        .min_by_key(|(_, height)| *height)
+        .map(|((cx, cz), y)| [f64::from(cx) + 0.5, f64::from(y), f64::from(cz) + 0.5])
+}
+
+/// O id do prefeito no mundo aberto, se já foi visto.
+pub(super) fn mayor_id() -> Option<u32> { MAYOR_ID.lock().ok().and_then(|id| *id) }
+
 /// O prefeito chega à praça (o ponto mais baixo e seco a 3 blocos do centro), ou ao lado do
 /// jogador sem vila conhecida.
 fn summon_mayor(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress) {
@@ -183,19 +199,7 @@ fn summon_mayor(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progre
         return;
     }
     if host.run_command(&format!("execute if entity @e[type={MAYOR}]")) { return; }
-    let spot = match workforce::spawn::center() {
-        Some(([x, _, z], _)) => {
-            let columns: Vec<(i32, i32)> = [(3, 0), (-3, 0), (0, 3), (0, -3), (2, 2), (-2, 2), (2, -2), (-2, -2)]
-                .iter().map(|(dx, dz)| (x + dx, z + dz)).collect();
-            let ground = host.surface_heights(OVERWORLD, &columns, NativeHeightmap::MotionBlockingNoLeaves).ok();
-            let floor = host.surface_heights(OVERWORLD, &columns, NativeHeightmap::OceanFloor).ok();
-            ground.zip(floor).and_then(|(ground, floor)| columns.iter().zip(ground.iter().zip(&floor))
-                .filter_map(|(col, (g, f))| (g.is_some() && g == f).then(|| (*col, g.unwrap())))
-                .min_by_key(|(_, height)| *height))
-                .map(|((cx, cz), y)| [f64::from(cx) + 0.5, f64::from(y), f64::from(cz) + 0.5])
-        }
-        None => None,
-    }.unwrap_or_else(|| {
+    let spot = plaza_spot(host).unwrap_or_else(|| {
         let [x, y, z] = player.position;
         [x.floor() + 2.5, y.floor(), z.floor() + 0.5]
     });

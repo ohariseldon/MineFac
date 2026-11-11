@@ -7,7 +7,7 @@ marcos colocados pelo mod). Vale para a geração de novos mundos e para qualque
 gerador, na exploração ou nos portais.
 
 **Estado:** cinco conceitos de mapa desenhados como planta (`docs/mapa/`); o mapa 5, "Costa oeste",
-é o foco do desenvolvimento, começando pelo bloco central. O gerador experimental de
+é o foco do desenvolvimento e tem a planta final do mundo inteiro e a vila no estágio 1. O gerador experimental de
 [work-in-progress/finite-world](work-in-progress/finite-world/CONTINUAR.md) continua desativado; ele
 é a base técnica para aplicar a planta no motor.
 
@@ -22,9 +22,16 @@ gerador, na exploração ou nos portais.
 - O subsolo segue o do Minecraft (cavernas, minérios por altura, deepslate, aquíferos), com os
   biomas de caverna nas regras do vanilla. A planta reserva recursos garantidos onde a história
   precisa deles (por exemplo, cobre perto do terreno da oficina).
-- Para detalhar, cada mapa se divide em uma **grade de 3 x 3 blocos** de 5.000 x 5.000 blocos
-  (NO, N, NE, O, C, L, SO, S, SE). Um bloco é detalhado de cada vez; o zoom usa os mesmos cortes de
-  clima do mapa inteiro, então não muda os biomas.
+- Cada mapa tem uma planta final do mundo inteiro, no detalhe de 4 blocos por pixel, e a vila de
+  perto em cada estágio. (No mapa 5, a grade de 3 x 3 blocos serviu só para a primeira rodada.)
+- No mapa 5, só o oeste tem mar: ao norte, a leste e ao sul o continente segue até a muralha de
+  bedrock, como uma fatia de um continente maior (os rios dessas bordas terminam em lagos e
+  brejos, como o Pantanal do Leste, e não na muralha).
+- Os rios da planta passam por uma revisão automática (`tools/mapa/costa_oeste.py`): a água só
+  desce, nenhum rio cruza outro fora da confluência e nenhum passa pelo mar antes da foz. O rio cava
+  o próprio vale, e as cachoeiras ficam onde o perfil cai.
+- As estruturas do Minecraft na planta respeitam os biomas em que o jogo as gera; a planta inteira
+  fica em dados em `docs/mapa/costa-oeste/plano.json`.
 - Em volta da vila inicial, 600 blocos sem ravinas e sem bocas de caverna; as variantes raras de
   bioma (cerejeiral, girassóis, bétulas antigas...) ficam longe da vila.
 - A vila muda por estágios conforme a história (ver [docs/mapa/PLANO.md](docs/mapa/PLANO.md)).
