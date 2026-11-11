@@ -1,16 +1,33 @@
 # Restrição obrigatória do mundo
 
-Decisão de produto de 7 de novembro de 2026. Vale para a geração de novos mundos
-do Veio e para qualquer mudança futura no gerador, na exploração ou nos portais.
-O usuário autorizou adaptar a distribuição do terreno para garantir o conteúdo.
+Decisão de produto de 7 de novembro de 2026, **revista em 11 de novembro de 2026**: o Veio passa a
+ter **mapas fixos e desenhados**, não um mundo que varia de seed para seed. Ao criar o mundo, o
+jogador escolhe um dos mapas do Veio; cada mapa é sempre o mesmo (planta de clima, seed fixa e
+marcos colocados pelo mod). Vale para a geração de novos mundos e para qualquer mudança futura no
+gerador, na exploração ou nos portais.
 
-**Estado: implementação experimental com primeiras verificações no gerador real;
-ainda desativada e sem validação completa no jogo.** A garantia de recursos e os
-portais ainda têm pendências. Este documento não altera os saves.
+**Estado:** cinco conceitos de mapa desenhados como planta (`docs/mapa/`); o mapa 5, "Costa oeste",
+é o foco do desenvolvimento, começando pelo bloco central. O gerador experimental de
+[work-in-progress/finite-world](work-in-progress/finite-world/CONTINUAR.md) continua desativado; ele
+é a base técnica para aplicar a planta no motor.
 
-O código experimental e os próximos passos estão no
-[checkpoint do mapa finito](work-in-progress/finite-world/CONTINUAR.md). Esse
-rascunho está fora do bundle nativo e permanece desativado no jogo.
+## Mapas fixos
+
+- O catálogo de mapas fica em [docs/mapa/conceitos/](docs/mapa/conceitos/README.md). Cada mapa tem
+  um estado: **foco** (em desenvolvimento), **espera** (só a planta geral) ou **pronto**.
+- Um mapa é: a planta de clima (continentalidade, temperatura, umidade, montanha, erosão e
+  estranheza em escala de continente), a seed fixa do detalhe (relevo fino, cavernas, minérios,
+  aquíferos, árvores) e os marcos em coordenadas fixas (a vila, os prédios, a mina, as obras).
+  Mesma versão do jogo, mesma planta e mesma seed dão sempre o mesmo mundo.
+- O subsolo segue o do Minecraft (cavernas, minérios por altura, deepslate, aquíferos), com os
+  biomas de caverna nas regras do vanilla. A planta reserva recursos garantidos onde a história
+  precisa deles (por exemplo, cobre perto do terreno da oficina).
+- Para detalhar, cada mapa se divide em uma **grade de 3 x 3 blocos** de 5.000 x 5.000 blocos
+  (NO, N, NE, O, C, L, SO, S, SE). Um bloco é detalhado de cada vez; o zoom usa os mesmos cortes de
+  clima do mapa inteiro, então não muda os biomas.
+- Em volta da vila inicial, 600 blocos sem ravinas e sem bocas de caverna; as variantes raras de
+  bioma (cerejeiral, girassóis, bétulas antigas...) ficam longe da vila.
+- A vila muda por estágios conforme a história (ver [docs/mapa/PLANO.md](docs/mapa/PLANO.md)).
 
 ## Tamanho e limite
 
@@ -67,27 +84,23 @@ conteúdo funcionar. A disponibilidade não significa recursos infinitos: consum
 raridade, distâncias e exploração continuam fazendo parte do jogo. As jazidas
 industriais renováveis já existentes mantêm suas regras.
 
-## Geração com variação e cobertura obrigatória
+## Cobertura obrigatória em cada mapa
 
-1. A seed determina o relevo, as formas, a distribuição e as variações do mundo.
-   A geração continua variando entre seeds; não se reduz a uma única seed fixa.
-2. Antes de liberar o mundo ao jogador, o gerador monta um plano finito por
-   dimensão, reservando regiões adequadas para os biomas e para o conteúdo
-   obrigatório. Pode adaptar a distribuição vanilla para cumprir essa cobertura.
-3. O plano reserva estruturas e recursos com suas dependências: altura, terreno,
-   bioma, espaço, criaturas e acesso. Não basta conferir nomes de biomas.
-4. Uma validação determinística confirma a cobertura e seus locais. Faltas são
-   corrigidas no plano antes da geração dos chunks; uma tentativa que não cumprir
-   as regras não pode ser apresentada como um mundo válido ou completo.
-5. O plano aprovado, sua versão, os limites e a referência ao catálogo ficam
-   salvos com o mundo. Carregar chunks em outra ordem, visitar outra dimensão ou
-   reabrir o jogo não muda o plano nem repete estruturas ou recompensas.
+1. Cada mapa do catálogo cumpre sozinho a cobertura acima: todos os biomas e todo o conteúdo
+   obrigatório cabem dentro dos limites, com área e acesso suficientes.
+2. A planta reserva regiões adequadas para os biomas e o conteúdo obrigatório, com o equilíbrio
+   de áreas (cada faixa de clima com a mesma fração da terra; variantes raras com fatia fixa).
+3. A planta reserva estruturas e recursos com suas dependências: altura, terreno, bioma, espaço,
+   criaturas e acesso. Não basta conferir nomes de biomas.
+4. Uma validação determinística confirma a cobertura e seus locais no gerador real antes de o
+   mapa ser marcado como pronto.
+5. O mapa escolhido, sua versão, os limites e a referência ao catálogo ficam salvos com o mundo.
+   Carregar chunks em outra ordem, visitar outra dimensão ou reabrir o jogo não muda nada.
 6. A geração detalhada acontece sob demanda. Não é necessário carregar ou manter
    todos os 225 milhões de colunas na memória para garantir a cobertura do plano.
 
-Uma amostragem de alguns pontos, uma seed conhecida ou o comando `worldborder`
-isolado não comprovam essa garantia. A integração precisa validar o resultado do
-gerador real, incluindo biomas subterrâneos, estruturas e obtenção de recursos.
+A prévia (`tools/mapa/preview_maps.py`) confere a cobertura da planta; ela não substitui a
+validação no gerador real, incluindo biomas subterrâneos, estruturas e obtenção de recursos.
 
 ## Nether e portais
 
@@ -134,7 +147,7 @@ muralha inteira carregada ou pré-gerar tudo como condição de entrada.
 
 ## Critérios de aceite da implementação
 
-- Várias seeds, incluindo casos extremos, cumprem o catálogo completo no gerador
+- Cada mapa do catálogo cumpre o catálogo completo no gerador
   real. Verificar cobertura efetiva, regiões utilizáveis e acesso à progressão;
   testes de constantes ou mocks não bastam para certificar a geração.
 - Faces, cantos, chunks parciais, topo e subsolo impedem saída sem lacunas.

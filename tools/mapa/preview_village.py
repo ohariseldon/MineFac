@@ -49,7 +49,7 @@ ROADS = [  # (pontos, largura em blocos)
     ([(-6, 0), (-36, 6)], 3),                                   # praça → lavradora
     ([(30, 2), (80, 8), (124, 34)], 3),                         # → oleira, cruzando dois degraus
     ([(-36, 6), (-62, 40), (-74, 66)], 2),                      # → pasto
-    ([(-20, -20), (-70, -46), (-118, -56)], 2),                 # → carvoaria
+    ([(-20, -20), (-70, -46), (-134, -56)], 2),                 # → carvoaria
     ([(4, 6), (14, 20)], 3),                                    # → vendinha
     ([(80, 8), (78, -18)], 2),                                  # → terreno da oficina
 ]
@@ -61,11 +61,11 @@ BUILDINGS = [
     (-42, 0, 11, 9, "ok", "Lavradora (Dona Cida)"),
     (18, 24, 10, 8, "ok", "Vendinha (Seu Zé)"),
     (126, 44, 12, 9, "ok", "Olaria (Dona Zefa)"),
-    (-124, -60, 10, 8, "ok", "Carvoaria (Seu Lino)"),
+    (-140, -60, 10, 8, "ok", "Carvoaria (Seu Lino)"),
     (-84, 64, 9, 7, "ok", "Vaqueiro (Seu Tonho)"),
     (-22, 30, 8, 8, "ok", ""), (24, -30, 8, 8, "ok", ""), (-30, -28, 8, 8, "ok", ""),
     (44, 26, 8, 8, "obra", ""), (-14, 52, 8, 8, "obra", ""),
-    (54, -34, 8, 8, "ruina", ""),
+    (40, -64, 8, 8, "ruina", ""),
     (-48, -40, 8, 8, "lote", ""), (56, 48, 8, 8, "lote", ""), (-44, 46, 8, 8, "lote", ""), (10, 58, 8, 8, "lote", ""),
 ]
 STATE = {"ok": ((188, 140, 90), "habitada"), "obra": ((230, 200, 120), "em obra (andaime)"),
@@ -87,7 +87,7 @@ def main():
             if zi < -150 + 10 * math.sin(xi / 30):
                 shade = max(0, min(1, (-150 - zi) / 50))
                 c = (int(150 - 40 * shade), int(160 - 50 * shade), int(120 - 20 * shade))
-            elif xi < -120 + 12 * math.sin(zi / 25):
+            elif xi < -150 + 12 * math.sin(zi / 25):
                 c = (55, 110, 50)
             elif xi > river_x(zi) - 6 and xi < river_x(zi) + 6:
                 c = (60, 110, 210)
@@ -101,8 +101,8 @@ def main():
     import random
     rnd = random.Random(4)
     for _ in range(420):
-        x, z = rnd.uniform(-200, -125), rnd.uniform(-150, 200)
-        if x < -120 + 12 * math.sin(z / 25) - 4:
+        x, z = rnd.uniform(-200, -150), rnd.uniform(-150, 200)
+        if x < -150 + 12 * math.sin(z / 25) - 4:
             a, b = P(x, z); r = rnd.uniform(4, 7)
             d.ellipse([a - r, b - r, a + r, b + r], fill=(35, 85, 35, 230))
     # quebras dos terraços (linhas) e rótulos
@@ -165,9 +165,9 @@ def main():
         if label:
             d.text(((a1 + a2) / 2, b2 + 9), label, fill=(255, 255, 255), font=font(13), anchor="mm", stroke_width=3, stroke_fill=(0, 0, 0))
     # mina do avô e rótulos de região
-    a, b = P(-30, -175); d.polygon([(a - 9, b + 6), (a, b - 8), (a + 9, b + 6)], fill=(40, 30, 25), outline=(200, 170, 120))
-    d.text((a + 14, b), "Mina do avô (fechada)", fill=(255, 230, 180), font=font(13), anchor="lm", stroke_width=3, stroke_fill=(0, 0, 0))
-    for text, x, z in [("Serra do Veio (encosta)", 60, -180), ("Floresta", -165, 20), ("Rio", 162, -120), ("Planície", 100, 150)]:
+    a, b = P(-26, -192); d.polygon([(a - 9, b + 6), (a, b - 8), (a + 9, b + 6)], fill=(255, 230, 180), outline=(0, 0, 0))
+    d.text((a + 14, b), "Mina do avô: 300 blocos ao norte, no Morro da Mina", fill=(255, 230, 180), font=font(13), anchor="lm", stroke_width=3, stroke_fill=(0, 0, 0))
+    for text, x, z in [("pé do Morro da Mina", 110, -172), ("Mata", -178, 20), ("Rio Veio", 162, -120), ("Planície do Veio", 80, 150)]:
         d.text(P(x, z), text, fill=(255, 255, 255), font=font(15), anchor="mm", stroke_width=3, stroke_fill=(0, 0, 0))
     # cabeçalho, escala e painel
     d.text((16, 14), "A vila no estágio 0: a vila em declínio", fill=(255, 255, 255), font=font(28))

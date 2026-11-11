@@ -18,10 +18,34 @@ from PIL import Image, ImageDraw, ImageFont
 
 HALF = 7500
 N = 1000                       # pixels por lado (15 blocos por pixel)
+X0 = Z0 = -HALF                # canto noroeste da janela desenhada
 BLOCK = 2 * HALF / N
-xs = (np.arange(N) + 0.5) * BLOCK - HALF
-X, Z = np.meshgrid(xs, xs)     # X: leste, Z: sul
-U, V = X / HALF, Z / HALF
+
+
+def set_view(x0, z0, size, n):
+    """Desenha só uma janela do mapa (`size` blocos de lado a partir de x0, z0) com `n` pixels."""
+    global N, X0, Z0, BLOCK, X, Z, U, V
+    N, X0, Z0, BLOCK = n, x0, z0, size / n
+    xs_ = (np.arange(n) + 0.5) * BLOCK + x0
+    zs_ = (np.arange(n) + 0.5) * BLOCK + z0
+    X, Z = np.meshgrid(xs_, zs_)  # X: leste, Z: sul
+    U, V = X / HALF, Z / HALF
+
+
+set_view(-HALF, -HALF, 2 * HALF, N)
+
+# Cortes por quantil (equilíbrio dos biomas). O mapa inteiro grava; uma janela com zoom repete os
+# mesmos cortes, para o recorte ter exatamente os biomas do mapa inteiro.
+CUTS = {}
+REPLAY = False
+
+
+def cut(key, compute):
+    if REPLAY:
+        return CUTS.get(key)
+    value = compute()
+    CUTS[key] = value
+    return value
 
 # ---------- ruído ----------
 _rng = np.random.default_rng(7)
@@ -121,11 +145,13 @@ def classify(C, T, H, M, E, W, mushroom):
     t = np.digitize(T, [-0.45, -0.15, 0.2, 0.55])           # 0 gelado .. 4 quente
     h = np.digitize(H, [-0.35, -0.1, 0.1, 0.3])             # 0 seco .. 4 úmido
     out = np.full(C.shape, INDEX["plains"], dtype=np.int16)
+    calls = [0]
     def put(mask, name): out[mask] = INDEX[name]
     def share(mask, name, part, field=W, low=False):
-        if not mask.any(): return
-        cut = np.quantile(field[mask], part if low else 1 - part)
-        put(mask & ((field <= cut) if low else (field >= cut)), name)
+        calls[0] += 1
+        value = cut(f"share{calls[0]}", lambda: float(np.quantile(field[mask], part if low else 1 - part)) if mask.any() else None)
+        if value is None: return
+        put(mask & ((field <= value) if low else (field >= value)), name)
 
     land = C >= -0.12
     table = {
@@ -180,7 +206,8 @@ def classify(C, T, H, M, E, W, mushroom):
     deep = np.zeros_like(sea)
     for band in range(5):                                    # cada oceano tem a sua parte funda
         m = sea & (t == band)
-        if m.any(): deep |= m & (C <= np.quantile(C[m], 0.45))
+        value = cut(f"deep{band}", lambda: float(np.quantile(C[m], 0.45)) if m.any() else None)
+        if value is not None: deep |= m & (C <= value)
     put(sea & (t == 4), "warm_ocean")
     put(sea & (t == 3), "lukewarm_ocean"); put(deep & (t == 3), "deep_lukewarm_ocean")
     put(sea & (t == 2), "ocean"); put(deep & (t == 2), "deep_ocean")
@@ -190,10 +217,10 @@ def classify(C, T, H, M, E, W, mushroom):
     return out, t
 
 
-def equalize(field, mask, cuts):
+def equalize(field, mask, cuts, key):
     """Reposiciona o campo para que cada faixa (entre os cortes da tabela) cubra a mesma fração
     da terra. A ordem dos valores não muda: o norte continua mais frio que o sul."""
-    q = np.quantile(field[mask], np.linspace(0, 1, len(cuts) + 2))
+    q = cut(key, lambda: np.quantile(field[mask], np.linspace(0, 1, len(cuts) + 2)))
     targets = np.concatenate([[cuts[0] - 0.4], cuts, [cuts[-1] + 0.4]])
     return np.interp(field, q, targets)
 
@@ -209,7 +236,7 @@ def village_patch(C, T, H, M):
     T = T * (1 - w) + 0.02 * w
     H = H * (1 - w) + (-0.2) * w
     M = M * (1 - blob(0, 0, 700, 0.5, 4))
-    H = H + 0.32 * blob(-600, 80, 420, 0.6, 5)  # floresta a oeste
+    H = H + 0.34 * blob(-430, -40, 340, 0.6, 5)  # a mata chega a ~150 blocos a oeste da praça
     return C, T, H, M
 
 
@@ -357,13 +384,15 @@ def concept_5():
         + 0.6 * ridge(X, Z, [(2000, 3800), (3600, 5200)], 520, s + 2) + 0.5 * ridge(X, Z, [(-1200, -5200), (900, -6200)], 500, s + 3)
     mush = blob(-6400, 400, 380, 0.7, 6) > 0.30
     C = np.where(mush, -0.2, C)
-    rivers = [[(5300, -2600), (3200, -1200), (1500, -700), (200, -500), (180, 0), (-900, 600), (-2600, 900)],
+    rivers = [[(5300, -2600), (3200, -1200), (1500, -700), (260, -480), (175, 0), (230, 420), (-300, 820), (-1000, 960), (-2700, 1080)],
               [(5200, 2400), (3200, 1900), (1400, 2600), (-600, 3200), (-2700, 3500)],
               [(5000, -5600), (2800, -5000), (500, -4300), (-2400, -4400)],
               [(5400, 6000), (2600, 6400), (-1000, 6600), (-2600, 6800)]]
     labels = [("Mar do Oeste", -5000, -2500), ("Muralha de Pedra", 5600, -400), ("Costa", -2300, 1800),
               ("Interior seco", 3600, 3800), ("Ilha dos cogumelos", -6300, 1000)]
-    return dict(C=C, T=T, H=H, M=M, E=e, W=w, mush=mush, rivers=rivers, labels=labels,
+    # o Morro da Mina: o primeiro contraforte da Serra do Veio, logo ao norte da vila
+    foothills = [([(-650, -420), (250, -450), (850, -560), (1300, -900)], 170, 0.55, 57)]
+    return dict(C=C, T=T, H=H, M=M, E=e, W=w, mush=mush, rivers=rivers, labels=labels, foothills=foothills,
                 title="5 · Costa oeste", text="Mar a oeste, uma muralha de montanhas a leste fecha o mundo. Rios descem "
                 "da muralha ao mar; o litoral é úmido e o interior, atrás das serras, seco.")
 
@@ -378,7 +407,7 @@ def font(size):
 
 
 def to_px(x, z):
-    return ((x + HALF) / BLOCK, (z + HALF) / BLOCK)
+    return ((x - X0) / BLOCK, (z - Z0) / BLOCK)
 
 
 def jitter(points, seed):
@@ -392,6 +421,7 @@ def jitter(points, seed):
             t = i / steps
             x, z = ax + (bx - ax) * t, az + (bz - az) * t
             off = 260 * float(value_noise(np.array(x), np.array(z), 700, seed)) + 90 * float(value_noise(np.array(x), np.array(z), 200, seed + 1))
+            off *= min(1.0, max(0.12, (math.hypot(x, z) - 250) / 900))   # perto da vila o rio fica onde a planta diz
             out.append((x + nx / norm * off, z + nz / norm * off))
     out.append(points[-1])
     return out
@@ -407,22 +437,34 @@ def caves(C, H, M, E, cls):
     return drip, lush, dark
 
 
-def render(concept, out_dir, index):
+def prepare(concept, index, detail=False):
+    """Campos finais e biomas. Com `detail`, um ruído fino revela relevo e bordas que a escala do
+    mapa inteiro não mostra (sem mudar os biomas grandes)."""
     C, T, H, M, E, W = (concept[k] for k in ("C", "T", "H", "M", "E", "W"))
+    if detail:
+        T = T + 0.04 * fbm(X, Z, 140, 801, 3)
+        H = H + 0.05 * fbm(X, Z, 140, 802, 3)
+        C = C + 0.025 * fbm(X, Z, 160, 803, 3)
     # serras com bordas irregulares e colinas soltas pelo continente (longe da vila)
     hills = 0.8 * np.clip(fbm(X, Z, 1300, 500 + index) - 0.12, 0, 1) * (1 - blob(0, 0, 900))
     M = M * (0.8 + 0.4 * fbm(X, Z, 500, 600 + index, 3)) + hills
     # várzeas: faixa baixa e úmida ao longo dos rios, onde nascem pântanos e manguezais
-    flood = Image.new("L", (N, N), 0)
-    fd = ImageDraw.Draw(flood)
+    near_river = np.full(X.shape, 1e9, dtype=np.float32)
     for i, pts in enumerate(concept["rivers"]):
-        fd.line([to_px(x, z) for x, z in jitter(pts, 300 + index * 10 + i)], fill=255, width=40)
-    plain = (np.array(flood) > 0) & (M < 0.3) & (np.hypot(X, Z) > 700) & (fbm(X, Z, 600, 700 + index) > -0.15)
+        near_river = np.minimum(near_river, seg_distance(X, Z, jitter(pts, 300 + index * 10 + i)))
+    reach = 300 * (1 + 0.6 * fbm(X, Z, 500, 710 + index, 4))       # várzea de largura irregular
+    plain = (near_river < reach) & (M < 0.3) & (np.hypot(X, Z) > 700) & (fbm(X, Z, 600, 700 + index) > -0.15)
     land = C >= -0.12
-    T = equalize(T, land, [-0.45, -0.15, 0.2, 0.55])
-    H = equalize(H, land, [-0.35, -0.1, 0.1, 0.3])
+    T = equalize(T, land, [-0.45, -0.15, 0.2, 0.55], f"T{index}")
+    H = equalize(H, land, [-0.35, -0.1, 0.1, 0.3], f"H{index}")
     C, T, H, M = village_patch(C, T, H, M)
+    # sem variantes raras em volta da vila: planície comum e prado, não girassóis nem cerejeiral
+    calm = blob(0, 0, 1000, 0.4, 8) > 0.45
+    for pts, width, amp, seed in concept.get("foothills", []):
+        M = M + amp * ridge(X, Z, pts, width, seed)
     cls, tband = classify(C, T, H, M, E, W, concept["mush"])
+    for rare, common in CALM.items():
+        cls = np.where(calm & (cls == INDEX[rare]), INDEX[common], cls)
     h = np.digitize(H, [-0.35, -0.1, 0.1, 0.3])
     swamp = plain & (C >= -0.04) & (h >= 2) & (tband >= 1)
     cls = np.where(swamp & (tband <= 2), INDEX["swamp"], np.where(swamp & (tband >= 3), INDEX["mangrove_swamp"], cls))
@@ -433,12 +475,32 @@ def render(concept, out_dir, index):
     for i, pts in enumerate(concept["rivers"]):
         line = [to_px(x, z) for x, z in jitter(pts, 300 + index * 10 + i)]
         river_lines.append(line)
-        draw.line(line, fill=255, width=3 if i == 0 else 2)
+        draw.line(line, fill=255, width=max(3 if i == 0 else 2, int((22 if i == 0 else 14) / BLOCK)))
     rmask = (np.array(river_mask) > 0) & (C >= -0.12)
     cls = np.where(rmask & (tband == 0), INDEX["frozen_river"], np.where(rmask, INDEX["river"], cls))
-    # relevo para o sombreamento
     height = np.where(C < -0.12, -30 + 60 * C, 10 + 30 * np.clip(C, 0, 1)) + 160 * np.clip(M, 0, 1.3) ** 1.4 \
         + 6 * fbm(X, Z, 300, 77, 3) + np.where(rmask, -6, 0)
+    if detail:
+        height = height + 3 * fbm(X, Z, 60, 804, 3)
+    return dict(C=C, T=T, H=H, M=M, E=E, W=W, cls=cls, tband=tband, rmask=rmask, height=height, river_lines=river_lines)
+
+
+# Perto da vila, as variantes raras voltam ao bioma comum: o raro fica para quem explora.
+CALM = {"sunflower_plains": "plains", "flower_forest": "forest", "cherry_grove": "meadow",
+        "old_growth_birch_forest": "birch_forest", "old_growth_pine_taiga": "taiga", "old_growth_spruce_taiga": "taiga",
+        "windswept_gravelly_hills": "windswept_hills", "bamboo_jungle": "jungle"}
+
+
+def shaded(cls, height, strength=1.0):
+    """Cor do bioma com sombra do relevo (luz do noroeste)."""
+    gz, gx = np.gradient(height)
+    shade = np.clip(0.82 + (-gx * 0.6 - gz * 0.6) * strength / 18, 0.45, 1.25)
+    return np.clip(COLORS[cls] * shade[..., None], 0, 255).astype(np.uint8)
+
+
+def render(concept, out_dir, index):
+    f_ = prepare(concept, index)
+    C, H, M, E, cls, height = (f_[k] for k in ("C", "H", "M", "E", "cls", "height"))
     gz, gx = np.gradient(height)
     shade = np.clip(0.82 + (-gx * 0.6 - gz * 0.6) / 18, 0.45, 1.25)
     rgb = COLORS[cls] * shade[..., None]

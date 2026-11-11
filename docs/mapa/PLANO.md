@@ -4,10 +4,9 @@ Pedido de 11/11/2026: um mapa único, sempre igual, com todos os biomas do Minec
 equilibrada nos 15.000 x 15.000 blocos, transições naturais, a vila inicial integrada ao terreno e uma vila
 que muda de aparência conforme a história avança.
 
-**Muda uma decisão anterior.** O [MAPA.md](../../MAPA.md) (7/11) diz que o mundo varia de seed para seed.
-O pedido agora é um mapa desenhado e fixo. Ao aprovar um dos conceitos abaixo, o MAPA.md passa a dizer:
-"um mapa fixo, desenhado, com seed fixa". As outras regras continuam valendo: tamanho, muralha de bedrock,
-todos os biomas e recursos e o Nether a 1:8.
+**Decidido em 11/11:** o [MAPA.md](../../MAPA.md) agora diz que os mapas são fixos e desenhados. Os
+cinco conceitos ficam no [catálogo](conceitos/README.md) como opções do jogador ao criar o mundo; o
+**mapa 5, Costa oeste**, é o foco, começando pelo [bloco central](costa-oeste/README.md).
 
 ## As cinco prévias
 
@@ -117,8 +116,8 @@ cada troca a um evento da história. Dois ritmos:
 
 ## Próximos passos
 
-1. Escolher um conceito (ou misturar dois) e ajustar a planta: nomes, onde fica cada serra, rios.
-2. Atualizar o MAPA.md com a decisão do mapa fixo.
+1. ~~Escolher um conceito~~: o mapa 5. ~~Atualizar o MAPA.md~~: feito.
+2. Detalhar o bloco C do mapa 5 com o Luiz (nomes, recursos, onde a vila cresce).
 3. Passar a planta para o formato que o gerador lê e testar no motor real: comparar a imagem do mundo
    gerado com a planta e conferir a cobertura de biomas, estruturas e recursos.
 4. Modelos da vila no estágio 0 e a tabela de estágios, começando pela fonte.
