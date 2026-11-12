@@ -222,13 +222,67 @@ pub(super) fn find(block: &str, slots: &[Option<ItemStack>]) -> Option<&'static 
     })
 }
 
+/// Sem receita completa: (índice da receita, entrada que falta) da receita com mais entradas
+/// já atendidas entre as que usam algo que está nas entradas. `None` se nada nas entradas serve.
+pub(super) fn closest(block: &str, slots: &[Option<ItemStack>]) -> Option<(usize, usize)> {
+    let mut best: Option<(usize, usize, usize)> = None;
+    for (index, recipe) in recipes(block).enumerate() {
+        let mut started = false;
+        let mut ready = 0;
+        let mut missing = None;
+        for (slot, input) in recipe.inputs.iter().enumerate() {
+            let present = slots.get(slot).and_then(Option::as_ref).filter(|stack| matches_input(input, stack));
+            started |= present.is_some();
+            if present.is_some_and(|stack| stack.count >= input.count) {
+                ready += 1;
+            } else if missing.is_none() {
+                missing = Some(slot);
+            }
+        }
+        let Some(missing) = missing else { continue };
+        if started && best.is_none_or(|(_, _, known)| ready > known) {
+            best = Some((index, missing, ready));
+        }
+    }
+    best.map(|(index, slot, _)| (index, slot))
+}
+
+/// Linha do painel quando faltam ingredientes: o item e a quantidade por ciclo que faltam na
+/// receita mais próxima (`data[8]` receita, `data[12]` entrada). Só texto, para qualquer painel.
+pub(super) fn missing_line(block: &str, data: &[i32]) -> Option<String> {
+    use horizon_client::mod_api::Text;
+    let read = |index: usize| data.get(index).copied().unwrap_or(0);
+    let (item, count) = missing_input(block, read(0), read(8), read(12))?;
+    Some(Text::tr("veio.todo.missing", &[&count, &contracts::item_name(item), &read(12)]).plain())
+}
+
+/// (item, quantidade por ciclo) que falta, se o estado for "faltam ingredientes".
+pub(super) fn missing_input(block: &str, status: i32, recipe: i32, slot: i32) -> Option<(&'static str, u32)> {
+    if status != 2 || slot <= 0 || block == HUB {
+        return None;
+    }
+    let recipe = recipes(block).nth(usize::try_from(recipe).ok()?.checked_sub(1)?)?;
+    let input = recipe.inputs.get(usize::try_from(slot - 1).ok()?)?;
+    Some((input.items.first()?, input.count))
+}
+
 /// Motor comum das máquinas de receita: espera ingredientes, espaço e energia; aplica módulos.
 pub(super) fn process(entity: &mut ModBlockEntity) {
     let output_slot = output_slots(&entity.id).start;
     let Some(recipe) = find(&entity.id, &entity.items) else {
         set_number(entity, "Status", 2);
+        // A receita mais próxima do que está nas entradas: o painel mostra as taxas dela e
+        // o que falta (`Info` = entrada que falta, a partir de 1; 0 = entradas vazias).
+        match closest(&entity.id, &entity.items) {
+            Some((index, slot)) => {
+                set_number(entity, "RecipeIndex", index as i32 + 1);
+                set_number(entity, "Info", slot as i32 + 1);
+            }
+            None => set_number(entity, "Info", 0),
+        }
         return;
     };
+    set_number(entity, "Info", 0);
     let (item, amount) = recipe.output;
     let (duration, draw) = upgrades::apply(recipe.ticks, recipe.power, upgrades::effect(entity));
     set_number(entity, "Duration", duration);

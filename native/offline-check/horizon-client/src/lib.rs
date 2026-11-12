@@ -370,6 +370,9 @@ pub mod mod_api {
         fn kill_mob(&mut self, dimension: &str, id: u32) -> bool {
             unimplemented!("kill_mob")
         }
+        fn remove_mob(&mut self, dimension: &str, id: u32) -> bool {
+            unimplemented!("remove_mob")
+        }
         fn set_mob_health(&mut self, dimension: &str, id: u32, health: f32) -> bool {
             unimplemented!("set_mob_health")
         }
@@ -392,6 +395,29 @@ pub mod mod_api {
         }
         fn text(&self, batch: &mut HudBatch, text: &str, at: [f32; 2], rgb: u32, shadow: bool) {
             unimplemented!("text")
+        }
+        /// `native_item` (API 111): o ícone de `item`, `size` pixels de GUI, em `at`.
+        fn item(&self, batch: &mut HudBatch, item: &str, at: [f32; 2], size: f32) -> bool {
+            unimplemented!("item")
+        }
+        /// `native_gui_tooltip`: uma caixa de dica vanilla no cursor.
+        fn gui_tooltip(&self, batch: &mut HudBatch, lines: &[Text], at: [f32; 2]) {
+            unimplemented!("gui_tooltip")
+        }
+        /// `native_mod_screen_open` (API 111): abre a tela própria do mod.
+        fn mod_screen_open(&mut self, mod_id: &str) -> bool {
+            unimplemented!("mod_screen_open")
+        }
+        fn mod_screen_close(&mut self, mod_id: &str) {
+            unimplemented!("mod_screen_close")
+        }
+        /// O mod cuja tela própria está aberta.
+        fn mod_screen(&self) -> Option<&str> {
+            unimplemented!("mod_screen")
+        }
+        /// A tecla escolhida para a tecla `name` do mod, ou `default` (`key.keyboard.j`).
+        fn mod_key(&self, mod_id: &str, name: &str, default: &str) -> String {
+            unimplemented!("mod_key")
         }
         fn text_width(&self, text: &str) -> f32 {
             unimplemented!("text_width")
@@ -720,6 +746,54 @@ pub mod mod_api {
         }
     }
     /// `screen_click` (API 20): `replace`, o retorno é o botão.
+    /// A tela aberta, como os ganchos de tela a veem (`NativeScreenView`).
+    #[derive(Clone, Copy, Debug)]
+    pub struct NativeScreenView<'a> {
+        pub id: &'static str,
+        pub menu: Option<&'a str>,
+        pub title: Option<&'a Text>,
+        pub rect: [f32; 4],
+        pub slots: usize,
+        pub mouse: [f32; 2],
+        pub partial_tick: f32,
+    }
+    /// `key` (API 1): tecla ou botão do mouse, pelo nome vanilla (`key.keyboard.j`).
+    #[non_exhaustive]
+    pub struct KeyEvent<'a> {
+        pub key: &'a str,
+        pub pressed: bool,
+    }
+    /// `screen_render_post`: desenhar por cima da tela aberta.
+    #[non_exhaustive]
+    pub struct ScreenRenderPostEvent<'a> {
+        pub batch: &'a mut HudBatch,
+        pub screen: &'a NativeScreenView<'a>,
+    }
+    #[non_exhaustive]
+    pub struct ScreenMouseButtonPressedPreEvent<'a> {
+        pub screen: &'a NativeScreenView<'a>,
+        pub button: i32,
+        pub modifiers: u32,
+    }
+    #[non_exhaustive]
+    pub struct ScreenMouseScrolledPreEvent<'a> {
+        pub screen: &'a NativeScreenView<'a>,
+        pub scroll: [f64; 2],
+        pub modifiers: u32,
+    }
+    impl<'a> ScreenRenderPostEvent<'a> {
+        /// Só no substituto: monta o evento para testes e prévias.
+        pub fn preview(batch: &'a mut HudBatch, screen: &'a NativeScreenView<'a>) -> Self { Self { batch, screen } }
+    }
+    impl<'a> ScreenMouseButtonPressedPreEvent<'a> {
+        pub fn preview(screen: &'a NativeScreenView<'a>, button: i32) -> Self { Self { screen, button, modifiers: 0 } }
+    }
+    impl<'a> ScreenMouseScrolledPreEvent<'a> {
+        pub fn preview(screen: &'a NativeScreenView<'a>, scroll: [f64; 2]) -> Self { Self { screen, scroll, modifiers: 0 } }
+    }
+    impl<'a> KeyEvent<'a> {
+        pub fn preview(key: &'a str, pressed: bool) -> Self { Self { key, pressed } }
+    }
     #[non_exhaustive]
     pub struct ScreenClickEvent<'a> {
         pub block: &'a str,
@@ -837,6 +911,20 @@ pub mod mod_api {
         pub kind: &'a str,
         pub offer: &'a MerchantOffer,
     }
+    /// `interact_entity` (API 29): clique direito de um jogador numa entidade (`Entity.getId`),
+    /// uma vez por mão, antes da interação da entidade e do item. `Flow::Cancel` toma o clique.
+    #[non_exhaustive]
+    pub struct InteractEntityEvent<'a> {
+        pub entity: i32,
+        pub kind: &'a str,
+        pub stack: Option<&'a ItemStack>,
+    }
+    impl<'a> InteractEntityEvent<'a> {
+        /// Só no substituto: monta o evento para os testes.
+        pub fn preview(entity: i32, kind: &'a str, stack: Option<&'a ItemStack>) -> Self {
+            Self { entity, kind, stack }
+        }
+    }
     #[non_exhaustive]
     pub struct PlayerRespawnedEvent<'a> {
         pub player: u128,
@@ -949,10 +1037,21 @@ pub mod mod_api {
             Flow::Continue
         }
         fn tick(&self, host: &mut dyn Host, event: &mut TickEvent) {}
+        fn key(&self, host: &mut dyn Host, event: &mut KeyEvent<'_>) {}
+        fn screen_render_post(&self, host: &dyn Host, event: &mut ScreenRenderPostEvent<'_>) {}
+        fn screen_mouse_button_pressed_pre(&self, host: &dyn Host, event: &mut ScreenMouseButtonPressedPreEvent<'_>) -> Flow {
+            Flow::Continue
+        }
+        fn screen_mouse_scrolled_pre(&self, host: &dyn Host, event: &mut ScreenMouseScrolledPreEvent<'_>) -> Flow {
+            Flow::Continue
+        }
         fn chunk_load(&self, host: &mut dyn Host, event: &mut ChunkLoadEvent<'_>) {}
         fn player_logged_in(&self, host: &mut dyn Host, event: &mut PlayerLoggedInEvent<'_>) {}
         fn player_respawned(&self, host: &mut dyn Host, event: &mut PlayerRespawnedEvent<'_>) {}
         fn trade_with_villager(&self, host: &mut dyn Host, event: &mut TradeWithVillagerEvent<'_>) {}
+        fn interact_entity(&self, host: &mut dyn Host, event: &mut InteractEntityEvent<'_>) -> Flow {
+            Flow::Continue
+        }
         fn player_spawn_point_set(&self, host: &mut dyn Host, event: &mut PlayerSpawnPointSetEvent<'_>) -> Flow {
             Flow::Continue
         }

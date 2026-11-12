@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "minecraft:gold_block",
+    "minecraft:chiseled_stone_bricks",
+    "minecraft:chiseled_stone_bricks",
+    "minecraft:smooth_stone",
+    "minecraft:smooth_stone",
+    "minecraft:smooth_stone",
+    "minecraft:smooth_stone",
+    "minecraft:lantern",
+    "minecraft:lantern"
+  ],
+  "result": {
+    "id": "veio:monument",
+    "count": 1
+  }
+}

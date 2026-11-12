@@ -16,7 +16,7 @@ pub(super) const SOFT_INK: u32 = 0x5a5a5a;
 const WIDTH: f32 = 194.0;
 const HEIGHT: f32 = 236.0;
 
-pub(super) const STATUS_KEYS: [&str; 44] = [
+pub(super) const STATUS_KEYS: [&str; 45] = [
     "idle", "working", "input", "blocked", "ore", "power", "fuel", "sun", "charged", "redstone",
     "crops", "watch", "tier", "damaged", "water", "wind", "seeds", "animals",
     // Postos de trabalho (`workforce`).
@@ -31,6 +31,8 @@ pub(super) const STATUS_KEYS: [&str; 44] = [
     "site_plan", "site_blocked", "site_building", "site_done",
     // Terminais de transporte (`freight`): rota, caravana sem animal, sem ração, animal ocupado.
     "freight_route", "caravan_animal", "caravan_feed", "caravan_busy",
+    // Feriado da agenda da vila (`workforce::society::agenda`).
+    "holiday",
 ];
 
 pub(super) fn screen(block: &str) -> Option<NativeScreen> {
@@ -241,6 +243,11 @@ pub(super) fn screen_draw(host: &dyn Host, event: &mut ScreenDrawEvent<'_>) {
         ],
     } };
     let mut lines = lines;
+    // Faltam ingredientes: a terceira linha diz o que falta na receita mais próxima.
+    if let Some(missing) = production::missing_line(event.block, event.data) {
+        lines.truncate(2);
+        lines.push(missing);
+    }
     draw_rates(host, event, &layout);
     // Terceira linha: módulo, emissão e integridade, só quando houver algo a dizer.
     let mut extra = Vec::new();

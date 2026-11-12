@@ -38,6 +38,8 @@ pub(super) mod barracks;
 pub(super) mod center;
 pub(super) mod storage;
 pub(super) mod spawn;
+pub(crate) mod town;
+mod town_plan;
 pub(super) mod village;
 pub(super) mod zones;
 pub(super) mod society;
@@ -49,6 +51,7 @@ pub(super) mod site;
 pub(super) mod staff;
 pub(super) mod focus;
 pub(super) mod home;
+pub(super) mod pick;
 
 pub(super) const FARM_POST: &str = "veio:farm_post";
 pub(super) const HAULER_POST: &str = "veio:hauler_post";
@@ -238,8 +241,10 @@ pub(super) fn claim(uuid: Uuid, dimension: &str, post: [i32; 3], now: u64) -> bo
         claim.seen = now;
         return true;
     }
-    // Limpa reivindicações vencidas antes de crescer.
-    claims.retain(|(_, claim)| now.saturating_sub(claim.seen) <= CLAIM_STALE);
+    // Limpa reivindicações vencidas quando a lista cresce (a busca já trata as vencidas).
+    if claims.len() >= 128 {
+        claims.retain(|(_, claim)| now.saturating_sub(claim.seen) <= CLAIM_STALE);
+    }
     claims.push((uuid, Claim { dimension: dimension.to_owned(), post, entity: None, seen: now }));
     true
 }
@@ -950,6 +955,10 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
         return Some(Flow::Cancel);
     }
     let Some(found) = candidate(host, pos, now) else {
+        // Ninguém livre a 8 blocos: o posto espera o jogador clicar no aldeão que quiser.
+        if let Some(player) = host.acting_player() {
+            pick::arm(player.uuid, dimension, pos, now);
+        }
         notify(host, pos, "veio.worker.none");
         return Some(Flow::Cancel);
     };
@@ -957,14 +966,18 @@ pub(super) fn right_click(host: &mut dyn Host, pos: [i32; 3], held: &str) -> Opt
         return Some(Flow::Cancel);
     }
     let mut hired = false;
-    host.change_mod_block_entity(pos, &mut |entity| hired = assign(dimension, pos, entity, found, now));
+    let mut food = true;
+    host.change_mod_block_entity(pos, &mut |entity| {
+        hired = assign(dimension, pos, entity, found, now);
+        food = pick::has_food(entity);
+    });
     if !hired {
         // Ninguém foi contratado: devolve a esmeralda.
         host.give_items(WAGE, 1);
         notify(host, pos, "veio.worker.none");
         return Some(Flow::Cancel);
     }
-    notify(host, pos, "veio.worker.hired");
+    notify(host, pos, pick::hired_key(&block, food));
     host.play_sound("minecraft:entity.villager.yes", center(pos), 4, 0.8, 1.0);
     host.send_particles(&ParticleOptions::simple(ParticleType::HappyVillager), None,
         [f64::from(pos[0]) + 0.5, f64::from(pos[1]) + 1.2, f64::from(pos[2]) + 0.5], [0.3, 0.3, 0.3], 0.0, 8);
@@ -1154,6 +1167,15 @@ pub(super) fn step(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         publish_ration(entity);
         return;
     }
+    // Feriado: a vila para para comemorar (o quartel continua de plantão).
+    if entity.id != BARRACKS && society::agenda::holiday(dimension, pos, host.day_time(), now) {
+        show_load(host, entity, id, false);
+        cancel(id);
+        unreserve(dimension, pos);
+        set_number(entity, "Status", society::agenda::HOLIDAY);
+        publish_ration(entity);
+        return;
+    }
     if entity.id == FOREMAN_DESK {
         foreman::organize(host, pos, entity, now);
     }
@@ -1271,7 +1293,7 @@ fn work(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity, id: u32
             cancel(id);
             unreserve(dimension, pos);
             return match status {
-                KEEP if number(entity, "Status") == RESTING => IDLE_WORK,
+                KEEP if matches!(number(entity, "Status"), RESTING | society::agenda::HOLIDAY) => IDLE_WORK,
                 KEEP => number(entity, "Status"),
                 status => status,
             };
@@ -1525,7 +1547,42 @@ pub(super) fn panel_lines(block: &str, data: &[i32]) -> Option<Vec<String>> {
         BARRACKS => (tr("veio.metric.kills", &[&read(9)]), barracks::hint(read(6))),
         _ => return zones::panel_lines(block, data).or_else(|| storage::panel_lines(block, data)),
     };
-    Some(vec![first, tr("veio.metric.ration", &[&read(12)]), tr(hint, &[])])
+    let step = next_step(block, data).unwrap_or_else(|| tr(hint, &[]));
+    Some(vec![first, tr("veio.metric.ration", &[&read(12)]), step])
+}
+
+/// O que o jogador precisa fazer agora num posto, conforme o estado do painel (`data[0]`).
+/// `None` quando o posto está trabalhando e não há nada a pedir: o painel mostra a dica fixa.
+/// Função pura (só texto), para qualquer painel chamar.
+pub(super) fn next_step(block: &str, data: &[i32]) -> Option<String> {
+    next_step_key(block, data).map(|key| Text::tr(key, &[]).plain())
+}
+
+pub(super) fn next_step_key(block: &str, data: &[i32]) -> Option<&'static str> {
+    if !matches!(block, FARM_POST | HAULER_POST | FOREMAN_DESK | SHEPHERD_POST | BARRACKS) {
+        return None;
+    }
+    let read = |index: usize| data.get(index).copied().unwrap_or(0);
+    Some(match read(0) {
+        NO_WORKER => "veio.todo.hire",
+        ABSENT => "veio.todo.absent",
+        NO_FOOD => "veio.todo.food",
+        PATH => "veio.todo.path",
+        3 => "veio.todo.output",
+        NO_WAGE => "veio.todo.wage",
+        RESTING => "veio.todo.rest",
+        production::NO_ANIMALS if block == SHEPHERD_POST => "veio.todo.shepherd_idle",
+        NO_TASK | IDLE_WORK => match block {
+            FARM_POST => "veio.todo.farm_idle",
+            // O carregador publica em `Rate` (slot 6) quantas máquinas achou em volta.
+            HAULER_POST if read(6) == 0 => "veio.todo.hauler_none",
+            HAULER_POST => "veio.todo.hauler_idle",
+            FOREMAN_DESK => "veio.todo.foreman_idle",
+            SHEPHERD_POST => "veio.todo.shepherd_idle",
+            _ => return None,
+        },
+        _ => return None,
+    })
 }
 
 pub(super) fn screen_slots(block: &str) -> Option<Vec<Option<[f32; 2]>>> {
@@ -1569,6 +1626,7 @@ pub(super) fn maintenance(now: u64) { foreman::maintenance(now); }
 /// Tick global do jogo: chegada na vila e o foco dos jogadores.
 pub(super) fn world_tick(host: &mut dyn Host, now: u64) {
     spawn::tick(host, now);
+    town::tick(host, now);
     focus::tick(host, now);
 }
 

@@ -2,6 +2,12 @@
 
 Integra a produção 0.9 da nuvem e preserva o unificador da 0.8.1. As receitas de produção, geração de energia e agricultura continuam no módulo de produção.
 
+## Entrada, saída e carga (0.28)
+
+- **Máquinas:** a face de trás (para onde a máquina "olha" longe do jogador ao ser colocada) é a saída: a produção sai por ali e nada entra (`logistics::accepts_at`, chamado em `container_accepts`). As outras faces recebem. No modelo, moldura vermelha no bico de saída e faixas verdes nas faces de entrada (`appearance::draw`); extratoras só têm a vermelha.
+- **Esteiras:** não aceitam nada pela frente (a face para onde andam). O divisor só recebe por trás. Uma esteira que encosta na saída de uma máquina não faz curva para dentro dela.
+- **Carga por bloco:** matéria-prima (minério, pedra, toras: `logistics::is_raw`) até 5; produto pronto até o que a esteira move por vez (comum 1, rápida 2, expressa 4; divisor, unificador e túnel 2). O Horizon insere um item por vez e pergunta ao mod a cada um, então o limite é exato. A vazão não muda: esteiras vizinhas andam em fases alternadas.
+
 ## Curvas e rampas
 
 Esteiras comuns e rápidas passam a reconhecer conexões vizinhas. Quando existe uma única entrada e uma única saída disponível, uma curva de 90 graus é orientada automaticamente. Em bifurcações ambíguas a direção escolhida ao colocar a peça é preservada. A conexão é recalculada a cada oito ticks, escalonada pela posição.

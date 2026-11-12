@@ -1,0 +1,60 @@
+{
+  "type": "minecraft:generic",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": {
+                    "raw": "Diário de Otávio"
+                  },
+                  "author": "Otávio",
+                  "generation": 0,
+                  "resolved": true,
+                  "pages": [
+                    {
+                      "raw": {
+                        "translate": "veio.onboarding.diary.0"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.onboarding.diary.1"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.onboarding.diary.2"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.onboarding.diary.3"
+                      }
+                    },
+                    {
+                      "raw": {
+                        "translate": "veio.onboarding.diary.4"
+                      }
+                    }
+                  ]
+                },
+                "minecraft:custom_name": {
+                  "translate": "veio.onboarding.diary.title",
+                  "italic": false
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

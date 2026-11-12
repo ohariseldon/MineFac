@@ -1,0 +1,15 @@
+# Gerado por tools/vila/build_village.py. Não edite à mão.
+# Vendinha · Seu Zé (acabamento do estágio 4): só acrescenta (roda no mesmo canto e piso de veio:village/vendinha).
+setblock ~4 ~1 ~-1 minecraft:lilac[half=lower]
+setblock ~4 ~1 ~10 minecraft:peony[half=lower]
+setblock ~4 ~2 ~-1 minecraft:lilac[half=upper]
+setblock ~4 ~2 ~0 minecraft:glass_pane[north=true,south=false,east=true,west=true]
+setblock ~-1 ~2 ~3 minecraft:spruce_trapdoor[facing=west,half=bottom,open=true]
+setblock ~-1 ~2 ~5 minecraft:spruce_trapdoor[facing=west,half=bottom,open=true]
+setblock ~-1 ~2 ~6 minecraft:spruce_trapdoor[facing=west,half=bottom,open=true]
+setblock ~0 ~2 ~6 minecraft:glass_pane[north=false,south=true,east=false,west=false]
+setblock ~-1 ~2 ~7 minecraft:spruce_trapdoor[facing=west,half=bottom,open=true]
+setblock ~0 ~2 ~7 minecraft:glass_pane[north=true,south=true,east=false,west=false]
+setblock ~-1 ~2 ~8 minecraft:spruce_trapdoor[facing=west,half=bottom,open=true]
+setblock ~4 ~2 ~9 minecraft:glass_pane[north=false,south=true,east=true,west=true]
+setblock ~4 ~2 ~10 minecraft:peony[half=upper]

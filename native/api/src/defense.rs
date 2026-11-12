@@ -18,7 +18,25 @@ const FRESH: u64 = 40;
 const FORGET: u64 = 400;
 const MAX_TRACKED: usize = 4096;
 
+#[cfg(not(test))]
 static CLOCK: AtomicU64 = AtomicU64::new(0);
+
+// Nos testes, cada teste (uma thread) tem o seu relógio: os testes rodam em paralelo e um que
+// avança muitos ticks não deve envelhecer os registros dos outros.
+#[cfg(test)]
+thread_local! {
+    static CLOCK: AtomicU64 = const { AtomicU64::new(0) };
+}
+
+#[cfg(not(test))]
+fn with_clock<T>(f: impl FnOnce(&AtomicU64) -> T) -> T {
+    f(&CLOCK)
+}
+
+#[cfg(test)]
+fn with_clock<T>(f: impl FnOnce(&AtomicU64) -> T) -> T {
+    CLOCK.with(f)
+}
 static SEEN: Mutex<Vec<(String, HashMap<u32, u64>)>> = Mutex::new(Vec::new());
 static SWEEP: AtomicU64 = AtomicU64::new(u64::MAX);
 
@@ -37,18 +55,18 @@ pub(super) fn hostile(kind: &str) -> bool {
 
 /// Relógio do mod: conta os ticks do jogo (janela e servidor) para envelhecer registros.
 pub(super) fn clock() -> u64 {
-    CLOCK.load(Ordering::Relaxed)
+    with_clock(|clock| clock.load(Ordering::Relaxed))
 }
 
 pub(super) fn advance_clock() {
-    CLOCK.fetch_add(1, Ordering::Relaxed);
+    with_clock(|clock| clock.fetch_add(1, Ordering::Relaxed));
 }
 
 pub(super) fn observe(dimension: &str, id: u32, kind: &str) {
     if !hostile(kind) {
         return;
     }
-    let now = CLOCK.load(Ordering::Relaxed);
+    let now = clock();
     let Ok(mut seen) = SEEN.lock() else { return };
     if let Some((_, mobs)) = seen.iter_mut().find(|(name, _)| name == dimension) {
         if mobs.len() >= MAX_TRACKED && !mobs.contains_key(&id) {
@@ -65,7 +83,7 @@ pub(super) fn observe(dimension: &str, id: u32, kind: &str) {
 /// Hostis vistos há pouco nesta dimensão. Esquece os antigos no máximo uma vez a cada 40 ticks,
 /// em todas as dimensões de uma vez (a marca da limpeza é uma só para todas).
 pub(super) fn recent(dimension: &str) -> Vec<u32> {
-    let now = CLOCK.load(Ordering::Relaxed);
+    let now = clock();
     let Ok(mut seen) = SEEN.lock() else { return Vec::new() };
     let generation = now / 40;
     if SWEEP.swap(generation, Ordering::Relaxed) != generation {

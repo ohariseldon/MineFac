@@ -590,6 +590,7 @@ fn meal(host: &mut dyn Host, pos: [i32; 3]) -> Option<Flow> {
             host.action_bar(player.uuid, Text::tr("veio.home.meal_wait_bar", &[&wait]));
         }
         Ok((item, variety, warm, power, level, comfort)) => {
+            super::super::onboarding::ate_at_home(player.uuid);
             let name = player.name.clone();
             if spawn::safe_name(&name) {
                 // Fome cheia, sempre.

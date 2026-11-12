@@ -15,8 +15,12 @@ pub(super) fn marker(block: &str) -> Option<[f32; 3]> {
 
 const MATERIAL: [Option<CubeFace<'static>>; 6] = [Some(CubeFace { sprite: "veio:gui/material", uv: None }); 6];
 
+pub(super) const OUTPUT_RED: u32 = 0xe8322a;
+pub(super) const INPUT_GREEN: u32 = 0x3fd24a;
+
 /// Returns whether an active CPU-driven stroke needs a new draw each frame.
 /// Rotations use Horizon's cached GPU spin and static machines remain cached.
+
 pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) -> Option<bool> {
     let profile = data::profile(event.block)?;
     let active = motion::active(event.block, event.entity);
@@ -27,6 +31,21 @@ pub(super) fn draw(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) -> O
     let [x0, y0, z0, x1, y1, z1] = profile.lamp;
     host.draw_cube(event.draw, [x0, y0, z0], [x1, y1, z1], MATERIAL,
         presentation::lamp_color(number(event.entity, "Status") as usize));
+    // Entrada e saída à vista: moldura vermelha no bico de saída (atrás) e faixas verdes nas faces
+    // que recebem (frente e laterais). A face vermelha nunca aceita itens.
+    let block = event.block;
+    let outputs = !output_slots(block).is_empty();
+    if outputs {
+        for (from, to) in [([5.5, 8.0, -0.08], [10.5, 8.7, 0.6]), ([5.5, 3.3, -0.08], [10.5, 4.0, 0.6])] {
+            host.draw_cube(event.draw, from, to, MATERIAL, OUTPUT_RED);
+        }
+    }
+    if outputs && has_item_inputs(block) {
+        for (from, to) in [([5.0, 0.4, 16.0], [11.0, 1.2, 16.08]), ([-0.08, 0.4, 5.0], [0.0, 1.2, 11.0]),
+            ([16.0, 0.4, 5.0], [16.08, 1.2, 11.0])] {
+            host.draw_cube(event.draw, from, to, MATERIAL, INPUT_GREEN);
+        }
+    }
     let module = number(event.entity, "Module");
     if (1..=3).contains(&module) {
         let [x, y, z] = profile.badge;

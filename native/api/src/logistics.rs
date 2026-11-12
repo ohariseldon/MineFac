@@ -56,6 +56,49 @@ pub(super) fn transfer_outputs(host: &mut dyn Host, pos: [i32; 3], entity: &mut 
     }
 }
 
+/// Matéria-prima (minério, pedra, toras): a esteira guarda até 5. Produto feito guarda só o que
+/// a esteira move por vez (1 na comum), como no Satisfactory: a esteira transporta, não estoca.
+pub(super) fn is_raw(item: &str) -> bool {
+    let name = item.rsplit(':').next().unwrap_or(item);
+    name.starts_with("raw_") || name.ends_with("_ore") || name.ends_with("_log") || name.ends_with("_stem")
+        || matches!(name, "coal" | "cobblestone" | "cobbled_deepslate" | "stone" | "gravel" | "sand" | "red_sand"
+            | "clay_ball" | "flint" | "redstone" | "lapis_lazuli" | "quartz" | "gold_nugget" | "netherrack"
+            | "diamond" | "emerald" | "ancient_debris" | "dirt" | "andesite" | "diorite" | "granite" | "tuff")
+        || production::data::NODES.iter().any(|node| node.output.0 == item)
+}
+
+pub(super) const RAW_PER_BELT: u32 = 5;
+
+/// Quantos itens deste tipo cabem em cada espaço do bloco de transporte.
+pub(super) fn capacity(block: &str, item: &str) -> u32 {
+    let step = match block { EXPRESS_BELT => 4, FAST_BELT => 2, BELT => 1, _ => 2 };
+    if is_raw(item) { RAW_PER_BELT.max(step) } else { step }
+}
+
+/// A face por onde o bloco solta a produção não recebe nada: a esteira não aceita o que vem da
+/// frente dela, e a máquina não aceita entrada pela própria saída. Sem isso, a máquina devolvia o
+/// produto na esteira que a alimentava e a linha travava. Transporte também tem limite de carga.
+pub(super) fn accepts_face(host: &dyn Host, event: &ContainerAcceptsEvent<'_>) -> bool {
+    accepts_at(host, event.pos, event.entity, event.slot, &event.stack.item, event.face)
+}
+
+pub(super) fn accepts_at(host: &dyn Host, pos: [i32; 3], entity: &ModBlockEntity, slot: usize, item: &str,
+    face: Option<Direction>) -> bool
+{
+    let block = entity.id.as_str();
+    if transport(block) {
+        let held = entity.items.get(slot).and_then(Option::as_ref).map_or(0, |stack| stack.count);
+        if held >= capacity(block, item) { return false; }
+    }
+    let Some(face) = face else { return true };
+    if matches!(face, Direction::Up | Direction::Down) || block == MERGER { return true; }
+    let Some(output) = output_direction(host, pos) else { return true };
+    if block == SPLITTER { return face != turn(output, false) && face != turn(output, true) && face != output; }
+    if transport(block) { return face != output; }
+    if block == lift::LIFT || output_slots(block).is_empty() { return true; }
+    face != output
+}
+
 pub(super) fn transport(block: &str) -> bool { matches!(block, BELT | FAST_BELT | EXPRESS_BELT | SPLITTER | MERGER | TUNNEL) }
 
 /// Alcance do túnel de esteira: a saída fica a até 6 blocos da entrada, na mesma direção.
@@ -314,7 +357,8 @@ fn refresh_path(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity)
                 let target = belt_target(host, pos, *side);
                 let block = host.block(target);
                 (is_belt(&block) && output_direction(host, target) != Some(side.opposite()))
-                    || (target[1] == pos[1] && !is_belt(&block) && has_item_inputs(&block))
+                    || (target[1] == pos[1] && !is_belt(&block) && has_item_inputs(&block)
+                        && output_direction(host, target) != Some(side.opposite()))
             }).collect();
         if candidates.len() == 1 && candidates[0] != output {
             output = candidates[0];

@@ -41,6 +41,7 @@ pub(super) fn division(block: &str) -> Option<u8> {
     Some(match block {
         production::TREE_FARM => FORESTRY,
         workforce::society::HOUSE | workforce::society::WELL => URBAN,
+        _ if workforce::society::agenda::is_amenity(block) => URBAN,
         workforce::SHOP => COMMERCE,
         workforce::TOWN_HALL => return None,
         workforce::FOREMAN_DESK | workforce::society::trade::PORT | workforce::society::trade::STATION => LOGISTICS,

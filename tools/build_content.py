@@ -94,6 +94,10 @@ BLOCKS = {
     "shop": ("machine", "wood", 8, [7], 1.5),
     "town_hall": ("machine", "steel", 2, [], 2.0),
     "well": ("machine", "iron", 1, [0], 1.5),
+    # Agenda da vila (0.27): obras cívicas pedidas pelos visitantes do prefeito.
+    "park": ("machine", "wood", 1, [], 1.5),
+    "plaza": ("machine", "iron", 1, [], 2.0),
+    "monument": ("machine", "steel", 1, [], 3.0),
     # Comércio exterior (0.23): porto de carga (no mar) e estação de carga (na fronteira).
     "export_dock": ("machine", "steel", 9, [], 2.0),
     "freight_station": ("machine", "iron", 9, [], 2.0),
@@ -161,7 +165,7 @@ TABS = {
     "logistics": ("veio:belt", ["belt", "fast_belt", "express_belt", "belt_tunnel", "cargo_lift", "splitter", "merger", "inserter", "fast_inserter", "long_inserter", "rail_terminal", "drone_port", "caravan_station", "route_card", "wrench", "clipboard", "minecraft:rail", "minecraft:powered_rail", "minecraft:chest_minecart", "minecraft:hopper"]),
     "world": ("veio:harvester", ["harvester", "planter", "sprinkler", "grow_lamp", "tree_farm", "ranch", "farm_post", "shepherd_post", "hauler_post", "foreman_desk",
         "field_marker", "pen_marker", "barn", "silo", "control_center", "site", "home", "mill", "kitchen",
-        "pantry", "flour", "biomass", "tesla", "barracks", "house", "shop", "town_hall", "well", "export_dock", "freight_station", "repair_kit", "minecraft:bone_meal"]),
+        "pantry", "flour", "biomass", "tesla", "barracks", "house", "shop", "town_hall", "well", "park", "plaza", "monument", "export_dock", "freight_station", "repair_kit", "minecraft:bone_meal"]),
 }
 
 FACES = ("down", "up", "north", "south", "west", "east")
@@ -466,6 +470,17 @@ def main():
             entry["max_stack_size"] = stack
         write(D / f"horizon/item/{name}.json", entry)
     # Saqueadores: zumbis com mais alcance de visão, para acharem a fábrica e os aldeões.
+    # Visitantes da agenda: comerciante viajante parado e com nome, que conversa com o jogador.
+    write(D / "horizon/entity_type/visitor.json", {"template": "minecraft:wandering_trader"})
+    # Prefeito do tutorial: aldeão parado na varanda da casa do fundador; fala a missão do momento.
+    # Tipo próprio para não entrar no censo nem na contratação dos aldeões.
+    write(D / "horizon/entity_type/mayor.json", {"template": "minecraft:villager"})
+    # Vizinhos do primeiro favor (onboarding/favors.rs): o ferreiro com a prensa e a lavradora.
+    write(D / "horizon/entity_type/smith.json", {"template": "minecraft:villager"})
+    write(D / "horizon/entity_type/farmer.json", {"template": "minecraft:villager"})
+    # Moradores dos pedidos da vila (onboarding/errands.rs): oleira, vendeiro, vaqueiro e carvoeiro.
+    for kind in ("potter", "grocer", "cowherd", "collier"):
+        write(D / f"horizon/entity_type/{kind}.json", {"template": "minecraft:villager"})
     write(D / "horizon/entity_type/raider.json", {"template": "minecraft:zombie",
         "attributes": {"minecraft:max_health": 24.0, "minecraft:movement_speed": 0.25,
             "minecraft:follow_range": 40.0}})

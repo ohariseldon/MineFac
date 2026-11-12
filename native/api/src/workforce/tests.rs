@@ -112,6 +112,8 @@ struct Village {
     /// Outros itens no inventário do jogador.
     bag: HashMap<String, u32>,
     sneak: bool,
+    /// Jogadores com a tag de chegada (de um mundo antigo).
+    tagged: Vec<String>,
 }
 
 impl Village {
@@ -231,6 +233,9 @@ impl Host for Village {
     fn kill_mob(&mut self, _: &str, id: u32) -> bool {
         self.animals.remove(&id).is_some()
     }
+    fn remove_mob(&mut self, _: &str, id: u32) -> bool {
+        self.animals.remove(&id).is_some() || self.villagers.remove(&id).is_some()
+    }
     fn edit_blocks(&mut self, _: &str, edit: &horizon_client::mod_api::NativeBlockEdit) -> Result<u64, String> {
         for run in &edit.runs {
             for dy in 0..run.height as i32 {
@@ -260,8 +265,18 @@ impl Host for Village {
     fn server_players(&self) -> Vec<horizon_client::mod_api::NativeServerPlayer> {
         self.players.clone()
     }
+    fn acting_player(&self) -> Option<horizon_client::mod_api::NativeServerPlayer> {
+        self.players.first().cloned()
+    }
+    fn world_dir(&self) -> Option<std::path::PathBuf> {
+        None
+    }
     fn run_command(&mut self, line: &str) -> bool {
         self.commands.push(line.to_owned());
+        if let Some(rest) = line.split(" as ").nth(1) && line.ends_with("if entity @s[tag=veio_village]") {
+            let name = rest.split_whitespace().next().unwrap_or_default();
+            return self.tagged.iter().any(|known| known == name);
+        }
         true
     }
     fn tell(&mut self, _: u128, line: Text) -> bool {
@@ -1316,6 +1331,23 @@ fn village_cap_grows_with_development_up_to_150() {
 
 // ---------- Spawn no centro da vila ----------
 
+#[test]
+fn the_new_village_goes_on_flat_dry_land_without_trees() {
+    // Plano e limpo: nota 0. Morro de 9 blocos e copas pesam; água recusa.
+    let flat = vec![70; 49];
+    assert_eq!(spawn::site_score(&flat, &flat, &flat), Some(0));
+    let mut hill = flat.clone();
+    hill[10] = 79;
+    assert_eq!(spawn::site_score(&hill, &hill, &hill), Some(36));
+    let mut canopy = flat.clone();
+    canopy[3] = 76;
+    canopy[4] = 75;
+    assert_eq!(spawn::site_score(&flat, &flat, &canopy), Some(6));
+    let mut lake = flat.clone();
+    lake[0] = 72;
+    assert_eq!(spawn::site_score(&flat, &lake, &lake), None, "água não serve");
+}
+
 fn player(uuid: u128, name: &str, at: [f64; 3]) -> horizon_client::mod_api::NativeServerPlayer {
     horizon_client::mod_api::NativeServerPlayer {
         uuid, name: name.to_owned(), dimension: spawn::OVERWORLD.to_owned(), position: at, ..Default::default()
@@ -1323,7 +1355,7 @@ fn player(uuid: u128, name: &str, at: [f64; 3]) -> horizon_client::mod_api::Nati
 }
 
 #[test]
-fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() {
+fn new_players_arrive_near_the_village_and_the_control_center_takes_over() {
     spawn::reset();
     let mut village = Village::new(spawn::OVERWORLD);
     village.crops.clear();
@@ -1331,6 +1363,8 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
         village.villager(16001 + index as u32, [*x, 64.0, *z], [70, 0, 0, index as i32]);
     }
     village.villager(16010, [180.5, 64.0, 100.5], [70, 0, 0, 10]);
+    // Steve já tinha chegado antes (mundo antigo): volta à vila do Minecraft que já existia.
+    village.tagged = vec!["Steve".into()];
     spawn::logged_in(7, "Steve", 0);
     spawn::logged_in(8, "bad name;kill", 0);
     // A janela também roda o tick e não vê os jogadores do servidor: nada se perde.
@@ -1340,7 +1374,9 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     spawn::tick(&mut village, 40);
     let joined = village.commands.join("\n");
     assert!(joined.contains("setworldspawn 100 70 100"), "centro da vila: média do grupo, altura do terreno\n{joined}");
-    assert!(joined.contains("unless entity @s[tag=veio_village] run tp @s 100 70 100"), "só quem chega pela primeira vez");
+    // Perto demais (14 blocos): vai para fora, a 44 blocos, do lado de onde estava; a seta leva à vila.
+    assert!(joined.contains("unless entity @s[tag=veio_village] run tp @s 69 70 69"), "só quem chega pela primeira vez\n{joined}");
+    assert!(joined.contains("spawnpoint @s 100 70 100"), "renasce na vila");
     assert!(joined.contains("tag Steve add veio_village"));
     assert!(!joined.contains("bad name"), "nome inseguro não entra em comando");
 
@@ -1349,21 +1385,59 @@ fn new_players_arrive_at_the_village_center_and_the_control_center_takes_over() 
     spawn::logged_in(9, "Alex", 40);
     spawn::tick(&mut village, 60);
     let joined = village.commands.join("\n");
-    assert!(joined.contains("tp @s 100 70 100"), "convidado da LAN vai ao centro já conhecido\n{joined}");
+    assert!(joined.contains("tp @s 131 70 131"), "convidado da LAN vai para perto do centro já conhecido\n{joined}");
     assert!(!joined.contains("place structure"), "não gera uma segunda vila");
 
-    // Sozinho e longe de tudo: espera os chunks, gera uma vila e só depois desiste.
+    // Sozinho e longe de tudo: espera os chunks e funda a vila do Veio.
     spawn::reset();
     village.commands.clear();
     village.players = vec![player(9, "Alex", [5000.0, 64.0, 5000.0])];
     spawn::logged_in(9, "Alex", 40);
     spawn::tick(&mut village, 60);
-    assert!(village.commands.is_empty(), "ainda esperando os aldeões carregarem");
-    spawn::tick(&mut village, 40 + spawn::WAIT + 20);
-    assert!(village.commands.iter().any(|line| line.contains("place structure minecraft:village_plains")));
-    spawn::tick(&mut village, 40 + 2 * spawn::WAIT + 40);
-    assert!(village.commands.iter().any(|line| line.contains("veio.spawn.none")));
-    assert!(village.commands.iter().any(|line| line == "tag Alex add veio_village"));
+    assert!(!village.commands.iter().any(|line| line.contains("setworldspawn")), "ainda esperando os chunks carregarem");
+    spawn::tick(&mut village, 40 + 100 + 20);
+    // Terreno todo plano no teste: a vila nasce onde o jogador está, e ele vai para fora dela.
+    let joined = village.commands.join("\n");
+    assert!(!joined.contains("place structure"), "nada de vila do Minecraft\n{joined}");
+    assert!(joined.contains("setworldspawn 5000 70 5000"), "{joined}");
+    assert!(joined.contains("tp @s 5000 70 5044") && joined.contains("tag Alex add veio_village"), "nasce ao sul da vila nova\n{joined}");
+    assert!(!joined.contains("fill"), "sem árvores, nada a limpar");
+    assert_eq!(spawn::center(), Some(([5000, 70, 5000], false)));
+    assert_eq!(town::known_center(), Some([5000, 70, 5000]));
+    // A casa do fundador vai para o lugar dela no plano, ao norte da praça.
+    let [fx, fz] = super::town_plan::FOUNDER;
+    assert_eq!(super::super::home::site(&village, [5000, 70, 5000]), [5000 + fx, 69, 5000 + fz]);
+    // A vila sobe aos poucos: primeiro a praça (o piso entra no lugar da grama, um abaixo do chão).
+    village.commands.clear();
+    town::tick(&mut village, 190);
+    assert!(!village.commands.iter().any(|line| line.contains("village/praca")), "nada nasce em cima do jogador");
+    village.players = vec![player(9, "Alex", [5000.5, 70.0, 5044.5])];
+    let before = village.commands.len();
+    town::tick(&mut village, 200);
+    let joined = village.commands[before..].join("\n");
+    assert!(joined.contains("positioned 4987 69 4991 run function veio:village/praca"), "{joined}");
+    assert_eq!(village.commands.len() - before, 3, "três peças por vez\n{joined}");
+    for now in (210..2000).step_by(10) { town::tick(&mut village, now); }
+    let joined = village.commands.join("\n");
+    for key in ["ferreiro", "lavradora", "vendinha", "olaria", "carvoaria", "vaqueiro", "pasto", "roca", "casa_pedra", "ruina", "lote_1"] {
+        assert!(joined.contains(&format!("run function veio:village/{key}")), "{key} de pé no estágio 1");
+    }
+    assert!(joined.contains("run function veio:village/ruas/1_0_0"), "as ruas depois dos prédios");
+    for key in ["praca_2", "prefeitura_3", "casa_reformada"] {
+        assert!(!joined.contains(&format!("veio:village/{key}")), "{key} é de outro estágio");
+    }
+    // Os pedidos atendidos: a vila respira. A praça só muda com o jogador longe.
+    village.commands.clear();
+    town::advance(2);
+    village.players = vec![player(9, "Alex", [5000.0, 70.0, 5010.0])];
+    for now in (2000..2400).step_by(10) { town::tick(&mut village, now); }
+    let joined = village.commands.join("\n");
+    assert!(!joined.contains("veio:village/praca_2"), "o jogador está na praça\n{joined}");
+    assert!(joined.contains("veio:village/casa_reformada"), "a casa abandonada fica longe do jogador\n{joined}");
+    village.players = vec![player(9, "Alex", [5000.0, 70.0, 5200.0])];
+    for now in (2400..2800).step_by(10) { town::tick(&mut village, now); }
+    assert!(village.commands.iter().any(|line| line.ends_with("positioned 4987 69 4991 run function veio:village/praca_2")),
+        "a fonte e o coreto prontos, no mesmo piso");
 
     // O centro de controle vira o centro da vila; quem renasce volta para lá.
     village.commands.clear();
@@ -1695,10 +1769,13 @@ fn society_town(dimension: &'static str, seed: i32) -> (Village, ModBlockEntity,
     let mut village = Village::new(dimension);
     village.day = 1000;
     // Três moradores perto da casa (um deles vira o comerciante) e o prefeito longe dela.
-    village.villager(18001, [16.5, 64.0, 1.5], [180, seed, 0, 1]);
-    village.villager(18002, [17.5, 64.0, 0.5], [180, seed, 0, 2]);
-    village.villager(18003, [15.5, 64.0, -1.5], [180, seed, 0, 3]);
-    village.villager(18004, [60.5, 64.0, 1.5], [180, seed, 0, 4]);
+    // Ids próprios por vila: as ordens dos aldeões são globais (por id), e os testes rodam em paralelo.
+    static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(30000);
+    let base = NEXT.fetch_add(10, std::sync::atomic::Ordering::Relaxed);
+    village.villager(base + 1, [16.5, 64.0, 1.5], [180, seed, base as i32, 1]);
+    village.villager(base + 2, [17.5, 64.0, 0.5], [180, seed, base as i32, 2]);
+    village.villager(base + 3, [15.5, 64.0, -1.5], [180, seed, base as i32, 3]);
+    village.villager(base + 4, [60.5, 64.0, 1.5], [180, seed, base as i32, 4]);
     let mut shop = block(SHOP);
     assert!(hire_at(&mut village, &mut shop, SHOP_POS, 0));
     let mut hall = block(TOWN_HALL);
@@ -1843,7 +1920,7 @@ fn the_merchant_offers_the_stock_at_the_local_price() {
 fn indicators_measure_families_inequality_and_districts() {
     let home = |x: i32, residents: i32, income: i32| society::Home {
         dimension: "d".into(), pos: [x, 64, 0], built: 0, licensed: true, residents, adults: residents, kids: 0,
-        employed: residents / 2, income, hungry: false, owed: false, wallet: 0, sanitation: true, power: true, commerce: true, crowded: false,
+        employed: residents / 2, income, hungry: false, owed: false, wallet: 0, sanitation: true, leisure: true, cheer: 50, power: true, commerce: true, crowded: false,
         smog: false, food: 100, housing: 100, services: 100, wealth: 100, seen: 0,
     };
     assert_eq!(home(0, 4, 0).idh(), 100);
@@ -2760,4 +2837,310 @@ fn balance_contracts_are_a_separate_buyer_and_open_markets_stay_open() {
     assert_eq!(state(dimension).0, 0, "contratos perdidos tiram reputação");
     assert_eq!(tier_open(dimension), 2, "mercado conquistado não fecha");
     let _ = &mut village;
+}
+
+// ---------- Agenda da vila ----------
+
+const DAY_TICKS: i64 = 24_000;
+
+#[test]
+fn the_calendar_has_holidays_sundays_and_weekend_events() {
+    use society::agenda::*;
+    let key = |day: i64| scheduled(day).map(|event| EVENTS[event].key);
+    assert_eq!(key(0), Some("founding"), "primavera, dia 1: Dia da Fundação");
+    assert_eq!(key(3), Some("flowers"), "primavera, dia 4: Festa das Flores");
+    assert!(is_holiday(0) && is_holiday(3));
+    assert!(sunday(5) && !is_holiday(5), "primavera, dia 6: domingo comum");
+    assert!(matches!(key(5), Some("fair" | "dance" | "fishing")), "domingo tem evento menor");
+    assert_eq!(key(8), Some("saint_john"), "verão, dia 3: São João");
+    assert_eq!(key(15), Some("harvest"), "outono, dia 4: Festa da Colheita");
+    assert_eq!(key(20), Some("lights"), "inverno, dia 3: Festa das Luzes");
+    assert_eq!(key(23), Some("new_year"), "inverno, dia 6: Virada do Ano (feriado no lugar do domingo)");
+    assert_eq!(key(1), None, "dia útil");
+    let holidays = (0..24).filter(|day| is_holiday(*day)).count();
+    assert_eq!(holidays, 6, "seis feriados por ano");
+    assert_eq!(next_holiday(1), (1, 2), "do dia 2 da primavera, a Festa das Flores é daqui a 2 dias");
+}
+
+#[test]
+fn a_visitor_brings_a_request_and_delivering_it_prepares_the_holiday() {
+    use society::agenda::*;
+    let (mut village, _, mut hall) = society_town("veio:test_agenda_request", 21);
+    let dimension = village.dimension;
+    // Dia 2 da primavera: a Festa das Flores (dia 4) chega com 2 dias de antecedência.
+    village.day = DAY_TICKS + 1000;
+    hall.items[1] = Some(ItemStack::new(WAGE, 4));
+    // Turno da prefeitura em [60, 64, 0]: (time + 60) % 1200 < 10.
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1140);
+    let open = proposals(&hall);
+    assert_eq!(open.len(), 1);
+    assert_eq!(EVENTS[open[0].event].key, "flowers");
+    assert_eq!(open[0].due, 3);
+    assert_eq!(village.summoned.len(), 1, "a florista chegou à prefeitura");
+    // Entrega no espaço Agenda: 16 papoulas, 16 dentes-de-leão e 4 garrafas de mel.
+    let public_before = balance(PUBLIC, &village, [60, 64, 0]);
+    let company_before = balance(COMPANY, &village, [30, 64, 30]);
+    for (item, count) in [("minecraft:poppy", 16), ("minecraft:dandelion", 16), ("minecraft:honey_bottle", 4)] {
+        hall.items[AGENDA_SLOT] = Some(ItemStack::new(item, count));
+        society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1150);
+    }
+    assert!(proposals(&hall)[0].prepared, "festa preparada");
+    let paid = public_before - balance(PUBLIC, &village, [60, 64, 0]);
+    assert!(paid > 0, "a prefeitura reembolsa o que foi entregue");
+    assert_eq!(balance(COMPANY, &village, [30, 64, 30]) - company_before, paid, "o reembolso vai para a companhia");
+    // No dia da festa, o ânimo sobe e o pedido sai da lista.
+    let before = morale(&hall);
+    village.day = 3 * DAY_TICKS + 1000;
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1160);
+    // O ânimo volta 3 pontos por dia para 50 (estava abaixo: o Dia da Fundação não foi preparado).
+    assert_eq!(morale(&hall), before + 3 + EVENTS[1].cheer, "festa preparada: ânimo +20");
+    assert!(proposals(&hall).iter().all(|proposal| proposal.due > 3));
+    let _ = dimension;
+}
+
+#[test]
+fn on_a_holiday_the_village_stops_working_and_an_unprepared_one_lowers_morale() {
+    use society::agenda::*;
+    let (mut village, _, mut hall) = society_town("veio:test_agenda_holiday", 22);
+    // Dia da Fundação (primavera, dia 1 = dia 0), sem preparo.
+    village.day = 1000;
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1140);
+    assert!(morale(&hall) < 50, "feriado sem festa: ânimo cai");
+    let mut farm = block(FARM_POST);
+    village.villager(18201, [62.5, 64.0, 2.5], [182, 22, 0, 1]);
+    assert!(hire_at(&mut village, &mut farm, [62, 64, 4], 0));
+    set_number(&mut farm, "Ration", 10);
+    // Fase do posto em [62, 64, 4]: (62 ^ 4) & 7 = 2, então os ciclos caem em 8, 18, 28...
+    step(&mut village, [62, 64, 4], &mut farm, 8, 1);
+    assert_eq!(number(&farm, "Status"), HOLIDAY, "feriado: o posto descansa");
+    village.day = DAY_TICKS + 1000;
+    step(&mut village, [62, 64, 4], &mut farm, 18, 2);
+    assert_ne!(number(&farm, "Status"), HOLIDAY, "no dia seguinte, volta ao trabalho");
+}
+
+#[test]
+fn a_civic_request_is_fulfilled_by_building_a_park_and_gives_leisure() {
+    use society::agenda::*;
+    let (mut village, _, mut hall) = society_town("veio:test_agenda_civic", 23);
+    let dimension = village.dimension;
+    hall.items[1] = Some(ItemStack::new(WAGE, 10));
+    let mut house = block(society::HOUSE);
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    // Dia útil com obra cívica: (dia % 4) == (60 ^ 0) & 3 = 0 → dia 4 (primavera, dia 5).
+    village.day = 4 * DAY_TICKS + 1000;
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1140);
+    let civic = proposals(&hall).into_iter().find(|proposal| EVENTS[proposal.event].kind == Kind::Civic).expect("pedido de obra cívica");
+    assert_eq!(civic.target, [16, 64, 0], "o bairro sem lazer");
+    let block_id = EVENTS[civic.event].amenity;
+    let mut amenity = block(block_id);
+    // Bloco cívico no bairro (fase 0 em [18, 64, 2]: (18 ^ 2) & 63 = 16; tempo 84).
+    society::tick_block(&mut village, [18, 64, 2], &mut amenity, 84);
+    assert!(leisure_near(dimension, [16, 64, 0], 1), "o bloco dá lazer ao bairro");
+    let company = balance(COMPANY, &village, [30, 64, 30]);
+    society::hall_cycle(&mut village, [60, 64, 0], &mut hall, 1150);
+    let done = proposals(&hall).into_iter().find(|proposal| proposal.event == civic.event).unwrap();
+    assert!(done.prepared, "obra cívica cumprida");
+    assert!(balance(COMPANY, &village, [30, 64, 30]) > company, "a prefeitura paga a obra à companhia");
+    society::house_turn(&mut village, [16, 64, 0], &mut house, 1000);
+    let homes = society::homes_near(dimension, [16, 64, 0], 1, 2);
+    assert!(homes[0].leisure, "a casa ganha lazer");
+}
+
+#[test]
+fn morale_and_leisure_move_the_human_development_index() {
+    let home = |leisure: bool, cheer: i32| society::Home {
+        dimension: "d".into(), pos: [0, 64, 0], built: 0, licensed: true, residents: 4, adults: 4, kids: 0,
+        employed: 2, income: 160, hungry: false, owed: false, wallet: 0, sanitation: true, leisure, cheer, power: true,
+        commerce: true, crowded: false, smog: false, food: 80, housing: 80,
+        services: if leisure { 100 } else { 75 }, wealth: 80, seen: 0,
+    };
+    assert!(home(true, 50).idh() > home(false, 50).idh(), "lazer conta nos serviços");
+    assert!(home(true, 100).idh() > home(true, 50).idh(), "ânimo alto melhora o IDH");
+    assert!(home(true, 0).idh() < home(true, 50).idh(), "ânimo baixo piora o IDH");
+    assert!(home(true, 100).idh() <= 100);
+}
+
+#[test]
+fn with_no_one_near_the_post_waits_for_the_villager_the_player_clicks() {
+    pick::reset();
+    let mut village = Village::new("veio:test_pick_hire");
+    village.stations.insert(POST, post());
+    village.players.push(named_player(village.dimension, 7, "Luiz", [0.5, 64.0, 0.5]));
+    village.emeralds = 2;
+    // Longe demais para a contratação automática (8), perto o bastante para a escolha (32).
+    village.villager(12001, [20.5, 64.0, 0.5], [12, 0, 1, 1]);
+    assert_eq!(right_click(&mut village, POST, WAGE), Some(Flow::Cancel));
+    assert_eq!(worker(&village.stations[&POST]), None);
+    assert_eq!(village.emeralds, 2, "sem contratação, a esmeralda fica");
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.none"));
+
+    // Sem a espera, a esmeralda num aldeão é comércio vanilla; com ela, contrata.
+    assert_eq!(pick::interact(&mut village, 12001, Some(WAGE)), Some(Flow::Cancel));
+    assert_eq!(worker(&village.stations[&POST]), Some([12, 0, 1, 1]));
+    assert_eq!(village.emeralds, 1);
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.hired.hungry"), "posto sem comida: o próximo passo é a comida");
+    assert_eq!(pick::interact(&mut village, 12001, Some(WAGE)), None, "a espera acabou: volta a ser comércio");
+
+    // Agachado e de mão vazia, o aldeão diz onde trabalha.
+    village.sneak = true;
+    set_number(village.stations.get_mut(&POST).unwrap(), "Status", NO_FOOD);
+    assert_eq!(pick::interact(&mut village, 12001, None), Some(Flow::Cancel));
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.works.no_food"));
+    village.sneak = false;
+    assert_eq!(pick::interact(&mut village, 12001, None), None, "sem agachar, abre o comércio");
+}
+
+#[test]
+fn a_picked_villager_must_be_free_adult_and_near_the_post() {
+    pick::reset();
+    let mut village = Village::new("veio:test_pick_rules");
+    village.stations.insert(POST, post());
+    village.players.push(named_player(village.dimension, 8, "Luiz", [0.5, 64.0, 0.5]));
+    village.emeralds = 3;
+    village.villager(12101, [60.5, 64.0, 0.5], [12, 1, 0, 1]);
+    village.villager(12102, [20.5, 64.0, 0.5], [12, 1, 0, 2]);
+    village.villagers.get_mut(&12102).unwrap().2 = -24000;
+    right_click(&mut village, POST, WAGE);
+    assert_eq!(pick::interact(&mut village, 12101, Some(WAGE)), Some(Flow::Cancel));
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.pick.far"));
+    right_click(&mut village, POST, WAGE);
+    assert_eq!(pick::interact(&mut village, 12102, Some(WAGE)), Some(Flow::Cancel));
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.child"));
+    assert_eq!(worker(&village.stations[&POST]), None);
+    assert_eq!(village.emeralds, 3, "escolha recusada não cobra");
+    village.sneak = true;
+    assert_eq!(pick::interact(&mut village, 12101, None), Some(Flow::Cancel));
+    assert_eq!(village.notices.last().map(String::as_str), Some("veio.worker.free"));
+}
+
+#[test]
+fn the_post_panel_says_what_to_do_next() {
+    let data = |status: i32, rate: i32| { let mut data = vec![0; 13]; data[0] = status; data[6] = rate; data };
+    assert_eq!(next_step_key(FARM_POST, &data(NO_WORKER, 0)), Some("veio.todo.hire"));
+    assert_eq!(next_step_key(HAULER_POST, &data(NO_FOOD, 0)), Some("veio.todo.food"));
+    assert_eq!(next_step_key(HAULER_POST, &data(IDLE_WORK, 0)), Some("veio.todo.hauler_none"));
+    assert_eq!(next_step_key(HAULER_POST, &data(IDLE_WORK, 3)), Some("veio.todo.hauler_idle"));
+    assert_eq!(next_step_key(FARM_POST, &data(NO_TASK, 0)), Some("veio.todo.farm_idle"));
+    assert_eq!(next_step_key(FOREMAN_DESK, &data(NO_WAGE, 0)), Some("veio.todo.wage"));
+    assert_eq!(next_step_key(SHEPHERD_POST, &data(production::NO_ANIMALS, 0)), Some("veio.todo.shepherd_idle"));
+    assert_eq!(next_step_key(FARM_POST, &data(1, 0)), None, "trabalhando: fica a dica fixa");
+    assert_eq!(next_step_key(SHOP, &data(NO_WORKER, 0)), None, "loja e prefeitura têm painel próprio");
+    let lines = panel_lines(FARM_POST, &data(NO_FOOD, 0)).unwrap();
+    assert_eq!(lines[2], "veio.todo.food");
+}
+
+#[test]
+fn a_hauler_carries_the_press_plates_on_to_the_assembler() {
+    let mut village = Village::new("veio:test_work_chain");
+    village.crops.clear();
+    let mut press = block(PRESS);
+    press.items[1] = Some(ItemStack::new(PLATE, 6));
+    set_number(&mut press, "Status", 1);
+    village.stations.insert(PRESS_AT, press);
+    let assembler_at = [-3, 64, 0];
+    let mut assembler = block(ASSEMBLER);
+    set_number(&mut assembler, "Status", 2);
+    village.stations.insert(assembler_at, assembler);
+    village.villager(12201, [0.5, 64.0, 1.5], [12, 2, 0, 1]);
+    let mut hauler = block(HAULER_POST);
+    set_number(&mut hauler, "Ration", 20);
+    assert!(hire_at(&mut village, &mut hauler, POST, 0));
+    // Recolhe as chapas da prensa...
+    let now = cycles_at(&mut village, POST, &mut hauler, 1, HAULER_SWEEP * 2, |post| target(post) == Some(PRESS_AT));
+    village.walk(12201, [2, 64, 0]);
+    cycle_at(&mut village, POST, &mut hauler, now + 1);
+    assert_eq!(carried(&hauler), vec![(PLATE.to_owned(), 6)]);
+    village.walk(12201, [0, 64, 1]);
+    cycle_at(&mut village, POST, &mut hauler, now + 2);
+    assert_eq!(hauler.items[4], Some(ItemStack::new(PLATE, 6)));
+    // ... e leva ao montador parado por falta delas, sem devolver à prensa.
+    let now = cycles_at(&mut village, POST, &mut hauler, now + 3, HAULER_SWEEP, |post| carry_to(post) == Some(assembler_at));
+    assert_eq!(carried(&hauler), vec![(PLATE.to_owned(), 6)]);
+    village.walk(12201, [-2, 64, 0]);
+    cycle_at(&mut village, POST, &mut hauler, now + 1);
+    assert_eq!(village.stations[&assembler_at].items[0], Some(ItemStack::new(PLATE, 6)));
+    assert!(village.stations[&PRESS_AT].items[0].is_none(), "a chapa não volta para a prensa");
+}
+
+#[test]
+fn a_starved_machine_names_the_missing_input_of_the_closest_recipe() {
+    let mut assembler = block(ASSEMBLER);
+    assembler.items[0] = Some(ItemStack::new(PLATE, 1));
+    production::process(&mut assembler);
+    assert_eq!(number(&assembler, "Status"), 2);
+    let recipe = number(&assembler, "RecipeIndex");
+    assert!(recipe > 0, "taxas da receita mais próxima no painel");
+    assert_eq!(number(&assembler, "Info"), 1, "falta a entrada 1 (só 1 de 2 chapas)");
+    assert_eq!(production::missing_input(ASSEMBLER, 2, recipe, 1), Some((PLATE, 2)));
+    assert_eq!(production::missing_input(ASSEMBLER, 1, recipe, 1), None, "trabalhando: nada a pedir");
+    // Entradas vazias: nada a apontar.
+    let mut empty = block(ASSEMBLER);
+    production::process(&mut empty);
+    assert_eq!(number(&empty, "Info"), 0);
+}
+
+#[test]
+fn the_town_plan_matches_its_functions_and_keeps_people_outside_the_walls() {
+    use super::town_plan::{PIECES, ROADS};
+    let functions = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../content/data/veio/function/village");
+    for piece in &PIECES {
+        let text = std::fs::read_to_string(functions.join(format!("{}.mcfunction", piece.key)))
+            .unwrap_or_else(|_| panic!("falta a função de {}", piece.key));
+        if piece.overlay {
+            assert!(!text.contains(" replace ") && !text.contains("kill "), "{}: o acabamento não limpa nada", piece.key);
+            assert!(PIECES.iter().any(|p| !p.overlay && p.site == piece.site && p.stage < piece.stage && piece.stage < p.until),
+                "{}: acabamento de um prédio que ainda está de pé", piece.key);
+        } else {
+            assert!(text.lines().any(|line| line.starts_with("fill ~") && line.ends_with("minecraft:air")), "{}: limpa o volume", piece.key);
+        }
+        assert!(piece.stage < piece.until, "{}", piece.key);
+        let [w, n, e, s] = piece.core;
+        let [aw, an, ae, as_] = piece.area;
+        assert!(aw <= w && an <= n && ae >= e && as_ >= s, "{}: as paredes ficam dentro da área", piece.key);
+    }
+    for road in &ROADS {
+        assert!(functions.join(format!("{}.mcfunction", road.name)).exists(), "falta {}", road.name);
+    }
+    // Cada estágio tem um lugar para cada coisa: nada se sobrepõe.
+    for stage in 1..=town::MAX_STAGE {
+        let standing: Vec<_> = town::wanted(stage).filter(|p| !p.overlay).collect();
+        for (i, a) in standing.iter().enumerate() {
+            for b in &standing[i + 1..] {
+                let apart = a.area[2] < b.area[0] || b.area[2] < a.area[0] || a.area[3] < b.area[1] || b.area[3] < a.area[1];
+                assert!(apart, "estágio {stage}: {} e {}", a.key, b.key);
+            }
+        }
+    }
+    // Os moradores com nome ficam do lado de fora, na frente da porta; o prefeito, na praça.
+    let inside = |(x, z): (i32, i32), key: &str| PIECES.iter().filter(|p| p.site != key)
+        .any(|p| x >= p.area[0] && x <= p.area[2] && z >= p.area[1] && z <= p.area[3]);
+    for (spots, own) in [(town::SMITH, "ferreiro"), (town::FARMER, "lavradora"), (town::GROCER, "vendinha"),
+        (town::POTTER, "olaria"), (town::COLLIER, "carvoaria"), (town::COWHERD, "vaqueiro")]
+    {
+        let piece = PIECES.iter().find(|p| p.key == own).unwrap();
+        for (x, z) in spots {
+            let walls = x >= piece.core[0] && x <= piece.core[2] && z >= piece.core[1] && z <= piece.core[3];
+            assert!(!walls && !inside((x, z), own), "{own}: ({x}, {z}) fora dos prédios");
+            assert!((x - (piece.core[0] + piece.core[2]) / 2).abs() + (z - (piece.core[1] + piece.core[3]) / 2).abs() < 16, "{own}: perto de casa");
+        }
+    }
+    for (x, z) in town::MAYOR {
+        assert!(f64::from(x).hypot(f64::from(z)) > 4.5, "longe da fonte: ({x}, {z})");
+        let plaza = PIECES.iter().find(|p| p.key == "praca").unwrap().core;
+        assert!(x >= plaza[0] && x <= plaza[2] && z >= plaza[1] && z <= plaza[3], "na praça: ({x}, {z})");
+    }
+}
+
+#[test]
+fn the_town_save_keeps_its_center_stage_floors_and_what_is_built() {
+    let text = town::save_text([10, 64, -20], 2, &["praca", "ferreiro"], &[("praca".into(), 63)], &["ruas/1_0_0"]);
+    let (center, stage, built, floors, roads) = town::load_text(&text).unwrap();
+    assert_eq!((center, stage), ([10, 64, -20], 2));
+    assert_eq!(built, vec!["praca", "ferreiro"]);
+    assert_eq!(floors, vec![("praca".to_string(), 63)]);
+    assert_eq!(roads, vec!["ruas/1_0_0"]);
+    let old = town::load_text("centro 1 2 3\nestagio 9\npeca casa_que_saiu_do_plano\nlixo\n").unwrap();
+    assert_eq!(old.1, town::MAX_STAGE, "estágio limitado");
+    assert!(old.2.is_empty(), "peça fora do plano é esquecida");
+    assert!(town::load_text("estagio 2\n").is_none(), "sem centro, sem vila");
 }

@@ -12,6 +12,16 @@ def read_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def check_village():
+    """A vila (`tools/vila/build_village.py`): modelos válidos, nada sobreposto e as funções e o plano
+    do Rust em dia com os modelos."""
+    import subprocess
+    import sys
+    result = subprocess.run([sys.executable, str(ROOT / "tools/vila/build_village.py"), "--check"],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, "vila: " + (result.stdout + result.stderr).strip()
+
+
 def main():
     files = list(CONTENT.rglob("*.json"))
     for path in files:
@@ -32,8 +42,43 @@ def main():
     check_page_fit(languages, "first_steps")
     check_page_fit(languages, "transport_guide")
     # Dynamic native keys are not reachable from a book's JSON tree.
-    keys = ([f"veio.onboarding.goal.{i}" for i in range(8)]
-            + [f"veio.onboarding.hint.{i}" for i in range(9)]
+    keys = ([f"veio.onboarding.goal.{i}" for i in range(16)]
+            + [f"veio.onboarding.{part}.{i}" for part in ("title", "why", "story") for i in range(17)]
+            + [f"veio.onboarding.from.{i}" for i in (*range(8), 8, 10, 11, 12)]
+            + [f"veio.onboarding.recipe.{i}.0" for i in (0, 1, 3, 4, 5, 6, 7, 8, 10, 11, 12)]
+            + ["veio.onboarding.recipe.1.1", "veio.onboarding.book", "veio.onboarding.make", "veio.onboarding.done"]
+            + [f"veio.onboarding.name.{item.rsplit(':', 1)[-1]}" for item in onboarding_items()]
+            + [f"veio.village.{part}.{i}" for part in ("title", "why", "goal", "done") for i in range(8)]
+            + [f"veio.village.recipe.{i}" for i in (0, 2, 4, 5, 6, 7)] + [f"veio.village.end.{i}" for i in range(1, 5)]
+            + [f"veio.city.{part}.{i}" for part in ("title", "why", "goal", "done", "hint") for i in range(10)]
+            + [f"veio.city.{part}.{i}" for part in ("weak", "fix") for i in range(4)] + ["veio.city.goal.8_wait", "veio.city.goal.8_soon"]
+            + [f"veio.city.more.{i}" for i in range(10)] + ["veio.city.bar_prefix", "veio.city.hint_ready"]
+            + [f"veio.city.check.{key}" for key in ("open", "day", "wages", "wallets", "clerk", "residents", "families", "idh")]
+            + [f"veio.night.{part}.{i}" for part in ("title", "why", "goal", "done", "more") for i in range(6)]
+            + [f"veio.night.council.{i}" for i in range(1, 9)]
+            + [f"veio.forge.{part}.{i}" for part in ("title", "why", "done", "more") for i in range(8)]
+            + [f"veio.forge.recipe.{i}" for i in (2, 4, 5, 6, 7)] + [f"veio.forge.end.{i}" for i in range(1, 5)]
+            + [f"veio.metro.{part}.{i}" for part in ("title", "why", "done", "more") for i in range(6)]
+            + [f"veio.metro.end.{i}" for i in range(1, 5)] + ["veio.forge.wave", "veio.metro.goal.3_wait"]
+            + [f"veio.errand.{key}.{part}" for key in ("roof", "shop", "herd", "coal", "forge") for part in ("title", "hint", "after", "next", "ask.0.1", "goal.1")]
+            + [f"veio.errand.{key}.name" for key in ("potter", "grocer", "cowherd", "collier")]
+            + [f"veio.errand.revival.{i}" for i in range(1, 5)] + ["veio.errand.bar", "veio.errand.book.title", "veio.errand.book.level"]
+            + [f"veio.night.first.{i}" for i in range(1, 4)] + [f"veio.night.dusk.{i}" for i in range(1, 5)] + [f"veio.night.end.{i}" for i in range(1, 4)]
+            + ["veio.night.goal.home", "veio.night.goal.inside", "veio.night.goal.shelter", "veio.night.dawn", "veio.night.offer", "veio.night.villager"]
+            + [f"veio.city.recipe.{i}" for i in (0, 1, 4, 5, 6)] + [f"veio.city.end.{i}" for i in range(1, 6)]
+            + [f"veio.onboarding.hint.{i}" for i in range(16)] + [f"veio.village.hint.{i}" for i in range(8)]
+            + [f"veio.onboarding.act.{i}{part}" for i in range(4) for part in ("", ".sub", ".line")]
+            + [f"veio.onboarding.diary.{i}" for i in range(5)] + ["veio.onboarding.hint.head", "veio.onboarding.far",
+               "veio.onboarding.act.end", "veio.onboarding.act.end.sub", "veio.onboarding.diary.title"]
+            + [f"veio.festival.{f}.{part}" for f in ("harvest", "governor") for part in
+               ("name", "when", "announce.1", "announce.2", "good.1", "good.2", "good_sub", "weak", "retry")]
+            + [f"veio.favor.{k}" for k in ("smith.name", "farmer.name", "bar", "done", "done.sub", "farmer.gift",
+               "farmer.plant", "farmer.planted", "farmer.more", "farmer.after", "farmer.wait", "smith.after", "smith.wait")]
+            + [f"veio.favor.{k}.{n}" for k, top in (("start", 2), ("mayor", 5), ("goal", 5), ("smith.ask", 4),
+               ("farmer.ask", 3), ("farmer.thanks", 3), ("smith.thanks", 3)) for n in range(1, top + 1)]
+            + ["veio.festival.countdown", "veio.festival.reminder", "veio.villager.who", "veio.villager.says"]
+            + [f"veio.villager.{t}.{n}" for t in ("mayor", "gather", "plot", "festival", "favor", "factory", "village", "free")
+               for n in range(1, 5)]
             + [f"veio.onboarding.blocked.{i}" for i in (3, 5, 9)]
             + ["veio.onboarding.hidden", "veio.onboarding.shown", "veio.onboarding.save_failed"])
     for language in languages:
@@ -41,6 +86,7 @@ def main():
     textures = check_assets(languages)
     from check_machine_audio import check as check_audio
     check_audio()
+    check_village()
     print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas; "
           f"{textures} texturas 16x16 encontradas.")
 
@@ -100,6 +146,24 @@ def flatten(node, lang, bold=False):
         vanilla = key.split(".")[-1].replace("_", " ").capitalize()
         runs.append((lang.get(key, vanilla).replace("%%", "%"), bold))
     return runs + flatten(node.get("extra", []), lang, bold)
+
+
+def onboarding_items():
+    # Itens da lista de materiais do tutorial (CRAFT em onboarding.rs): todos precisam de nome.
+    import re
+    source = (ROOT / "native/api/src/onboarding.rs").read_text(encoding="utf-8")
+    village = (ROOT / "native/api/src/onboarding/village.rs").read_text(encoding="utf-8")
+    city = (ROOT / "native/api/src/onboarding/city.rs").read_text(encoding="utf-8")
+    forge = (ROOT / "native/api/src/onboarding/forge.rs").read_text(encoding="utf-8")
+    block = (source[source.index("const CRAFT"):source.index("fn craft_bit")] + village[village.index("const PARTS"):village.index("pub(super) fn slot")]
+             + city[city.index("const PARTS"):city.index("pub(super) fn step")] + forge[forge.index("parts:"):forge.index("intro:")])
+    consts = {"GENERATOR": "generator", "PRESS": "press", "CABLE": "cable", "ASSEMBLER": "assembler", "DRILL": "drill",
+              "BELT": "belt", "HUB": "contract_hub", "PLATE": "copper_plate", "GEAR": "gear", "FARM_POST": "farm_post",
+              "FIELD_MARKER": "field_marker", "HAULER_POST": "hauler_post", "FOREMAN_DESK": "foreman_desk", "HOUSE": "house",
+              "TOWN_HALL": "town_hall", "WELL": "well", "SHOP": "shop", "PARK": "park",
+              "DRILL_MK2": "drill_mk2", "BARRACKS": "barracks", "TESLA": "tesla", "BATTERY": "battery",
+              "BOARD": "factory_board", "POLE": "pole", "SPLITTER": "splitter"}
+    return re.findall(r'"#?([a-z_]+:[a-z_]+)"', block) + [consts[name] for name in re.findall(r"\b([A-Z_]+)\b", block) if name in consts]
 
 
 def check_page_fit(languages, name, strict=True):

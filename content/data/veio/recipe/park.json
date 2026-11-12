@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "minecraft:oak_sapling",
+    "minecraft:oak_sapling",
+    "minecraft:poppy",
+    "minecraft:dandelion",
+    "minecraft:oak_fence",
+    "minecraft:oak_fence",
+    "minecraft:oak_planks",
+    "minecraft:oak_planks",
+    "minecraft:lantern"
+  ],
+  "result": {
+    "id": "veio:park",
+    "count": 1
+  }
+}

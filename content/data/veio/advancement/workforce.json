@@ -39,7 +39,10 @@
       "veio:house",
       "veio:well",
       "veio:shop",
-      "veio:town_hall"
+      "veio:town_hall",
+      "veio:park",
+      "veio:plaza",
+      "veio:monument"
     ]
   }
 }

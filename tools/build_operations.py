@@ -52,6 +52,7 @@ def add_labels(langs):
         "no_water": ("O porto de carga precisa de mar ou rio largo em volta (20 blocos de água).", "The cargo port needs sea or a wide river around it (20 water blocks)."),
         "not_frontier": ("A estação de carga fica na fronteira: a 96 blocos da sede e das prefeituras.", "The freight station goes at the frontier: 96 blocks from headquarters and town halls."),
         "locked_market": ("O mundo ainda não compra essa camada: cumpra contratos para subir a reputação.", "The world does not buy this tier yet: fulfill contracts to raise reputation."),
+        "holiday": ("Feriado: a vila para para comemorar. O trabalho volta amanhã.", "Holiday: the village stops to celebrate. Work resumes tomorrow."),
         "storing": ("A fila do capataz guarda e retira itens daqui.", "The foreman's queue stores and takes items here."),
         "caravan_animal": ("Aproxime animal adulto equipado e use um laço no terminal; não precisa gastar o laço.", "Bring an equipped adult animal and use a lead on the terminal; the lead is kept."),
         "caravan_feed": ("Cavalo/burro: trigo, maçã ou feno; porco: cenoura, batata ou beterraba.", "Horse/donkey: wheat, apple or hay; pig: carrot, potato or beetroot."),

@@ -2,6 +2,19 @@
 
 Primeira etapa da ordem em [frentes/CLOUD.md](frentes/CLOUD.md): um aldeão contratado trabalha numa lavoura. Integrada na 0.10.0 com a interface de postos do Codex e o lote 1 do Grok.
 
+
+## 0.27.0: agenda da vila
+
+Desenho completo em [frentes/AGENDA.md](frentes/AGENDA.md). Feita sobre a build consolidada (`claude/project-thread-mrtok9`, 0.26.0).
+
+- **Calendário** sobre as estações do clima: domingo no 6º dia de cada estação; 6 feriados fixos (Fundação, Flores, São João, Colheita, Luzes, Virada do Ano). No feriado os postos param (estado *Feriado*, o quartel segue) e os aldeões vão à praça.
+- **Visitantes** (`veio:visitor`, comerciante viajante parado e com nome) chegam à prefeitura 2 dias antes; clique mostra a conversa (gancho `interact_entity`). Pedido entregue no novo espaço *Agenda* da prefeitura; a prefeitura reembolsa a companhia.
+- **Obras cívicas**: parque, praça e monumento (blocos novos) pedidos para bairros sem lazer; construir o bloco lá cumpre a missão e a prefeitura paga a obra.
+- **Ânimo** (0 a 100) multiplica o IDH de 0,9x a 1,1x; **lazer** vira o 4º serviço do IDH; pedido 13 do prefeito (casas sem lazer).
+- **Aba Agenda** na prefeitura (setas no título, `menu_button`), agenda no relatório do livro.
+- Defeito corrigido de passagem: depois do descanso, um posto em planejamento ficava mostrando o estado anterior (agora vale também para o feriado).
+- Testes: calendário, pedido e entrega com reembolso e ânimo, feriado parando o posto, obra cívica com lazer, ânimo e lazer no IDH.
+
 ## Para o jogador
 
 1. Obtenha a colheitadeira. O avanço **Lavoura mecanizada** passa a liberar a receita do **Posto do lavrador** (composteira, enxada de ferro, esmeralda e barril, em qualquer posição).
@@ -31,6 +44,14 @@ Máquinas industriais, a colheitadeira e as demais máquinas de produção conti
 | Trabalhador ausente | Aldeão não encontrado (longe, em chunk descarregado, morto). Depois de 5 minutos com o posto carregado, a atribuição é desfeita. |
 
 O painel mostra também as colheitas feitas e quantas colheitas a comida guardada ainda paga.
+
+## Interação mais clara (sobre a 0.25.0, PR do #47)
+
+- **O painel diz o próximo passo:** a 3ª linha dos postos muda com o estado (contratar, pôr comida, esvaziar a saída, pôr insumos ou esmeraldas, abrir caminho).
+- **Escolher quem contratar:** sem aldeão livre a 8 blocos, o clique com esmeralda deixa o posto esperando 30 s; clique, ainda com a esmeralda, no aldeão que quiser, a até 32 blocos. Fora disso, esmeralda no aldeão é comércio normal.
+- **Perguntar ao aldeão:** agachado e de mão vazia, clique num aldeão para ver em que posto ele trabalha e o que falta, ou se está livre.
+- **Carregador encadeia:** o que ele recolhe de uma máquina abastece a vizinha parada por falta daquilo (prensa > montador), nunca de volta a quem fabrica.
+- **Máquinas:** em "Faltam ingredientes", o painel mostra o item e a entrada que faltam na receita mais próxima.
 
 ## 0.25.0: balanceamento da economia
 
@@ -400,7 +421,7 @@ Feita sem teste no jogo, a partir do código do Horizon `66f3981` (`mobs/ai.rs`,
 ### Spawn na vila, conferido no Horizon
 
 - `run_command` só roda onde há servidor (`lan`). No singleplayer, o servidor integrado roda numa thread própria com `lan` ativo, e os ganchos de login e renascimento disparam nele: o spawn funciona.
-- Os comandos usados existem: `execute ... as ... unless entity @s[tag=...] run`, `tp`, `setworldspawn`, `spawnpoint`, `tag`, `tellraw` e `place structure` (este ignora o bioma, como o vanilla, e exige os chunks carregados, o que vale em volta do jogador).
+- Os comandos usados existem: `execute ... as ... unless entity @s[tag=...] run`, `tp`, `setworldspawn`, `spawnpoint`, `tag`, `tellraw`, `function` e, nas funções da vila, `execute positioned over`, `if loaded` e `place feature` (exigem os chunks carregados; peça fora deles espera o jogador chegar perto).
 - **Corrigido:** o tick também roda na janela, onde a lista de jogadores do servidor pode vir vazia; antes a chegada era descartada. Agora ela espera o servidor.
 
 ### Desempenho com vilas grandes (medido)
@@ -431,7 +452,11 @@ O teto de aldeões de cada vila passou a depender do desenvolvimento a até 64 b
 
 ### Spawn no centro da vila
 
-- **Mundo novo e jogador novo:** no login, o Veio procura uma vila a até 96 blocos pelos aldeões registrados. O centro é a média dos aldeões em volta daquele com mais vizinhos (onde a vila se reúne). O jogador é levado para lá, e o spawn do mundo e o dele ficam nesse ponto. Se não houver vila em 30 s, o Veio gera uma vila de planície onde o jogador está (`/place structure minecraft:village_plains`) e procura de novo; se ainda assim nada aparecer, avisa no chat.
+- **Mundo novo e jogador novo (desde a 0.40.0):**
+  - O Veio funda a vila dele num terreno plano, seco e sem árvores, a mais de 150 blocos de qualquer aldeão, e a ergue aos poucos (`workforce/town.rs`, [docs/vila/README.md](docs/vila/README.md)).
+  - O centro fica salvo em `<mundo>/veio/vila.txt`.
+  - O jogador aparece a 44 blocos, fora dos prédios, e o spawn do mundo e o dele ficam no centro.
+- **Mundo antigo:** quem já tinha chegado (tag `veio_village`) e não tem `vila.txt` volta à vila do Minecraft de antes. O centro dela é a média dos aldeões em volta daquele com mais vizinhos (onde a vila se reúne).
 - **Centro de controle:** com administrador, o centro de controle passa a ser o centro da vila. O spawn do mundo e o de todos os jogadores vão para cima dele, e quem renasce é levado para lá, mesmo tendo cama em outro lugar.
 - Cada jogador recebe a tag `veio_village` depois da primeira chegada; os comandos de chegada só valem para quem não tem a tag, então voltar ao mundo não muda nada.
 - Usa os ganchos `player_logged_in` e `player_respawned` e `Host::run_command` (console do servidor), conferidos no Horizon `66f3981`. Só no Overworld.
