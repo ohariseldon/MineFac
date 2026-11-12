@@ -1,4 +1,33 @@
-# Veio 0.39.0
+# Veio 0.40.0
+
+A 0.40.0 traz **a vila do Veio**, desenhada bloco a bloco, no lugar da vila do Minecraft. Num mundo novo, ela nasce num terreno plano perto de onde você aparece, e vai subindo enquanto você chega: a praça com a fonte seca e o coreto sem telhado, as casas dos moradores dos pedidos e mais sete casas habitadas, cada uma de um jeito.
+- **As casas:**
+  - de pedra e tábua;
+  - enxaimel;
+  - de taipa;
+  - o sobrado;
+  - com varanda;
+  - a do jardim;
+  - a casa de pedra, a mais antiga.
+- **Os moradores dos pedidos:**
+  - a oficina do Seu Bento, com forja, bigorna e chaminé;
+  - a casa da Dona Cida, ao lado da roça;
+  - a vendinha do Seu Zé, de prateleiras vazias e toldo listrado;
+  - a olaria da Dona Zefa, com o forno rachado e os varais;
+  - a cabana do Seu Lino, com o monte de carvão apagado;
+  - a casa do Seu Tonho, com o pasto grande para a Mimosa.
+- **O resto do lugar:** duas casas em obra, uma abandonada e quatro lotes vazios.
+- **Por dentro:** tudo mobiliado, com camas, mesas, fogão, baús, estantes, tapetes e lanternas.
+- **O desgaste:** no começo há uma vidraça quebrada, teia no beiral e mato junto da parede.
+- **Cada um no seu lugar:** os moradores com nome ficam na frente da própria casa, o prefeito fica na praça, e a casa do fundador e o terreno da oficina têm lugar marcado.
+- **As ruas:** são de terra, com mato crescendo no meio.
+- **O verde:** árvores e canteiros de flores entre as casas, sem cair em rua nem em lugar de obra futura.
+- **A vila melhora junto com a história:**
+  - **com os pedidos atendidos,** a fonte ganha água, o coreto ganha telhado, as casas em obra ficam prontas, a abandonada é reformada, as ruas viram cascalho com lanternas, e as casas ganham lanterna na porta, jardineiras e flores;
+  - **no capítulo da vila,** os lotes ganham casas e nasce a prefeitura (o gabinete);
+  - **no capítulo da cidade,** a prefeitura vira um sobrado com varanda e salão do conselho, chega o poço novo, as ruas passam a ser de pedra, e as casas ganham venezianas, bancos e arbustos floridos;
+  - **na metrópole,** a prefeitura vira o paço municipal com torre do sino e as ruas ganham meio-fio.
+  - Nenhuma troca acontece com você olhando: uma mudança espera você estar a mais de 32 blocos.
 
 A 0.39.0 é uma rodada de revisão:
 - **À noite, os moradores com nome dormem.** O prefeito Otávio e os vizinhos (Seu Bento, Dona Cida, Dona Zefa, Seu Zé, Seu Tonho, Seu Lino) eram aldeões parados que nunca saíam do lugar. Agora, ao anoitecer, cada um vai para a cama mais perto de onde trabalha e volta de manhã.

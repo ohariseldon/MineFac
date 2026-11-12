@@ -945,6 +945,7 @@ fn tick(host: &mut dyn Host, now: u64) {
         let Some(p) = s.players.get_mut(&player.uuid) else { continue };
         if p.night_first == 1 { continue; }
         errands::tick(host, player, p, now);
+        workforce::town::advance(town_stage(p));
         if p.dirty && now % 100 == 0 && save(&s.root, player.uuid, p).is_err() && !p.save_warned {
             host.tell(player.uuid, Text::tr("veio.onboarding.save_failed", &[])); p.save_warned = true;
         }
@@ -1052,6 +1053,13 @@ pub(super) fn neighbor_talk(host: &mut dyn Host, kind: &str) -> bool {
 }
 
 /// Outro mundo vai abrir: esquece o prefeito e os vizinhos do mundo anterior.
+/// O estágio da vila do Veio pela história de um jogador: 2 com os pedidos da vila atendidos, 3 no
+/// capítulo da vila, 4 no da cidade, 6 no da metrópole.
+fn town_stage(p: &Progress) -> u8 {
+    if p.metro > 0 { 6 } else if p.city > 0 { 4 } else if p.village > 0 { 3 }
+    else if p.errand_flags & errands::REVIVED != 0 { 2 } else { 1 }
+}
+
 pub(super) fn world_changed() { intro::reset(); favors::reset(); errands::reset(); rest::reset(); }
 
 /// Clique num morador dos pedidos da vila. `true` se o Veio tomou o clique.

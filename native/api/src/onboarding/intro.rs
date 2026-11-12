@@ -176,8 +176,10 @@ pub(super) fn mayor_at(host: &dyn Host, p: &Progress) -> Option<[f64; 3]> {
 /// O lugar do prefeito na praça: o ponto mais baixo e seco a 3 blocos do centro da vila.
 pub(super) fn plaza_spot(host: &dyn Host) -> Option<[f64; 3]> {
     let ([x, _, z], _) = workforce::spawn::center()?;
-    let columns: Vec<(i32, i32)> = [(3, 0), (-3, 0), (0, 3), (0, -3), (2, 2), (-2, 2), (2, -2), (-2, -2)]
-        .iter().map(|(dx, dz)| (x + dx, z + dz)).collect();
+    // Na vila do Veio: entre a fonte e o coreto (`town_plan::MAYOR`); senão, a 3 blocos do centro.
+    let columns: Vec<(i32, i32)> = workforce::town::spots(host, &workforce::town::MAYOR).unwrap_or_else(|| {
+        [(3, 0), (-3, 0), (0, 3), (0, -3), (2, 2), (-2, 2), (2, -2), (-2, -2)].iter().map(|(dx, dz)| (x + dx, z + dz)).collect()
+    });
     let ground = host.surface_heights(OVERWORLD, &columns, NativeHeightmap::MotionBlockingNoLeaves).ok()?;
     let floor = host.surface_heights(OVERWORLD, &columns, NativeHeightmap::OceanFloor).ok()?;
     columns.iter().zip(ground.iter().zip(&floor))
@@ -280,8 +282,9 @@ fn overlaps_house(center: [i32; 2]) -> bool {
 
 /// Escolhe o terreno da oficina em volta da vila: o quadrado mais plano, sem água, fora da casa.
 pub(super) fn choose_plot(host: &dyn Host, around: [i32; 3]) -> Pos {
-    let mut best: Option<(i32, [i32; 2])> = None;
+    let mut best: Option<(i32, [i32; 2])> = workforce::town::plot(host).map(|at| (0, at));
     for ring in RINGS {
+        if best.is_some_and(|(score, _)| score == 0) { break; }
         for (dx, dz) in DIRECTIONS {
             let center = [around[0] + dx * ring, around[2] + dz * ring];
             if overlaps_house(center) { continue; }

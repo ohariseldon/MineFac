@@ -130,6 +130,10 @@ fn block_of(at: [f64; 3]) -> [i32; 3] {
 /// Canto noroeste da casa perto de `around`: o terreno mais plano, sem água nem árvores, ao norte do
 /// centro (a porta, no sul, fica de frente para a vila). `y` é o nível do piso.
 pub(crate) fn site(host: &dyn Host, around: [i32; 3]) -> [i32; 3] {
+    // Na vila do Veio, a casa tem lugar marcado no plano (`workforce::town`).
+    if let Some(at) = super::workforce::town::founder_site(host) {
+        return at;
+    }
     let [cx, cy, cz] = around;
     let fallback = [cx - FOOTPRINT[0] / 2, cy - 1, cz - 23];
     let candidates: Vec<[i32; 2]> = [-18, -24, -30].iter()
@@ -195,6 +199,11 @@ fn build(host: &mut dyn Host, now: u64) {
     if !host.run_command(GUARD) {
         // Este mundo já tem a casa.
         state.built = true;
+        return;
+    }
+    // Na vila do Veio, a casa tem lugar marcado: espera o chão de lá carregar (sem gastar tentativa).
+    if super::workforce::town::known_center().is_some() && super::workforce::town::founder_site(host).is_none() {
+        state.next_try = now + RETRY;
         return;
     }
     let around = center.unwrap_or_else(|| block_of(first.position));

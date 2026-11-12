@@ -6,7 +6,7 @@ Pedido do usuário para a frente Cloud. O Grok já fechou a regra de moradia. Es
 
 - A população fica entre 30 e 150. O teto sobe com postos, zonas, armazéns e o centro de controle.
 - Cada aldeão precisa de uma cama. Conta a cabeceira (`part=head`), não o pé. A volta das camas lê 16 blocos por tick num raio de 32, em três camadas.
-- A vila que o jogo coloca no começo (`village_plains`) já traz camas para quem está lá. Crescer além disso é o jogador construir mais casas.
+- A vila do Veio que o jogo ergue no começo ([docs/vila/README.md](../docs/vila/README.md)) já traz camas para quem está lá. Crescer além disso é o jogador construir mais casas.
 - Sem cama livre, ninguém nasce. A cada 10 s, quem está perto ouve: “N aldeões e M camas. Construa mais casas.” (`veio.village.need_houses`).
 
 ## O que construir

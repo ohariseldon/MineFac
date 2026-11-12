@@ -112,6 +112,8 @@ struct Village {
     /// Outros itens no inventário do jogador.
     bag: HashMap<String, u32>,
     sneak: bool,
+    /// Jogadores com a tag de chegada (de um mundo antigo).
+    tagged: Vec<String>,
 }
 
 impl Village {
@@ -266,8 +268,15 @@ impl Host for Village {
     fn acting_player(&self) -> Option<horizon_client::mod_api::NativeServerPlayer> {
         self.players.first().cloned()
     }
+    fn world_dir(&self) -> Option<std::path::PathBuf> {
+        None
+    }
     fn run_command(&mut self, line: &str) -> bool {
         self.commands.push(line.to_owned());
+        if let Some(rest) = line.split(" as ").nth(1) && line.ends_with("if entity @s[tag=veio_village]") {
+            let name = rest.split_whitespace().next().unwrap_or_default();
+            return self.tagged.iter().any(|known| known == name);
+        }
         true
     }
     fn tell(&mut self, _: u128, line: Text) -> bool {
@@ -1354,6 +1363,8 @@ fn new_players_arrive_near_the_village_and_the_control_center_takes_over() {
         village.villager(16001 + index as u32, [*x, 64.0, *z], [70, 0, 0, index as i32]);
     }
     village.villager(16010, [180.5, 64.0, 100.5], [70, 0, 0, 10]);
+    // Steve já tinha chegado antes (mundo antigo): volta à vila do Minecraft que já existia.
+    village.tagged = vec!["Steve".into()];
     spawn::logged_in(7, "Steve", 0);
     spawn::logged_in(8, "bad name;kill", 0);
     // A janela também roda o tick e não vê os jogadores do servidor: nada se perde.
@@ -1377,20 +1388,56 @@ fn new_players_arrive_near_the_village_and_the_control_center_takes_over() {
     assert!(joined.contains("tp @s 131 70 131"), "convidado da LAN vai para perto do centro já conhecido\n{joined}");
     assert!(!joined.contains("place structure"), "não gera uma segunda vila");
 
-    // Sozinho e longe de tudo: espera os chunks, gera uma vila e só depois desiste.
+    // Sozinho e longe de tudo: espera os chunks e funda a vila do Veio.
     spawn::reset();
     village.commands.clear();
     village.players = vec![player(9, "Alex", [5000.0, 64.0, 5000.0])];
     spawn::logged_in(9, "Alex", 40);
     spawn::tick(&mut village, 60);
-    assert!(village.commands.is_empty(), "ainda esperando os aldeões carregarem");
-    spawn::tick(&mut village, 40 + spawn::WAIT + 20);
-    // Terreno todo plano no teste: a vila nasce onde o jogador está, e ele já vai para o centro.
+    assert!(!village.commands.iter().any(|line| line.contains("setworldspawn")), "ainda esperando os chunks carregarem");
+    spawn::tick(&mut village, 40 + 100 + 20);
+    // Terreno todo plano no teste: a vila nasce onde o jogador está, e ele vai para fora dela.
     let joined = village.commands.join("\n");
-    assert!(joined.contains("place structure minecraft:village_plains 5000 70 5000"), "{joined}");
+    assert!(!joined.contains("place structure"), "nada de vila do Minecraft\n{joined}");
+    assert!(joined.contains("setworldspawn 5000 70 5000"), "{joined}");
     assert!(joined.contains("tp @s 5000 70 5044") && joined.contains("tag Alex add veio_village"), "nasce ao sul da vila nova\n{joined}");
     assert!(!joined.contains("fill"), "sem árvores, nada a limpar");
     assert_eq!(spawn::center(), Some(([5000, 70, 5000], false)));
+    assert_eq!(town::known_center(), Some([5000, 70, 5000]));
+    // A casa do fundador vai para o lugar dela no plano, ao norte da praça.
+    let [fx, fz] = super::town_plan::FOUNDER;
+    assert_eq!(super::super::home::site(&village, [5000, 70, 5000]), [5000 + fx, 69, 5000 + fz]);
+    // A vila sobe aos poucos: primeiro a praça (o piso entra no lugar da grama, um abaixo do chão).
+    village.commands.clear();
+    town::tick(&mut village, 190);
+    assert!(!village.commands.iter().any(|line| line.contains("village/praca")), "nada nasce em cima do jogador");
+    village.players = vec![player(9, "Alex", [5000.5, 70.0, 5044.5])];
+    let before = village.commands.len();
+    town::tick(&mut village, 200);
+    let joined = village.commands[before..].join("\n");
+    assert!(joined.contains("positioned 4987 69 4991 run function veio:village/praca"), "{joined}");
+    assert_eq!(village.commands.len() - before, 3, "três peças por vez\n{joined}");
+    for now in (210..2000).step_by(10) { town::tick(&mut village, now); }
+    let joined = village.commands.join("\n");
+    for key in ["ferreiro", "lavradora", "vendinha", "olaria", "carvoaria", "vaqueiro", "pasto", "roca", "casa_pedra", "ruina", "lote_1"] {
+        assert!(joined.contains(&format!("run function veio:village/{key}")), "{key} de pé no estágio 1");
+    }
+    assert!(joined.contains("run function veio:village/ruas/1_0_0"), "as ruas depois dos prédios");
+    for key in ["praca_2", "prefeitura_3", "casa_reformada"] {
+        assert!(!joined.contains(&format!("veio:village/{key}")), "{key} é de outro estágio");
+    }
+    // Os pedidos atendidos: a vila respira. A praça só muda com o jogador longe.
+    village.commands.clear();
+    town::advance(2);
+    village.players = vec![player(9, "Alex", [5000.0, 70.0, 5010.0])];
+    for now in (2000..2400).step_by(10) { town::tick(&mut village, now); }
+    let joined = village.commands.join("\n");
+    assert!(!joined.contains("veio:village/praca_2"), "o jogador está na praça\n{joined}");
+    assert!(joined.contains("veio:village/casa_reformada"), "a casa abandonada fica longe do jogador\n{joined}");
+    village.players = vec![player(9, "Alex", [5000.0, 70.0, 5200.0])];
+    for now in (2400..2800).step_by(10) { town::tick(&mut village, now); }
+    assert!(village.commands.iter().any(|line| line.ends_with("positioned 4987 69 4991 run function veio:village/praca_2")),
+        "a fonte e o coreto prontos, no mesmo piso");
 
     // O centro de controle vira o centro da vila; quem renasce volta para lá.
     village.commands.clear();
@@ -3030,4 +3077,70 @@ fn a_starved_machine_names_the_missing_input_of_the_closest_recipe() {
     let mut empty = block(ASSEMBLER);
     production::process(&mut empty);
     assert_eq!(number(&empty, "Info"), 0);
+}
+
+#[test]
+fn the_town_plan_matches_its_functions_and_keeps_people_outside_the_walls() {
+    use super::town_plan::{PIECES, ROADS};
+    let functions = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../content/data/veio/function/village");
+    for piece in &PIECES {
+        let text = std::fs::read_to_string(functions.join(format!("{}.mcfunction", piece.key)))
+            .unwrap_or_else(|_| panic!("falta a função de {}", piece.key));
+        if piece.overlay {
+            assert!(!text.contains(" replace ") && !text.contains("kill "), "{}: o acabamento não limpa nada", piece.key);
+            assert!(PIECES.iter().any(|p| !p.overlay && p.site == piece.site && p.stage < piece.stage && piece.stage < p.until),
+                "{}: acabamento de um prédio que ainda está de pé", piece.key);
+        } else {
+            assert!(text.lines().any(|line| line.starts_with("fill ~") && line.ends_with("minecraft:air")), "{}: limpa o volume", piece.key);
+        }
+        assert!(piece.stage < piece.until, "{}", piece.key);
+        let [w, n, e, s] = piece.core;
+        let [aw, an, ae, as_] = piece.area;
+        assert!(aw <= w && an <= n && ae >= e && as_ >= s, "{}: as paredes ficam dentro da área", piece.key);
+    }
+    for road in &ROADS {
+        assert!(functions.join(format!("{}.mcfunction", road.name)).exists(), "falta {}", road.name);
+    }
+    // Cada estágio tem um lugar para cada coisa: nada se sobrepõe.
+    for stage in 1..=town::MAX_STAGE {
+        let standing: Vec<_> = town::wanted(stage).filter(|p| !p.overlay).collect();
+        for (i, a) in standing.iter().enumerate() {
+            for b in &standing[i + 1..] {
+                let apart = a.area[2] < b.area[0] || b.area[2] < a.area[0] || a.area[3] < b.area[1] || b.area[3] < a.area[1];
+                assert!(apart, "estágio {stage}: {} e {}", a.key, b.key);
+            }
+        }
+    }
+    // Os moradores com nome ficam do lado de fora, na frente da porta; o prefeito, na praça.
+    let inside = |(x, z): (i32, i32), key: &str| PIECES.iter().filter(|p| p.site != key)
+        .any(|p| x >= p.area[0] && x <= p.area[2] && z >= p.area[1] && z <= p.area[3]);
+    for (spots, own) in [(town::SMITH, "ferreiro"), (town::FARMER, "lavradora"), (town::GROCER, "vendinha"),
+        (town::POTTER, "olaria"), (town::COLLIER, "carvoaria"), (town::COWHERD, "vaqueiro")]
+    {
+        let piece = PIECES.iter().find(|p| p.key == own).unwrap();
+        for (x, z) in spots {
+            let walls = x >= piece.core[0] && x <= piece.core[2] && z >= piece.core[1] && z <= piece.core[3];
+            assert!(!walls && !inside((x, z), own), "{own}: ({x}, {z}) fora dos prédios");
+            assert!((x - (piece.core[0] + piece.core[2]) / 2).abs() + (z - (piece.core[1] + piece.core[3]) / 2).abs() < 16, "{own}: perto de casa");
+        }
+    }
+    for (x, z) in town::MAYOR {
+        assert!(f64::from(x).hypot(f64::from(z)) > 4.5, "longe da fonte: ({x}, {z})");
+        let plaza = PIECES.iter().find(|p| p.key == "praca").unwrap().core;
+        assert!(x >= plaza[0] && x <= plaza[2] && z >= plaza[1] && z <= plaza[3], "na praça: ({x}, {z})");
+    }
+}
+
+#[test]
+fn the_town_save_keeps_its_center_stage_floors_and_what_is_built() {
+    let text = town::save_text([10, 64, -20], 2, &["praca", "ferreiro"], &[("praca".into(), 63)], &["ruas/1_0_0"]);
+    let (center, stage, built, floors, roads) = town::load_text(&text).unwrap();
+    assert_eq!((center, stage), ([10, 64, -20], 2));
+    assert_eq!(built, vec!["praca", "ferreiro"]);
+    assert_eq!(floors, vec![("praca".to_string(), 63)]);
+    assert_eq!(roads, vec!["ruas/1_0_0"]);
+    let old = town::load_text("centro 1 2 3\nestagio 9\npeca casa_que_saiu_do_plano\nlixo\n").unwrap();
+    assert_eq!(old.1, town::MAX_STAGE, "estágio limitado");
+    assert!(old.2.is_empty(), "peça fora do plano é esquecida");
+    assert!(town::load_text("estagio 2\n").is_none(), "sem centro, sem vila");
 }

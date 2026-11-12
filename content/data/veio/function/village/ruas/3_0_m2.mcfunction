@@ -1,0 +1,79 @@
+# Gerado por tools/vila/build_village.py. Ruas do estágio 3 (cascalho batido), relativas ao centro da vila.
+execute positioned ~0 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~0 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~0 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~0 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~0 ~ ~-46 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~0 ~ ~-46 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~0 ~ ~-45 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~0 ~ ~-45 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~0 ~ ~-44 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~0 ~ ~-44 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~0 ~ ~-43 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~0 ~ ~-43 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~0 ~ ~-42 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~0 ~ ~-42 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~0 ~ ~-41 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:coarse_dirt replace #veio:road_ground
+execute positioned ~0 ~ ~-41 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~0 ~ ~-40 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~0 ~ ~-40 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~0 ~ ~-39 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~0 ~ ~-39 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~1 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~1 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~1 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:coarse_dirt replace #veio:road_ground
+execute positioned ~1 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~2 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~2 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~2 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:coarse_dirt replace #veio:road_ground
+execute positioned ~2 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~3 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~3 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~3 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~3 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~4 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:coarse_dirt replace #veio:road_ground
+execute positioned ~4 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~5 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~5 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~6 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~6 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~7 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~7 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~8 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~8 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~9 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~9 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~10 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~10 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~11 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~11 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~23 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:coarse_dirt replace #veio:road_ground
+execute positioned ~23 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~23 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~23 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~23 ~ ~-62 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:coarse_dirt replace #veio:road_ground
+execute positioned ~23 ~ ~-62 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~23 ~ ~-61 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~23 ~ ~-61 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~25 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~25 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~26 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~26 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~27 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:coarse_dirt replace #veio:road_ground
+execute positioned ~27 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~28 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~28 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~29 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~29 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~30 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:dirt_path replace #veio:road_ground
+execute positioned ~30 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~31 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~31 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~31 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~31 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~17 ~ ~-64 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:oak_fence
+execute positioned ~17 ~ ~-64 positioned over motion_blocking_no_leaves run setblock ~ ~2 ~ minecraft:lantern[hanging=false]
+execute positioned ~6 ~ ~-63 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:oak_fence
+execute positioned ~6 ~ ~-63 positioned over motion_blocking_no_leaves run setblock ~ ~2 ~ minecraft:lantern[hanging=false]
+execute positioned ~2 ~ ~-62 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:oak_fence
+execute positioned ~2 ~ ~-62 positioned over motion_blocking_no_leaves run setblock ~ ~2 ~ minecraft:lantern[hanging=false]

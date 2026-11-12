@@ -38,6 +38,8 @@ pub(super) mod barracks;
 pub(super) mod center;
 pub(super) mod storage;
 pub(super) mod spawn;
+pub(crate) mod town;
+mod town_plan;
 pub(super) mod village;
 pub(super) mod zones;
 pub(super) mod society;
@@ -1624,6 +1626,7 @@ pub(super) fn maintenance(now: u64) { foreman::maintenance(now); }
 /// Tick global do jogo: chegada na vila e o foco dos jogadores.
 pub(super) fn world_tick(host: &mut dyn Host, now: u64) {
     spawn::tick(host, now);
+    town::tick(host, now);
     focus::tick(host, now);
 }
 

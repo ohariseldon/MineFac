@@ -53,6 +53,14 @@ impl Person {
             Person::Smith => [(8, 0), (8, 3), (8, -3), (7, 6)],
         }
     }
+    /// Na vila do Veio: na frente da casa ou da oficina de cada um (`town_plan`).
+    fn planned(self) -> &'static [(i32, i32); 4] {
+        match self {
+            Person::Potter => &workforce::town::POTTER, Person::Grocer => &workforce::town::GROCER,
+            Person::Cowherd => &workforce::town::COWHERD, Person::Collier => &workforce::town::COLLIER,
+            Person::Smith => &workforce::town::SMITH,
+        }
+    }
     fn villager(self) -> (&'static str, &'static str) {
         match self {
             Person::Potter => ("minecraft:mason", "minecraft:desert"),
@@ -195,7 +203,8 @@ pub(super) fn residents(host: &dyn Host) -> Vec<(&'static str, Option<u32>, Opti
 /// O lugar fixo de cada um: o chão mais baixo e seco entre as colunas dele.
 fn home(host: &dyn Host, who: Person) -> Option<[f64; 3]> {
     let ([x, _, z], _) = workforce::spawn::center()?;
-    let columns: Vec<(i32, i32)> = who.offsets().iter().map(|(dx, dz)| (x + dx, z + dz)).collect();
+    let columns: Vec<(i32, i32)> = workforce::town::spots(host, who.planned())
+        .unwrap_or_else(|| who.offsets().iter().map(|(dx, dz)| (x + dx, z + dz)).collect());
     let ground = host.surface_heights(OVERWORLD, &columns, NativeHeightmap::MotionBlockingNoLeaves).ok()?;
     let floor = host.surface_heights(OVERWORLD, &columns, NativeHeightmap::OceanFloor).ok()?;
     columns.iter().zip(ground.iter().zip(&floor))
@@ -357,6 +366,8 @@ fn close(host: &mut dyn Host, player: &NativeServerPlayer, p: &mut Progress, ind
     }
     if ERRANDS.iter().enumerate().all(|(i, e)| p.errands[i] == e.done()) && p.errand_flags & REVIVED == 0 {
         p.errand_flags |= REVIVED;
+        // A vila respira: fonte com água, coreto com telhado, as casas em obra prontas.
+        workforce::town::advance(2);
         for line in 1..=4 { intro::say(host, player.uuid, &format!("veio.errand.revival.{line}"), &[]); }
         intro::react(host, intro::Mood::Happy);
         if spawn_safe(&player.name) {

@@ -1,0 +1,21 @@
+# Gerado por tools/vila/build_village.py. Ruas do estágio 4 (calçamento de pedra), relativas ao centro da vila.
+execute positioned ~96 ~ ~25 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:gravel replace #veio:road_ground
+execute positioned ~96 ~ ~25 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~96 ~ ~26 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~96 ~ ~26 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~97 ~ ~25 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~97 ~ ~25 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~97 ~ ~26 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:andesite replace #veio:road_ground
+execute positioned ~97 ~ ~26 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~98 ~ ~25 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~98 ~ ~25 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~98 ~ ~26 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~98 ~ ~26 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~99 ~ ~25 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~99 ~ ~25 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~99 ~ ~26 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~99 ~ ~26 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~100 ~ ~25 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:cobblestone replace #veio:road_ground
+execute positioned ~100 ~ ~25 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees
+execute positioned ~100 ~ ~26 positioned over motion_blocking_no_leaves run fill ~ ~-1 ~ ~ ~-1 ~ minecraft:andesite replace #veio:road_ground
+execute positioned ~100 ~ ~26 positioned over motion_blocking_no_leaves run fill ~ ~ ~ ~ ~1 ~ minecraft:air replace #minecraft:replaceable_by_trees

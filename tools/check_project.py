@@ -12,6 +12,16 @@ def read_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def check_village():
+    """A vila (`tools/vila/build_village.py`): modelos válidos, nada sobreposto e as funções e o plano
+    do Rust em dia com os modelos."""
+    import subprocess
+    import sys
+    result = subprocess.run([sys.executable, str(ROOT / "tools/vila/build_village.py"), "--check"],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, "vila: " + (result.stdout + result.stderr).strip()
+
+
 def main():
     files = list(CONTENT.rglob("*.json"))
     for path in files:
@@ -76,6 +86,7 @@ def main():
     textures = check_assets(languages)
     from check_machine_audio import check as check_audio
     check_audio()
+    check_village()
     print(f"Veio {versions[0]}: {len(files)} JSON válidos; {len(pages)} páginas e traduções conferidas; "
           f"{textures} texturas 16x16 encontradas.")
 

@@ -5,7 +5,12 @@
 //!   aldeões em volta daquele que tem mais vizinhos (onde a vila se reúne). O jogador vai para lá,
 //!   e o spawn do mundo e o dele ficam nesse ponto. Sem vila em `WAIT` ticks, o Veio escolhe um
 //!   terreno plano, seco e sem árvores a até `SITE_REACH` blocos (`flat_site`), tira as árvores
-//!   que sobrarem em volta, gera uma vila de planície ali (`/place structure`) e leva o jogador.
+//!   que sobrarem em volta e funda ali a vila do Veio (`town.rs`, desenhada em `tools/vila`), que
+//!   vai sendo erguida enquanto o jogador chega.
+//! - **Mundo do Veio:** num mundo que já tem a vila do Veio (`town::center`), o centro é o dela,
+//!   lido do disco. Quem chega pela primeira vez a um mundo sem ela ganha a vila do Veio, mesmo
+//!   com uma vila do Minecraft por perto; a procura por aldeões (`find_village`) só vale para os
+//!   mundos de antes dela, para quem já tinha chegado.
 //! - **Centro de controle:** com administrador, ele vira o centro da vila: o spawn do mundo e o de
 //!   todos os jogadores passam para cima dele, e quem renasce volta para lá.
 //!
@@ -20,6 +25,8 @@ pub(crate) const OVERWORLD: &str = "minecraft:overworld";
 pub(crate) const SEARCH: f64 = 96.0;
 /// Espera pelos aldeões (os chunks em volta precisam carregar) antes de gerar uma vila.
 pub(crate) const WAIT: u64 = 600;
+/// Num mundo sem vila nenhuma, quanto esperar os chunks em volta antes de fundar a do Veio.
+const FOUND_WAIT: u64 = 100;
 pub(crate) const MIN_VILLAGERS: usize = 3;
 const NEIGHBORS: f64 = 16.0;
 /// Até onde procurar terreno para a vila nova (dentro da distância em que os chunks já carregaram).
@@ -32,6 +39,8 @@ const GOOD_SITE: i32 = 3 * 4 + 2 * 3;
 /// Área limpa de árvores em volta do centro (64 x 64), em blocos de 16 x 16 x 32 por comando.
 const CLEAR_HALF: i32 = 32;
 const TAG: &str = "veio_village";
+/// Distância mínima entre o centro da vila do Veio e um aldeão de outra vila.
+const VILLAGE_SPAN: f64 = 150.0;
 
 struct Arrival {
     player: u128,
@@ -56,6 +65,15 @@ pub(crate) fn safe_name(name: &str) -> bool {
 
 pub(crate) fn center() -> Option<([i32; 3], bool)> {
     CENTER.lock().ok().and_then(|center| *center)
+}
+
+/// O centro da vila do Veio lido do disco vira o centro conhecido (sem mexer em spawn nenhum).
+pub(crate) fn adopt(at: [i32; 3]) {
+    if let Ok(mut center) = CENTER.lock()
+        && center.is_none()
+    {
+        *center = Some((at, false));
+    }
 }
 
 pub(crate) fn logged_in(player: u128, name: &str, now: u64) {
@@ -144,12 +162,17 @@ fn heights(host: &dyn Host, columns: &[(i32, i32)], map: NativeHeightmap) -> Opt
 /// Devolve o centro, a altura do chão e se ainda há copas para tirar.
 pub(crate) fn flat_site(host: &dyn Host, around: [i32; 2]) -> Option<([i32; 3], bool)> {
     let mut best: Option<(i32, [i32; 3])> = None;
-    for ring in (0..=SITE_REACH).step_by(16) {
+    // Longe das vilas do Minecraft: a do Veio ocupa uns 110 blocos para cada lado do centro.
+    let villagers: Vec<[f64; 3]> = production::ranch::villager_positions(host, OVERWORLD).iter().map(|(_, at)| *at).collect();
+    let crowded = |x: i32, z: i32| villagers.iter().any(|at| (at[0] - f64::from(x)).hypot(at[2] - f64::from(z)) < VILLAGE_SPAN);
+    let reach = if villagers.is_empty() { SITE_REACH } else { SITE_REACH + VILLAGE_SPAN as i32 };
+    for ring in (0..=reach).step_by(16) {
         let points: Vec<[i32; 2]> = if ring == 0 { vec![around] } else {
             [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)].iter()
                 .map(|(dx, dz)| [around[0] + dx * ring, around[1] + dz * ring]).collect()
         };
         for [x, z] in points {
+            if crowded(x, z) { continue; }
             let columns = site_columns(x, z);
             let (Some(floor), Some(ground), Some(top)) = (heights(host, &columns, NativeHeightmap::OceanFloor),
                 heights(host, &columns, NativeHeightmap::MotionBlockingNoLeaves),
@@ -213,6 +236,7 @@ pub(crate) fn approach(host: &dyn Host, center: [i32; 3], from: [f64; 3]) -> Opt
         heights(host, &points, NativeHeightmap::MotionBlockingNoLeaves), heights(host, &points, NativeHeightmap::MotionBlocking))
     {
         for (index, (x, z)) in points.iter().enumerate() {
+            if town::known_center().is_some_and(|c| town::occupied(c, *x, *z)) { continue; }
             if floor[index] == ground[index] && top[index] == ground[index] {
                 return Some([*x, ground[index], *z]);
             }
@@ -264,8 +288,11 @@ pub(crate) fn tick(host: &mut dyn Host, now: u64) {
         }
         // Centro já conhecido (a vila do anfitrião ou o centro de controle): quem entra na LAN
         // vai para lá, mesmo longe. Sem isso, o convidado ganharia outra vila onde apareceu.
-        let known = center().map(|(at, _)| at);
-        let found = known.or_else(|| find_village(host, player.position));
+        let known = center().map(|(at, _)| at).or_else(|| town::center(host));
+        // Só quem já tinha chegado antes da vila do Veio (um mundo antigo) volta à vila do Minecraft.
+        let veteran = known.is_none()
+            && host.run_command(&format!("execute in {OVERWORLD} as {} if entity @s[tag={TAG}]", arrival.name));
+        let found = known.or_else(|| if veteran { find_village(host, player.position) } else { None });
         if let Some(at) = found {
             if settle(host, &arrival.name, at, player.position) {
                 if let Ok(mut center) = CENTER.lock()
@@ -278,29 +305,28 @@ pub(crate) fn tick(host: &mut dyn Host, now: u64) {
             waiting.push(arrival);
             continue;
         }
-        if now < arrival.deadline {
+        if veteran {
+            // Mundo antigo: espera os aldeões dele carregarem; não ganha uma vila nova.
+            if now < arrival.deadline { waiting.push(arrival); }
+            continue;
+        }
+        // Os chunks em volta precisam carregar para medir o terreno: um pouco de espera.
+        if now + WAIT < arrival.deadline + FOUND_WAIT {
             waiting.push(arrival);
             continue;
         }
         let name = arrival.name.clone();
         let only_new = format!("execute in {OVERWORLD} as {name} unless entity @s[tag={TAG}] at @s run");
         if !arrival.placed {
-            // Nenhuma vila perto: escolhe terreno plano e sem árvores, limpa e gera a vila lá.
+            // Nenhuma vila: escolhe terreno plano e sem árvores, limpa e funda a vila do Veio lá.
             arrival.placed = true;
-            let around = [player.position[0].floor() as i32, player.position[2].floor() as i32];
-            if let Some((site, trees)) = flat_site(host, around) {
-                if trees { clear_trees(host, site); }
-                let [x, y, z] = site;
-                if host.run_command(&format!("execute in {OVERWORLD} run place structure minecraft:village_plains {x} {y} {z}"))
-                    && settle(host, &name, site, player.position)
-                {
-                    if let Ok(mut center) = CENTER.lock() && center.is_none() {
-                        *center = Some((site, false));
-                    }
-                    continue;
-                }
-            } else {
-                host.run_command(&format!("{only_new} place structure minecraft:village_plains ~ ~ ~"));
+            let here = [player.position[0].floor() as i32, player.position[1].floor() as i32, player.position[2].floor() as i32];
+            let (site, trees) = flat_site(host, [here[0], here[2]]).unwrap_or((here, false));
+            if trees { clear_trees(host, site); }
+            let site = town::found(host, site);
+            if settle(host, &name, site, player.position) {
+                adopt(site);
+                continue;
             }
             arrival.deadline = now + WAIT;
             waiting.push(arrival);
@@ -336,6 +362,7 @@ pub(crate) fn control_center(host: &mut dyn Host, [x, y, z]: [i32; 3]) {
 
 #[cfg(test)]
 pub(crate) fn reset() {
+    town::reset();
     if let Ok(mut center) = CENTER.lock() {
         *center = None;
     }

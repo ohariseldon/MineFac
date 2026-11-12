@@ -46,6 +46,10 @@ impl Who {
             Who::Farmer => [(-8, 0), (-8, 3), (-8, -3), (-7, -6)],
         }
     }
+    /// Na vila do Veio: na frente da casa de cada um (`town_plan`).
+    fn planned(self) -> &'static [(i32, i32); 4] {
+        match self { Who::Smith => &workforce::town::SMITH, Who::Farmer => &workforce::town::FARMER }
+    }
     fn villager(self) -> (&'static str, &'static str) {
         match self { Who::Smith => ("minecraft:toolsmith", "minecraft:plains"), Who::Farmer => ("minecraft:farmer", "minecraft:savanna") }
     }
@@ -81,7 +85,8 @@ pub(super) fn residents(host: &dyn Host) -> Vec<(&'static str, Option<u32>, Opti
 /// O lugar fixo de cada um: o chão mais baixo e seco entre as colunas dele.
 fn home(host: &dyn Host, who: Who) -> Option<[f64; 3]> {
     let ([x, _, z], _) = workforce::spawn::center()?;
-    let columns: Vec<(i32, i32)> = who.offsets().iter().map(|(dx, dz)| (x + dx, z + dz)).collect();
+    let columns: Vec<(i32, i32)> = workforce::town::spots(host, who.planned())
+        .unwrap_or_else(|| who.offsets().iter().map(|(dx, dz)| (x + dx, z + dz)).collect());
     let ground = host.surface_heights(OVERWORLD, &columns, NativeHeightmap::MotionBlockingNoLeaves).ok()?;
     let floor = host.surface_heights(OVERWORLD, &columns, NativeHeightmap::OceanFloor).ok()?;
     columns.iter().zip(ground.iter().zip(&floor))

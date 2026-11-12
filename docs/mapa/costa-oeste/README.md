@@ -165,7 +165,7 @@ existe; hoje, nenhum conflito.
   efeito de obra. As grandes, uma por dia de jogo.
 - **Como no jogo:** cada prédio vira um conjunto de modelos de estrutura, um por estágio.
 
-## O que já está no jogo (0.39.0)
+## O que já está no jogo
 
 - **Os moradores com nome dormem.** O prefeito e os vizinhos vão à cama mais perto ao anoitecer e
   voltam de manhã (`onboarding/rest.rs`). No mapa fixo, cada um mora num dos prédios do estágio 1.
@@ -175,12 +175,15 @@ existe; hoje, nenhum conflito.
 - **Chão limpo onde a vila nasce:** a limpeza tira a serrapilheira e os arbustos junto com as
   árvores.
 
+**Desde a 0.40.0:** a vila do estágio 1 é erguida no jogo, bloco a bloco, com o acabamento e as
+trocas de estágio ([../../vila/README.md](../../vila/README.md)).
+- Os moradores dos pedidos ficam na frente da própria casa.
+- O prefeito fica na praça.
+- A casa do fundador e o terreno da oficina têm lugar marcado no plano.
+
 **Ainda não está no jogo:**
 - o gerador que usa esta planta (o rascunho está em `work-in-progress/finite-world`);
-- os modelos dos prédios por estágio.
-
-No código, os moradores dos pedidos ainda nascem a ~10 blocos da praça (`errands.rs`, `favors.rs`).
-Com o mapa fixo, eles passam para as coordenadas da planta.
+- as casas novas do estágio 4 em diante, e o parque, o quartel, o distrito e a praça cívica.
 
 ## Histórico
 
